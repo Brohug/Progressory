@@ -9,6 +9,8 @@ export default function MembersPage() {
   const [topics, setTopics] = useState([]);
   const [memberProgressMap, setMemberProgressMap] = useState({});
   const [expandedMembers, setExpandedMembers] = useState({});
+  const [editingMembers, setEditingMembers] = useState({});
+  const [editMemberMap, setEditMemberMap] = useState({});
   const [formData, setFormData] = useState({
     program_id: '',
     first_name: '',
@@ -134,6 +136,83 @@ export default function MembersPage() {
     }));
   };
 
+  const toggleEditMember = (member) => {
+    const isEditing = editingMembers[member.id];
+
+    if (!editMemberMap[member.id]) {
+      setEditMemberMap((prev) => ({
+        ...prev,
+        [member.id]: {
+          program_id: member.program_id ? String(member.program_id) : '',
+          first_name: member.first_name || '',
+          last_name: member.last_name || '',
+          email: member.email || '',
+          belt_rank: member.belt_rank || '',
+          is_active: member.is_active ? 'true' : 'false'
+        }
+      }));
+    }
+
+    setEditingMembers((prev) => ({
+      ...prev,
+      [member.id]: !prev[member.id]
+    }));
+
+    if (isEditing) {
+      setEditMemberMap((prev) => ({
+        ...prev,
+        [member.id]: {
+          program_id: member.program_id ? String(member.program_id) : '',
+          first_name: member.first_name || '',
+          last_name: member.last_name || '',
+          email: member.email || '',
+          belt_rank: member.belt_rank || '',
+          is_active: member.is_active ? 'true' : 'false'
+        }
+      }));
+    }
+  };
+
+  const handleEditMemberChange = (memberId, e) => {
+    const { name, value } = e.target;
+
+    setEditMemberMap((prev) => ({
+      ...prev,
+      [memberId]: {
+        ...prev[memberId],
+        [name]: value
+      }
+    }));
+  };
+
+  const handleUpdateMember = async (memberId) => {
+    try {
+      setError('');
+
+      const editData = editMemberMap[memberId];
+
+      const payload = {
+        program_id: editData.program_id ? Number(editData.program_id) : null,
+        first_name: editData.first_name,
+        last_name: editData.last_name,
+        email: editData.email || null,
+        belt_rank: editData.belt_rank || null,
+        is_active: editData.is_active === 'true'
+      };
+
+      await api.put(`/members/${memberId}`, payload);
+      await fetchMembers();
+
+      setEditingMembers((prev) => ({
+        ...prev,
+        [memberId]: false
+      }));
+    } catch (err) {
+      console.error('Update member error:', err);
+      setError(err.response?.data?.message || 'Failed to update member');
+    }
+  };
+
   const getTopicsForMember = (member) => {
     if (!member.program_id) {
       return topics;
@@ -248,12 +327,106 @@ export default function MembersPage() {
                     {expandedMembers[member.id] ? 'Hide Progress' : 'Manage Progress'}
                   </button>
                   <button
+                    className="secondary-button"
+                    onClick={() => toggleEditMember(member)}
+                  >
+                    {editingMembers[member.id] ? 'Hide Edit Member' : 'Edit Member'}
+                  </button>
+                  <button
                     className="danger-button"
                     onClick={() => handleDelete(member.id)}
                   >
                     Delete Member
                   </button>
                 </div>
+
+                {editingMembers[member.id] && (
+                  <div className="detail-block">
+                    <section className="page-section">
+                      <h4>Edit Member Details</h4>
+
+                      <form
+                        className="form-grid"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleUpdateMember(member.id);
+                        }}
+                      >
+                        <div>
+                          <label>Program</label>
+                          <select
+                            name="program_id"
+                            value={editMemberMap[member.id]?.program_id || ''}
+                            onChange={(e) => handleEditMemberChange(member.id, e)}
+                          >
+                            <option value="">No Program</option>
+                            {programs.map((program) => (
+                              <option key={program.id} value={program.id}>
+                                {program.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label>First Name</label>
+                          <input
+                            type="text"
+                            name="first_name"
+                            value={editMemberMap[member.id]?.first_name || ''}
+                            onChange={(e) => handleEditMemberChange(member.id, e)}
+                          />
+                        </div>
+
+                        <div>
+                          <label>Last Name</label>
+                          <input
+                            type="text"
+                            name="last_name"
+                            value={editMemberMap[member.id]?.last_name || ''}
+                            onChange={(e) => handleEditMemberChange(member.id, e)}
+                          />
+                        </div>
+
+                        <div>
+                          <label>Email</label>
+                          <input
+                            type="email"
+                            name="email"
+                            value={editMemberMap[member.id]?.email || ''}
+                            onChange={(e) => handleEditMemberChange(member.id, e)}
+                          />
+                        </div>
+
+                        <div>
+                          <label>Belt Rank</label>
+                          <input
+                            type="text"
+                            name="belt_rank"
+                            value={editMemberMap[member.id]?.belt_rank || ''}
+                            onChange={(e) => handleEditMemberChange(member.id, e)}
+                          />
+                        </div>
+
+                        <div>
+                          <label>Active Status</label>
+                          <select
+                            name="is_active"
+                            value={editMemberMap[member.id]?.is_active || 'true'}
+                            onChange={(e) => handleEditMemberChange(member.id, e)}
+                          >
+                            <option value="true">active</option>
+                            <option value="false">inactive</option>
+                          </select>
+                        </div>
+
+                        <div className="inline-actions">
+                          <button type="submit">Save Member Details</button>
+                        </div>
+                      </form>
+                    </section>
+                  </div>
+                )}
 
                 {expandedMembers[member.id] && (
                   <div className="detail-block">
