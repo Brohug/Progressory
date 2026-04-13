@@ -89,3 +89,24 @@ server/
     controllers/
     middleware/
     routes/
+
+### Dashboard
+![Dashboard](screenshots/dashboard.png)
+
+### Classes Overview
+![Classes Overview](screenshots/classes-overview.png)
+
+### Class Management
+![Class Management](screenshots/classes-manage.png)
+
+### Members
+![Members](screenshots/members.png)
+
+### Staff
+![Staff](screenshots/staff.png)
+
+### Library
+![Library](screenshots/library.png)
+
+### Reports
+![Reports](screenshots/reports.png)  
