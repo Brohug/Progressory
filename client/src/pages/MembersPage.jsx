@@ -93,20 +93,20 @@ export default function MembersPage() {
   };
 
   const handleDelete = async (memberId) => {
-  const confirmed = window.confirm(
-    'Delete this member? This can remove related attendance and progression history.'
-  );
-  if (!confirmed) return;
+    const confirmed = window.confirm(
+      'Delete this member? This can remove related attendance and progression history.'
+    );
+    if (!confirmed) return;
 
-  try {
-    setError('');
-    await api.delete(`/members/${memberId}`);
-    await fetchMembers();
-  } catch (err) {
-    console.error('Delete member error:', err);
-    setError(err.response?.data?.message || 'Failed to delete member');
-  }
-};
+    try {
+      setError('');
+      await api.delete(`/members/${memberId}`);
+      await fetchMembers();
+    } catch (err) {
+      console.error('Delete member error:', err);
+      setError(err.response?.data?.message || 'Failed to delete member');
+    }
+  };
 
   const loadMemberProgress = async (memberId) => {
     try {
@@ -135,6 +135,10 @@ export default function MembersPage() {
   };
 
   const getTopicsForMember = (member) => {
+    if (!member.program_id) {
+      return topics;
+    }
+
     return topics.filter((topic) => {
       return topic.program_id === null || topic.program_id === member.program_id;
     });
