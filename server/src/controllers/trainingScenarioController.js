@@ -1,5 +1,48 @@
 const pool = require('../config/db');
 
+const getTrainingScenarios = async (req, res) => {
+  try {
+    const gymId = req.user.gym_id;
+
+    const [rows] = await pool.query(
+      `SELECT
+        ts.id,
+        ts.gym_id,
+        ts.program_id,
+        ts.training_method_id,
+        ts.name,
+        ts.description,
+        ts.starting_position_topic_id,
+        ts.top_objective,
+        ts.bottom_objective,
+        ts.constraints_text,
+        ts.round_duration_seconds,
+        ts.is_active,
+        ts.created_at,
+        ts.updated_at,
+        p.name AS program_name,
+        tm.name AS training_method_name,
+        ct.title AS starting_position_title
+      FROM training_scenarios ts
+      LEFT JOIN programs p ON ts.program_id = p.id
+      INNER JOIN training_methods tm ON ts.training_method_id = tm.id
+      LEFT JOIN curriculum_topics ct ON ts.starting_position_topic_id = ct.id
+      WHERE ts.gym_id = ?
+      ORDER BY ts.is_active DESC, ts.created_at DESC`,
+      [gymId]
+    );
+
+    return res.status(200).json(rows);
+  } catch (error) {
+    console.error('Get training scenarios error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
 const createTrainingScenario = async (req, res) => {
   try {
     const gymId = req.user.gym_id;
@@ -15,157 +58,95 @@ const createTrainingScenario = async (req, res) => {
       round_duration_seconds
     } = req.body;
 
-    if (!name || !name.trim()) {
+    if (!training_method_id || !name || !name.trim()) {
       return res.status(400).json({
-        message: 'Scenario name is required'
+        message: 'training_method_id and name are required'
       });
     }
 
-    if (!training_method_id) {
-      return res.status(400).json({
-        message: 'training_method_id is required'
-      });
-    }
+    const trimmedName = name.trim();
 
-    const [methodRows] = await pool.query(
-      'SELECT id FROM training_methods WHERE id = ? AND gym_id = ?',
-      [training_method_id, gymId]
+    const [duplicateRows] = await pool.query(
+      `SELECT id
+       FROM training_scenarios
+       WHERE gym_id = ?
+         AND training_method_id = ?
+         AND COALESCE(program_id, 0) = COALESCE(?, 0)
+         AND LOWER(name) = LOWER(?)
+         AND is_active = TRUE`,
+      [gymId, training_method_id, program_id || null, trimmedName]
     );
 
-    if (methodRows.length === 0) {
+    if (duplicateRows.length > 0) {
       return res.status(400).json({
-        message: 'Training method not found for this gym'
+        message:
+          'A training scenario with this name already exists for this program and training method.'
       });
-    }
-
-    if (program_id !== undefined && program_id !== null) {
-      const [programRows] = await pool.query(
-        'SELECT id FROM programs WHERE id = ? AND gym_id = ?',
-        [program_id, gymId]
-      );
-
-      if (programRows.length === 0) {
-        return res.status(400).json({
-          message: 'Program not found for this gym'
-        });
-      }
-    }
-
-    if (starting_position_topic_id !== undefined && starting_position_topic_id !== null) {
-      const [topicRows] = await pool.query(
-        'SELECT id FROM curriculum_topics WHERE id = ? AND gym_id = ?',
-        [starting_position_topic_id, gymId]
-      );
-
-      if (topicRows.length === 0) {
-        return res.status(400).json({
-          message: 'Starting position topic not found for this gym'
-        });
-      }
     }
 
     const [result] = await pool.query(
       `INSERT INTO training_scenarios
-       (gym_id, program_id, training_method_id, name, description, starting_position_topic_id,
-        top_objective, bottom_objective, constraints_text, round_duration_seconds)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (
+        gym_id,
+        program_id,
+        training_method_id,
+        name,
+        description,
+        starting_position_topic_id,
+        top_objective,
+        bottom_objective,
+        constraints_text,
+        round_duration_seconds,
+        is_active
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
       [
         gymId,
-        program_id ?? null,
+        program_id || null,
         training_method_id,
-        name.trim(),
+        trimmedName,
         description || null,
-        starting_position_topic_id ?? null,
+        starting_position_topic_id || null,
         top_objective || null,
         bottom_objective || null,
         constraints_text || null,
-        round_duration_seconds ?? null
+        round_duration_seconds || null
       ]
     );
 
     const [rows] = await pool.query(
-      `SELECT ts.*,
-              p.name AS program_name,
-              tm.name AS training_method_name,
-              ct.title AS starting_position_title
-       FROM training_scenarios ts
-       LEFT JOIN programs p ON ts.program_id = p.id
-       JOIN training_methods tm ON ts.training_method_id = tm.id
-       LEFT JOIN curriculum_topics ct ON ts.starting_position_topic_id = ct.id
-       WHERE ts.id = ? AND ts.gym_id = ?`,
+      `SELECT
+        ts.id,
+        ts.gym_id,
+        ts.program_id,
+        ts.training_method_id,
+        ts.name,
+        ts.description,
+        ts.starting_position_topic_id,
+        ts.top_objective,
+        ts.bottom_objective,
+        ts.constraints_text,
+        ts.round_duration_seconds,
+        ts.is_active,
+        ts.created_at,
+        ts.updated_at,
+        p.name AS program_name,
+        tm.name AS training_method_name,
+        ct.title AS starting_position_title
+      FROM training_scenarios ts
+      LEFT JOIN programs p ON ts.program_id = p.id
+      INNER JOIN training_methods tm ON ts.training_method_id = tm.id
+      LEFT JOIN curriculum_topics ct ON ts.starting_position_topic_id = ct.id
+      WHERE ts.id = ? AND ts.gym_id = ?`,
       [result.insertId, gymId]
     );
 
     return res.status(201).json({
       message: 'Training scenario created successfully',
-      training_scenario: rows[0]
+      trainingScenario: rows[0]
     });
   } catch (error) {
     console.error('Create training scenario error:', error.message);
-
-    return res.status(500).json({
-      message: 'Server error',
-      error: error.message
-    });
-  }
-};
-
-const getTrainingScenarios = async (req, res) => {
-  try {
-    const gymId = req.user.gym_id;
-
-    const [rows] = await pool.query(
-      `SELECT ts.*,
-              p.name AS program_name,
-              tm.name AS training_method_name,
-              ct.title AS starting_position_title
-       FROM training_scenarios ts
-       LEFT JOIN programs p ON ts.program_id = p.id
-       JOIN training_methods tm ON ts.training_method_id = tm.id
-       LEFT JOIN curriculum_topics ct ON ts.starting_position_topic_id = ct.id
-       WHERE ts.gym_id = ?
-       ORDER BY ts.created_at DESC`,
-      [gymId]
-    );
-
-    return res.status(200).json(rows);
-  } catch (error) {
-    console.error('Get training scenarios error:', error.message);
-
-    return res.status(500).json({
-      message: 'Server error',
-      error: error.message
-    });
-  }
-};
-
-const getTrainingScenarioById = async (req, res) => {
-  try {
-    const gymId = req.user.gym_id;
-    const { id } = req.params;
-
-    const [rows] = await pool.query(
-      `SELECT ts.*,
-              p.name AS program_name,
-              tm.name AS training_method_name,
-              ct.title AS starting_position_title
-       FROM training_scenarios ts
-       LEFT JOIN programs p ON ts.program_id = p.id
-       JOIN training_methods tm ON ts.training_method_id = tm.id
-       LEFT JOIN curriculum_topics ct ON ts.starting_position_topic_id = ct.id
-       WHERE ts.id = ? AND ts.gym_id = ?`,
-      [id, gymId]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({
-        message: 'Training scenario not found'
-      });
-    }
-
-    return res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error('Get training scenario by ID error:', error.message);
 
     return res.status(500).json({
       message: 'Server error',
@@ -192,111 +173,132 @@ const updateTrainingScenario = async (req, res) => {
     } = req.body;
 
     const [existingRows] = await pool.query(
-      'SELECT * FROM training_scenarios WHERE id = ? AND gym_id = ?',
+      `SELECT * FROM training_scenarios WHERE id = ? AND gym_id = ?`,
       [id, gymId]
     );
 
     if (existingRows.length === 0) {
-      return res.status(404).json({
-        message: 'Training scenario not found'
-      });
+      return res.status(404).json({ message: 'Training scenario not found' });
     }
 
-    const currentScenario = existingRows[0];
+    const current = existingRows[0];
 
-    const updatedProgramId = program_id !== undefined ? program_id : currentScenario.program_id;
-    const updatedTrainingMethodId = training_method_id !== undefined ? training_method_id : currentScenario.training_method_id;
-    const updatedName = name !== undefined ? name.trim() : currentScenario.name;
-    const updatedDescription = description !== undefined ? description : currentScenario.description;
-    const updatedStartingPositionTopicId =
-      starting_position_topic_id !== undefined ? starting_position_topic_id : currentScenario.starting_position_topic_id;
-    const updatedTopObjective = top_objective !== undefined ? top_objective : currentScenario.top_objective;
-    const updatedBottomObjective = bottom_objective !== undefined ? bottom_objective : currentScenario.bottom_objective;
-    const updatedConstraintsText = constraints_text !== undefined ? constraints_text : currentScenario.constraints_text;
-    const updatedRoundDurationSeconds =
-      round_duration_seconds !== undefined ? round_duration_seconds : currentScenario.round_duration_seconds;
-    const updatedIsActive = is_active !== undefined ? is_active : currentScenario.is_active;
+    const nextProgramId =
+      program_id !== undefined ? program_id || null : current.program_id;
+    const nextMethodId =
+      training_method_id !== undefined ? training_method_id : current.training_method_id;
+    const nextName =
+      name !== undefined ? name.trim() : current.name;
+    const nextDescription =
+      description !== undefined ? description || null : current.description;
+    const nextStartingTopicId =
+      starting_position_topic_id !== undefined
+        ? starting_position_topic_id || null
+        : current.starting_position_topic_id;
+    const nextTopObjective =
+      top_objective !== undefined ? top_objective || null : current.top_objective;
+    const nextBottomObjective =
+      bottom_objective !== undefined ? bottom_objective || null : current.bottom_objective;
+    const nextConstraints =
+      constraints_text !== undefined ? constraints_text || null : current.constraints_text;
+    const nextDuration =
+      round_duration_seconds !== undefined
+        ? round_duration_seconds || null
+        : current.round_duration_seconds;
+    const nextIsActive =
+      is_active !== undefined ? Boolean(is_active) : Boolean(current.is_active);
 
-    if (!updatedName) {
+    if (!nextMethodId || !nextName) {
       return res.status(400).json({
-        message: 'Scenario name cannot be empty'
+        message: 'training_method_id and name are required'
       });
     }
 
-    const [methodRows] = await pool.query(
-      'SELECT id FROM training_methods WHERE id = ? AND gym_id = ?',
-      [updatedTrainingMethodId, gymId]
-    );
+    const identityUnchanged =
+      String(current.program_id ?? '') === String(nextProgramId ?? '') &&
+      String(current.training_method_id) === String(nextMethodId) &&
+      String(current.name).trim().toLowerCase() === String(nextName).trim().toLowerCase();
 
-    if (methodRows.length === 0) {
-      return res.status(400).json({
-        message: 'Training method not found for this gym'
-      });
-    }
-
-    if (updatedProgramId !== null) {
-      const [programRows] = await pool.query(
-        'SELECT id FROM programs WHERE id = ? AND gym_id = ?',
-        [updatedProgramId, gymId]
+    if (!identityUnchanged) {
+      const [duplicateRows] = await pool.query(
+        `SELECT id
+         FROM training_scenarios
+         WHERE gym_id = ?
+           AND training_method_id = ?
+           AND COALESCE(program_id, 0) = COALESCE(?, 0)
+           AND LOWER(name) = LOWER(?)
+           AND id <> ?`,
+        [gymId, nextMethodId, nextProgramId, nextName, id]
       );
 
-      if (programRows.length === 0) {
+      if (duplicateRows.length > 0) {
         return res.status(400).json({
-          message: 'Program not found for this gym'
-        });
-      }
-    }
-
-    if (updatedStartingPositionTopicId !== null) {
-      const [topicRows] = await pool.query(
-        'SELECT id FROM curriculum_topics WHERE id = ? AND gym_id = ?',
-        [updatedStartingPositionTopicId, gymId]
-      );
-
-      if (topicRows.length === 0) {
-        return res.status(400).json({
-          message: 'Starting position topic not found for this gym'
+          message:
+            'A training scenario with this name already exists for this program and training method.'
         });
       }
     }
 
     await pool.query(
       `UPDATE training_scenarios
-       SET program_id = ?, training_method_id = ?, name = ?, description = ?, starting_position_topic_id = ?,
-           top_objective = ?, bottom_objective = ?, constraints_text = ?, round_duration_seconds = ?, is_active = ?
+       SET
+         program_id = ?,
+         training_method_id = ?,
+         name = ?,
+         description = ?,
+         starting_position_topic_id = ?,
+         top_objective = ?,
+         bottom_objective = ?,
+         constraints_text = ?,
+         round_duration_seconds = ?,
+         is_active = ?
        WHERE id = ? AND gym_id = ?`,
       [
-        updatedProgramId,
-        updatedTrainingMethodId,
-        updatedName,
-        updatedDescription,
-        updatedStartingPositionTopicId,
-        updatedTopObjective,
-        updatedBottomObjective,
-        updatedConstraintsText,
-        updatedRoundDurationSeconds,
-        updatedIsActive,
+        nextProgramId,
+        nextMethodId,
+        nextName,
+        nextDescription,
+        nextStartingTopicId,
+        nextTopObjective,
+        nextBottomObjective,
+        nextConstraints,
+        nextDuration,
+        nextIsActive,
         id,
         gymId
       ]
     );
 
-    const [updatedRows] = await pool.query(
-      `SELECT ts.*,
-              p.name AS program_name,
-              tm.name AS training_method_name,
-              ct.title AS starting_position_title
-       FROM training_scenarios ts
-       LEFT JOIN programs p ON ts.program_id = p.id
-       JOIN training_methods tm ON ts.training_method_id = tm.id
-       LEFT JOIN curriculum_topics ct ON ts.starting_position_topic_id = ct.id
-       WHERE ts.id = ? AND ts.gym_id = ?`,
+    const [rows] = await pool.query(
+      `SELECT
+        ts.id,
+        ts.gym_id,
+        ts.program_id,
+        ts.training_method_id,
+        ts.name,
+        ts.description,
+        ts.starting_position_topic_id,
+        ts.top_objective,
+        ts.bottom_objective,
+        ts.constraints_text,
+        ts.round_duration_seconds,
+        ts.is_active,
+        ts.created_at,
+        ts.updated_at,
+        p.name AS program_name,
+        tm.name AS training_method_name,
+        ct.title AS starting_position_title
+      FROM training_scenarios ts
+      LEFT JOIN programs p ON ts.program_id = p.id
+      INNER JOIN training_methods tm ON ts.training_method_id = tm.id
+      LEFT JOIN curriculum_topics ct ON ts.starting_position_topic_id = ct.id
+      WHERE ts.id = ? AND ts.gym_id = ?`,
       [id, gymId]
     );
 
     return res.status(200).json({
       message: 'Training scenario updated successfully',
-      training_scenario: updatedRows[0]
+      trainingScenario: rows[0]
     });
   } catch (error) {
     console.error('Update training scenario error:', error.message);
@@ -308,13 +310,13 @@ const updateTrainingScenario = async (req, res) => {
   }
 };
 
-const deleteTrainingScenario = async (req, res) => {
+const deactivateTrainingScenario = async (req, res) => {
   try {
     const gymId = req.user.gym_id;
     const { id } = req.params;
 
     const [existingRows] = await pool.query(
-      'SELECT * FROM training_scenarios WHERE id = ? AND gym_id = ?',
+      `SELECT id FROM training_scenarios WHERE id = ? AND gym_id = ?`,
       [id, gymId]
     );
 
@@ -325,15 +327,17 @@ const deleteTrainingScenario = async (req, res) => {
     }
 
     await pool.query(
-      'DELETE FROM training_scenarios WHERE id = ? AND gym_id = ?',
+      `UPDATE training_scenarios
+       SET is_active = FALSE
+       WHERE id = ? AND gym_id = ?`,
       [id, gymId]
     );
 
     return res.status(200).json({
-      message: 'Training scenario deleted successfully'
+      message: 'Training scenario deactivated successfully'
     });
   } catch (error) {
-    console.error('Delete training scenario error:', error.message);
+    console.error('Deactivate training scenario error:', error.message);
 
     return res.status(500).json({
       message: 'Server error',
@@ -343,9 +347,8 @@ const deleteTrainingScenario = async (req, res) => {
 };
 
 module.exports = {
-  createTrainingScenario,
   getTrainingScenarios,
-  getTrainingScenarioById,
+  createTrainingScenario,
   updateTrainingScenario,
-  deleteTrainingScenario
+  deactivateTrainingScenario
 };

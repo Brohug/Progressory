@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import api from '../api/axios';
 import Layout from '../components/Layout';
 
@@ -8,6 +8,9 @@ export default function ProgramsPage() {
     name: '',
     description: ''
   });
+  const [editingPrograms, setEditingPrograms] = useState({});
+  const [editProgramMap, setEditProgramMap] = useState({});
+  const [showInactive, setShowInactive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -29,6 +32,18 @@ export default function ProgramsPage() {
   useEffect(() => {
     fetchPrograms();
   }, []);
+
+  const orderedPrograms = useMemo(() => {
+    const active = programs.filter((program) => program.is_active);
+    const inactive = programs.filter((program) => !program.is_active);
+
+    const sortByName = (a, b) => a.name.localeCompare(b.name);
+
+    active.sort(sortByName);
+    inactive.sort(sortByName);
+
+    return showInactive ? [...active, ...inactive] : active;
+  }, [programs, showInactive]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -56,6 +71,76 @@ export default function ProgramsPage() {
       setError(err.response?.data?.message || 'Failed to create program');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const toggleEditProgram = (program) => {
+    if (!editProgramMap[program.id]) {
+      setEditProgramMap((prev) => ({
+        ...prev,
+        [program.id]: {
+          name: program.name || '',
+          description: program.description || '',
+          is_active: program.is_active ? 'true' : 'false'
+        }
+      }));
+    }
+
+    setEditingPrograms((prev) => ({
+      ...prev,
+      [program.id]: !prev[program.id]
+    }));
+  };
+
+  const handleEditProgramChange = (programId, e) => {
+    const { name, value } = e.target;
+
+    setEditProgramMap((prev) => ({
+      ...prev,
+      [programId]: {
+        ...prev[programId],
+        [name]: value
+      }
+    }));
+  };
+
+  const handleUpdateProgram = async (programId) => {
+    try {
+      setError('');
+
+      const editData = editProgramMap[programId];
+
+      await api.put(`/programs/${programId}`, {
+        name: editData.name,
+        description: editData.description || null,
+        is_active: editData.is_active === 'true'
+      });
+
+      await fetchPrograms();
+
+      setEditingPrograms((prev) => ({
+        ...prev,
+        [programId]: false
+      }));
+    } catch (err) {
+      console.error('Update program error:', err);
+      setError(err.response?.data?.message || 'Failed to update program');
+    }
+  };
+
+  const handleDeactivateProgram = async (programId) => {
+    const confirmed = window.confirm(
+      'Deactivate this program? Existing data will remain, but the program will be marked inactive.'
+    );
+    if (!confirmed) return;
+
+    try {
+      setError('');
+      await api.patch(`/programs/${programId}/deactivate`);
+      await fetchPrograms();
+    } catch (err) {
+      console.error('Deactivate program error:', err);
+      setError(err.response?.data?.message || 'Failed to deactivate program');
     }
   };
 
@@ -98,15 +183,31 @@ export default function ProgramsPage() {
       {error && <p className="error-text">{error}</p>}
 
       <section className="page-section">
-        <h3>Program List</h3>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '12px',
+            alignItems: 'center',
+            flexWrap: 'wrap'
+          }}
+        >
+          <h3 style={{ marginBottom: 0 }}>Program List</h3>
+          <button
+            className="secondary-button"
+            onClick={() => setShowInactive((prev) => !prev)}
+          >
+            {showInactive ? 'Hide Inactive Programs' : 'Show Inactive Programs'}
+          </button>
+        </div>
 
         {loading ? (
           <p className="empty-state">Loading programs...</p>
-        ) : programs.length === 0 ? (
+        ) : orderedPrograms.length === 0 ? (
           <p className="empty-state">No programs found.</p>
         ) : (
           <ul className="card-list">
-            {programs.map((program) => (
+            {orderedPrograms.map((program) => (
               <li key={program.id} className="card-item">
                 <strong>{program.name}</strong>
                 <div className="detail-block">
@@ -115,6 +216,76 @@ export default function ProgramsPage() {
                     Active: {program.is_active ? 'Yes' : 'No'}
                   </div>
                 </div>
+
+                <div className="inline-actions">
+                  <button
+                    className="secondary-button"
+                    onClick={() => toggleEditProgram(program)}
+                  >
+                    {editingPrograms[program.id] ? 'Hide Edit Program' : 'Edit Program'}
+                  </button>
+
+                  {program.is_active ? (
+                    <button
+                      className="danger-button"
+                      onClick={() => handleDeactivateProgram(program.id)}
+                    >
+                      Deactivate Program
+                    </button>
+                  ) : null}
+                </div>
+
+                {editingPrograms[program.id] && (
+                  <div className="detail-block">
+                    <section className="page-section">
+                      <h4>Edit Program Details</h4>
+
+                      <form
+                        className="form-grid"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleUpdateProgram(program.id);
+                        }}
+                      >
+                        <div>
+                          <label>Program Name</label>
+                          <input
+                            type="text"
+                            name="name"
+                            value={editProgramMap[program.id]?.name || ''}
+                            onChange={(e) => handleEditProgramChange(program.id, e)}
+                          />
+                        </div>
+
+                        <div>
+                          <label>Description</label>
+                          <textarea
+                            name="description"
+                            value={editProgramMap[program.id]?.description || ''}
+                            onChange={(e) => handleEditProgramChange(program.id, e)}
+                            rows="3"
+                          />
+                        </div>
+
+                        <div>
+                          <label>Active Status</label>
+                          <select
+                            name="is_active"
+                            value={editProgramMap[program.id]?.is_active || 'true'}
+                            onChange={(e) => handleEditProgramChange(program.id, e)}
+                          >
+                            <option value="true">active</option>
+                            <option value="false">inactive</option>
+                          </select>
+                        </div>
+
+                        <div className="inline-actions">
+                          <button type="submit">Save Program Details</button>
+                        </div>
+                      </form>
+                    </section>
+                  </div>
+                )}
               </li>
             ))}
           </ul>

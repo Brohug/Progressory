@@ -11,9 +11,11 @@ const createProgram = async (req, res) => {
       });
     }
 
+    const trimmedName = name.trim();
+
     const [existingPrograms] = await pool.query(
-      'SELECT id FROM programs WHERE gym_id = ? AND name = ?',
-      [gymId, name.trim()]
+      'SELECT id FROM programs WHERE gym_id = ? AND LOWER(name) = LOWER(?)',
+      [gymId, trimmedName]
     );
 
     if (existingPrograms.length > 0) {
@@ -23,8 +25,8 @@ const createProgram = async (req, res) => {
     }
 
     const [result] = await pool.query(
-      'INSERT INTO programs (gym_id, name, description) VALUES (?, ?, ?)',
-      [gymId, name.trim(), description || null]
+      'INSERT INTO programs (gym_id, name, description, is_active) VALUES (?, ?, ?, TRUE)',
+      [gymId, trimmedName, description || null]
     );
 
     const [rows] = await pool.query(
@@ -51,7 +53,7 @@ const getPrograms = async (req, res) => {
     const gymId = req.user.gym_id;
 
     const [rows] = await pool.query(
-      'SELECT * FROM programs WHERE gym_id = ? ORDER BY created_at DESC',
+      'SELECT * FROM programs WHERE gym_id = ? ORDER BY is_active DESC, created_at DESC',
       [gymId]
     );
 
@@ -112,9 +114,12 @@ const updateProgram = async (req, res) => {
 
     const currentProgram = existingRows[0];
 
-    const updatedName = name !== undefined ? name.trim() : currentProgram.name;
-    const updatedDescription = description !== undefined ? description : currentProgram.description;
-    const updatedIsActive = is_active !== undefined ? is_active : currentProgram.is_active;
+    const updatedName =
+      name !== undefined ? name.trim() : currentProgram.name;
+    const updatedDescription =
+      description !== undefined ? description || null : currentProgram.description;
+    const updatedIsActive =
+      is_active !== undefined ? Boolean(is_active) : Boolean(currentProgram.is_active);
 
     if (!updatedName) {
       return res.status(400).json({
@@ -123,7 +128,7 @@ const updateProgram = async (req, res) => {
     }
 
     const [duplicateRows] = await pool.query(
-      'SELECT id FROM programs WHERE gym_id = ? AND name = ? AND id <> ?',
+      'SELECT id FROM programs WHERE gym_id = ? AND LOWER(name) = LOWER(?) AND id <> ?',
       [gymId, updatedName, id]
     );
 
@@ -159,7 +164,7 @@ const updateProgram = async (req, res) => {
   }
 };
 
-const deleteProgram = async (req, res) => {
+const deactivateProgram = async (req, res) => {
   try {
     const gymId = req.user.gym_id;
     const { id } = req.params;
@@ -176,15 +181,17 @@ const deleteProgram = async (req, res) => {
     }
 
     await pool.query(
-      'DELETE FROM programs WHERE id = ? AND gym_id = ?',
+      `UPDATE programs
+       SET is_active = FALSE
+       WHERE id = ? AND gym_id = ?`,
       [id, gymId]
     );
 
     return res.status(200).json({
-      message: 'Program deleted successfully'
+      message: 'Program deactivated successfully'
     });
   } catch (error) {
-    console.error('Delete program error:', error.message);
+    console.error('Deactivate program error:', error.message);
 
     return res.status(500).json({
       message: 'Server error',
@@ -198,5 +205,5 @@ module.exports = {
   getPrograms,
   getProgramById,
   updateProgram,
-  deleteProgram
+  deactivateProgram
 };

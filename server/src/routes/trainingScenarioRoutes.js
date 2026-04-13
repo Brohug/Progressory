@@ -2,19 +2,17 @@ const express = require('express');
 const router = express.Router();
 
 const {
-  createTrainingScenario,
   getTrainingScenarios,
-  getTrainingScenarioById,
+  createTrainingScenario,
   updateTrainingScenario,
-  deleteTrainingScenario
+  deactivateTrainingScenario
 } = require('../controllers/trainingScenarioController');
 
 const { protect } = require('../middleware/authMiddleware');
 
-router.post('/', protect, createTrainingScenario);
 router.get('/', protect, getTrainingScenarios);
-router.get('/:id', protect, getTrainingScenarioById);
+router.post('/', protect, createTrainingScenario);
 router.put('/:id', protect, updateTrainingScenario);
-router.delete('/:id', protect, deleteTrainingScenario);
+router.patch('/:id/deactivate', protect, deactivateTrainingScenario);
 
 module.exports = router;

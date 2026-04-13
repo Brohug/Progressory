@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import api from '../api/axios';
 import Layout from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
@@ -20,6 +20,10 @@ export default function ClassesPage() {
   const [classMembersMap, setClassMembersMap] = useState({});
   const [expandedClasses, setExpandedClasses] = useState({});
   const [editClassMap, setEditClassMap] = useState({});
+  const [editingScenarios, setEditingScenarios] = useState({});
+  const [editScenarioMap, setEditScenarioMap] = useState({});
+  const [showAllClasses, setShowAllClasses] = useState(false);
+  const [showInactiveScenarios, setShowInactiveScenarios] = useState(false);
 
   const [formData, setFormData] = useState({
     program_id: '',
@@ -31,9 +35,24 @@ export default function ClassesPage() {
     notes: ''
   });
 
+  const [scenarioFormData, setScenarioFormData] = useState({
+    program_id: '',
+    training_method_id: '',
+    name: '',
+    description: '',
+    starting_position_topic_id: '',
+    top_objective: '',
+    bottom_objective: '',
+    constraints_text: '',
+    round_duration_seconds: ''
+  });
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [scenarioSubmitting, setScenarioSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [scenarioError, setScenarioError] = useState('');
+  const [scenarioMessage, setScenarioMessage] = useState('');
 
   const fetchClasses = async () => {
     try {
@@ -125,11 +144,45 @@ export default function ClassesPage() {
     }
   }, [user]);
 
+  const sortedClasses = useMemo(() => {
+    return [...classes].sort((a, b) => {
+      const dateA = new Date(`${a.class_date}T${a.start_time || '00:00:00'}`).getTime();
+      const dateB = new Date(`${b.class_date}T${b.start_time || '00:00:00'}`).getTime();
+      return dateB - dateA;
+    });
+  }, [classes]);
+
+  const visibleClasses = showAllClasses ? sortedClasses : sortedClasses.slice(0, 20);
+
+  const orderedScenarios = useMemo(() => {
+    const active = trainingScenarios.filter((scenario) => scenario.is_active);
+    const inactive = trainingScenarios.filter((scenario) => !scenario.is_active);
+
+    return showInactiveScenarios ? [...active, ...inactive] : active;
+  }, [trainingScenarios, showInactiveScenarios]);
+
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
+  };
+
+  const handleScenarioFormChange = (e) => {
+    const { name, value } = e.target;
+
+    setScenarioFormData((prev) => {
+      const next = {
+        ...prev,
+        [name]: value
+      };
+
+      if (name === 'program_id') {
+        next.starting_position_topic_id = '';
+      }
+
+      return next;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -169,6 +222,168 @@ export default function ClassesPage() {
     }
   };
 
+  const handleCreateScenario = async (e) => {
+    e.preventDefault();
+    setScenarioSubmitting(true);
+    setScenarioError('');
+    setScenarioMessage('');
+
+    try {
+      const payload = {
+        program_id: scenarioFormData.program_id
+          ? Number(scenarioFormData.program_id)
+          : null,
+        training_method_id: Number(scenarioFormData.training_method_id),
+        name: scenarioFormData.name,
+        description: scenarioFormData.description || null,
+        starting_position_topic_id: scenarioFormData.starting_position_topic_id
+          ? Number(scenarioFormData.starting_position_topic_id)
+          : null,
+        top_objective: scenarioFormData.top_objective || null,
+        bottom_objective: scenarioFormData.bottom_objective || null,
+        constraints_text: scenarioFormData.constraints_text || null,
+        round_duration_seconds: scenarioFormData.round_duration_seconds
+          ? Number(scenarioFormData.round_duration_seconds)
+          : null
+      };
+
+      await api.post('/training-scenarios', payload);
+
+      setScenarioFormData({
+        program_id: '',
+        training_method_id: '',
+        name: '',
+        description: '',
+        starting_position_topic_id: '',
+        top_objective: '',
+        bottom_objective: '',
+        constraints_text: '',
+        round_duration_seconds: ''
+      });
+
+      setScenarioMessage('Training scenario created successfully.');
+      await fetchTrainingScenarios();
+    } catch (err) {
+      console.error('Create training scenario error:', err);
+      setScenarioError(
+        err.response?.data?.message || 'Failed to create training scenario'
+      );
+    } finally {
+      setScenarioSubmitting(false);
+    }
+  };
+
+  const toggleEditScenario = (scenario) => {
+    if (!editScenarioMap[scenario.id]) {
+      setEditScenarioMap((prev) => ({
+        ...prev,
+        [scenario.id]: {
+          program_id: scenario.program_id ? String(scenario.program_id) : '',
+          training_method_id: scenario.training_method_id
+            ? String(scenario.training_method_id)
+            : '',
+          name: scenario.name || '',
+          description: scenario.description || '',
+          starting_position_topic_id: scenario.starting_position_topic_id
+            ? String(scenario.starting_position_topic_id)
+            : '',
+          top_objective: scenario.top_objective || '',
+          bottom_objective: scenario.bottom_objective || '',
+          constraints_text: scenario.constraints_text || '',
+          round_duration_seconds: scenario.round_duration_seconds
+            ? String(scenario.round_duration_seconds)
+            : '',
+          is_active: scenario.is_active ? 'true' : 'false'
+        }
+      }));
+    }
+
+    setEditingScenarios((prev) => ({
+      ...prev,
+      [scenario.id]: !prev[scenario.id]
+    }));
+  };
+
+  const handleEditScenarioChange = (scenarioId, e) => {
+    const { name, value } = e.target;
+
+    setEditScenarioMap((prev) => {
+      const next = {
+        ...prev,
+        [scenarioId]: {
+          ...prev[scenarioId],
+          [name]: value
+        }
+      };
+
+      if (name === 'program_id') {
+        next[scenarioId].starting_position_topic_id = '';
+      }
+
+      return next;
+    });
+  };
+
+  const handleUpdateScenario = async (scenarioId) => {
+    try {
+      setScenarioError('');
+      setScenarioMessage('');
+
+      const editData = editScenarioMap[scenarioId];
+
+      await api.put(`/training-scenarios/${scenarioId}`, {
+        program_id: editData.program_id ? Number(editData.program_id) : null,
+        training_method_id: Number(editData.training_method_id),
+        name: editData.name,
+        description: editData.description || null,
+        starting_position_topic_id: editData.starting_position_topic_id
+          ? Number(editData.starting_position_topic_id)
+          : null,
+        top_objective: editData.top_objective || null,
+        bottom_objective: editData.bottom_objective || null,
+        constraints_text: editData.constraints_text || null,
+        round_duration_seconds: editData.round_duration_seconds
+          ? Number(editData.round_duration_seconds)
+          : null,
+        is_active: editData.is_active === 'true'
+      });
+
+      await fetchTrainingScenarios();
+
+      setEditingScenarios((prev) => ({
+        ...prev,
+        [scenarioId]: false
+      }));
+
+      setScenarioMessage('Training scenario updated successfully.');
+    } catch (err) {
+      console.error('Update training scenario error:', err);
+      setScenarioError(
+        err.response?.data?.message || 'Failed to update training scenario'
+      );
+    }
+  };
+
+  const handleDeactivateScenario = async (scenarioId) => {
+    const confirmed = window.confirm(
+      'Deactivate this training scenario? Existing class entries will remain, but this scenario will no longer be used for new entries.'
+    );
+    if (!confirmed) return;
+
+    try {
+      setScenarioError('');
+      setScenarioMessage('');
+      await api.patch(`/training-scenarios/${scenarioId}/deactivate`);
+      await fetchTrainingScenarios();
+      setScenarioMessage('Training scenario deactivated successfully.');
+    } catch (err) {
+      console.error('Deactivate training scenario error:', err);
+      setScenarioError(
+        err.response?.data?.message || 'Failed to deactivate training scenario'
+      );
+    }
+  };
+
   const loadClassDetails = async (classId) => {
     try {
       const [topicsRes, trainingEntriesRes, membersRes] = await Promise.all([
@@ -203,11 +418,9 @@ export default function ClassesPage() {
 
     if (
       !isExpanded &&
-      (
-        !classTopicsMap[classId] ||
+      (!classTopicsMap[classId] ||
         !classTrainingEntriesMap[classId] ||
-        !classMembersMap[classId]
-      )
+        !classMembersMap[classId])
     ) {
       await loadClassDetails(classId);
     }
@@ -271,19 +484,47 @@ export default function ClassesPage() {
 
   const getTopicsForClass = (classItem) => {
     return allTopics.filter((topic) => {
-      return topic.program_id === null || topic.program_id === classItem.program_id;
+      return (
+        topic.program_id === null ||
+        String(topic.program_id) === String(classItem.program_id)
+      );
     });
   };
 
   const getScenariosForClass = (classItem) => {
     return trainingScenarios.filter((scenario) => {
-      return scenario.program_id === null || scenario.program_id === classItem.program_id;
+      return (
+        scenario.is_active &&
+        (
+          scenario.program_id === null ||
+          String(scenario.program_id) === String(classItem.program_id)
+        )
+      );
     });
   };
 
   const getMembersForClass = (classItem) => {
     return allMembers.filter((member) => {
-      return member.program_id === null || member.program_id === classItem.program_id;
+      return (
+        member.program_id === null ||
+        String(member.program_id) === String(classItem.program_id)
+      );
+    });
+  };
+
+  const getTopicsForScenarioProgram = (programId) => {
+    if (!programId) {
+      return allTopics.filter((topic) => topic.is_active);
+    }
+
+    return allTopics.filter((topic) => {
+      return (
+        topic.is_active &&
+        (
+          topic.program_id === null ||
+          String(topic.program_id) === String(programId)
+        )
+      );
     });
   };
 
@@ -345,7 +586,7 @@ export default function ClassesPage() {
               onChange={handleChange}
             >
               <option value="">Select Program</option>
-              {programs.map((program) => (
+              {programs.filter((program) => program.is_active).map((program) => (
                 <option key={program.id} value={program.id}>
                   {program.name}
                 </option>
@@ -411,18 +652,373 @@ export default function ClassesPage() {
         </form>
       </section>
 
+      <section className="page-section" style={{ maxWidth: '760px' }}>
+        <h3>Create Training Scenario</h3>
+
+        <form className="form-grid" onSubmit={handleCreateScenario}>
+          <div>
+            <label>Program</label>
+            <select
+              name="program_id"
+              value={scenarioFormData.program_id}
+              onChange={handleScenarioFormChange}
+            >
+              <option value="">No Program</option>
+              {programs.filter((program) => program.is_active).map((program) => (
+                <option key={program.id} value={program.id}>
+                  {program.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label>Training Method</label>
+            <select
+              name="training_method_id"
+              value={scenarioFormData.training_method_id}
+              onChange={handleScenarioFormChange}
+            >
+              <option value="">Select Training Method</option>
+              {trainingMethods.filter((method) => method.is_active).map((method) => (
+                <option key={method.id} value={method.id}>
+                  {method.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label>Scenario Name</label>
+            <input
+              type="text"
+              name="name"
+              value={scenarioFormData.name}
+              onChange={handleScenarioFormChange}
+            />
+            <div className="meta-text">
+              Use a specific name. Example: Shrimping - 45 Second Warmup
+            </div>
+          </div>
+
+          <div>
+            <label>Starting Position Topic</label>
+            <select
+              name="starting_position_topic_id"
+              value={scenarioFormData.starting_position_topic_id}
+              onChange={handleScenarioFormChange}
+            >
+              <option value="">No Starting Topic</option>
+              {getTopicsForScenarioProgram(scenarioFormData.program_id).map((topic) => (
+                <option key={topic.id} value={topic.id}>
+                  {topic.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label>Top Objective</label>
+            <input
+              type="text"
+              name="top_objective"
+              value={scenarioFormData.top_objective}
+              onChange={handleScenarioFormChange}
+            />
+          </div>
+
+          <div>
+            <label>Bottom Objective</label>
+            <input
+              type="text"
+              name="bottom_objective"
+              value={scenarioFormData.bottom_objective}
+              onChange={handleScenarioFormChange}
+            />
+          </div>
+
+          <div>
+            <label>Round Duration (seconds)</label>
+            <input
+              type="number"
+              name="round_duration_seconds"
+              value={scenarioFormData.round_duration_seconds}
+              onChange={handleScenarioFormChange}
+              min="1"
+            />
+          </div>
+
+          <div>
+            <label>Description</label>
+            <textarea
+              name="description"
+              value={scenarioFormData.description}
+              onChange={handleScenarioFormChange}
+              rows="3"
+            />
+          </div>
+
+          <div>
+            <label>Constraints</label>
+            <textarea
+              name="constraints_text"
+              value={scenarioFormData.constraints_text}
+              onChange={handleScenarioFormChange}
+              rows="3"
+            />
+          </div>
+
+          <div className="inline-actions">
+            <button type="submit" disabled={scenarioSubmitting}>
+              {scenarioSubmitting ? 'Creating...' : 'Create Training Scenario'}
+            </button>
+          </div>
+        </form>
+
+        {scenarioMessage && <p className="success-text">{scenarioMessage}</p>}
+        {scenarioError && <p className="error-text">{scenarioError}</p>}
+      </section>
+
+      <section className="page-section">
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '12px',
+            alignItems: 'center',
+            flexWrap: 'wrap'
+          }}
+        >
+          <h3 style={{ marginBottom: 0 }}>Existing Training Scenarios</h3>
+          <button
+            className="secondary-button"
+            onClick={() => setShowInactiveScenarios((prev) => !prev)}
+          >
+            {showInactiveScenarios ? 'Hide Inactive Scenarios' : 'Show Inactive Scenarios'}
+          </button>
+        </div>
+
+        {orderedScenarios.length === 0 ? (
+          <p className="empty-state">No training scenarios found.</p>
+        ) : (
+          <ul className="card-list">
+            {orderedScenarios.map((scenario) => (
+              <li key={scenario.id} className="card-item">
+                <strong>{scenario.name}</strong>
+                <div className="detail-block">
+                  <div className="meta-text">
+                    Program: {scenario.program_name || 'No Program'}
+                  </div>
+                  <div className="meta-text">
+                    Training Method: {scenario.training_method_name}
+                  </div>
+                  <div className="meta-text">
+                    Starting Topic: {scenario.starting_position_title || 'None'}
+                  </div>
+                  <div className="meta-text">
+                    Duration: {scenario.round_duration_seconds || 'None'} seconds
+                  </div>
+                  <div className="meta-text">
+                    Active: {scenario.is_active ? 'Yes' : 'No'}
+                  </div>
+                  <div>Description: {scenario.description || 'None'}</div>
+                  <div>Top Objective: {scenario.top_objective || 'None'}</div>
+                  <div>Bottom Objective: {scenario.bottom_objective || 'None'}</div>
+                  <div>Constraints: {scenario.constraints_text || 'None'}</div>
+                </div>
+
+                <div className="inline-actions">
+                  <button
+                    className="secondary-button"
+                    onClick={() => toggleEditScenario(scenario)}
+                  >
+                    {editingScenarios[scenario.id] ? 'Hide Edit Scenario' : 'Edit Scenario'}
+                  </button>
+
+                  {scenario.is_active ? (
+                    <button
+                      className="danger-button"
+                      onClick={() => handleDeactivateScenario(scenario.id)}
+                    >
+                      Deactivate Scenario
+                    </button>
+                  ) : null}
+                </div>
+
+                {editingScenarios[scenario.id] && (
+                  <div className="detail-block">
+                    <section className="page-section">
+                      <h4>Edit Training Scenario</h4>
+
+                      <form
+                        className="form-grid"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleUpdateScenario(scenario.id);
+                        }}
+                      >
+                        <div>
+                          <label>Program</label>
+                          <select
+                            name="program_id"
+                            value={editScenarioMap[scenario.id]?.program_id || ''}
+                            onChange={(e) => handleEditScenarioChange(scenario.id, e)}
+                          >
+                            <option value="">No Program</option>
+                            {programs.filter((program) => program.is_active).map((program) => (
+                              <option key={program.id} value={program.id}>
+                                {program.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label>Training Method</label>
+                          <select
+                            name="training_method_id"
+                            value={editScenarioMap[scenario.id]?.training_method_id || ''}
+                            onChange={(e) => handleEditScenarioChange(scenario.id, e)}
+                          >
+                            <option value="">Select Training Method</option>
+                            {trainingMethods.filter((method) => method.is_active).map((method) => (
+                              <option key={method.id} value={method.id}>
+                                {method.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label>Scenario Name</label>
+                          <input
+                            type="text"
+                            name="name"
+                            value={editScenarioMap[scenario.id]?.name || ''}
+                            onChange={(e) => handleEditScenarioChange(scenario.id, e)}
+                          />
+                        </div>
+
+                        <div>
+                          <label>Starting Position Topic</label>
+                          <select
+                            name="starting_position_topic_id"
+                            value={editScenarioMap[scenario.id]?.starting_position_topic_id || ''}
+                            onChange={(e) => handleEditScenarioChange(scenario.id, e)}
+                          >
+                            <option value="">No Starting Topic</option>
+                            {getTopicsForScenarioProgram(editScenarioMap[scenario.id]?.program_id).map((topic) => (
+                              <option key={topic.id} value={topic.id}>
+                                {topic.title}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label>Top Objective</label>
+                          <input
+                            type="text"
+                            name="top_objective"
+                            value={editScenarioMap[scenario.id]?.top_objective || ''}
+                            onChange={(e) => handleEditScenarioChange(scenario.id, e)}
+                          />
+                        </div>
+
+                        <div>
+                          <label>Bottom Objective</label>
+                          <input
+                            type="text"
+                            name="bottom_objective"
+                            value={editScenarioMap[scenario.id]?.bottom_objective || ''}
+                            onChange={(e) => handleEditScenarioChange(scenario.id, e)}
+                          />
+                        </div>
+
+                        <div>
+                          <label>Round Duration (seconds)</label>
+                          <input
+                            type="number"
+                            name="round_duration_seconds"
+                            value={editScenarioMap[scenario.id]?.round_duration_seconds || ''}
+                            onChange={(e) => handleEditScenarioChange(scenario.id, e)}
+                            min="1"
+                          />
+                        </div>
+
+                        <div>
+                          <label>Description</label>
+                          <textarea
+                            name="description"
+                            value={editScenarioMap[scenario.id]?.description || ''}
+                            onChange={(e) => handleEditScenarioChange(scenario.id, e)}
+                            rows="3"
+                          />
+                        </div>
+
+                        <div>
+                          <label>Constraints</label>
+                          <textarea
+                            name="constraints_text"
+                            value={editScenarioMap[scenario.id]?.constraints_text || ''}
+                            onChange={(e) => handleEditScenarioChange(scenario.id, e)}
+                            rows="3"
+                          />
+                        </div>
+
+                        <div>
+                          <label>Active Status</label>
+                          <select
+                            name="is_active"
+                            value={editScenarioMap[scenario.id]?.is_active || 'true'}
+                            onChange={(e) => handleEditScenarioChange(scenario.id, e)}
+                          >
+                            <option value="true">active</option>
+                            <option value="false">inactive</option>
+                          </select>
+                        </div>
+
+                        <div className="inline-actions">
+                          <button type="submit">Save Scenario</button>
+                        </div>
+                      </form>
+                    </section>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       {error && <p className="error-text">{error}</p>}
 
       <section className="page-section">
-        <h3>Class List</h3>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '12px',
+            alignItems: 'center',
+            flexWrap: 'wrap'
+          }}
+        >
+          <h3 style={{ marginBottom: 0 }}>Class List</h3>
+          <button
+            className="secondary-button"
+            onClick={() => setShowAllClasses((prev) => !prev)}
+          >
+            {showAllClasses ? 'Show Recent 20 Classes' : 'Show Older Classes'}
+          </button>
+        </div>
 
         {loading ? (
           <p className="empty-state">Loading classes...</p>
-        ) : classes.length === 0 ? (
+        ) : visibleClasses.length === 0 ? (
           <p className="empty-state">No classes found.</p>
         ) : (
           <ul className="card-list">
-            {classes.map((classItem) => (
+            {visibleClasses.map((classItem) => (
               <li key={classItem.id} className="card-item">
                 <strong>{classItem.title || 'Untitled Class'}</strong>
 
@@ -566,8 +1162,7 @@ export default function ClassesPage() {
                       <ul className="card-list">
                         {classTopicsMap[classItem.id].map((topic) => (
                           <li key={topic.id} className="card-item">
-                            <strong>{topic.topic_title}</strong> — {topic.topic_type} —{' '}
-                            {topic.coverage_type} — {topic.focus_level}
+                            <strong>{topic.topic_title}</strong> — {topic.topic_type} — {topic.coverage_type} — {topic.focus_level}
                             <div className="detail-block">
                               <div>{topic.notes || 'No notes'}</div>
                             </div>
@@ -594,25 +1189,13 @@ export default function ClassesPage() {
                             <strong>{entry.segment_title || 'Untitled Segment'}</strong>
                             <div className="detail-block">
                               <div className="meta-text">Method: {entry.training_method_name}</div>
-                              <div className="meta-text">
-                                Scenario: {entry.training_scenario_name || 'None'}
-                              </div>
-                              <div className="meta-text">
-                                Topic: {entry.curriculum_topic_title || 'None'}
-                              </div>
+                              <div className="meta-text">Scenario: {entry.training_scenario_name || 'None'}</div>
+                              <div className="meta-text">Topic: {entry.curriculum_topic_title || 'None'}</div>
                               <div className="meta-text">Order: {entry.segment_order}</div>
-                              <div className="meta-text">
-                                Duration: {entry.duration_minutes || 0} minutes
-                              </div>
-                              {entry.constraints_text && (
-                                <div>Constraints: {entry.constraints_text}</div>
-                              )}
-                              {entry.win_condition_top && (
-                                <div>Top Win: {entry.win_condition_top}</div>
-                              )}
-                              {entry.win_condition_bottom && (
-                                <div>Bottom Win: {entry.win_condition_bottom}</div>
-                              )}
+                              <div className="meta-text">Duration: {entry.duration_minutes || 0} minutes</div>
+                              {entry.constraints_text && <div>Constraints: {entry.constraints_text}</div>}
+                              {entry.win_condition_top && <div>Top Win: {entry.win_condition_top}</div>}
+                              {entry.win_condition_bottom && <div>Bottom Win: {entry.win_condition_bottom}</div>}
                               {entry.notes && <div>Notes: {entry.notes}</div>}
                             </div>
                             <div className="inline-actions">
@@ -634,6 +1217,12 @@ export default function ClassesPage() {
               </li>
             ))}
           </ul>
+        )}
+
+        {!showAllClasses && sortedClasses.length > 20 && (
+          <p className="meta-text" style={{ marginTop: '12px' }}>
+            Showing the 20 most recent classes first.
+          </p>
         )}
       </section>
     </Layout>

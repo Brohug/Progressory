@@ -25,11 +25,29 @@ export default function ClassTrainingEntriesForm({
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
+  const availableScenarios = formData.training_method_id
+    ? trainingScenarios.filter(
+        (scenario) =>
+          String(scenario.training_method_id) === String(formData.training_method_id) &&
+          scenario.is_active
+      )
+    : trainingScenarios.filter((scenario) => scenario.is_active);
+
   const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
+    const { name, value } = e.target;
+
+    setFormData((prev) => {
+      const next = {
+        ...prev,
+        [name]: value
+      };
+
+      if (name === 'training_method_id') {
+        next.training_scenario_id = '';
+      }
+
+      return next;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -104,7 +122,7 @@ export default function ClassTrainingEntriesForm({
             onChange={handleChange}
           >
             <option value="">Select a training method</option>
-            {trainingMethods.map((method) => (
+            {trainingMethods.filter((method) => method.is_active).map((method) => (
               <option key={method.id} value={method.id}>
                 {method.name}
               </option>
@@ -114,18 +132,24 @@ export default function ClassTrainingEntriesForm({
 
         <div>
           <label>Training Scenario</label>
-          <select
-            name="training_scenario_id"
-            value={formData.training_scenario_id}
-            onChange={handleChange}
-          >
-            <option value="">No scenario</option>
-            {trainingScenarios.map((scenario) => (
-              <option key={scenario.id} value={scenario.id}>
-                {scenario.name}
-              </option>
-            ))}
-          </select>
+          {availableScenarios.length > 0 ? (
+            <select
+              name="training_scenario_id"
+              value={formData.training_scenario_id}
+              onChange={handleChange}
+            >
+              <option value="">No scenario</option>
+              {availableScenarios.map((scenario) => (
+                <option key={scenario.id} value={scenario.id}>
+                  {scenario.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="meta-text">
+              No training scenarios available yet for the selected method/program.
+            </div>
+          )}
         </div>
 
         <div>
@@ -136,7 +160,7 @@ export default function ClassTrainingEntriesForm({
             onChange={handleChange}
           >
             <option value="">No topic</option>
-            {topics.map((topic) => (
+            {topics.filter((topic) => topic.is_active).map((topic) => (
               <option key={topic.id} value={topic.id}>
                 {topic.title}
               </option>
