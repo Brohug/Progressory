@@ -19,6 +19,8 @@ export default function ClassesPage() {
   const [classTrainingEntriesMap, setClassTrainingEntriesMap] = useState({});
   const [classMembersMap, setClassMembersMap] = useState({});
   const [expandedClasses, setExpandedClasses] = useState({});
+  const [editClassMap, setEditClassMap] = useState({});
+
   const [formData, setFormData] = useState({
     program_id: '',
     title: '',
@@ -195,7 +197,8 @@ export default function ClassesPage() {
     }
   };
 
-  const toggleClassDetails = async (classId) => {
+  const toggleClassDetails = async (classItem) => {
+    const classId = classItem.id;
     const isExpanded = expandedClasses[classId];
 
     if (
@@ -209,10 +212,61 @@ export default function ClassesPage() {
       await loadClassDetails(classId);
     }
 
+    if (!editClassMap[classId]) {
+      setEditClassMap((prev) => ({
+        ...prev,
+        [classId]: {
+          title: classItem.title || '',
+          class_date: classItem.class_date
+            ? new Date(classItem.class_date).toISOString().split('T')[0]
+            : '',
+          start_time: classItem.start_time || '',
+          end_time: classItem.end_time || '',
+          notes: classItem.notes || ''
+        }
+      }));
+    }
+
     setExpandedClasses((prev) => ({
       ...prev,
       [classId]: !prev[classId]
     }));
+  };
+
+  const handleEditClassChange = (classId, e) => {
+    const { name, value } = e.target;
+
+    setEditClassMap((prev) => ({
+      ...prev,
+      [classId]: {
+        ...prev[classId],
+        [name]: value
+      }
+    }));
+  };
+
+  const handleUpdateClass = async (classItem) => {
+    try {
+      setError('');
+
+      const editData = editClassMap[classItem.id];
+
+      const payload = {
+        program_id: classItem.program_id,
+        title: editData.title,
+        class_date: editData.class_date,
+        start_time: editData.start_time || null,
+        end_time: editData.end_time || null,
+        head_coach_user_id: classItem.head_coach_user_id,
+        notes: editData.notes || ''
+      };
+
+      await api.put(`/classes/${classItem.id}`, payload);
+      await fetchClasses();
+    } catch (err) {
+      console.error('Update class error:', err);
+      setError(err.response?.data?.message || 'Failed to update class');
+    }
   };
 
   const getTopicsForClass = (classItem) => {
@@ -234,46 +288,46 @@ export default function ClassesPage() {
   };
 
   const handleDeleteClassTopic = async (classId, topicEntryId) => {
-  const confirmed = window.confirm('Remove this topic from the class?');
-  if (!confirmed) return;
+    const confirmed = window.confirm('Remove this topic from the class?');
+    if (!confirmed) return;
 
-  try {
-    setError('');
-    await api.delete(`/classes/${classId}/topics/${topicEntryId}`);
-    await loadClassDetails(classId);
-  } catch (err) {
-    console.error('Delete class topic error:', err);
-    setError(err.response?.data?.message || 'Failed to delete class topic');
-  }
-};
+    try {
+      setError('');
+      await api.delete(`/classes/${classId}/topics/${topicEntryId}`);
+      await loadClassDetails(classId);
+    } catch (err) {
+      console.error('Delete class topic error:', err);
+      setError(err.response?.data?.message || 'Failed to delete class topic');
+    }
+  };
 
   const handleDeleteTrainingEntry = async (classId, entryId) => {
-  const confirmed = window.confirm('Remove this training entry from the class?');
-  if (!confirmed) return;
+    const confirmed = window.confirm('Remove this training entry from the class?');
+    if (!confirmed) return;
 
-  try {
-    setError('');
-    await api.delete(`/classes/${classId}/training-entries/${entryId}`);
-    await loadClassDetails(classId);
-  } catch (err) {
-    console.error('Delete training entry error:', err);
-    setError(err.response?.data?.message || 'Failed to delete training entry');
-  }
-};
+    try {
+      setError('');
+      await api.delete(`/classes/${classId}/training-entries/${entryId}`);
+      await loadClassDetails(classId);
+    } catch (err) {
+      console.error('Delete training entry error:', err);
+      setError(err.response?.data?.message || 'Failed to delete training entry');
+    }
+  };
 
   const handleDeleteClassMember = async (classId, classMemberId) => {
-  const confirmed = window.confirm('Remove this attendance record from the class?');
-  if (!confirmed) return;
+    const confirmed = window.confirm('Remove this attendance record from the class?');
+    if (!confirmed) return;
 
-  try {
-    setError('');
-    await api.delete(`/classes/${classId}/members/${classMemberId}`);
-    await loadClassDetails(classId);
-  } catch (err) {
-    console.error('Delete class member error:', err);
-    setError(err.response?.data?.message || 'Failed to remove class member');
-  }
-};
+    try {
+      setError('');
+      await api.delete(`/classes/${classId}/members/${classMemberId}`);
+      await loadClassDetails(classId);
+    } catch (err) {
+      console.error('Delete class member error:', err);
+      setError(err.response?.data?.message || 'Failed to remove class member');
+    }
+  };
 
   return (
     <Layout>
@@ -389,14 +443,80 @@ export default function ClassesPage() {
                 <div className="inline-actions">
                   <button
                     className="secondary-button"
-                    onClick={() => toggleClassDetails(classItem.id)}
+                    onClick={() => toggleClassDetails(classItem)}
                   >
-                    {expandedClasses[classItem.id] ? 'Hide Details' : 'View Details'}
+                    {expandedClasses[classItem.id] ? 'Hide Class' : 'Manage Class'}
                   </button>
                 </div>
 
                 {expandedClasses[classItem.id] && (
                   <div className="detail-block">
+                    <section className="page-section">
+                      <h4>Edit Class Details</h4>
+
+                      <form
+                        className="form-grid"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleUpdateClass(classItem);
+                        }}
+                      >
+                        <div>
+                          <label>Class Title</label>
+                          <input
+                            type="text"
+                            name="title"
+                            value={editClassMap[classItem.id]?.title || ''}
+                            onChange={(e) => handleEditClassChange(classItem.id, e)}
+                          />
+                        </div>
+
+                        <div>
+                          <label>Class Date</label>
+                          <input
+                            type="date"
+                            name="class_date"
+                            value={editClassMap[classItem.id]?.class_date || ''}
+                            onChange={(e) => handleEditClassChange(classItem.id, e)}
+                          />
+                        </div>
+
+                        <div>
+                          <label>Start Time</label>
+                          <input
+                            type="time"
+                            name="start_time"
+                            value={editClassMap[classItem.id]?.start_time || ''}
+                            onChange={(e) => handleEditClassChange(classItem.id, e)}
+                          />
+                        </div>
+
+                        <div>
+                          <label>End Time</label>
+                          <input
+                            type="time"
+                            name="end_time"
+                            value={editClassMap[classItem.id]?.end_time || ''}
+                            onChange={(e) => handleEditClassChange(classItem.id, e)}
+                          />
+                        </div>
+
+                        <div>
+                          <label>Notes</label>
+                          <textarea
+                            name="notes"
+                            value={editClassMap[classItem.id]?.notes || ''}
+                            onChange={(e) => handleEditClassChange(classItem.id, e)}
+                            rows="3"
+                          />
+                        </div>
+
+                        <div className="inline-actions">
+                          <button type="submit">Save Class Details</button>
+                        </div>
+                      </form>
+                    </section>
+
                     <ClassAttendanceForm
                       classId={classItem.id}
                       members={getMembersForClass(classItem)}
