@@ -20,10 +20,12 @@ export default function ClassesPage() {
   const [classMembersMap, setClassMembersMap] = useState({});
   const [expandedClasses, setExpandedClasses] = useState({});
   const [editClassMap, setEditClassMap] = useState({});
+  const [classFeedbackMap, setClassFeedbackMap] = useState({});
   const [editingScenarios, setEditingScenarios] = useState({});
   const [editScenarioMap, setEditScenarioMap] = useState({});
   const [showAllClasses, setShowAllClasses] = useState(false);
   const [showInactiveScenarios, setShowInactiveScenarios] = useState(false);
+  const [classSearch, setClassSearch] = useState('');
 
   const [formData, setFormData] = useState({
     program_id: '',
@@ -50,9 +52,30 @@ export default function ClassesPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [scenarioSubmitting, setScenarioSubmitting] = useState(false);
+  const [classMessage, setClassMessage] = useState('');
   const [error, setError] = useState('');
   const [scenarioError, setScenarioError] = useState('');
   const [scenarioMessage, setScenarioMessage] = useState('');
+
+  const clearClassFeedback = (classId) => {
+    setClassFeedbackMap((prev) => ({
+      ...prev,
+      [classId]: {
+        message: '',
+        error: ''
+      }
+    }));
+  };
+
+  const setClassFeedback = (classId, nextFeedback) => {
+    setClassFeedbackMap((prev) => ({
+      ...prev,
+      [classId]: {
+        message: nextFeedback.message || '',
+        error: nextFeedback.error || ''
+      }
+    }));
+  };
 
   const fetchClasses = async () => {
     try {
@@ -152,7 +175,38 @@ export default function ClassesPage() {
     });
   }, [classes]);
 
-  const visibleClasses = showAllClasses ? sortedClasses : sortedClasses.slice(0, 20);
+  const filteredClasses = useMemo(() => {
+    const searchTerm = classSearch.trim().toLowerCase();
+
+    if (!searchTerm) {
+      return sortedClasses;
+    }
+
+    return sortedClasses.filter((classItem) => {
+      const coachName = `${classItem.head_coach_first_name || ''} ${
+        classItem.head_coach_last_name || ''
+      }`
+        .trim()
+        .toLowerCase();
+      const dateText = classItem.class_date
+        ? new Date(classItem.class_date).toLocaleDateString().toLowerCase()
+        : '';
+
+      return (
+        (classItem.title || '').toLowerCase().includes(searchTerm) ||
+        (classItem.program_name || '').toLowerCase().includes(searchTerm) ||
+        coachName.includes(searchTerm) ||
+        (classItem.class_date || '').toLowerCase().includes(searchTerm) ||
+        dateText.includes(searchTerm)
+      );
+    });
+  }, [classSearch, sortedClasses]);
+
+  const visibleClasses = classSearch.trim()
+    ? filteredClasses
+    : showAllClasses
+      ? sortedClasses
+      : sortedClasses.slice(0, 20);
 
   const orderedScenarios = useMemo(() => {
     const active = trainingScenarios.filter((scenario) => scenario.is_active);
@@ -188,6 +242,7 @@ export default function ClassesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+    setClassMessage('');
     setError('');
 
     try {
@@ -214,6 +269,7 @@ export default function ClassesPage() {
       });
 
       await fetchClasses();
+      setClassMessage('Class created successfully.');
     } catch (err) {
       console.error('Create class error:', err);
       setError(err.response?.data?.message || 'Failed to create class');
@@ -460,6 +516,7 @@ export default function ClassesPage() {
 
   const handleUpdateClass = async (classItem) => {
     try {
+      clearClassFeedback(classItem.id);
       setError('');
 
       const editData = editClassMap[classItem.id];
@@ -476,9 +533,16 @@ export default function ClassesPage() {
 
       await api.put(`/classes/${classItem.id}`, payload);
       await fetchClasses();
+      setClassFeedback(classItem.id, {
+        message: 'Class updated successfully.',
+        error: ''
+      });
     } catch (err) {
       console.error('Update class error:', err);
-      setError(err.response?.data?.message || 'Failed to update class');
+      setClassFeedback(classItem.id, {
+        message: '',
+        error: err.response?.data?.message || 'Failed to update class'
+      });
     }
   };
 
@@ -533,12 +597,20 @@ export default function ClassesPage() {
     if (!confirmed) return;
 
     try {
+      clearClassFeedback(classId);
       setError('');
       await api.delete(`/classes/${classId}/topics/${topicEntryId}`);
       await loadClassDetails(classId);
+      setClassFeedback(classId, {
+        message: 'Topic removed from class.',
+        error: ''
+      });
     } catch (err) {
       console.error('Delete class topic error:', err);
-      setError(err.response?.data?.message || 'Failed to delete class topic');
+      setClassFeedback(classId, {
+        message: '',
+        error: err.response?.data?.message || 'Failed to delete class topic'
+      });
     }
   };
 
@@ -547,12 +619,20 @@ export default function ClassesPage() {
     if (!confirmed) return;
 
     try {
+      clearClassFeedback(classId);
       setError('');
       await api.delete(`/classes/${classId}/training-entries/${entryId}`);
       await loadClassDetails(classId);
+      setClassFeedback(classId, {
+        message: 'Training entry removed from class.',
+        error: ''
+      });
     } catch (err) {
       console.error('Delete training entry error:', err);
-      setError(err.response?.data?.message || 'Failed to delete training entry');
+      setClassFeedback(classId, {
+        message: '',
+        error: err.response?.data?.message || 'Failed to delete training entry'
+      });
     }
   };
 
@@ -561,12 +641,20 @@ export default function ClassesPage() {
     if (!confirmed) return;
 
     try {
+      clearClassFeedback(classId);
       setError('');
       await api.delete(`/classes/${classId}/members/${classMemberId}`);
       await loadClassDetails(classId);
+      setClassFeedback(classId, {
+        message: 'Attendance removed from class.',
+        error: ''
+      });
     } catch (err) {
       console.error('Delete class member error:', err);
-      setError(err.response?.data?.message || 'Failed to remove class member');
+      setClassFeedback(classId, {
+        message: '',
+        error: err.response?.data?.message || 'Failed to remove class member'
+      });
     }
   };
 
@@ -650,6 +738,9 @@ export default function ClassesPage() {
             </button>
           </div>
         </form>
+
+        {classMessage && <p className="success-text">{classMessage}</p>}
+        {error && <p className="error-text">{error}</p>}
       </section>
 
       <section className="page-section" style={{ maxWidth: '760px' }}>
@@ -991,8 +1082,6 @@ export default function ClassesPage() {
         )}
       </section>
 
-      {error && <p className="error-text">{error}</p>}
-
       <section className="page-section">
         <div
           style={{
@@ -1004,18 +1093,37 @@ export default function ClassesPage() {
           }}
         >
           <h3 style={{ marginBottom: 0 }}>Class List</h3>
-          <button
-            className="secondary-button"
-            onClick={() => setShowAllClasses((prev) => !prev)}
+          <div
+            style={{
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'center',
+              flexWrap: 'wrap'
+            }}
           >
-            {showAllClasses ? 'Show Recent 20 Classes' : 'Show Older Classes'}
-          </button>
+            <input
+              type="search"
+              value={classSearch}
+              onChange={(e) => setClassSearch(e.target.value)}
+              placeholder="Search classes, programs, coach, or date"
+              aria-label="Search classes"
+              style={{ minWidth: '280px' }}
+            />
+            <button
+              className="secondary-button"
+              onClick={() => setShowAllClasses((prev) => !prev)}
+            >
+              {showAllClasses ? 'Show Recent 20 Classes' : 'Show Older Classes'}
+            </button>
+          </div>
         </div>
 
         {loading ? (
           <p className="empty-state">Loading classes...</p>
         ) : visibleClasses.length === 0 ? (
-          <p className="empty-state">No classes found.</p>
+          <p className="empty-state">
+            {classSearch.trim() ? 'No classes match your search.' : 'No classes found.'}
+          </p>
         ) : (
           <ul className="card-list">
             {visibleClasses.map((classItem) => (
@@ -1111,6 +1219,17 @@ export default function ClassesPage() {
                           <button type="submit">Save Class Details</button>
                         </div>
                       </form>
+
+                      {classFeedbackMap[classItem.id]?.message && (
+                        <p className="success-text">
+                          {classFeedbackMap[classItem.id].message}
+                        </p>
+                      )}
+                      {classFeedbackMap[classItem.id]?.error && (
+                        <p className="error-text">
+                          {classFeedbackMap[classItem.id].error}
+                        </p>
+                      )}
                     </section>
 
                     <ClassAttendanceForm
@@ -1219,7 +1338,7 @@ export default function ClassesPage() {
           </ul>
         )}
 
-        {!showAllClasses && sortedClasses.length > 20 && (
+        {!classSearch.trim() && !showAllClasses && sortedClasses.length > 20 && (
           <p className="meta-text" style={{ marginTop: '12px' }}>
             Showing the 20 most recent classes first.
           </p>
