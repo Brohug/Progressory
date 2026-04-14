@@ -599,12 +599,20 @@ export default function ClassesPage() {
   };
 
   const getMembersForClass = (classItem) => {
-    return allMembers.filter((member) => {
+    const activeMembers = allMembers.filter((member) => member.is_active);
+
+    if (!classItem.program_id) {
+      return activeMembers;
+    }
+
+    const matchingMembers = activeMembers.filter((member) => {
       return (
         member.program_id === null ||
         String(member.program_id) === String(classItem.program_id)
       );
     });
+
+    return matchingMembers.length > 0 ? matchingMembers : activeMembers;
   };
 
   const getTopicsForScenarioProgram = (programId) => {

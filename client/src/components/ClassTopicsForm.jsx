@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import api from '../api/axios';
 import { formatLabel } from '../utils/formatLabel';
+import TopicSearchSelect from './TopicSearchSelect';
 
 export default function ClassTopicsForm({ classId, topics, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -18,6 +19,13 @@ export default function ClassTopicsForm({ classId, topics, onSuccess }) {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value
+    }));
+  };
+
+  const handleTopicChange = (topicId) => {
+    setFormData((prev) => ({
+      ...prev,
+      curriculum_topic_id: topicId
     }));
   };
 
@@ -69,18 +77,12 @@ export default function ClassTopicsForm({ classId, topics, onSuccess }) {
       <form className="form-grid" onSubmit={handleSubmit}>
         <div>
           <label>Topic</label>
-          <select
-            name="curriculum_topic_id"
+          <TopicSearchSelect
+            topics={topics}
             value={formData.curriculum_topic_id}
-            onChange={handleChange}
-          >
-            <option value="">Select a topic</option>
-            {topics.map((topic) => (
-              <option key={topic.id} value={topic.id}>
-                {topic.title}
-              </option>
-            ))}
-          </select>
+            onChange={handleTopicChange}
+            placeholder="Search topics for this class..."
+          />
         </div>
 
         <div>

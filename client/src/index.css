@@ -374,6 +374,55 @@ ul {
   border-top: 1px solid var(--border);
 }
 
+.search-select {
+  display: grid;
+  gap: 10px;
+}
+
+.search-select-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.search-select-current button {
+  padding: 8px 12px;
+}
+
+.search-select-results {
+  display: grid;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.search-select-option {
+  width: 100%;
+  text-align: left;
+  background: rgba(15, 23, 42, 0.72);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 600;
+}
+
+.search-select-option:hover {
+  background: rgba(30, 41, 59, 0.9);
+}
+
+.search-select-option.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.15);
+}
+
 .dashboard-page .page-section,
 .reports-page .page-section {
   padding: 20px;

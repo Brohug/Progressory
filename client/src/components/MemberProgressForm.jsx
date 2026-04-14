@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import api from '../api/axios';
+import { formatLabel } from '../utils/formatLabel';
+import TopicSearchSelect from './TopicSearchSelect';
 
 export default function MemberProgressForm({
   memberId,
@@ -20,6 +22,13 @@ export default function MemberProgressForm({
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value
+    }));
+  };
+
+  const handleTopicChange = (topicId) => {
+    setFormData((prev) => ({
+      ...prev,
+      curriculum_topic_id: topicId
     }));
   };
 
@@ -69,18 +78,12 @@ export default function MemberProgressForm({
       <form className="form-grid" onSubmit={handleSubmit}>
         <div>
           <label>Topic</label>
-          <select
-            name="curriculum_topic_id"
+          <TopicSearchSelect
+            topics={topics}
             value={formData.curriculum_topic_id}
-            onChange={handleChange}
-          >
-            <option value="">Select a topic</option>
-            {topics.map((topic) => (
-              <option key={topic.id} value={topic.id}>
-                {topic.title}
-              </option>
-            ))}
-          </select>
+            onChange={handleTopicChange}
+            placeholder="Search topics for member progress..."
+          />
         </div>
 
         <div>
@@ -90,10 +93,10 @@ export default function MemberProgressForm({
             value={formData.status}
             onChange={handleChange}
           >
-            <option value="not_started">not_started</option>
-            <option value="introduced">introduced</option>
-            <option value="developing">developing</option>
-            <option value="competent">competent</option>
+            <option value="not_started">{formatLabel('not_started')}</option>
+            <option value="introduced">{formatLabel('introduced')}</option>
+            <option value="developing">{formatLabel('developing')}</option>
+            <option value="competent">{formatLabel('competent')}</option>
           </select>
         </div>
 

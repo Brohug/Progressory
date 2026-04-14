@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import api from '../api/axios';
+import { formatLabel } from '../utils/formatLabel';
 
 export default function ClassAttendanceForm({
   classId,
@@ -70,14 +71,22 @@ export default function ClassAttendanceForm({
             name="member_id"
             value={formData.member_id}
             onChange={handleChange}
+            disabled={members.length === 0}
           >
-            <option value="">Select a member</option>
+            <option value="">
+              {members.length === 0 ? 'No members available' : 'Select a member'}
+            </option>
             {members.map((member) => (
               <option key={member.id} value={member.id}>
                 {member.first_name} {member.last_name}
               </option>
             ))}
           </select>
+          <p className="section-note">
+            {members.length === 0
+              ? 'No active members are available for this class yet.'
+              : 'Select a member, then click Add Attendance.'}
+          </p>
         </div>
 
         <div>
@@ -87,15 +96,14 @@ export default function ClassAttendanceForm({
             value={formData.attendance_status}
             onChange={handleChange}
           >
-            <option value="present">present</option>
-            <option value="absent">absent</option>
-            <option value="excused">excused</option>
+            <option value="present">{formatLabel('present')}</option>
+            <option value="absent">{formatLabel('absent')}</option>
           </select>
         </div>
 
         <div className="inline-actions">
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Adding...' : 'Add Member to Class'}
+          <button type="submit" disabled={isSubmitting || !formData.member_id || members.length === 0}>
+            {isSubmitting ? 'Adding...' : 'Add Attendance'}
           </button>
         </div>
       </form>
