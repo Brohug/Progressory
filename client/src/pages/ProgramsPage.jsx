@@ -215,6 +215,16 @@ export default function ProgramsPage() {
                   <div className="meta-text">
                     Active: {program.is_active ? 'Yes' : 'No'}
                   </div>
+                  {program.created_at && (
+                    <div className="meta-text">
+                      Created: {new Date(program.created_at).toLocaleString()}
+                    </div>
+                  )}
+                  {program.updated_at && (
+                    <div className="meta-text">
+                      Updated: {new Date(program.updated_at).toLocaleString()}
+                    </div>
+                  )}
                 </div>
 
                 <div className="inline-actions">
@@ -274,8 +284,8 @@ export default function ProgramsPage() {
                             value={editProgramMap[program.id]?.is_active || 'true'}
                             onChange={(e) => handleEditProgramChange(program.id, e)}
                           >
-                            <option value="true">active</option>
-                            <option value="false">inactive</option>
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
                           </select>
                         </div>
 

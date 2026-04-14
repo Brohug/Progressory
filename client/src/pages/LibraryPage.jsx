@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import api from '../api/axios';
 import Layout from '../components/Layout';
+import { formatLabel } from '../utils/formatLabel';
 
 export default function LibraryPage() {
   const [entries, setEntries] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [topics, setTopics] = useState([]);
+  const [showInactive, setShowInactive] = useState(false);
   const [formData, setFormData] = useState({
     program_id: '',
     curriculum_topic_id: '',
@@ -54,6 +56,13 @@ export default function LibraryPage() {
     loadPageData();
   }, []);
 
+  const orderedEntries = useMemo(() => {
+    const active = entries.filter((entry) => entry.is_active);
+    const inactive = entries.filter((entry) => !entry.is_active);
+
+    return showInactive ? [...active, ...inactive] : active;
+  }, [entries, showInactive]);
+
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -100,19 +109,32 @@ export default function LibraryPage() {
     }
   };
 
-  const handleDelete = async (entryId) => {
-  const confirmed = window.confirm('Delete this library entry?');
-  if (!confirmed) return;
+  const handleSetActiveState = async (entry, nextIsActive) => {
+    const confirmed = window.confirm(
+      nextIsActive
+        ? 'Reactivate this library entry?'
+        : 'Deactivate this library entry? It will remain in the system but be marked inactive.'
+    );
+    if (!confirmed) return;
 
-  try {
-    setError('');
-    await api.delete(`/library/${entryId}`);
-    await fetchEntries();
-  } catch (err) {
-    console.error('Delete library entry error:', err);
-    setError(err.response?.data?.message || 'Failed to delete library entry');
-  }
-};
+    try {
+      setError('');
+      await api.put(`/library/${entry.id}`, {
+        program_id: entry.program_id,
+        curriculum_topic_id: entry.curriculum_topic_id,
+        title: entry.title,
+        entry_type: entry.entry_type,
+        description: entry.description || null,
+        video_url: entry.video_url || null,
+        visibility: entry.visibility,
+        is_active: nextIsActive
+      });
+      await fetchEntries();
+    } catch (err) {
+      console.error('Update library entry active state error:', err);
+      setError(err.response?.data?.message || 'Failed to update library entry');
+    }
+  };
 
   return (
     <Layout>
@@ -141,7 +163,7 @@ export default function LibraryPage() {
             >
               {entryTypes.map((type) => (
                 <option key={type} value={type}>
-                  {type}
+                  {formatLabel(type)}
                 </option>
               ))}
             </select>
@@ -208,7 +230,7 @@ export default function LibraryPage() {
             >
               {visibilityOptions.map((option) => (
                 <option key={option} value={option}>
-                  {option}
+                  {formatLabel(option)}
                 </option>
               ))}
             </select>
@@ -225,26 +247,55 @@ export default function LibraryPage() {
       {error && <p className="error-text">{error}</p>}
 
       <section className="page-section">
-        <h3>Library Entries</h3>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '12px',
+            alignItems: 'center',
+            flexWrap: 'wrap'
+          }}
+        >
+          <h3 style={{ marginBottom: 0 }}>Library Entries</h3>
+          <button
+            className="secondary-button"
+            onClick={() => setShowInactive((prev) => !prev)}
+          >
+            {showInactive ? 'Hide Inactive Entries' : 'Show Inactive Entries'}
+          </button>
+        </div>
 
         {loading ? (
           <p className="empty-state">Loading library...</p>
-        ) : entries.length === 0 ? (
+        ) : orderedEntries.length === 0 ? (
           <p className="empty-state">No library entries found.</p>
         ) : (
           <ul className="card-list">
-            {entries.map((entry) => (
+            {orderedEntries.map((entry) => (
               <li key={entry.id} className="card-item">
                 <strong>{entry.title}</strong>
 
                 <div className="detail-block">
-                  <div className="meta-text">Type: {entry.entry_type}</div>
+                  <div className="meta-text">Type: {formatLabel(entry.entry_type)}</div>
                   <div className="meta-text">Program: {entry.program_name || 'None'}</div>
                   <div className="meta-text">Topic: {entry.topic_title || 'None'}</div>
-                  <div className="meta-text">Visibility: {entry.visibility}</div>
+                  <div className="meta-text">Visibility: {formatLabel(entry.visibility)}</div>
+                  <div className="meta-text">
+                    Active: {entry.is_active ? 'Yes' : 'No'}
+                  </div>
                   <div className="meta-text">
                     Created By: {entry.created_by_first_name} {entry.created_by_last_name}
                   </div>
+                  {entry.created_at && (
+                    <div className="meta-text">
+                      Created: {new Date(entry.created_at).toLocaleString()}
+                    </div>
+                  )}
+                  {entry.updated_at && (
+                    <div className="meta-text">
+                      Updated: {new Date(entry.updated_at).toLocaleString()}
+                    </div>
+                  )}
                   <div>{entry.description || 'No description'}</div>
                 </div>
 
@@ -254,12 +305,21 @@ export default function LibraryPage() {
                       Open Video Link
                     </a>
                   )}
-                  <button
-                    className="danger-button"
-                    onClick={() => handleDelete(entry.id)}
-                  >
-                    Delete Entry
-                  </button>
+                  {entry.is_active ? (
+                    <button
+                      className="danger-button"
+                      onClick={() => handleSetActiveState(entry, false)}
+                    >
+                      Deactivate Entry
+                    </button>
+                  ) : (
+                    <button
+                      className="secondary-button"
+                      onClick={() => handleSetActiveState(entry, true)}
+                    >
+                      Reactivate Entry
+                    </button>
+                  )}
                 </div>
               </li>
             ))}

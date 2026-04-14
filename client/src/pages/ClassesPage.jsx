@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import ClassTopicsForm from '../components/ClassTopicsForm';
 import ClassTrainingEntriesForm from '../components/ClassTrainingEntriesForm';
 import ClassAttendanceForm from '../components/ClassAttendanceForm';
+import { formatLabel } from '../utils/formatLabel';
 
 export default function ClassesPage() {
   const { user } = useAuth();
@@ -23,8 +24,12 @@ export default function ClassesPage() {
   const [classFeedbackMap, setClassFeedbackMap] = useState({});
   const [editingScenarios, setEditingScenarios] = useState({});
   const [editScenarioMap, setEditScenarioMap] = useState({});
+  const [scenarioFeedbackMap, setScenarioFeedbackMap] = useState({});
+  const [activeView, setActiveView] = useState('classes');
   const [showAllClasses, setShowAllClasses] = useState(false);
   const [showInactiveScenarios, setShowInactiveScenarios] = useState(false);
+  const [showCreateClassForm, setShowCreateClassForm] = useState(false);
+  const [showCreateScenarioForm, setShowCreateScenarioForm] = useState(false);
   const [classSearch, setClassSearch] = useState('');
 
   const [formData, setFormData] = useState({
@@ -71,6 +76,26 @@ export default function ClassesPage() {
     setClassFeedbackMap((prev) => ({
       ...prev,
       [classId]: {
+        message: nextFeedback.message || '',
+        error: nextFeedback.error || ''
+      }
+    }));
+  };
+
+  const clearScenarioFeedback = (scenarioId) => {
+    setScenarioFeedbackMap((prev) => ({
+      ...prev,
+      [scenarioId]: {
+        message: '',
+        error: ''
+      }
+    }));
+  };
+
+  const setScenarioFeedback = (scenarioId, nextFeedback) => {
+    setScenarioFeedbackMap((prev) => ({
+      ...prev,
+      [scenarioId]: {
         message: nextFeedback.message || '',
         error: nextFeedback.error || ''
       }
@@ -382,8 +407,7 @@ export default function ClassesPage() {
 
   const handleUpdateScenario = async (scenarioId) => {
     try {
-      setScenarioError('');
-      setScenarioMessage('');
+      clearScenarioFeedback(scenarioId);
 
       const editData = editScenarioMap[scenarioId];
 
@@ -411,12 +435,16 @@ export default function ClassesPage() {
         [scenarioId]: false
       }));
 
-      setScenarioMessage('Training scenario updated successfully.');
+      setScenarioFeedback(scenarioId, {
+        message: 'Training scenario updated successfully.',
+        error: ''
+      });
     } catch (err) {
       console.error('Update training scenario error:', err);
-      setScenarioError(
-        err.response?.data?.message || 'Failed to update training scenario'
-      );
+      setScenarioFeedback(scenarioId, {
+        message: '',
+        error: err.response?.data?.message || 'Failed to update training scenario'
+      });
     }
   };
 
@@ -427,16 +455,19 @@ export default function ClassesPage() {
     if (!confirmed) return;
 
     try {
-      setScenarioError('');
-      setScenarioMessage('');
+      clearScenarioFeedback(scenarioId);
       await api.patch(`/training-scenarios/${scenarioId}/deactivate`);
       await fetchTrainingScenarios();
-      setScenarioMessage('Training scenario deactivated successfully.');
+      setScenarioFeedback(scenarioId, {
+        message: 'Training scenario deactivated successfully.',
+        error: ''
+      });
     } catch (err) {
       console.error('Deactivate training scenario error:', err);
-      setScenarioError(
-        err.response?.data?.message || 'Failed to deactivate training scenario'
-      );
+      setScenarioFeedback(scenarioId, {
+        message: '',
+        error: err.response?.data?.message || 'Failed to deactivate training scenario'
+      });
     }
   };
 
@@ -663,6 +694,56 @@ export default function ClassesPage() {
       <h2 className="page-title">Classes</h2>
 
       <section className="page-section" style={{ maxWidth: '760px' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '12px',
+            alignItems: 'center',
+            flexWrap: 'wrap'
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              gap: '12px',
+              flexWrap: 'wrap'
+            }}
+          >
+            <button
+              className={activeView === 'classes' ? '' : 'secondary-button'}
+              onClick={() => setActiveView('classes')}
+            >
+              Classes
+            </button>
+            <button
+              className={activeView === 'scenarios' ? '' : 'secondary-button'}
+              onClick={() => setActiveView('scenarios')}
+            >
+              Training Scenarios
+            </button>
+          </div>
+
+          <button
+            onClick={() =>
+              activeView === 'classes'
+                ? setShowCreateClassForm((prev) => !prev)
+                : setShowCreateScenarioForm((prev) => !prev)
+            }
+          >
+            {activeView === 'classes'
+              ? showCreateClassForm
+                ? 'Hide New Class Form'
+                : 'New Class'
+              : showCreateScenarioForm
+                ? 'Hide New Scenario Form'
+                : 'New Training Scenario'}
+          </button>
+        </div>
+      </section>
+
+      {activeView === 'classes' && showCreateClassForm ? (
+      <section className="page-section" style={{ maxWidth: '760px' }}>
         <h3>Create Class</h3>
 
         <form className="form-grid" onSubmit={handleSubmit}>
@@ -742,7 +823,9 @@ export default function ClassesPage() {
         {classMessage && <p className="success-text">{classMessage}</p>}
         {error && <p className="error-text">{error}</p>}
       </section>
+      ) : null}
 
+      {activeView === 'scenarios' && showCreateScenarioForm ? (
       <section className="page-section" style={{ maxWidth: '760px' }}>
         <h3>Create Training Scenario</h3>
 
@@ -869,7 +952,9 @@ export default function ClassesPage() {
         {scenarioMessage && <p className="success-text">{scenarioMessage}</p>}
         {scenarioError && <p className="error-text">{scenarioError}</p>}
       </section>
+      ) : null}
 
+      {activeView === 'scenarios' ? (
       <section className="page-section">
         <div
           style={{
@@ -935,6 +1020,17 @@ export default function ClassesPage() {
                     </button>
                   ) : null}
                 </div>
+
+                {scenarioFeedbackMap[scenario.id]?.message && (
+                  <p className="success-text">
+                    {scenarioFeedbackMap[scenario.id].message}
+                  </p>
+                )}
+                {scenarioFeedbackMap[scenario.id]?.error && (
+                  <p className="error-text">
+                    {scenarioFeedbackMap[scenario.id].error}
+                  </p>
+                )}
 
                 {editingScenarios[scenario.id] && (
                   <div className="detail-block">
@@ -1064,8 +1160,8 @@ export default function ClassesPage() {
                             value={editScenarioMap[scenario.id]?.is_active || 'true'}
                             onChange={(e) => handleEditScenarioChange(scenario.id, e)}
                           >
-                            <option value="true">active</option>
-                            <option value="false">inactive</option>
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
                           </select>
                         </div>
 
@@ -1081,7 +1177,9 @@ export default function ClassesPage() {
           </ul>
         )}
       </section>
+      ) : null}
 
+      {activeView === 'classes' ? (
       <section className="page-section">
         <div
           style={{
@@ -1281,7 +1379,7 @@ export default function ClassesPage() {
                       <ul className="card-list">
                         {classTopicsMap[classItem.id].map((topic) => (
                           <li key={topic.id} className="card-item">
-                            <strong>{topic.topic_title}</strong> — {topic.topic_type} — {topic.coverage_type} — {topic.focus_level}
+                            <strong>{topic.topic_title}</strong> - {formatLabel(topic.topic_type)} - {formatLabel(topic.coverage_type)} - {formatLabel(topic.focus_level)}
                             <div className="detail-block">
                               <div>{topic.notes || 'No notes'}</div>
                             </div>
@@ -1344,6 +1442,8 @@ export default function ClassesPage() {
           </p>
         )}
       </section>
+      ) : null}
     </Layout>
   );
 }
+

@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import api from '../api/axios';
 import Layout from '../components/Layout';
+import { formatLabel } from '../utils/formatLabel';
 
 export default function TopicsPage() {
   const [topics, setTopics] = useState([]);
   const [programs, setPrograms] = useState([]);
+  const [showInactive, setShowInactive] = useState(false);
   const [formData, setFormData] = useState({
     program_id: '',
     parent_topic_id: '',
@@ -60,6 +62,13 @@ export default function TopicsPage() {
     loadPageData();
   }, []);
 
+  const orderedTopics = useMemo(() => {
+    const active = topics.filter((topic) => topic.is_active);
+    const inactive = topics.filter((topic) => !topic.is_active);
+
+    return showInactive ? [...active, ...inactive] : active;
+  }, [topics, showInactive]);
+
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -97,6 +106,31 @@ export default function TopicsPage() {
       setError(err.response?.data?.message || 'Failed to create topic');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleSetActiveState = async (topic, nextIsActive) => {
+    const confirmed = window.confirm(
+      nextIsActive
+        ? 'Reactivate this topic?'
+        : 'Deactivate this topic? It will remain in the system but be marked inactive.'
+    );
+    if (!confirmed) return;
+
+    try {
+      setError('');
+      await api.put(`/topics/${topic.id}`, {
+        program_id: topic.program_id,
+        parent_topic_id: topic.parent_topic_id,
+        title: topic.title,
+        topic_type: topic.topic_type,
+        description: topic.description || '',
+        is_active: nextIsActive
+      });
+      await fetchTopics();
+    } catch (err) {
+      console.error('Update topic active state error:', err);
+      setError(err.response?.data?.message || 'Failed to update topic');
     }
   };
 
@@ -159,7 +193,7 @@ export default function TopicsPage() {
             >
               {topicTypes.map((type) => (
                 <option key={type} value={type}>
-                  {type}
+                  {formatLabel(type)}
                 </option>
               ))}
             </select>
@@ -186,22 +220,59 @@ export default function TopicsPage() {
       {error && <p className="error-text">{error}</p>}
 
       <section className="page-section">
-        <h3>Topic List</h3>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '12px',
+            alignItems: 'center',
+            flexWrap: 'wrap'
+          }}
+        >
+          <h3 style={{ marginBottom: 0 }}>Topic List</h3>
+          <button
+            className="secondary-button"
+            onClick={() => setShowInactive((prev) => !prev)}
+          >
+            {showInactive ? 'Hide Inactive Topics' : 'Show Inactive Topics'}
+          </button>
+        </div>
 
         {loading ? (
           <p className="empty-state">Loading topics...</p>
-        ) : topics.length === 0 ? (
+        ) : orderedTopics.length === 0 ? (
           <p className="empty-state">No topics found.</p>
         ) : (
           <ul className="card-list">
-            {topics.map((topic) => (
+            {orderedTopics.map((topic) => (
               <li key={topic.id} className="card-item">
                 <strong>{topic.title}</strong>
                 <div className="detail-block">
-                  <div className="meta-text">Type: {topic.topic_type}</div>
+                  <div className="meta-text">Type: {formatLabel(topic.topic_type)}</div>
                   <div className="meta-text">Program: {topic.program_name || 'None'}</div>
                   <div className="meta-text">Parent: {topic.parent_topic_title || 'None'}</div>
+                  <div className="meta-text">
+                    Active: {topic.is_active ? 'Yes' : 'No'}
+                  </div>
                   <div>{topic.description || 'No description'}</div>
+                </div>
+
+                <div className="inline-actions">
+                  {topic.is_active ? (
+                    <button
+                      className="danger-button"
+                      onClick={() => handleSetActiveState(topic, false)}
+                    >
+                      Deactivate Topic
+                    </button>
+                  ) : (
+                    <button
+                      className="secondary-button"
+                      onClick={() => handleSetActiveState(topic, true)}
+                    >
+                      Reactivate Topic
+                    </button>
+                  )}
                 </div>
               </li>
             ))}

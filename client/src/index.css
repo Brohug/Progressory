@@ -207,9 +207,73 @@ ul {
   margin-bottom: 14px;
 }
 
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.section-header h3,
+.section-header h4 {
+  margin-bottom: 0;
+}
+
+.section-note {
+  margin: 4px 0 0;
+  color: var(--muted);
+  max-width: 640px;
+}
+
+.page-intro {
+  margin: -4px 0 24px;
+  max-width: 720px;
+  color: #cbd5e1;
+  font-size: 15px;
+}
+
 .form-grid {
   display: grid;
   gap: 14px;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.action-card {
+  display: block;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.82) 0%, rgba(11, 18, 32, 0.92) 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  transition: border-color 0.15s ease, transform 0.08s ease, background 0.15s ease;
+}
+
+.action-card:hover {
+  border-color: var(--accent);
+  color: inherit;
+  transform: translateY(-1px);
+}
+
+.action-card strong {
+  display: block;
+  font-size: 17px;
+}
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .card-list {
@@ -308,6 +372,79 @@ ul {
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid var(--border);
+}
+
+.dashboard-page .page-section,
+.reports-page .page-section {
+  padding: 20px;
+}
+
+.dashboard-page .page-title,
+.reports-page .page-title {
+  margin-bottom: 12px;
+}
+
+.dashboard-page .stats-grid,
+.reports-page .stats-grid {
+  margin-bottom: 28px;
+}
+
+.dashboard-hero-section {
+  padding: 22px;
+}
+
+.dashboard-action-card,
+.dashboard-report-card {
+  min-height: 148px;
+}
+
+.dashboard-primary-section .card-item,
+.reports-page .card-item {
+  padding: 18px;
+}
+
+.dashboard-compact-card,
+.reports-compact-card {
+  padding: 14px 16px;
+}
+
+.dashboard-compact-card .detail-block,
+.reports-compact-card .detail-block {
+  margin-top: 12px;
+  padding-top: 10px;
+}
+
+.dashboard-insights-grid .page-section,
+.reports-insights-grid .page-section {
+  height: 100%;
+}
+
+.dashboard-cta-section {
+  margin-top: 6px;
+}
+
+.dashboard-report-link-text {
+  margin-top: 10px;
+  color: #bae6fd;
+  font-weight: 600;
+}
+
+.dashboard-report-card {
+  border-color: rgba(56, 189, 248, 0.28);
+}
+
+.reports-insights-grid {
+  margin-bottom: 24px;
+}
+
+.reports-page .stat-card,
+.dashboard-page .stat-card {
+  padding: 20px;
+}
+
+.reports-priority-section {
+  border-color: rgba(56, 189, 248, 0.28);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.86) 0%, rgba(11, 18, 32, 0.96) 100%);
 }
 
 @media (max-width: 640px) {

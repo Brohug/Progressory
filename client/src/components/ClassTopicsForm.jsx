@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import api from '../api/axios';
+import { formatLabel } from '../utils/formatLabel';
 
 export default function ClassTopicsForm({ classId, topics, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -89,8 +90,8 @@ export default function ClassTopicsForm({ classId, topics, onSuccess }) {
             value={formData.coverage_type}
             onChange={handleChange}
           >
-            <option value="taught">taught</option>
-            <option value="reviewed">reviewed</option>
+            <option value="taught">{formatLabel('taught')}</option>
+            <option value="reviewed">{formatLabel('reviewed')}</option>
           </select>
         </div>
 
@@ -101,9 +102,9 @@ export default function ClassTopicsForm({ classId, topics, onSuccess }) {
             value={formData.focus_level}
             onChange={handleChange}
           >
-            <option value="focus">focus</option>
-            <option value="secondary">secondary</option>
-            <option value="review">review</option>
+            <option value="focus">{formatLabel('focus')}</option>
+            <option value="secondary">{formatLabel('secondary')}</option>
+            <option value="review">{formatLabel('review')}</option>
           </select>
         </div>
 

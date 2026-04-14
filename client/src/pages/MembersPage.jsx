@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import api from '../api/axios';
 import Layout from '../components/Layout';
 import MemberProgressForm from '../components/MemberProgressForm';
+import { formatLabel } from '../utils/formatLabel';
 
 export default function MembersPage() {
   const [members, setMembers] = useState([]);
@@ -11,6 +12,7 @@ export default function MembersPage() {
   const [expandedMembers, setExpandedMembers] = useState({});
   const [editingMembers, setEditingMembers] = useState({});
   const [editMemberMap, setEditMemberMap] = useState({});
+  const [showInactive, setShowInactive] = useState(false);
   const [formData, setFormData] = useState({
     program_id: '',
     first_name: '',
@@ -54,6 +56,13 @@ export default function MembersPage() {
     loadPageData();
   }, []);
 
+  const orderedMembers = useMemo(() => {
+    const active = members.filter((member) => member.is_active);
+    const inactive = members.filter((member) => !member.is_active);
+
+    return showInactive ? [...active, ...inactive] : active;
+  }, [members, showInactive]);
+
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -94,19 +103,26 @@ export default function MembersPage() {
     }
   };
 
-  const handleDelete = async (memberId) => {
+  const handleDeactivate = async (member) => {
     const confirmed = window.confirm(
-      'Delete this member? This can remove related attendance and progression history.'
+      'Deactivate this member? Attendance and progression history will remain, but the member will be marked inactive.'
     );
     if (!confirmed) return;
 
     try {
       setError('');
-      await api.delete(`/members/${memberId}`);
+      await api.put(`/members/${member.id}`, {
+        program_id: member.program_id,
+        first_name: member.first_name,
+        last_name: member.last_name,
+        email: member.email || null,
+        belt_rank: member.belt_rank || null,
+        is_active: false
+      });
       await fetchMembers();
     } catch (err) {
-      console.error('Delete member error:', err);
-      setError(err.response?.data?.message || 'Failed to delete member');
+      console.error('Deactivate member error:', err);
+      setError(err.response?.data?.message || 'Failed to deactivate member');
     }
   };
 
@@ -298,15 +314,31 @@ export default function MembersPage() {
       {error && <p className="error-text">{error}</p>}
 
       <section className="page-section">
-        <h3>Member List</h3>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '12px',
+            alignItems: 'center',
+            flexWrap: 'wrap'
+          }}
+        >
+          <h3 style={{ marginBottom: 0 }}>Member List</h3>
+          <button
+            className="secondary-button"
+            onClick={() => setShowInactive((prev) => !prev)}
+          >
+            {showInactive ? 'Hide Inactive Members' : 'Show Inactive Members'}
+          </button>
+        </div>
 
         {loading ? (
           <p className="empty-state">Loading members...</p>
-        ) : members.length === 0 ? (
+        ) : orderedMembers.length === 0 ? (
           <p className="empty-state">No members found.</p>
         ) : (
           <ul className="card-list">
-            {members.map((member) => (
+            {orderedMembers.map((member) => (
               <li key={member.id} className="card-item">
                 <strong>
                   {member.first_name} {member.last_name}
@@ -317,6 +349,16 @@ export default function MembersPage() {
                   <div className="meta-text">Email: {member.email || 'None'}</div>
                   <div className="meta-text">Belt Rank: {member.belt_rank || 'None'}</div>
                   <div className="meta-text">Active: {member.is_active ? 'Yes' : 'No'}</div>
+                  {member.created_at && (
+                    <div className="meta-text">
+                      Created: {new Date(member.created_at).toLocaleString()}
+                    </div>
+                  )}
+                  {member.updated_at && (
+                    <div className="meta-text">
+                      Updated: {new Date(member.updated_at).toLocaleString()}
+                    </div>
+                  )}
                 </div>
 
                 <div className="inline-actions">
@@ -332,12 +374,14 @@ export default function MembersPage() {
                   >
                     {editingMembers[member.id] ? 'Hide Edit Member' : 'Edit Member'}
                   </button>
-                  <button
-                    className="danger-button"
-                    onClick={() => handleDelete(member.id)}
-                  >
-                    Delete Member
-                  </button>
+                  {member.is_active ? (
+                    <button
+                      className="danger-button"
+                      onClick={() => handleDeactivate(member)}
+                    >
+                      Deactivate Member
+                    </button>
+                  ) : null}
                 </div>
 
                 {editingMembers[member.id] && (
@@ -415,8 +459,8 @@ export default function MembersPage() {
                             value={editMemberMap[member.id]?.is_active || 'true'}
                             onChange={(e) => handleEditMemberChange(member.id, e)}
                           >
-                            <option value="true">active</option>
-                            <option value="false">inactive</option>
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
                           </select>
                         </div>
 
@@ -441,9 +485,9 @@ export default function MembersPage() {
                       <ul className="card-list">
                         {memberProgressMap[member.id].map((progress) => (
                           <li key={progress.id} className="card-item">
-                            <strong>{progress.topic_title}</strong> — {progress.topic_type}
+                            <strong>{progress.topic_title}</strong> - {formatLabel(progress.topic_type)}
                             <div className="detail-block">
-                              <div className="meta-text">Status: {progress.status}</div>
+                              <div className="meta-text">Status: {formatLabel(progress.status)}</div>
                               <div className="meta-text">
                                 Updated By: {progress.updated_by_first_name} {progress.updated_by_last_name}
                               </div>
@@ -471,3 +515,4 @@ export default function MembersPage() {
     </Layout>
   );
 }
+
