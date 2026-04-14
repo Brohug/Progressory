@@ -37,20 +37,20 @@ export default function MembersPage() {
     setTopics(response.data);
   };
 
-  const loadPageData = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      await Promise.all([fetchMembers(), fetchPrograms(), fetchTopics()]);
-    } catch (err) {
-      console.error('Load members page error:', err);
-      setError(err.response?.data?.message || 'Failed to load members');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const loadPageData = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        await Promise.all([fetchMembers(), fetchPrograms(), fetchTopics()]);
+      } catch (err) {
+        console.error('Load members page error:', err);
+        setError(err.response?.data?.message || 'Failed to load members');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadPageData();
   }, []);
 

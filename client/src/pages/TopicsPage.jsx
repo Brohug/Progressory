@@ -46,17 +46,17 @@ export default function TopicsPage() {
     }
   };
 
-  const loadPageData = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      await Promise.all([fetchTopics(), fetchPrograms()]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const loadPageData = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        await Promise.all([fetchTopics(), fetchPrograms()]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadPageData();
   }, []);
 

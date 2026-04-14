@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import api from '../api/axios';
 import Layout from '../components/Layout';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import ClassTopicsForm from '../components/ClassTopicsForm';
 import ClassTrainingEntriesForm from '../components/ClassTrainingEntriesForm';
 import ClassAttendanceForm from '../components/ClassAttendanceForm';
@@ -114,24 +114,24 @@ export default function ClassesPage() {
     }
   };
 
-  const loadPageData = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      await Promise.all([
-        fetchClasses(),
-        fetchPrograms(),
-        fetchAllTopics(),
-        fetchTrainingMethods(),
-        fetchTrainingScenarios(),
-        fetchAllMembers()
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const loadPageData = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        await Promise.all([
+          fetchClasses(),
+          fetchPrograms(),
+          fetchAllTopics(),
+          fetchTrainingMethods(),
+          fetchTrainingScenarios(),
+          fetchAllMembers()
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadPageData();
   }, []);
 

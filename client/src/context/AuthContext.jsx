@@ -1,6 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-
-const AuthContext = createContext();
+import { useState } from 'react';
+import { AuthContext } from './AuthContext';
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -22,17 +21,9 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('user');
   };
 
-  useEffect(() => {
-    if (!token) return;
-  }, [token]);
-
   return (
     <AuthContext.Provider value={{ token, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
 }

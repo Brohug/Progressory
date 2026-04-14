@@ -24,20 +24,20 @@ export default function StaffPage() {
     setUsers(response.data);
   };
 
-  const loadPageData = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      await fetchUsers();
-    } catch (err) {
-      console.error('Load staff page error:', err);
-      setError(err.response?.data?.message || 'Failed to load staff users');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const loadPageData = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        await fetchUsers();
+      } catch (err) {
+        console.error('Load staff page error:', err);
+        setError(err.response?.data?.message || 'Failed to load staff users');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (isOwner) {
       loadPageData();
     } else {

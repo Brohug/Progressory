@@ -37,20 +37,20 @@ export default function LibraryPage() {
     setTopics(response.data);
   };
 
-  const loadPageData = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      await Promise.all([fetchEntries(), fetchPrograms(), fetchTopics()]);
-    } catch (err) {
-      console.error('Load library page error:', err);
-      setError(err.response?.data?.message || 'Failed to load library');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const loadPageData = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        await Promise.all([fetchEntries(), fetchPrograms(), fetchTopics()]);
+      } catch (err) {
+        console.error('Load library page error:', err);
+        setError(err.response?.data?.message || 'Failed to load library');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadPageData();
   }, []);
 
