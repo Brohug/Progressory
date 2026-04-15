@@ -11,6 +11,7 @@ import ReportsPage from './pages/ReportsPage';
 import LibraryPage from './pages/LibraryPage';
 import MembersPage from './pages/MembersPage';
 import StaffPage from './pages/StaffPage';
+import CurriculumIndexPage from './pages/CurriculumIndexPage';
 
 export default function App() {
   return (
@@ -39,6 +40,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <TopicsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/index"
+            element={
+              <ProtectedRoute>
+                <CurriculumIndexPage />
               </ProtectedRoute>
             }
           />

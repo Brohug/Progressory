@@ -650,6 +650,112 @@ ul {
   font-size: 14px;
 }
 
+.curriculum-index-groups {
+  display: grid;
+  gap: 20px;
+}
+
+.curriculum-index-group {
+  display: grid;
+  gap: 14px;
+}
+
+.curriculum-index-group-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.curriculum-index-group-header h4 {
+  margin-bottom: 0;
+}
+
+.curriculum-index-card {
+  margin-bottom: 0;
+}
+
+.curriculum-index-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.curriculum-index-title-block {
+  display: grid;
+  gap: 6px;
+}
+
+.curriculum-index-title-block .eyebrow {
+  margin-bottom: 0;
+}
+
+.curriculum-index-skill-level {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.14);
+  color: #bae6fd;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.curriculum-index-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.curriculum-index-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.72);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.curriculum-index-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.curriculum-index-status-card {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.64);
+}
+
+.curriculum-index-status-card strong {
+  display: block;
+  margin: 4px 0 6px;
+  font-size: 15px;
+}
+
+.curriculum-index-actions {
+  margin-top: 14px;
+}
+
+.curriculum-index-action-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.curriculum-index-inline-note {
+  margin-top: 10px;
+}
+
 @media (max-width: 640px) {
   .reports-ranked-row {
     grid-template-columns: 36px minmax(0, 1fr);

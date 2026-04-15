@@ -19,7 +19,7 @@ export default function TopicSearchSelect({
     const normalizedQuery = query.trim().toLowerCase();
 
     if (!normalizedQuery) {
-      return topics.slice(0, 12);
+      return [];
     }
 
     return topics
@@ -28,6 +28,7 @@ export default function TopicSearchSelect({
   }, [topics, query]);
 
   const normalizedQuery = query.trim().toLowerCase();
+  const hasQuery = normalizedQuery.length > 0;
   const hasExactMatch = topics.some(
     (topic) => topic.title.trim().toLowerCase() === normalizedQuery
   );
@@ -61,36 +62,38 @@ export default function TopicSearchSelect({
         <div className="search-select-empty">{emptySelectionLabel}</div>
       )}
 
-      <div className="search-select-results">
-        {canCreateFromQuery && (
-          <button
-            type="button"
-            className="search-select-create"
-            onClick={() => onCreateOption(query.trim())}
-          >
-            Create topic: "{query.trim()}"
-          </button>
-        )}
+      {hasQuery && (
+        <div className="search-select-results">
+          {canCreateFromQuery && (
+            <button
+              type="button"
+              className="search-select-create"
+              onClick={() => onCreateOption(query.trim())}
+            >
+              Create topic: "{query.trim()}"
+            </button>
+          )}
 
-        {filteredTopics.length === 0 ? (
-          <p className="empty-state">No matching topics.</p>
-        ) : (
-          filteredTopics.map((topic) => {
-            const isSelected = String(topic.id) === String(value);
+          {filteredTopics.length === 0 ? (
+            <p className="empty-state">No matching topics.</p>
+          ) : (
+            filteredTopics.map((topic) => {
+              const isSelected = String(topic.id) === String(value);
 
-            return (
-              <button
-                key={topic.id}
-                type="button"
-                className={`search-select-option${isSelected ? ' selected' : ''}`}
-                onClick={() => onChange(String(topic.id))}
-              >
-                {topic.title}
-              </button>
-            );
-          })
-        )}
-      </div>
+              return (
+                <button
+                  key={topic.id}
+                  type="button"
+                  className={`search-select-option${isSelected ? ' selected' : ''}`}
+                  onClick={() => onChange(String(topic.id))}
+                >
+                  {topic.title}
+                </button>
+              );
+            })
+          )}
+        </div>
+      )}
     </div>
   );
 }

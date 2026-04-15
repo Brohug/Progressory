@@ -18,7 +18,7 @@ export default function MemberSearchSelect({
     const normalizedQuery = query.trim().toLowerCase();
 
     if (!normalizedQuery) {
-      return members.slice(0, 12);
+      return [];
     }
 
     return members
@@ -32,6 +32,8 @@ export default function MemberSearchSelect({
       })
       .slice(0, 12);
   }, [members, query]);
+
+  const hasQuery = query.trim().length > 0;
 
   return (
     <div className="search-select">
@@ -63,31 +65,33 @@ export default function MemberSearchSelect({
         <div className="search-select-empty">{emptySelectionLabel}</div>
       )}
 
-      <div className="search-select-results">
-        {members.length === 0 ? (
-          <p className="empty-state">No members available.</p>
-        ) : filteredMembers.length === 0 ? (
-          <p className="empty-state">No matching members.</p>
-        ) : (
-          filteredMembers.map((member) => {
-            const isSelected = String(member.id) === String(value);
+      {hasQuery && (
+        <div className="search-select-results">
+          {members.length === 0 ? (
+            <p className="empty-state">No members available.</p>
+          ) : filteredMembers.length === 0 ? (
+            <p className="empty-state">No matching members.</p>
+          ) : (
+            filteredMembers.map((member) => {
+              const isSelected = String(member.id) === String(value);
 
-            return (
-              <button
-                key={member.id}
-                type="button"
-                className={`search-select-option${isSelected ? ' selected' : ''}`}
-                onClick={() => onChange(String(member.id))}
-              >
-                <span>{member.first_name} {member.last_name}</span>
-                {member.email ? (
-                  <span className="meta-text">{member.email}</span>
-                ) : null}
-              </button>
-            );
-          })
-        )}
-      </div>
+              return (
+                <button
+                  key={member.id}
+                  type="button"
+                  className={`search-select-option${isSelected ? ' selected' : ''}`}
+                  onClick={() => onChange(String(member.id))}
+                >
+                  <span>{member.first_name} {member.last_name}</span>
+                  {member.email ? (
+                    <span className="meta-text">{member.email}</span>
+                  ) : null}
+                </button>
+              );
+            })
+          )}
+        </div>
+      )}
     </div>
   );
 }
