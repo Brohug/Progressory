@@ -47,7 +47,7 @@ export default function MembersPage() {
         await Promise.all([fetchMembers(), fetchPrograms(), fetchTopics()]);
       } catch (err) {
         console.error('Load members page error:', err);
-        setError(err.response?.data?.message || 'Failed to load members');
+        setError(err.response?.data?.message || 'Couldn\'t load members right now.');
       } finally {
         setLoading(false);
       }
@@ -97,7 +97,7 @@ export default function MembersPage() {
       await fetchMembers();
     } catch (err) {
       console.error('Create member error:', err);
-      setError(err.response?.data?.message || 'Failed to create member');
+      setError(err.response?.data?.message || 'Couldn\'t create that member just now.');
     } finally {
       setSubmitting(false);
     }
@@ -105,7 +105,7 @@ export default function MembersPage() {
 
   const handleDeactivate = async (member) => {
     const confirmed = window.confirm(
-      'Deactivate this member? Attendance and progression history will remain, but the member will be marked inactive.'
+      'Make this member inactive? Their attendance and progress history will stay in place, but they will be hidden from the default view.'
     );
     if (!confirmed) return;
 
@@ -122,7 +122,7 @@ export default function MembersPage() {
       await fetchMembers();
     } catch (err) {
       console.error('Deactivate member error:', err);
-      setError(err.response?.data?.message || 'Failed to deactivate member');
+      setError(err.response?.data?.message || 'Couldn\'t update that member right now.');
     }
   };
 
@@ -135,7 +135,7 @@ export default function MembersPage() {
       }));
     } catch (err) {
       console.error('Load member progress error:', err);
-      setError(err.response?.data?.message || 'Failed to load member progress');
+      setError(err.response?.data?.message || 'Couldn\'t load member progress right now.');
     }
   };
 
@@ -225,7 +225,7 @@ export default function MembersPage() {
       }));
     } catch (err) {
       console.error('Update member error:', err);
-      setError(err.response?.data?.message || 'Failed to update member');
+      setError(err.response?.data?.message || 'Couldn\'t update that member just now.');
     }
   };
 
@@ -237,6 +237,10 @@ export default function MembersPage() {
     return topics.filter((topic) => {
       return topic.program_id === null || topic.program_id === member.program_id;
     });
+  };
+
+  const getSuggestedTopicsForMember = (member) => {
+    return getTopicsForMember(member).slice(0, 6);
   };
 
   return (
@@ -254,7 +258,7 @@ export default function MembersPage() {
               value={formData.program_id}
               onChange={handleChange}
             >
-              <option value="">No Program</option>
+              <option value="">No program</option>
               {programs.map((program) => (
                 <option key={program.id} value={program.id}>
                   {program.name}
@@ -305,7 +309,7 @@ export default function MembersPage() {
 
           <div>
             <button type="submit" disabled={submitting}>
-              {submitting ? 'Creating...' : 'Create Member'}
+              {submitting ? 'Saving...' : 'Save Member'}
             </button>
           </div>
         </form>
@@ -335,7 +339,7 @@ export default function MembersPage() {
         {loading ? (
           <p className="empty-state">Loading members...</p>
         ) : orderedMembers.length === 0 ? (
-          <p className="empty-state">No members found.</p>
+          <p className="empty-state">No members have been added yet.</p>
         ) : (
           <ul className="card-list">
             {orderedMembers.map((member) => (
@@ -346,8 +350,8 @@ export default function MembersPage() {
 
                 <div className="detail-block">
                   <div className="meta-text">Program: {member.program_name || 'None'}</div>
-                  <div className="meta-text">Email: {member.email || 'None'}</div>
-                  <div className="meta-text">Belt Rank: {member.belt_rank || 'None'}</div>
+                  <div className="meta-text">Email: {member.email || 'Not added yet'}</div>
+                  <div className="meta-text">Belt Rank: {member.belt_rank || 'Not added yet'}</div>
                   <div className="meta-text">Active: {member.is_active ? 'Yes' : 'No'}</div>
                   {member.created_at && (
                     <div className="meta-text">
@@ -366,7 +370,7 @@ export default function MembersPage() {
                     className="secondary-button"
                     onClick={() => toggleMemberProgress(member.id)}
                   >
-                    {expandedMembers[member.id] ? 'Hide Progress' : 'Manage Progress'}
+                    {expandedMembers[member.id] ? 'Hide Progress' : 'View Progress'}
                   </button>
                   <button
                     className="secondary-button"
@@ -403,7 +407,7 @@ export default function MembersPage() {
                             value={editMemberMap[member.id]?.program_id || ''}
                             onChange={(e) => handleEditMemberChange(member.id, e)}
                           >
-                            <option value="">No Program</option>
+                            <option value="">No program</option>
                             {programs.map((program) => (
                               <option key={program.id} value={program.id}>
                                 {program.name}
@@ -477,6 +481,9 @@ export default function MembersPage() {
                     <MemberProgressForm
                       memberId={member.id}
                       topics={getTopicsForMember(member)}
+                      suggestedTopics={getSuggestedTopicsForMember(member)}
+                      defaultProgramId={member.program_id ? String(member.program_id) : ''}
+                      onTopicCreated={fetchTopics}
                       onSuccess={() => loadMemberProgress(member.id)}
                     />
 
@@ -503,7 +510,7 @@ export default function MembersPage() {
                         ))}
                       </ul>
                     ) : (
-                      <p className="empty-state">No progress records yet.</p>
+                      <p className="empty-state">No progress updates have been logged yet.</p>
                     )}
                   </div>
                 )}

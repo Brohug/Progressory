@@ -56,7 +56,7 @@ export default function ClassTrainingEntriesForm({
     setError('');
 
     if (!formData.training_method_id) {
-      setError('Please select a training method.');
+      setError('Choose a training method before saving this training entry.');
       return;
     }
 
@@ -84,7 +84,7 @@ export default function ClassTrainingEntriesForm({
 
       await api.post(`/classes/${classId}/training-entries`, payload);
 
-      setMessage('Training entry added successfully.');
+      setMessage('Training entry saved successfully.');
       setFormData({
         training_method_id: '',
         training_scenario_id: '',
@@ -103,7 +103,7 @@ export default function ClassTrainingEntriesForm({
       }
     } catch (err) {
       console.error('Failed to add training entry:', err);
-      setError(err.response?.data?.message || 'Failed to add training entry.');
+      setError(err.response?.data?.message || 'Couldn\'t save that training entry just now.');
     } finally {
       setIsSubmitting(false);
     }
@@ -121,7 +121,7 @@ export default function ClassTrainingEntriesForm({
             value={formData.training_method_id}
             onChange={handleChange}
           >
-            <option value="">Select a training method</option>
+              <option value="">Choose a training method</option>
             {trainingMethods.filter((method) => method.is_active).map((method) => (
               <option key={method.id} value={method.id}>
                 {method.name}
@@ -147,7 +147,7 @@ export default function ClassTrainingEntriesForm({
             </select>
           ) : (
             <div className="meta-text">
-              No training scenarios available yet for the selected method/program.
+              No training scenarios are available yet for the selected method or program.
             </div>
           )}
         </div>
@@ -242,7 +242,7 @@ export default function ClassTrainingEntriesForm({
 
         <div className="inline-actions">
           <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Adding...' : 'Add Training Entry'}
+            {isSubmitting ? 'Saving...' : 'Save Training Entry'}
           </button>
         </div>
       </form>

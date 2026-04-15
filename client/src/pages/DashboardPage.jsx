@@ -43,7 +43,7 @@ export default function DashboardPage() {
       setClasses(classesRes.data);
     } catch (err) {
       console.error('Load dashboard error:', err);
-      setError(err.response?.data?.message || 'Failed to load dashboard');
+      setError(err.response?.data?.message || 'Couldn\'t load the dashboard right now.');
     } finally {
       setLoading(false);
     }
@@ -93,7 +93,7 @@ export default function DashboardPage() {
     },
     {
       title: 'Reports',
-      description: 'Review trends, neglected topics, and usage patterns.',
+      description: 'Review trends, underused topics, and teaching patterns.',
       to: '/reports'
     }
   ];
@@ -111,20 +111,20 @@ export default function DashboardPage() {
       <div className="dashboard-page">
         <h2 className="page-title">Dashboard</h2>
         <p className="page-intro">
-          Start here for quick actions, current activity, and the most useful signals from your gym.
+          Start here for quick actions, recent activity, and a helpful snapshot of what is happening in your gym.
         </p>
 
         {error && <p className="error-text">{error}</p>}
 
         {loading ? (
-          <p className="empty-state">Loading dashboard...</p>
+          <p className="empty-state">Loading your dashboard...</p>
         ) : (
           <>
             <section className="page-section dashboard-hero-section">
               <div className="section-header">
                 <div>
                   <h3>Quick Actions</h3>
-                  <p className="section-note">Jump into the part of the app you need most.</p>
+                  <p className="section-note">Jump into the area you want to work in next.</p>
                 </div>
               </div>
               <div className="action-grid">
@@ -156,13 +156,13 @@ export default function DashboardPage() {
               <div className="section-header">
                 <div>
                   <h3>Recent Classes</h3>
-                  <p className="section-note">The latest sessions logged by your team.</p>
+                  <p className="section-note">The most recent sessions logged by your team.</p>
                 </div>
                 <Link to="/classes">Manage Classes</Link>
               </div>
 
               {recentClasses.length === 0 ? (
-                <p className="empty-state">No classes logged yet.</p>
+                <p className="empty-state">No classes have been logged yet.</p>
               ) : (
                 <ul className="card-list">
                   {recentClasses.map((item) => (
@@ -179,7 +179,7 @@ export default function DashboardPage() {
                         <div className="meta-text">
                           Time: {item.start_time || 'N/A'} - {item.end_time || 'N/A'}
                         </div>
-                        <div>{item.notes || 'No notes'}</div>
+                        <div>{item.notes || 'No notes added yet.'}</div>
                       </div>
                     </li>
                   ))}
@@ -197,7 +197,7 @@ export default function DashboardPage() {
                 </div>
 
                 {!topTopic ? (
-                  <p className="empty-state">No topic usage data yet.</p>
+                  <p className="empty-state">No topic usage has been logged yet.</p>
                 ) : (
                   <div className="card-item dashboard-compact-card">
                     <strong>{topTopic.topic_title}</strong>
@@ -226,12 +226,12 @@ export default function DashboardPage() {
                 </div>
 
                 {!topMethod ? (
-                  <p className="empty-state">No training method data yet.</p>
+                  <p className="empty-state">No training method usage has been logged yet.</p>
                 ) : (
                   <div className="card-item dashboard-compact-card">
                     <strong>{topMethod.training_method_name}</strong>
                     <div className="detail-block">
-                      <div>{topMethod.description || 'No description'}</div>
+                      <div>{topMethod.description || 'No description added yet.'}</div>
                       <div className="meta-text">
                         Total Segments: {Number(topMethod.total_segments)}
                       </div>
@@ -247,15 +247,15 @@ export default function DashboardPage() {
             <section className="page-section dashboard-cta-section">
               <div className="section-header">
                 <div>
-                  <h3>Need More Detail?</h3>
-                  <p className="section-note">Use Reports when you want deeper trends instead of quick signals.</p>
+                  <h3>Want A Closer Look?</h3>
+                  <p className="section-note">Open Reports when you want a deeper look at trends instead of quick signals.</p>
                 </div>
               </div>
               <Link to="/reports" className="action-card dashboard-report-card">
                 <strong>Open Reports</strong>
                 <div className="detail-block">
                   <div className="meta-text">
-                    Dive deeper into neglected topics, method usage, and broader curriculum trends.
+                    Explore underused topics, method usage, and broader curriculum trends.
                   </div>
                   <div className="dashboard-report-link-text">Go to Reports</div>
                 </div>

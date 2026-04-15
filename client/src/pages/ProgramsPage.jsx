@@ -23,7 +23,7 @@ export default function ProgramsPage() {
       setPrograms(response.data);
     } catch (err) {
       console.error('Fetch programs error:', err);
-      setError(err.response?.data?.message || 'Failed to load programs');
+      setError(err.response?.data?.message || 'Couldn\'t load programs right now.');
     } finally {
       setLoading(false);
     }
@@ -68,7 +68,7 @@ export default function ProgramsPage() {
       await fetchPrograms();
     } catch (err) {
       console.error('Create program error:', err);
-      setError(err.response?.data?.message || 'Failed to create program');
+      setError(err.response?.data?.message || 'Couldn\'t create that program just now.');
     } finally {
       setSubmitting(false);
     }
@@ -124,13 +124,13 @@ export default function ProgramsPage() {
       }));
     } catch (err) {
       console.error('Update program error:', err);
-      setError(err.response?.data?.message || 'Failed to update program');
+      setError(err.response?.data?.message || 'Couldn\'t update that program just now.');
     }
   };
 
   const handleDeactivateProgram = async (programId) => {
     const confirmed = window.confirm(
-      'Deactivate this program? Existing data will remain, but the program will be marked inactive.'
+      'Make this program inactive? Existing data will stay in place, but it will be hidden from the default view.'
     );
     if (!confirmed) return;
 
@@ -140,7 +140,7 @@ export default function ProgramsPage() {
       await fetchPrograms();
     } catch (err) {
       console.error('Deactivate program error:', err);
-      setError(err.response?.data?.message || 'Failed to deactivate program');
+      setError(err.response?.data?.message || 'Couldn\'t update that program right now.');
     }
   };
 
@@ -174,7 +174,7 @@ export default function ProgramsPage() {
 
           <div>
             <button type="submit" disabled={submitting}>
-              {submitting ? 'Creating...' : 'Create Program'}
+              {submitting ? 'Saving...' : 'Save Program'}
             </button>
           </div>
         </form>
@@ -204,14 +204,14 @@ export default function ProgramsPage() {
         {loading ? (
           <p className="empty-state">Loading programs...</p>
         ) : orderedPrograms.length === 0 ? (
-          <p className="empty-state">No programs found.</p>
+          <p className="empty-state">No programs have been added yet.</p>
         ) : (
           <ul className="card-list">
             {orderedPrograms.map((program) => (
               <li key={program.id} className="card-item">
                 <strong>{program.name}</strong>
                 <div className="detail-block">
-                  <div>{program.description || 'No description'}</div>
+                  <div>{program.description || 'No description added yet.'}</div>
                   <div className="meta-text">
                     Active: {program.is_active ? 'Yes' : 'No'}
                   </div>

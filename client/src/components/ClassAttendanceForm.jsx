@@ -37,7 +37,7 @@ export default function ClassAttendanceForm({
     setError('');
 
     if (!formData.member_id) {
-      setError('Please select a member.');
+      setError('Select a member before saving attendance.');
       return;
     }
 
@@ -51,7 +51,7 @@ export default function ClassAttendanceForm({
 
       await api.post(`/classes/${classId}/members`, payload);
 
-      setMessage('Member added to class successfully.');
+      setMessage('Attendance saved successfully.');
       setFormData({
         member_id: '',
         attendance_status: 'present'
@@ -62,7 +62,7 @@ export default function ClassAttendanceForm({
       }
     } catch (err) {
       console.error('Failed to add member to class:', err);
-      setError(err.response?.data?.message || 'Failed to add member to class.');
+      setError(err.response?.data?.message || 'Couldn\'t save attendance just now.');
     } finally {
       setIsSubmitting(false);
     }
@@ -84,13 +84,13 @@ export default function ClassAttendanceForm({
             helperText={
               members.length === 0
                 ? 'No active members are available for this class yet.'
-                : 'Search and select a member, then click Add Attendance.'
+                : 'Search for a member, then save attendance when you are ready.'
             }
           />
           <p className="section-note">
             {members.length === 0
               ? 'No active members are available for this class yet.'
-              : 'Search and select a member, then click Add Attendance.'}
+              : 'Search for a member, then save attendance when you are ready.'}
           </p>
         </div>
 
@@ -108,7 +108,7 @@ export default function ClassAttendanceForm({
 
         <div className="inline-actions">
           <button type="submit" disabled={isSubmitting || !formData.member_id || members.length === 0}>
-            {isSubmitting ? 'Adding...' : 'Add Attendance'}
+            {isSubmitting ? 'Saving...' : 'Save Attendance'}
           </button>
         </div>
       </form>

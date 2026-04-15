@@ -48,7 +48,7 @@ export default function LibraryPage() {
         await Promise.all([fetchEntries(), fetchPrograms(), fetchTopics()]);
       } catch (err) {
         console.error('Load library page error:', err);
-        setError(err.response?.data?.message || 'Failed to load library');
+        setError(err.response?.data?.message || 'Couldn\'t load the library right now.');
       } finally {
         setLoading(false);
       }
@@ -125,7 +125,7 @@ export default function LibraryPage() {
       await fetchEntries();
     } catch (err) {
       console.error('Create library entry error:', err);
-      setError(err.response?.data?.message || 'Failed to create library entry');
+      setError(err.response?.data?.message || 'Couldn\'t create that library entry just now.');
     } finally {
       setSubmitting(false);
     }
@@ -134,8 +134,8 @@ export default function LibraryPage() {
   const handleSetActiveState = async (entry, nextIsActive) => {
     const confirmed = window.confirm(
       nextIsActive
-        ? 'Reactivate this library entry?'
-        : 'Deactivate this library entry? It will remain in the system but be marked inactive.'
+        ? 'Make this library entry active again?'
+        : 'Make this library entry inactive? It will stay in the system, but it will be hidden from the default view.'
     );
     if (!confirmed) return;
 
@@ -154,7 +154,7 @@ export default function LibraryPage() {
       await fetchEntries();
     } catch (err) {
       console.error('Update library entry active state error:', err);
-      setError(err.response?.data?.message || 'Failed to update library entry');
+      setError(err.response?.data?.message || 'Couldn\'t update that library entry right now.');
     }
   };
 
@@ -198,7 +198,7 @@ export default function LibraryPage() {
               value={formData.program_id}
               onChange={handleChange}
             >
-              <option value="">No Program</option>
+              <option value="">No program</option>
               {programs.map((program) => (
                 <option key={program.id} value={program.id}>
                   {program.name}
@@ -256,7 +256,7 @@ export default function LibraryPage() {
 
           <div>
             <button type="submit" disabled={submitting}>
-              {submitting ? 'Creating...' : 'Create Library Entry'}
+              {submitting ? 'Saving...' : 'Save Library Entry'}
             </button>
           </div>
         </form>
@@ -286,7 +286,7 @@ export default function LibraryPage() {
         {loading ? (
           <p className="empty-state">Loading library...</p>
         ) : orderedEntries.length === 0 ? (
-          <p className="empty-state">No library entries found.</p>
+          <p className="empty-state">No library entries have been added yet.</p>
         ) : (
           <ul className="card-list">
             {orderedEntries.map((entry) => (
@@ -314,7 +314,7 @@ export default function LibraryPage() {
                       Updated: {new Date(entry.updated_at).toLocaleString()}
                     </div>
                   )}
-                  <div>{entry.description || 'No description'}</div>
+                  <div>{entry.description || 'No description added yet.'}</div>
                 </div>
 
                 <div className="inline-actions">
@@ -335,7 +335,7 @@ export default function LibraryPage() {
                       className="secondary-button"
                       onClick={() => handleSetActiveState(entry, true)}
                     >
-                      Reactivate Entry
+                      Make Entry Active Again
                     </button>
                   )}
                 </div>

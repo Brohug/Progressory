@@ -8,6 +8,9 @@ export default function TopicsPage() {
   const [topics, setTopics] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [showInactive, setShowInactive] = useState(false);
+  const [topicSearch, setTopicSearch] = useState('');
+  const [topicTypeFilter, setTopicTypeFilter] = useState('');
+  const [programFilter, setProgramFilter] = useState('');
   const [formData, setFormData] = useState({
     program_id: '',
     parent_topic_id: '',
@@ -35,7 +38,7 @@ export default function TopicsPage() {
       setTopics(response.data);
     } catch (err) {
       console.error('Fetch topics error:', err);
-      setError(err.response?.data?.message || 'Failed to load topics');
+      setError(err.response?.data?.message || 'Couldn\'t load topics right now.');
     }
   };
 
@@ -45,7 +48,7 @@ export default function TopicsPage() {
       setPrograms(response.data);
     } catch (err) {
       console.error('Fetch programs error:', err);
-      setError(err.response?.data?.message || 'Failed to load programs');
+      setError(err.response?.data?.message || 'Couldn\'t load programs right now.');
     }
   };
 
@@ -69,6 +72,23 @@ export default function TopicsPage() {
 
     return showInactive ? [...active, ...inactive] : active;
   }, [topics, showInactive]);
+
+  const filteredTopics = useMemo(() => {
+    const normalizedSearch = topicSearch.trim().toLowerCase();
+
+    return orderedTopics.filter((topic) => {
+      const matchesSearch = !normalizedSearch || (
+        (topic.title || '').toLowerCase().includes(normalizedSearch) ||
+        (topic.description || '').toLowerCase().includes(normalizedSearch) ||
+        (topic.parent_topic_title || '').toLowerCase().includes(normalizedSearch)
+      );
+
+      const matchesType = !topicTypeFilter || topic.topic_type === topicTypeFilter;
+      const matchesProgram = !programFilter || String(topic.program_id || '') === programFilter;
+
+      return matchesSearch && matchesType && matchesProgram;
+    });
+  }, [orderedTopics, topicSearch, topicTypeFilter, programFilter]);
 
   const availableParentTopics = useMemo(() => {
     const activeTopics = topics.filter((topic) => topic.is_active);
@@ -125,7 +145,7 @@ export default function TopicsPage() {
       await fetchTopics();
     } catch (err) {
       console.error('Create topic error:', err);
-      setError(err.response?.data?.message || 'Failed to create topic');
+      setError(err.response?.data?.message || 'Couldn\'t create that topic just now.');
     } finally {
       setSubmitting(false);
     }
@@ -134,8 +154,8 @@ export default function TopicsPage() {
   const handleSetActiveState = async (topic, nextIsActive) => {
     const confirmed = window.confirm(
       nextIsActive
-        ? 'Reactivate this topic?'
-        : 'Deactivate this topic? It will remain in the system but be marked inactive.'
+        ? 'Make this topic active again?'
+        : 'Make this topic inactive? It will stay in the system, but it will be hidden from the default view.'
     );
     if (!confirmed) return;
 
@@ -152,7 +172,7 @@ export default function TopicsPage() {
       await fetchTopics();
     } catch (err) {
       console.error('Update topic active state error:', err);
-      setError(err.response?.data?.message || 'Failed to update topic');
+      setError(err.response?.data?.message || 'Couldn\'t update that topic right now.');
     }
   };
 
@@ -171,7 +191,7 @@ export default function TopicsPage() {
               value={formData.program_id}
               onChange={handleChange}
             >
-              <option value="">No Program</option>
+              <option value="">No program</option>
               {programs.map((program) => (
                 <option key={program.id} value={program.id}>
                   {program.name}
@@ -229,7 +249,7 @@ export default function TopicsPage() {
 
           <div>
             <button type="submit" disabled={submitting}>
-              {submitting ? 'Creating...' : 'Create Topic'}
+              {submitting ? 'Saving...' : 'Save Topic'}
             </button>
           </div>
         </form>
@@ -238,16 +258,11 @@ export default function TopicsPage() {
       {error && <p className="error-text">{error}</p>}
 
       <section className="page-section">
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            gap: '12px',
-            alignItems: 'center',
-            flexWrap: 'wrap'
-          }}
-        >
-          <h3 style={{ marginBottom: 0 }}>Topic List</h3>
+        <div className="section-header">
+          <div>
+            <h3>Topic List</h3>
+            <p className="section-note">Search and filter your curriculum as the topic library grows.</p>
+          </div>
           <button
             className="secondary-button"
             onClick={() => setShowInactive((prev) => !prev)}
@@ -256,13 +271,57 @@ export default function TopicsPage() {
           </button>
         </div>
 
+        <div className="filter-grid">
+          <div>
+            <label>Search Topics</label>
+            <input
+              type="text"
+              value={topicSearch}
+              onChange={(e) => setTopicSearch(e.target.value)}
+              placeholder="Search by title, description, or parent topic..."
+            />
+          </div>
+
+          <div>
+            <label>Filter By Type</label>
+            <select
+              value={topicTypeFilter}
+              onChange={(e) => setTopicTypeFilter(e.target.value)}
+            >
+              <option value="">All Types</option>
+              {topicTypes.map((type) => (
+                <option key={type} value={type}>
+                  {formatLabel(type)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label>Filter By Program</label>
+            <select
+              value={programFilter}
+              onChange={(e) => setProgramFilter(e.target.value)}
+            >
+              <option value="">All Programs</option>
+              {programs.map((program) => (
+                <option key={program.id} value={String(program.id)}>
+                  {program.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         {loading ? (
           <p className="empty-state">Loading topics...</p>
-        ) : orderedTopics.length === 0 ? (
-          <p className="empty-state">No topics found.</p>
+        ) : filteredTopics.length === 0 ? (
+          <p className="empty-state">
+            {topics.length === 0 ? 'No topics have been added yet.' : 'No topics match those filters right now.'}
+          </p>
         ) : (
           <ul className="card-list">
-            {orderedTopics.map((topic) => (
+            {filteredTopics.map((topic) => (
               <li key={topic.id} className="card-item">
                 <strong>{topic.title}</strong>
                 <div className="detail-block">
@@ -272,7 +331,7 @@ export default function TopicsPage() {
                   <div className="meta-text">
                     Active: {topic.is_active ? 'Yes' : 'No'}
                   </div>
-                  <div>{topic.description || 'No description'}</div>
+                  <div>{topic.description || 'No description added yet.'}</div>
                 </div>
 
                 <div className="inline-actions">
@@ -288,7 +347,7 @@ export default function TopicsPage() {
                       className="secondary-button"
                       onClick={() => handleSetActiveState(topic, true)}
                     >
-                      Reactivate Topic
+                      Make Topic Active Again
                     </button>
                   )}
                 </div>

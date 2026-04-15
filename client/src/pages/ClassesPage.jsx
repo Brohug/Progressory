@@ -108,7 +108,7 @@ export default function ClassesPage() {
       setClasses(response.data);
     } catch (err) {
       console.error('Fetch classes error:', err);
-      setError(err.response?.data?.message || 'Failed to load classes');
+      setError(err.response?.data?.message || 'Couldn\'t load classes right now.');
     }
   };
 
@@ -118,7 +118,7 @@ export default function ClassesPage() {
       setPrograms(response.data);
     } catch (err) {
       console.error('Fetch programs error:', err);
-      setError(err.response?.data?.message || 'Failed to load programs');
+      setError(err.response?.data?.message || 'Couldn\'t load programs right now.');
     }
   };
 
@@ -128,7 +128,7 @@ export default function ClassesPage() {
       setAllTopics(response.data);
     } catch (err) {
       console.error('Fetch all topics error:', err);
-      setError(err.response?.data?.message || 'Failed to load topics');
+      setError(err.response?.data?.message || 'Couldn\'t load topics right now.');
     }
   };
 
@@ -138,7 +138,7 @@ export default function ClassesPage() {
       setTrainingMethods(response.data);
     } catch (err) {
       console.error('Fetch training methods error:', err);
-      setError(err.response?.data?.message || 'Failed to load training methods');
+      setError(err.response?.data?.message || 'Couldn\'t load training methods right now.');
     }
   };
 
@@ -148,7 +148,7 @@ export default function ClassesPage() {
       setTrainingScenarios(response.data);
     } catch (err) {
       console.error('Fetch training scenarios error:', err);
-      setError(err.response?.data?.message || 'Failed to load training scenarios');
+      setError(err.response?.data?.message || 'Couldn\'t load training scenarios right now.');
     }
   };
 
@@ -158,7 +158,7 @@ export default function ClassesPage() {
       setAllMembers(response.data);
     } catch (err) {
       console.error('Fetch members error:', err);
-      setError(err.response?.data?.message || 'Failed to load members');
+      setError(err.response?.data?.message || 'Couldn\'t load members right now.');
     }
   };
 
@@ -294,10 +294,10 @@ export default function ClassesPage() {
       });
 
       await fetchClasses();
-      setClassMessage('Class created successfully.');
+      setClassMessage('Class saved successfully.');
     } catch (err) {
       console.error('Create class error:', err);
-      setError(err.response?.data?.message || 'Failed to create class');
+      setError(err.response?.data?.message || 'Couldn\'t create that class just now.');
     } finally {
       setSubmitting(false);
     }
@@ -342,12 +342,12 @@ export default function ClassesPage() {
         round_duration_seconds: ''
       });
 
-      setScenarioMessage('Training scenario created successfully.');
+      setScenarioMessage('Training scenario saved successfully.');
       await fetchTrainingScenarios();
     } catch (err) {
       console.error('Create training scenario error:', err);
       setScenarioError(
-        err.response?.data?.message || 'Failed to create training scenario'
+          err.response?.data?.message || 'Couldn\'t create that training scenario just now.'
       );
     } finally {
       setScenarioSubmitting(false);
@@ -615,6 +615,33 @@ export default function ClassesPage() {
     return matchingMembers.length > 0 ? matchingMembers : activeMembers;
   };
 
+  const getSuggestedTopicsForClass = (classItem) => {
+    const availableTopics = getTopicsForClass(classItem);
+    const currentClassTopics = classTopicsMap[classItem.id] || [];
+    const suggestedTopics = [];
+    const seenTopicIds = new Set();
+
+    currentClassTopics.forEach((entry) => {
+      const matchedTopic = availableTopics.find(
+        (topic) => String(topic.id) === String(entry.curriculum_topic_id)
+      );
+
+      if (matchedTopic && !seenTopicIds.has(matchedTopic.id)) {
+        seenTopicIds.add(matchedTopic.id);
+        suggestedTopics.push(matchedTopic);
+      }
+    });
+
+    availableTopics.forEach((topic) => {
+      if (!seenTopicIds.has(topic.id)) {
+        seenTopicIds.add(topic.id);
+        suggestedTopics.push(topic);
+      }
+    });
+
+    return suggestedTopics.slice(0, 6);
+  };
+
   const getTopicsForScenarioProgram = (programId) => {
     if (!programId) {
       return allTopics.filter((topic) => topic.is_active);
@@ -741,10 +768,10 @@ export default function ClassesPage() {
           >
             {activeView === 'classes'
               ? showCreateClassForm
-                ? 'Hide New Class Form'
+                ? 'Hide New Class'
                 : 'New Class'
               : showCreateScenarioForm
-                ? 'Hide New Scenario Form'
+                ? 'Hide New Scenario'
                 : 'New Training Scenario'}
           </button>
         </div>
@@ -762,7 +789,7 @@ export default function ClassesPage() {
               value={formData.program_id}
               onChange={handleChange}
             >
-              <option value="">Select Program</option>
+              <option value="">Choose a program</option>
               {programs.filter((program) => program.is_active).map((program) => (
                 <option key={program.id} value={program.id}>
                   {program.name}
@@ -861,7 +888,7 @@ export default function ClassesPage() {
               value={scenarioFormData.training_method_id}
               onChange={handleScenarioFormChange}
             >
-              <option value="">Select Training Method</option>
+              <option value="">Choose a training method</option>
               {trainingMethods.filter((method) => method.is_active).map((method) => (
                 <option key={method.id} value={method.id}>
                   {method.name}
@@ -890,7 +917,7 @@ export default function ClassesPage() {
               value={scenarioFormData.starting_position_topic_id}
               onChange={handleScenarioFormChange}
             >
-              <option value="">No Starting Topic</option>
+              <option value="">No starting topic</option>
               {getTopicsForScenarioProgram(scenarioFormData.program_id).map((topic) => (
                 <option key={topic.id} value={topic.id}>
                   {topic.title}
@@ -1075,7 +1102,7 @@ export default function ClassesPage() {
                             value={editScenarioMap[scenario.id]?.training_method_id || ''}
                             onChange={(e) => handleEditScenarioChange(scenario.id, e)}
                           >
-                            <option value="">Select Training Method</option>
+                              <option value="">Choose a training method</option>
                             {trainingMethods.filter((method) => method.is_active).map((method) => (
                               <option key={method.id} value={method.id}>
                                 {method.name}
@@ -1101,7 +1128,7 @@ export default function ClassesPage() {
                             value={editScenarioMap[scenario.id]?.starting_position_topic_id || ''}
                             onChange={(e) => handleEditScenarioChange(scenario.id, e)}
                           >
-                            <option value="">No Starting Topic</option>
+                              <option value="">No starting topic</option>
                             {getTopicsForScenarioProgram(editScenarioMap[scenario.id]?.program_id).map((topic) => (
                               <option key={topic.id} value={topic.id}>
                                 {topic.title}
@@ -1228,7 +1255,7 @@ export default function ClassesPage() {
           <p className="empty-state">Loading classes...</p>
         ) : visibleClasses.length === 0 ? (
           <p className="empty-state">
-            {classSearch.trim() ? 'No classes match your search.' : 'No classes found.'}
+            {classSearch.trim() ? 'No classes match those filters yet.' : 'No classes have been added yet.'}
           </p>
         ) : (
           <ul className="card-list">
@@ -1255,7 +1282,7 @@ export default function ClassesPage() {
                     className="secondary-button"
                     onClick={() => toggleClassDetails(classItem)}
                   >
-                    {expandedClasses[classItem.id] ? 'Hide Class' : 'Manage Class'}
+                    {expandedClasses[classItem.id] ? 'Hide Details' : 'Manage Class'}
                   </button>
                 </div>
 
@@ -1365,12 +1392,15 @@ export default function ClassesPage() {
                         ))}
                       </ul>
                     ) : (
-                      <p className="empty-state">No members attached to this class.</p>
+                      <p className="empty-state">No attendance has been logged for this class yet.</p>
                     )}
 
                     <ClassTopicsForm
                       classId={classItem.id}
                       topics={getTopicsForClass(classItem)}
+                      suggestedTopics={getSuggestedTopicsForClass(classItem)}
+                      defaultProgramId={classItem.program_id ? String(classItem.program_id) : ''}
+                      onTopicCreated={fetchAllTopics}
                       onSuccess={() => loadClassDetails(classItem.id)}
                     />
 
@@ -1403,7 +1433,7 @@ export default function ClassesPage() {
                         ))}
                       </ul>
                     ) : (
-                      <p className="empty-state">No topics logged for this class.</p>
+                      <p className="empty-state">No topics have been logged for this class yet.</p>
                     )}
 
                     <h4>Training Entries</h4>
@@ -1435,7 +1465,7 @@ export default function ClassesPage() {
                         ))}
                       </ul>
                     ) : (
-                      <p className="empty-state">No training entries logged for this class.</p>
+                      <p className="empty-state">No training entries have been logged for this class yet.</p>
                     )}
                   </div>
                 )}

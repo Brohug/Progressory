@@ -6,7 +6,8 @@ export default function TopicSearchSelect({
   onChange,
   placeholder = 'Search topics...',
   emptySelectionLabel = 'No topic selected',
-  helperText = 'Select a topic from the matches below.'
+  helperText = 'Select a topic from the matches below.',
+  onCreateOption
 }) {
   const [query, setQuery] = useState('');
 
@@ -25,6 +26,12 @@ export default function TopicSearchSelect({
       .filter((topic) => topic.title.toLowerCase().includes(normalizedQuery))
       .slice(0, 12);
   }, [topics, query]);
+
+  const normalizedQuery = query.trim().toLowerCase();
+  const hasExactMatch = topics.some(
+    (topic) => topic.title.trim().toLowerCase() === normalizedQuery
+  );
+  const canCreateFromQuery = Boolean(onCreateOption && normalizedQuery && !hasExactMatch);
 
   return (
     <div className="search-select">
@@ -55,6 +62,16 @@ export default function TopicSearchSelect({
       )}
 
       <div className="search-select-results">
+        {canCreateFromQuery && (
+          <button
+            type="button"
+            className="search-select-create"
+            onClick={() => onCreateOption(query.trim())}
+          >
+            Create topic: "{query.trim()}"
+          </button>
+        )}
+
         {filteredTopics.length === 0 ? (
           <p className="empty-state">No matching topics.</p>
         ) : (

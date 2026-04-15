@@ -34,7 +34,7 @@ export default function ReportsPage() {
       setNeglectedTopics(neglectedTopicsRes.data);
     } catch (err) {
       console.error('Load reports error:', err);
-      setError(err.response?.data?.message || 'Failed to load reports');
+      setError(err.response?.data?.message || 'Couldn\'t load reports right now.');
     } finally {
       setLoading(false);
     }
@@ -61,12 +61,17 @@ export default function ReportsPage() {
     .sort((a, b) => Number(b.total_times_used) - Number(a.total_times_used))
     .slice(0, 6);
 
+  const topMethods = trainingMethodUsage
+    .slice()
+    .sort((a, b) => Number(b.total_segments) - Number(a.total_segments))
+    .slice(0, 6);
+
   return (
     <Layout>
       <div className="reports-page">
         <h2 className="page-title">Reports</h2>
         <p className="page-intro">
-          Review trends, spot neglected curriculum areas, and understand what is being taught and how it's being taught.
+          Review trends, spot underused curriculum areas, and better understand what is being taught and how it is being taught.
         </p>
 
         {error && <p className="error-text">{error}</p>}
@@ -84,122 +89,125 @@ export default function ReportsPage() {
               ))}
             </section>
 
-            <section className="two-column-grid reports-insights-grid">
-              <div className="page-section reports-priority-section">
-                <div className="section-header">
-                  <div>
-                    <h3>Neglected Topics</h3>
-                    <p className="section-note">Topics that have not appeared recently and may need attention.</p>
-                  </div>
+            <section className="page-section reports-priority-section">
+              <div className="section-header">
+                <div>
+                  <h3>Unused / Underutilized Topics</h3>
+                  <p className="section-note">Topics that have not shown up recently and may be worth revisiting in upcoming classes.</p>
                 </div>
-                {neglectedTopics.length === 0 ? (
-                  <p className="empty-state">No neglected topics found in the selected time range.</p>
-                ) : (
-                  <ul className="card-list">
-                    {neglectedTopics.map((item) => (
-                      <li key={item.topic_id} className="card-item reports-compact-card">
-                        <strong>{item.topic_title}</strong>
-                        <div className="detail-block">
-                          <div className="meta-text">Type: {formatLabel(item.topic_type)}</div>
-                          <div className="meta-text">Program: {item.program_name || 'None'}</div>
-                          <div className="meta-text">
-                            Last Used:{' '}
-                            {item.last_used_date
-                              ? new Date(item.last_used_date).toLocaleDateString()
-                              : 'Never'}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
               </div>
+              {neglectedTopics.length === 0 ? (
+                <p className="empty-state">No underused topics showed up in this time range.</p>
+              ) : (
+                <div className="reports-featured-grid">
+                  {neglectedTopics.slice(0, 6).map((item) => (
+                    <article key={item.topic_id} className="reports-featured-card">
+                      <strong>{item.topic_title}</strong>
+                      <div className="detail-block">
+                        <div className="meta-text">Type: {formatLabel(item.topic_type)}</div>
+                        <div className="meta-text">Program: {item.program_name || 'None'}</div>
+                        <div className="meta-text">
+                          Last Used:{' '}
+                          {item.last_used_date
+                            ? new Date(item.last_used_date).toLocaleDateString()
+                            : 'Not yet used'}
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
 
-              <div className="page-section">
+            <section className="two-column-grid reports-insights-grid">
+              <div className="page-section reports-ranked-section">
                 <div className="section-header">
                   <div>
                     <h3>Training Method Usage</h3>
                     <p className="section-note">How often each training method appears in logged class segments.</p>
                   </div>
                 </div>
-                {trainingMethodUsage.length === 0 ? (
-                  <p className="empty-state">No training method usage data found.</p>
+                {topMethods.length === 0 ? (
+                  <p className="empty-state">No training method usage has been logged yet.</p>
                 ) : (
-                  <ul className="card-list">
-                    {trainingMethodUsage.map((item) => (
-                      <li key={item.training_method_id} className="card-item reports-compact-card">
-                        <strong>{item.training_method_name}</strong>
-                        <div className="detail-block">
-                          <div>{item.description || 'No description'}</div>
+                  <div className="reports-ranked-list">
+                    {topMethods.map((item, index) => (
+                      <div key={item.training_method_id} className="reports-ranked-row">
+                        <div className="reports-rank">{index + 1}</div>
+                        <div className="reports-ranked-main">
+                          <strong>{item.training_method_name}</strong>
+                          <div className="meta-text">{item.description || 'No description added yet.'}</div>
+                        </div>
+                        <div className="reports-ranked-stats">
+                          <span>{Number(item.total_segments)} segments</span>
+                          <span>{Number(item.total_duration_minutes)} min</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="page-section reports-ranked-section">
+                <div className="section-header">
+                  <div>
+                    <h3>Top Topic Coverage</h3>
+                    <p className="section-note">The most-used topics ranked by how often they appear in classes.</p>
+                  </div>
+                </div>
+                {topTopics.length === 0 ? (
+                  <p className="empty-state">No topic coverage has been logged yet.</p>
+                ) : (
+                  <div className="reports-ranked-list">
+                    {topTopics.map((item, index) => (
+                      <div key={item.topic_id} className="reports-ranked-row">
+                        <div className="reports-rank">{index + 1}</div>
+                        <div className="reports-ranked-main">
+                          <strong>{item.topic_title}</strong>
                           <div className="meta-text">
-                            Total Segments: {Number(item.total_segments)}
-                          </div>
-                          <div className="meta-text">
-                            Total Duration: {Number(item.total_duration_minutes)} minutes
+                            {formatLabel(item.topic_type)} | {item.program_name || 'None'}
                           </div>
                         </div>
-                      </li>
+                        <div className="reports-ranked-stats">
+                          <span>{Number(item.total_times_used)} uses</span>
+                          <span>{Number(item.focus_count)} focus</span>
+                        </div>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 )}
               </div>
             </section>
 
-            <section className="page-section">
+            <section className="page-section reports-activity-section">
               <div className="section-header">
                 <div>
                   <h3>Recent Classes</h3>
-                  <p className="section-note">The latest classes included in this reporting view.</p>
+                  <p className="section-note">The most recent classes included in this reporting view.</p>
                 </div>
               </div>
               {recentClasses.length === 0 ? (
-                <p className="empty-state">No recent classes found.</p>
+                <p className="empty-state">No recent classes to show yet.</p>
               ) : (
-                <ul className="card-list">
+                <div className="reports-activity-list">
                   {recentClasses.map((item) => (
-                    <li key={item.id} className="card-item reports-compact-card">
-                      <strong>{item.title || 'Untitled Class'}</strong>
-                      <div className="detail-block">
-                        <div className="meta-text">Program: {item.program_name}</div>
-                        <div className="meta-text">
+                    <article key={item.id} className="reports-activity-item">
+                      <div className="reports-activity-header">
+                        <strong>{item.title || 'Untitled Class'}</strong>
+                        <span className="meta-text">
+                          {new Date(item.class_date).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="reports-activity-meta">
+                        <span>Program: {item.program_name}</span>
+                        <span>
                           Coach: {item.head_coach_first_name} {item.head_coach_last_name}
-                        </div>
-                        <div className="meta-text">
-                          Date: {new Date(item.class_date).toLocaleDateString()}
-                        </div>
-                        <div>{item.notes || 'No notes'}</div>
+                        </span>
                       </div>
-                    </li>
+                      <div className="meta-text">{item.notes || 'No notes added yet.'}</div>
+                    </article>
                   ))}
-                </ul>
-              )}
-            </section>
-
-            <section className="page-section">
-              <div className="section-header">
-                <div>
-                  <h3>Top Topic Coverage</h3>
-                  <p className="section-note">The most-used topics ranked by how often they appear in classes.</p>
                 </div>
-              </div>
-              {topTopics.length === 0 ? (
-                <p className="empty-state">No topic coverage data found.</p>
-              ) : (
-                <ul className="card-list">
-                  {topTopics.map((item) => (
-                    <li key={item.topic_id} className="card-item reports-compact-card">
-                      <strong>{item.topic_title}</strong>
-                      <div className="detail-block">
-                        <div className="meta-text">Type: {formatLabel(item.topic_type)}</div>
-                        <div className="meta-text">Program: {item.program_name || 'None'}</div>
-                        <div className="meta-text">Total Uses: {Number(item.total_times_used)}</div>
-                        <div className="meta-text">Focus Count: {Number(item.focus_count)}</div>
-                        <div className="meta-text">Taught: {Number(item.taught_count)}</div>
-                        <div className="meta-text">Reviewed: {Number(item.reviewed_count)}</div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
               )}
             </section>
           </>
