@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import api from '../api/axios';
 import Layout from '../components/Layout';
 import { formatLabel } from '../utils/formatLabel';
+import TopicSearchSelect from '../components/TopicSearchSelect';
 
 export default function LibraryPage() {
   const [entries, setEntries] = useState([]);
@@ -63,10 +64,31 @@ export default function LibraryPage() {
     return showInactive ? [...active, ...inactive] : active;
   }, [entries, showInactive]);
 
+  const availableTopics = useMemo(() => {
+    const activeTopics = topics.filter((topic) => topic.is_active);
+
+    if (!formData.program_id) {
+      return activeTopics;
+    }
+
+    const matchingTopics = activeTopics.filter((topic) => (
+      topic.program_id === null || String(topic.program_id) === String(formData.program_id)
+    ));
+
+    return matchingTopics.length > 0 ? matchingTopics : activeTopics;
+  }, [topics, formData.program_id]);
+
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value
+    }));
+  };
+
+  const handleTopicChange = (topicId) => {
+    setFormData((prev) => ({
+      ...prev,
+      curriculum_topic_id: topicId
     }));
   };
 
@@ -187,18 +209,14 @@ export default function LibraryPage() {
 
           <div>
             <label>Curriculum Topic</label>
-            <select
-              name="curriculum_topic_id"
+            <TopicSearchSelect
+              topics={availableTopics}
               value={formData.curriculum_topic_id}
-              onChange={handleChange}
-            >
-              <option value="">No Topic</option>
-              {topics.map((topic) => (
-                <option key={topic.id} value={topic.id}>
-                  {topic.title}
-                </option>
-              ))}
-            </select>
+              onChange={handleTopicChange}
+              placeholder="Search curriculum topics for this entry..."
+              emptySelectionLabel="No topic selected"
+              helperText="Search and select a curriculum topic if this entry should be linked."
+            />
           </div>
 
           <div>

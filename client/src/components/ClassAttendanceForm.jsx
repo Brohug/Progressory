@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import api from '../api/axios';
 import { formatLabel } from '../utils/formatLabel';
+import MemberSearchSelect from './MemberSearchSelect';
 
 export default function ClassAttendanceForm({
   classId,
@@ -20,6 +21,13 @@ export default function ClassAttendanceForm({
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value
+    }));
+  };
+
+  const handleMemberChange = (memberId) => {
+    setFormData((prev) => ({
+      ...prev,
+      member_id: memberId
     }));
   };
 
@@ -67,25 +75,22 @@ export default function ClassAttendanceForm({
       <form className="form-grid" onSubmit={handleSubmit}>
         <div>
           <label>Member</label>
-          <select
-            name="member_id"
+          <MemberSearchSelect
+            members={members}
             value={formData.member_id}
-            onChange={handleChange}
-            disabled={members.length === 0}
-          >
-            <option value="">
-              {members.length === 0 ? 'No members available' : 'Select a member'}
-            </option>
-            {members.map((member) => (
-              <option key={member.id} value={member.id}>
-                {member.first_name} {member.last_name}
-              </option>
-            ))}
-          </select>
+            onChange={handleMemberChange}
+            placeholder="Search members for attendance..."
+            emptySelectionLabel={members.length === 0 ? 'No members available' : 'No member selected'}
+            helperText={
+              members.length === 0
+                ? 'No active members are available for this class yet.'
+                : 'Search and select a member, then click Add Attendance.'
+            }
+          />
           <p className="section-note">
             {members.length === 0
               ? 'No active members are available for this class yet.'
-              : 'Select a member, then click Add Attendance.'}
+              : 'Search and select a member, then click Add Attendance.'}
           </p>
         </div>
 

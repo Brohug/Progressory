@@ -4,7 +4,9 @@ export default function TopicSearchSelect({
   topics,
   value,
   onChange,
-  placeholder = 'Search topics...'
+  placeholder = 'Search topics...',
+  emptySelectionLabel = 'No topic selected',
+  helperText = 'Select a topic from the matches below.'
 }) {
   const [query, setQuery] = useState('');
 
@@ -45,7 +47,11 @@ export default function TopicSearchSelect({
           </button>
         </div>
       ) : (
-        <p className="section-note">Select a topic from the matches below.</p>
+        <p className="section-note">{helperText}</p>
+      )}
+
+      {!selectedTopic && value === '' && (
+        <div className="search-select-empty">{emptySelectionLabel}</div>
       )}
 
       <div className="search-select-results">

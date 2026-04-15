@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import api from '../api/axios';
 import Layout from '../components/Layout';
 import { formatLabel } from '../utils/formatLabel';
+import TopicSearchSelect from '../components/TopicSearchSelect';
 
 export default function TopicsPage() {
   const [topics, setTopics] = useState([]);
@@ -69,10 +70,31 @@ export default function TopicsPage() {
     return showInactive ? [...active, ...inactive] : active;
   }, [topics, showInactive]);
 
+  const availableParentTopics = useMemo(() => {
+    const activeTopics = topics.filter((topic) => topic.is_active);
+
+    if (!formData.program_id) {
+      return activeTopics;
+    }
+
+    const matchingTopics = activeTopics.filter((topic) => (
+      topic.program_id === null || String(topic.program_id) === String(formData.program_id)
+    ));
+
+    return matchingTopics.length > 0 ? matchingTopics : activeTopics;
+  }, [topics, formData.program_id]);
+
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value
+    }));
+  };
+
+  const handleParentTopicChange = (topicId) => {
+    setFormData((prev) => ({
+      ...prev,
+      parent_topic_id: topicId
     }));
   };
 
@@ -160,18 +182,14 @@ export default function TopicsPage() {
 
           <div>
             <label>Parent Topic</label>
-            <select
-              name="parent_topic_id"
+            <TopicSearchSelect
+              topics={availableParentTopics}
               value={formData.parent_topic_id}
-              onChange={handleChange}
-            >
-              <option value="">No Parent</option>
-              {topics.map((topic) => (
-                <option key={topic.id} value={topic.id}>
-                  {topic.title}
-                </option>
-              ))}
-            </select>
+              onChange={handleParentTopicChange}
+              placeholder="Search parent topics..."
+              emptySelectionLabel="No parent topic selected"
+              helperText="Search and select a parent topic if this topic belongs under another one."
+            />
           </div>
 
           <div>
