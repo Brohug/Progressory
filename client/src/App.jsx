@@ -1,97 +1,108 @@
+import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from "./context/AuthContext.jsx";
 import ProtectedRoute from './components/ProtectedRoute';
 
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-import ProgramsPage from './pages/ProgramsPage';
-import TopicsPage from './pages/TopicsPage';
-import ClassesPage from './pages/ClassesPage';
-import ReportsPage from './pages/ReportsPage';
-import LibraryPage from './pages/LibraryPage';
-import MembersPage from './pages/MembersPage';
-import StaffPage from './pages/StaffPage';
-import CurriculumIndexPage from './pages/CurriculumIndexPage';
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const ProgramsPage = lazy(() => import('./pages/ProgramsPage'));
+const TopicsPage = lazy(() => import('./pages/TopicsPage'));
+const ClassesPage = lazy(() => import('./pages/ClassesPage'));
+const ReportsPage = lazy(() => import('./pages/ReportsPage'));
+const LibraryPage = lazy(() => import('./pages/LibraryPage'));
+const MembersPage = lazy(() => import('./pages/MembersPage'));
+const StaffPage = lazy(() => import('./pages/StaffPage'));
+const CurriculumIndexPage = lazy(() => import('./pages/CurriculumIndexPage'));
+
+function RouteFallback() {
+  return (
+    <div style={{ padding: '2rem', textAlign: 'center' }}>
+      Loading page...
+    </div>
+  );
+}
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LoginPage />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/programs"
-            element={
-              <ProtectedRoute>
-                <ProgramsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/topics"
-            element={
-              <ProtectedRoute>
-                <TopicsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/index"
-            element={
-              <ProtectedRoute>
-                <CurriculumIndexPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/classes"
-            element={
-              <ProtectedRoute>
-                <ClassesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reports"
-            element={
-              <ProtectedRoute>
-                <ReportsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/library"
-            element={
-              <ProtectedRoute>
-                <LibraryPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/members"
-            element={
-              <ProtectedRoute>
-                <MembersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/staff"
-            element={
-              <ProtectedRoute>
-                <StaffPage />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/" element={<LoginPage />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/programs"
+              element={
+                <ProtectedRoute>
+                  <ProgramsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/topics"
+              element={
+                <ProtectedRoute>
+                  <TopicsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/index"
+              element={
+                <ProtectedRoute>
+                  <CurriculumIndexPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/classes"
+              element={
+                <ProtectedRoute>
+                  <ClassesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute>
+                  <ReportsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/library"
+              element={
+                <ProtectedRoute>
+                  <LibraryPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/members"
+              element={
+                <ProtectedRoute>
+                  <MembersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/staff"
+              element={
+                <ProtectedRoute>
+                  <StaffPage />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   );
