@@ -41,6 +41,8 @@ export default function TopicSearchSelect({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
+        aria-label={placeholder}
+        className="search-select-input"
       />
 
       {selectedTopic ? (

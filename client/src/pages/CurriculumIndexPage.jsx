@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import Layout from '../components/Layout';
+import TopicSearchSelect from '../components/TopicSearchSelect';
 import curriculumIndexSeed from '../data/curriculumIndexSeed';
 
 const skillLevelOrder = ['Beginner', 'Intermediate', 'Advanced'];
@@ -14,8 +15,30 @@ const normalizeValue = (value) => (
     .replace(/\s+/g, ' ')
 );
 
+const inferTopicType = (entry) => {
+  const category = String(entry.category || '').toLowerCase();
+
+  if (category === 'positions') return 'position';
+  if (category === 'submissions' || category === 'leg locks') return 'submission';
+  if (category === 'escapes' || category === 'submission defense') return 'escape';
+  if (category === 'takedowns') return 'takedown';
+  if (
+    category === 'fundamentals' ||
+    category === 'concepts' ||
+    category === 'strategy and game planning'
+  ) {
+    return 'concept';
+  }
+  if (category === 'drills' || category === 'constraint-led games' || category === 'positional sparring') {
+    return 'drill_theme';
+  }
+
+  return 'technique';
+};
+
 export default function CurriculumIndexPage() {
   const [topics, setTopics] = useState([]);
+  const [programs, setPrograms] = useState([]);
   const [libraryEntries, setLibraryEntries] = useState([]);
   const [topicCoverage, setTopicCoverage] = useState([]);
   const [neglectedTopics, setNeglectedTopics] = useState([]);
@@ -23,6 +46,25 @@ export default function CurriculumIndexPage() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [skillLevelFilter, setSkillLevelFilter] = useState('');
   const [entryNoticeMap, setEntryNoticeMap] = useState({});
+  const [creatingEntryId, setCreatingEntryId] = useState(null);
+  const [editingTopicId, setEditingTopicId] = useState(null);
+  const [isCreatingTopic, setIsCreatingTopic] = useState(false);
+  const [isUpdatingTopic, setIsUpdatingTopic] = useState(false);
+  const [createTopicData, setCreateTopicData] = useState({
+    title: '',
+    topic_type: 'technique',
+    program_id: '',
+    parent_topic_id: '',
+    description: ''
+  });
+  const [editTopicData, setEditTopicData] = useState({
+    title: '',
+    topic_type: 'technique',
+    program_id: '',
+    parent_topic_id: '',
+    description: '',
+    is_active: 'true'
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -34,17 +76,20 @@ export default function CurriculumIndexPage() {
 
         const [
           topicsRes,
+          programsRes,
           libraryRes,
           topicCoverageRes,
           neglectedTopicsRes
         ] = await Promise.all([
           api.get('/topics'),
+          api.get('/programs'),
           api.get('/library'),
           api.get('/reports/topic-coverage'),
           api.get('/reports/neglected-topics?days=30')
         ]);
 
         setTopics(topicsRes.data);
+        setPrograms(programsRes.data);
         setLibraryEntries(libraryRes.data);
         setTopicCoverage(topicCoverageRes.data);
         setNeglectedTopics(neglectedTopicsRes.data);
@@ -59,9 +104,19 @@ export default function CurriculumIndexPage() {
     loadIndexSignals();
   }, []);
 
+  const fetchTopics = async () => {
+    const response = await api.get('/topics');
+    setTopics(response.data);
+  };
+
   const categories = useMemo(() => (
     Array.from(new Set(curriculumIndexSeed.map((entry) => entry.category))).sort()
   ), []);
+
+  const activePrograms = useMemo(
+    () => programs.filter((program) => program.is_active),
+    [programs]
+  );
 
   const skillLevels = useMemo(() => (
     Array.from(new Set(curriculumIndexSeed.map((entry) => entry.skillLevel))).sort(
@@ -143,6 +198,40 @@ export default function CurriculumIndexPage() {
     });
   }, [topicMap, coverageMap, libraryCountByTopicId, neglectedSet]);
 
+  const availableCreateParentTopics = useMemo(() => {
+    const activeTopics = topics.filter((topic) => topic.is_active);
+
+    if (!createTopicData.program_id) {
+      return activeTopics;
+    }
+
+    const matchingTopics = activeTopics.filter((topic) => (
+      topic.program_id === null || String(topic.program_id) === String(createTopicData.program_id)
+    ));
+
+    return matchingTopics.length > 0 ? matchingTopics : activeTopics;
+  }, [createTopicData.program_id, topics]);
+
+  const availableEditParentTopics = useMemo(() => {
+    const activeTopics = topics.filter((topic) => topic.is_active);
+
+    if (!editingTopicId) {
+      return activeTopics;
+    }
+
+    const withoutCurrent = activeTopics.filter((topic) => String(topic.id) !== String(editingTopicId));
+
+    if (!editTopicData.program_id) {
+      return withoutCurrent;
+    }
+
+    const matchingTopics = withoutCurrent.filter((topic) => (
+      topic.program_id === null || String(topic.program_id) === String(editTopicData.program_id)
+    ));
+
+    return matchingTopics.length > 0 ? matchingTopics : withoutCurrent;
+  }, [editTopicData.program_id, editingTopicId, topics]);
+
   const filteredEntries = useMemo(() => {
     const normalizedSearch = normalizeValue(search);
 
@@ -200,6 +289,185 @@ export default function CurriculumIndexPage() {
         ? 'Recent usage is available in Reports right now. A class-by-class drill-down can be the next phase.'
         : 'No recent classes have been logged for this item yet.'
     }));
+  };
+
+  const handleOpenCreateTopic = (entry) => {
+    setCreatingEntryId(entry.id);
+    setCreateTopicData({
+      title: entry.name,
+      topic_type: inferTopicType(entry),
+      program_id: '',
+      parent_topic_id: '',
+      description: entry.description || ''
+    });
+    setEntryNoticeMap((prev) => ({
+      ...prev,
+      [entry.id]: ''
+    }));
+  };
+
+  const handleCreateTopicChange = (e) => {
+    const { name, value } = e.target;
+
+    setCreateTopicData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleCreateTopic = async (entry) => {
+    if (!createTopicData.title.trim()) {
+      setEntryNoticeMap((prev) => ({
+        ...prev,
+        [entry.id]: 'Add a topic title before creating it.'
+      }));
+      return;
+    }
+
+    try {
+      setIsCreatingTopic(true);
+
+      await api.post('/topics', {
+        program_id: createTopicData.program_id ? Number(createTopicData.program_id) : null,
+        parent_topic_id: createTopicData.parent_topic_id ? Number(createTopicData.parent_topic_id) : null,
+        title: createTopicData.title.trim(),
+        topic_type: createTopicData.topic_type,
+        description: createTopicData.description || ''
+      });
+
+      await fetchTopics();
+      setCreatingEntryId(null);
+      setEntryNoticeMap((prev) => ({
+        ...prev,
+        [entry.id]: 'Topic created successfully. This item is now available in Topics and other curriculum workflows.'
+      }));
+    } catch (err) {
+      console.error('Create topic from curriculum index error:', err);
+      setEntryNoticeMap((prev) => ({
+        ...prev,
+        [entry.id]: err.response?.data?.message || 'Couldn\'t create that topic just now.'
+      }));
+    } finally {
+      setIsCreatingTopic(false);
+    }
+  };
+
+  const handleOpenEditTopic = (entry) => {
+    if (!entry.topic) {
+      return;
+    }
+
+    setCreatingEntryId(null);
+    setEditingTopicId(entry.topic.id);
+    setEditTopicData({
+      title: entry.topic.title || entry.name,
+      topic_type: entry.topic.topic_type || inferTopicType(entry),
+      program_id: entry.topic.program_id ? String(entry.topic.program_id) : '',
+      parent_topic_id: entry.topic.parent_topic_id ? String(entry.topic.parent_topic_id) : '',
+      description: entry.topic.description || entry.description || '',
+      is_active: entry.topic.is_active ? 'true' : 'false'
+    });
+    setEntryNoticeMap((prev) => ({
+      ...prev,
+      [entry.id]: ''
+    }));
+  };
+
+  const handleEditTopicChange = (e) => {
+    const { name, value } = e.target;
+
+    setEditTopicData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleUpdateTopic = async (entry) => {
+    if (!entry.topic) {
+      return;
+    }
+
+    if (!editTopicData.title.trim()) {
+      setEntryNoticeMap((prev) => ({
+        ...prev,
+        [entry.id]: 'Add a topic title before saving changes.'
+      }));
+      return;
+    }
+
+    try {
+      setIsUpdatingTopic(true);
+
+      await api.put(`/topics/${entry.topic.id}`, {
+        program_id: editTopicData.program_id ? Number(editTopicData.program_id) : null,
+        parent_topic_id: editTopicData.parent_topic_id ? Number(editTopicData.parent_topic_id) : null,
+        title: editTopicData.title.trim(),
+        topic_type: editTopicData.topic_type,
+        description: editTopicData.description || '',
+        is_active: editTopicData.is_active === 'true'
+      });
+
+      await fetchTopics();
+      setEditingTopicId(null);
+      setEntryNoticeMap((prev) => ({
+        ...prev,
+        [entry.id]: 'Topic updated successfully from the Curriculum Index.'
+      }));
+    } catch (err) {
+      console.error('Update topic from curriculum index error:', err);
+      setEntryNoticeMap((prev) => ({
+        ...prev,
+        [entry.id]: err.response?.data?.message || 'Couldn\'t update that topic just now.'
+      }));
+    } finally {
+      setIsUpdatingTopic(false);
+    }
+  };
+
+  const handleToggleTopicActive = async (entry, nextIsActive) => {
+    if (!entry.topic) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      nextIsActive
+        ? 'Make this topic active again?'
+        : 'Make this topic inactive? It will stay in the curriculum, but it will be hidden from the default view.'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setEntryNoticeMap((prev) => ({
+        ...prev,
+        [entry.id]: ''
+      }));
+
+      await api.put(`/topics/${entry.topic.id}`, {
+        program_id: entry.topic.program_id ?? null,
+        parent_topic_id: entry.topic.parent_topic_id ?? null,
+        title: entry.topic.title,
+        topic_type: entry.topic.topic_type,
+        description: entry.topic.description || '',
+        is_active: nextIsActive
+      });
+
+      await fetchTopics();
+      setEntryNoticeMap((prev) => ({
+        ...prev,
+        [entry.id]: nextIsActive
+          ? 'Topic made active again successfully.'
+          : 'Topic made inactive successfully.'
+      }));
+    } catch (err) {
+      console.error('Toggle topic active state from curriculum index error:', err);
+      setEntryNoticeMap((prev) => ({
+        ...prev,
+        [entry.id]: err.response?.data?.message || 'Couldn\'t update that topic right now.'
+      }));
+    }
   };
 
   return (
@@ -276,7 +544,7 @@ export default function CurriculumIndexPage() {
           <div className="section-header">
             <div>
               <h3>Index results</h3>
-              <p className="section-note">This first version is read-only and designed to show where each item currently connects across the app.</p>
+              <p className="section-note">Use this as both a curriculum reference layer and the first place to add operational topics when they do not exist yet.</p>
             </div>
           </div>
 
@@ -370,20 +638,236 @@ export default function CurriculumIndexPage() {
                           </div>
 
                           <div className="inline-actions curriculum-index-actions">
-                            {usageCount > 0 ? (
-                              <Link className="secondary-button curriculum-index-action-link" to="/reports">
-                                View usage in reports
-                              </Link>
-                            ) : (
+                            {!entry.topic ? (
                               <button
                                 type="button"
                                 className="secondary-button"
-                                onClick={() => handleCheckClassUsage(entry, usageCount)}
+                                onClick={() => handleOpenCreateTopic(entry)}
                               >
-                                Check class usage
+                                Add to Topics
                               </button>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  className="secondary-button"
+                                  onClick={() => handleOpenEditTopic(entry)}
+                                >
+                                  Edit topic
+                                </button>
+                                {entry.topic.is_active ? (
+                                  <button
+                                    type="button"
+                                    className="secondary-button"
+                                    onClick={() => handleToggleTopicActive(entry, false)}
+                                  >
+                                    Make inactive
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="secondary-button"
+                                    onClick={() => handleToggleTopicActive(entry, true)}
+                                  >
+                                    Make active
+                                  </button>
+                                )}
+                                {usageCount > 0 ? (
+                                  <Link className="secondary-button curriculum-index-action-link" to="/reports">
+                                    View usage in reports
+                                  </Link>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="secondary-button"
+                                    onClick={() => handleCheckClassUsage(entry, usageCount)}
+                                  >
+                                    Check class usage
+                                  </button>
+                                )}
+                              </>
                             )}
                           </div>
+
+                          {creatingEntryId === entry.id ? (
+                            <div className="quick-add-panel curriculum-index-create-panel">
+                              <label>Topic title</label>
+                              <input
+                                type="text"
+                                name="title"
+                                value={createTopicData.title}
+                                onChange={handleCreateTopicChange}
+                              />
+
+                              <label>Topic type</label>
+                              <select
+                                name="topic_type"
+                                value={createTopicData.topic_type}
+                                onChange={handleCreateTopicChange}
+                              >
+                                <option value="position">Position</option>
+                                <option value="technique">Technique</option>
+                                <option value="concept">Concept</option>
+                                <option value="submission">Submission</option>
+                                <option value="escape">Escape</option>
+                                <option value="takedown">Takedown</option>
+                                <option value="drill_theme">Drill Theme</option>
+                              </select>
+
+                              <label>Program</label>
+                              <select
+                                name="program_id"
+                                value={createTopicData.program_id}
+                                onChange={handleCreateTopicChange}
+                              >
+                                <option value="">No program</option>
+                                {activePrograms.map((program) => (
+                                  <option key={program.id} value={program.id}>
+                                    {program.name}
+                                  </option>
+                                ))}
+                              </select>
+
+                              <label>Parent topic</label>
+                              <TopicSearchSelect
+                                topics={availableCreateParentTopics}
+                                value={createTopicData.parent_topic_id}
+                                onChange={(topicId) => setCreateTopicData((prev) => ({
+                                  ...prev,
+                                  parent_topic_id: topicId
+                                }))}
+                                placeholder="Search parent topics..."
+                                emptySelectionLabel="No parent topic selected"
+                                helperText="Search and select a parent topic if this item belongs under another one."
+                              />
+
+                              <label>Description</label>
+                              <textarea
+                                name="description"
+                                rows={3}
+                                value={createTopicData.description}
+                                onChange={handleCreateTopicChange}
+                              />
+
+                              <p className="section-note curriculum-index-inline-note">
+                                This lets the item enter the operational curriculum with hierarchy in place from the start.
+                              </p>
+
+                              <div className="inline-actions">
+                                <button
+                                  type="button"
+                                  className="secondary-button"
+                                  onClick={() => handleCreateTopic(entry)}
+                                  disabled={isCreatingTopic}
+                                >
+                                  {isCreatingTopic ? 'Creating topic...' : 'Create topic'}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="secondary-button"
+                                  onClick={() => setCreatingEntryId(null)}
+                                  disabled={isCreatingTopic}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : null}
+
+                          {editingTopicId === entry.topic?.id ? (
+                            <div className="quick-add-panel curriculum-index-create-panel">
+                              <label>Topic title</label>
+                              <input
+                                type="text"
+                                name="title"
+                                value={editTopicData.title}
+                                onChange={handleEditTopicChange}
+                              />
+
+                              <label>Topic type</label>
+                              <select
+                                name="topic_type"
+                                value={editTopicData.topic_type}
+                                onChange={handleEditTopicChange}
+                              >
+                                <option value="position">Position</option>
+                                <option value="technique">Technique</option>
+                                <option value="concept">Concept</option>
+                                <option value="submission">Submission</option>
+                                <option value="escape">Escape</option>
+                                <option value="takedown">Takedown</option>
+                                <option value="drill_theme">Drill Theme</option>
+                              </select>
+
+                              <label>Program</label>
+                              <select
+                                name="program_id"
+                                value={editTopicData.program_id}
+                                onChange={handleEditTopicChange}
+                              >
+                                <option value="">No program</option>
+                                {activePrograms.map((program) => (
+                                  <option key={program.id} value={program.id}>
+                                    {program.name}
+                                  </option>
+                                ))}
+                              </select>
+
+                              <label>Parent topic</label>
+                              <TopicSearchSelect
+                                topics={availableEditParentTopics}
+                                value={editTopicData.parent_topic_id}
+                                onChange={(topicId) => setEditTopicData((prev) => ({
+                                  ...prev,
+                                  parent_topic_id: topicId
+                                }))}
+                                placeholder="Search parent topics..."
+                                emptySelectionLabel="No parent topic selected"
+                                helperText="Search and select a parent topic if this topic belongs under another one."
+                              />
+
+                              <label>Description</label>
+                              <textarea
+                                name="description"
+                                rows={3}
+                                value={editTopicData.description}
+                                onChange={handleEditTopicChange}
+                              />
+
+                              <label>Active status</label>
+                              <select
+                                name="is_active"
+                                value={editTopicData.is_active}
+                                onChange={handleEditTopicChange}
+                              >
+                                <option value="true">Active</option>
+                                <option value="false">Inactive</option>
+                              </select>
+
+                              <p className="section-note curriculum-index-inline-note">
+                                You can update the hierarchy here now, alongside the rest of the topic details.
+                              </p>
+
+                              <div className="inline-actions">
+                                <button
+                                  type="button"
+                                  className="secondary-button"
+                                  onClick={() => handleUpdateTopic(entry)}
+                                  disabled={isUpdatingTopic}
+                                >
+                                  {isUpdatingTopic ? 'Saving topic...' : 'Save topic'}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="secondary-button"
+                                  onClick={() => setEditingTopicId(null)}
+                                  disabled={isUpdatingTopic}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : null}
 
                           {entryNoticeMap[entry.id] ? (
                             <p className="section-note curriculum-index-inline-note">

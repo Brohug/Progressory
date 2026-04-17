@@ -967,37 +967,27 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['position', 'standing', 'base'],
     description: 'The broad standing engagement space where stance, posture, head position, and grips decide what opens next.',
-    relatedPositions: ['Neutral Standing', 'Clinch', 'Front Headlock Standing']
-  },
-  {
-    id: 'positions-neutral-standing',
-    category: 'Positions',
-    subcategory: 'Standing',
-    name: 'Neutral Standing',
-    skillLevel: 'Beginner',
-    tags: ['position', 'standing', 'neutral'],
-    description: 'A relatively even standing exchange before one athlete has secured a stronger gripping or positional advantage.',
-    relatedPositions: ['Standing', 'Wrestling Stance', 'Judo Stance']
+    relatedPositions: ['Clinch', 'Front Headlock Standing', 'Collar-Sleeve Standing']
   },
   {
     id: 'positions-wrestling-stance',
-    category: 'Positions',
-    subcategory: 'Standing',
+    category: 'Strategy and Game Planning',
+    subcategory: 'Standing Stance And Posture',
     name: 'Wrestling Stance',
     skillLevel: 'Beginner',
-    tags: ['position', 'standing', 'wrestling'],
+    tags: ['strategy', 'standing', 'wrestling'],
     description: 'A lower, mobile stance built for level changes, shots, sprawls, and fast angle adjustments.',
-    relatedPositions: ['Neutral Standing', 'Front Headlock Standing']
+    relatedPositions: ['Standing', 'Front Headlock Standing', 'Double Leg']
   },
   {
     id: 'positions-judo-stance',
-    category: 'Positions',
-    subcategory: 'Standing',
+    category: 'Strategy and Game Planning',
+    subcategory: 'Standing Stance And Posture',
     name: 'Judo Stance',
     skillLevel: 'Beginner',
-    tags: ['position', 'standing', 'judo'],
+    tags: ['strategy', 'standing', 'judo'],
     description: 'A more upright standing posture built around kuzushi, grip control, and throw entries.',
-    relatedPositions: ['Neutral Standing', 'Collar-Sleeve Standing']
+    relatedPositions: ['Standing', 'Collar-Sleeve Standing', 'O Soto Gari']
   },
   {
     id: 'positions-collar-sleeve-standing',
@@ -1440,16 +1430,6 @@ const curriculumIndexSeed = [
     relatedPositions: ['Leg Drag', 'Side Control', 'Back Control']
   },
   {
-    id: 'positions-over-under-passing-position',
-    category: 'Positions',
-    subcategory: 'Ground',
-    name: 'Over-Under Passing Position',
-    skillLevel: 'Intermediate',
-    tags: ['position', 'passing', 'pressure'],
-    description: 'A chest-connected passing position that controls both legs differently to collapse hip mobility and turn the guard.',
-    relatedPositions: ['Over-Under Pass', 'Stack Position']
-  },
-  {
     id: 'positions-stack-position',
     category: 'Positions',
     subcategory: 'Ground',
@@ -1457,7 +1437,7 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['position', 'passing', 'pressure'],
     description: 'A compressed top position that folds the hips and makes guard retention much harder to sustain.',
-    relatedPositions: ['Stack Pass', 'Over-Under Passing Position']
+    relatedPositions: ['Stack Pass Style', 'Double Under Pass']
   },
   {
     id: 'takedowns-double-leg',
@@ -1651,31 +1631,31 @@ const curriculumIndexSeed = [
   },
   {
     id: 'takedowns-duck-under',
-    category: 'Takedowns',
-    subcategory: 'Wrestling-Based',
+    category: 'Strategy and Game Planning',
+    subcategory: 'Standing Positional Entries',
     name: 'Duck Under',
     skillLevel: 'Intermediate',
-    tags: ['takedown', 'wrestling', 'angle'],
+    tags: ['strategy', 'wrestling', 'angle'],
     description: 'A go-behind style standing attack that uses head position and arm control to create a clean angle to the back.',
-    relatedPositions: ['Standing']
+    relatedPositions: ['Standing', 'Body Lock Standing', 'Back Control']
   },
   {
     id: 'takedowns-arm-drag-to-back-take',
-    category: 'Takedowns',
-    subcategory: 'Wrestling-Based',
+    category: 'Strategy and Game Planning',
+    subcategory: 'Standing Positional Entries',
     name: 'Arm Drag To Back Take',
     skillLevel: 'Intermediate',
-    tags: ['takedown', 'wrestling', 'back take'],
+    tags: ['strategy', 'wrestling', 'back take'],
     description: 'A standing arm drag that creates rear angle access before the opponent can square back into stance.',
     relatedPositions: ['Standing', 'Back Control']
   },
   {
     id: 'takedowns-go-behind',
-    category: 'Takedowns',
-    subcategory: 'Wrestling-Based',
+    category: 'Strategy and Game Planning',
+    subcategory: 'Standing Positional Entries',
     name: 'Go-Behind',
     skillLevel: 'Beginner',
-    tags: ['takedown', 'wrestling', 'rear angle'],
+    tags: ['strategy', 'wrestling', 'rear angle'],
     description: 'A positional takedown that circles behind the hips once the head and shoulders are pulled forward or stalled.',
     relatedPositions: ['Front Headlock', 'Turtle', 'Standing']
   },
@@ -1711,11 +1691,11 @@ const curriculumIndexSeed = [
   },
   {
     id: 'takedowns-peek-out',
-    category: 'Takedowns',
-    subcategory: 'Wrestling-Based',
+    category: 'Strategy and Game Planning',
+    subcategory: 'Standing Positional Entries',
     name: 'Peek Out',
     skillLevel: 'Advanced',
-    tags: ['takedown', 'wrestling', 'counter'],
+    tags: ['strategy', 'wrestling', 'counter'],
     description: 'A reactive takedown that slips the head free and turns the angle to the outside when the front headlock pressure overcommits.',
     relatedPositions: ['Front Headlock', 'Standing']
   },
@@ -1838,16 +1818,6 @@ const curriculumIndexSeed = [
     tags: ['guard pull', 'de la riva', 'entry'],
     description: 'A standing entry into outside-hook guard that prioritizes angle, distance, and early off-balancing potential.',
     relatedPositions: ['De La Riva', 'Open Guard']
-  },
-  {
-    id: 'escapes-upa-escape',
-    category: 'Escapes',
-    subcategory: 'Mount Escapes',
-    name: 'Upa Escape',
-    skillLevel: 'Beginner',
-    tags: ['escape', 'mount', 'bridge'],
-    description: 'A classic bridge-and-roll escape from mount when a strong trap is available.',
-    relatedPositions: ['Mount']
   },
   {
     id: 'escapes-elbow-knee-escape',
@@ -1987,7 +1957,7 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['escape', 'side control', 'inversion'],
     description: 'A recovery route that inverts under pressure to create angle and rebuild guard before control follows.',
-    relatedPositions: ['Side Control', 'Guard Retention']
+    relatedPositions: ['Open Guard', 'Guard Retention']
   },
   {
     id: 'escapes-north-south-escape-to-turtle',
@@ -2010,24 +1980,14 @@ const curriculumIndexSeed = [
     relatedPositions: ['Back Control']
   },
   {
-    id: 'escapes-hide-the-choking-side',
-    category: 'Escapes',
-    subcategory: 'Back Escapes',
-    name: 'Hide The Choking Side',
-    skillLevel: 'Beginner',
-    tags: ['escape', 'back control', 'defense'],
-    description: 'A back-defense priority that protects the vulnerable shoulder line while buying time to hand fight and turn.',
-    relatedPositions: ['Back Control']
-  },
-  {
     id: 'escapes-shoulder-slide-escape',
     category: 'Escapes',
     subcategory: 'Back Escapes',
     name: 'Shoulder Slide Escape',
     skillLevel: 'Intermediate',
     tags: ['escape', 'back control', 'turning'],
-    description: 'A back escape that uses shoulder positioning and careful rotation to slip toward the safer side.',
-    relatedPositions: ['Back Control']
+    description: 'A back escape that uses shoulder positioning and careful rotation to turn into closed guard while escaping the back.',
+    relatedPositions: ['Back Control', 'Closed Guard']
   },
   {
     id: 'escapes-back-to-the-mat-escape',
@@ -2073,7 +2033,7 @@ const curriculumIndexSeed = [
     id: 'escapes-roll-escape',
     category: 'Escapes',
     subcategory: 'Turtle Escapes',
-    name: 'Roll Escape',
+    name: 'Granby Roll',
     skillLevel: 'Intermediate',
     tags: ['escape', 'turtle', 'rolling'],
     description: 'A turtle escape that uses rolling momentum to clear pressure and recover a safer directional angle.',
@@ -2083,10 +2043,20 @@ const curriculumIndexSeed = [
     id: 'escapes-switch',
     category: 'Escapes',
     subcategory: 'Turtle Escapes',
-    name: 'Switch',
+    name: 'Hip Switch',
     skillLevel: 'Intermediate',
     tags: ['escape', 'turtle', 'wrestling'],
     description: 'A wrestling-based turtle escape that turns hip angle into a cleaner path away from control.',
+    relatedPositions: ['Turtle', 'Standing']
+  },
+  {
+    id: 'escapes-sit-out',
+    category: 'Escapes',
+    subcategory: 'Turtle Escapes',
+    name: 'Sit-Out',
+    skillLevel: 'Intermediate',
+    tags: ['escape', 'turtle', 'wrestling'],
+    description: 'A turtle escape that sits the hips out to one side to break chest-wrap style control and create a path to turn free.',
     relatedPositions: ['Turtle', 'Standing']
   },
   {
@@ -2146,17 +2116,17 @@ const curriculumIndexSeed = [
     name: 'Triangle Posture Escape',
     skillLevel: 'Beginner',
     tags: ['escape', 'submission', 'triangle'],
-    description: 'A triangle escape focused on rebuilding posture and managing the angle before the lock tightens.',
+    description: 'A triangle escape focused on rebuilding posture and breaking the legs apart.',
     relatedPositions: ['Closed Guard']
   },
   {
     id: 'escapes-triangle-hand-fight-angle-kill',
     category: 'Escapes',
     subcategory: 'Submission Escapes',
-    name: 'Triangle Hand Fight And Angle-Kill Escape',
+    name: 'Triangle Escape With Hand Fighting/Angles',
     skillLevel: 'Intermediate',
     tags: ['escape', 'submission', 'triangle'],
-    description: 'A triangle defense that hand fights the setup and turns the angle line before the finish connects.',
+    description: 'A triangle defense that hand fights the setup picking a side with your elbow to cut an angle to separate the legs and make the triangle harder to lock.',
     relatedPositions: ['Closed Guard']
   },
   {
@@ -2358,16 +2328,6 @@ const curriculumIndexSeed = [
     tags: ['guard', 'sweep', 'off-balance'],
     description: 'A sweep that removes the posts and redirects the opponent backward before they can rebuild standing base.',
     relatedPositions: ['Closed Guard', 'Standing']
-  },
-  {
-    id: 'sweeps-shoulder-clamp-sweep',
-    category: 'Sweeps',
-    subcategory: 'Closed Guard',
-    name: 'Shoulder Clamp Sweep',
-    skillLevel: 'Intermediate',
-    tags: ['guard', 'sweep', 'clamp'],
-    description: 'A sweep that uses upper-body clamping control to collapse posture and redirect balance toward the trapped shoulder.',
-    relatedPositions: ['Closed Guard', 'High Guard']
   },
   {
     id: 'sweeps-overhook-sweep',
@@ -2680,16 +2640,6 @@ const curriculumIndexSeed = [
     relatedPositions: ['Open Guard']
   },
   {
-    id: 'sweeps-tomoe-nage-sweep',
-    category: 'Sweeps',
-    subcategory: 'Open Guard',
-    name: 'Tomoe Nage Sweep',
-    skillLevel: 'Intermediate',
-    tags: ['sweep', 'open guard', 'sacrifice throw'],
-    description: 'A sacrifice-style sweep that uses a central hook and upper-body pull to send the opponent overhead.',
-    relatedPositions: ['Open Guard', 'Standing']
-  },
-  {
     id: 'sweeps-overhead-sweep',
     category: 'Sweeps',
     subcategory: 'Open Guard',
@@ -2920,6 +2870,16 @@ const curriculumIndexSeed = [
     relatedPositions: ['Open Guard', 'North-South']
   },
   {
+    id: 'guard-passing-stack-pass-style',
+    category: 'Guard Passing',
+    subcategory: 'Passing Styles',
+    name: 'Stack Pass Style',
+    skillLevel: 'Intermediate',
+    tags: ['passing', 'pressure', 'stack'],
+    description: 'A pass that compresses the lower body, folds the hips and uses posture control to break or clear the guard.',
+    relatedPositions: ['Closed Guard', 'Open Guard', 'Stack Position']
+  },
+  {
     id: 'guard-passing-standing-passing',
     category: 'Guard Passing',
     subcategory: 'Passing Styles',
@@ -2928,26 +2888,6 @@ const curriculumIndexSeed = [
     tags: ['passing', 'standing', 'mobility'],
     description: 'A style of guard passing done primarily on the feet, using posture and movement to clear the legs from above.',
     relatedPositions: ['Standing', 'Open Guard']
-  },
-  {
-    id: 'guard-passing-knee-slice-passing',
-    category: 'Guard Passing',
-    subcategory: 'Passing Styles',
-    name: 'Knee Slice Passing',
-    skillLevel: 'Beginner',
-    tags: ['passing', 'knee slice', 'angle'],
-    description: 'A passing style centered on slicing the knee line through the guard while controlling upper-body reactions.',
-    relatedPositions: ['Headquarters', 'Half Guard Top']
-  },
-  {
-    id: 'guard-passing-torreando-passing',
-    category: 'Guard Passing',
-    subcategory: 'Passing Styles',
-    name: 'Torreando Passing',
-    skillLevel: 'Beginner',
-    tags: ['passing', 'speed', 'outside'],
-    description: 'A style of passing that throws the legs aside and races around them before the frame line is rebuilt.',
-    relatedPositions: ['Open Guard', 'Side Control']
   },
   {
     id: 'guard-passing-knee-cut',
@@ -2963,7 +2903,7 @@ const curriculumIndexSeed = [
     id: 'guard-passing-toreando-pass',
     category: 'Guard Passing',
     subcategory: 'Specific Passes',
-    name: 'Toreando Pass',
+    name: 'Torreando Pass',
     skillLevel: 'Beginner',
     tags: ['passing', 'speed', 'outside'],
     description: 'A staple passing option that redirects the legs, wins angles, and races to control before the guard resets.',
@@ -2990,16 +2930,6 @@ const curriculumIndexSeed = [
     relatedPositions: ['Open Guard', 'Side Control', 'Back Takes']
   },
   {
-    id: 'guard-passing-stack-pass',
-    category: 'Guard Passing',
-    subcategory: 'Specific Passes',
-    name: 'Stack Pass',
-    skillLevel: 'Intermediate',
-    tags: ['passing', 'pressure', 'stack'],
-    description: 'A pass that compresses the lower body, folds the hips, and uses posture control to clear the guard.',
-    relatedPositions: ['Closed Guard', 'Open Guard']
-  },
-  {
     id: 'guard-passing-over-under-pass',
     category: 'Guard Passing',
     subcategory: 'Specific Passes',
@@ -3007,7 +2937,7 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['passing', 'pressure', 'pinning'],
     description: 'A pressure-based pass that stapled one leg while lifting the other to collapse mobility and turn the hips.',
-    relatedPositions: ['Open Guard', 'Half Guard Top']
+    relatedPositions: ['Open Guard', 'Half Guard Top', 'Stack Position']
   },
   {
     id: 'guard-passing-long-step',
@@ -3097,7 +3027,7 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['passing', 'mobility', 'backstep'],
     description: 'A passing movement that uses a backstep to clear entanglements and land behind the guard line.',
-    relatedPositions: ['Half Guard Top', 'Reverse Half Pass']
+    relatedPositions: ['Half Guard Top', 'Reverse Half Guard Pass']
   },
   {
     id: 'guard-passing-windshield-wiper-pass',
@@ -3200,16 +3130,6 @@ const curriculumIndexSeed = [
     relatedPositions: ['Open Guard', 'Side Control']
   },
   {
-    id: 'guard-passing-throw-leg-pass',
-    category: 'Guard Passing',
-    subcategory: 'Specific Passes',
-    name: 'Throw-Leg Pass',
-    skillLevel: 'Beginner',
-    tags: ['passing', 'mobility', 'outside'],
-    description: 'A simple pass that throws the legs aside and uses immediate angle to beat the first recovery line.',
-    relatedPositions: ['Open Guard', 'Standing Passing']
-  },
-  {
     id: 'guard-passing-tripod-pass',
     category: 'Guard Passing',
     subcategory: 'Specific Passes',
@@ -3253,7 +3173,7 @@ const curriculumIndexSeed = [
     id: 'guard-passing-reverse-half-pass',
     category: 'Guard Passing',
     subcategory: 'Specific Passes',
-    name: 'Reverse Half Pass',
+    name: 'Reverse Half Guard Pass',
     skillLevel: 'Intermediate',
     tags: ['passing', 'half guard', 'reverse'],
     description: 'A pass that clears reverse half-guard style entanglements by changing hip direction and angle.',
@@ -3906,17 +3826,17 @@ const curriculumIndexSeed = [
     name: 'Triangle Posture Escape',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'triangle', 'posture'],
-    description: 'A defensive response focused on restoring posture, managing angle, and addressing the strongest control points first.',
+    description: 'A triangle escape focused on rebuilding posture and breaking the legs apart.',
     relatedPositions: ['Closed Guard']
   },
   {
     id: 'submission-defense-triangle-hand-fight-angle-kill',
     category: 'Submission Defense',
     subcategory: 'Triangle Defense',
-    name: 'Triangle Hand Fight And Angle-Kill Escape',
+    name: 'Triangle Escape With Hand Fighting/Angles',
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'triangle', 'hand fighting'],
-    description: 'A triangle defense that combines hand positioning, posture recovery, and angle-killing movement before the lock tightens.',
+    description: 'A triangle defense that hand fights the setup picking a side with your elbow to cut an angle to separate the legs and make the triangle harder to lock.',
     relatedPositions: ['Closed Guard', 'Open Guard']
   },
   {
@@ -4351,7 +4271,7 @@ const curriculumIndexSeed = [
   },
   {
     id: 'drills-guard-retention-rounds',
-    category: 'Drills',
+    category: 'Constraint-Led Games',
     subcategory: null,
     name: 'Guard Retention Rounds',
     skillLevel: 'Intermediate',
@@ -4361,7 +4281,7 @@ const curriculumIndexSeed = [
   },
   {
     id: 'drills-positional-isolation-rounds',
-    category: 'Drills',
+    category: 'Constraint-Led Games',
     subcategory: null,
     name: 'Positional Isolation Rounds',
     skillLevel: 'Intermediate',
@@ -4371,7 +4291,7 @@ const curriculumIndexSeed = [
   },
   {
     id: 'drills-constraint-led-games',
-    category: 'Drills',
+    category: 'Constraint-Led Games',
     subcategory: null,
     name: 'Constraint-Led Games',
     skillLevel: 'Advanced',
@@ -4381,7 +4301,7 @@ const curriculumIndexSeed = [
   },
   {
     id: 'drills-positional-sparring-systems',
-    category: 'Drills',
+    category: 'Constraint-Led Games',
     subcategory: null,
     name: 'Positional Sparring Systems',
     skillLevel: 'Intermediate',
@@ -4391,7 +4311,7 @@ const curriculumIndexSeed = [
   },
   {
     id: 'drills-hand-fight-specific-rounds',
-    category: 'Drills',
+    category: 'Constraint-Led Games',
     subcategory: null,
     name: 'Hand-Fight Specific Rounds',
     skillLevel: 'Intermediate',
@@ -4401,7 +4321,7 @@ const curriculumIndexSeed = [
   },
   {
     id: 'drills-guard-passing-decision-tree-rounds',
-    category: 'Drills',
+    category: 'Constraint-Led Games',
     subcategory: null,
     name: 'Passing Decision Tree Rounds',
     skillLevel: 'Advanced',
@@ -4411,7 +4331,7 @@ const curriculumIndexSeed = [
   },
   {
     id: 'drills-submission-chain-rounds',
-    category: 'Drills',
+    category: 'Constraint-Led Games',
     subcategory: null,
     name: 'Submission Chain Rounds',
     skillLevel: 'Advanced',

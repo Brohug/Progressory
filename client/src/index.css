@@ -410,6 +410,34 @@ ul {
   gap: 10px;
 }
 
+.search-select-input {
+  width: 100%;
+  display: block;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.82);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+.search-select-input::placeholder {
+  color: var(--muted);
+}
+
+.search-select-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+}
+
+.search-select-input:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .search-select-current {
   display: flex;
   align-items: center;
@@ -533,6 +561,46 @@ ul {
 
 .dashboard-cta-section {
   margin-top: 6px;
+}
+
+.planned-classes-page .stats-grid {
+  margin-bottom: 28px;
+}
+
+.planned-classes-page .stat-card {
+  padding: 20px;
+}
+
+.planned-classes-form-section {
+  margin-bottom: 26px;
+}
+
+.planned-classes-inline-note {
+  margin-top: 8px;
+}
+
+.planned-classes-topic-actions {
+  margin-top: 10px;
+}
+
+.planned-classes-selected-topics,
+.planned-classes-card-topics {
+  margin-top: 12px;
+}
+
+.planned-class-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px 16px;
+  margin: 12px 0;
+}
+
+.planned-class-meta-grid p {
+  margin: 0;
+}
+
+.planned-classes-page .item-card {
+  padding: 18px;
 }
 
 .dashboard-report-link-text {
@@ -754,6 +822,10 @@ ul {
 
 .curriculum-index-inline-note {
   margin-top: 10px;
+}
+
+.curriculum-index-create-panel {
+  margin-top: 14px;
 }
 
 @media (max-width: 640px) {

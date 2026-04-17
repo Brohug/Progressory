@@ -23,6 +23,7 @@ export default function Layout({ children }) {
                 <Link to="/programs">Programs</Link>
                 <Link to="/index">Index</Link>
                 <Link to="/topics">Topics</Link>
+                <Link to="/planned-classes">Planned Classes</Link>
                 <Link to="/classes">Classes</Link>
                 <Link to="/reports">Reports</Link>
                 <Link to="/library">Library</Link>

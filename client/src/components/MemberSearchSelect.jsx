@@ -42,6 +42,8 @@ export default function MemberSearchSelect({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
+        aria-label={placeholder}
+        className="search-select-input"
         disabled={members.length === 0}
       />
 

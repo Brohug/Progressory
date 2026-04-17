@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import api from '../api/axios';
 import Layout from '../components/Layout';
 import { useAuth } from '../hooks/useAuth';
@@ -9,6 +10,7 @@ import { formatLabel } from '../utils/formatLabel';
 
 export default function ClassesPage() {
   const { user } = useAuth();
+  const location = useLocation();
 
   const [classes, setClasses] = useState([]);
   const [programs, setPrograms] = useState([]);
@@ -239,6 +241,38 @@ export default function ClassesPage() {
 
     return showInactiveScenarios ? [...active, ...inactive] : active;
   }, [trainingScenarios, showInactiveScenarios]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const openClassId = params.get('openClassId');
+
+    if (!openClassId) {
+      return;
+    }
+
+    const matchingClass = classes.find((classItem) => String(classItem.id) === String(openClassId));
+
+    if (!matchingClass) {
+      return;
+    }
+
+    setActiveView('classes');
+    setExpandedClasses((prev) => ({
+      ...prev,
+      [openClassId]: true
+    }));
+    setShowCreateClassForm(false);
+    setClassMessage('Planned class opened successfully. You can add attendance now.');
+
+    const scrollToClass = window.setTimeout(() => {
+      const element = document.getElementById(`class-card-${openClassId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+
+    return () => window.clearTimeout(scrollToClass);
+  }, [classes, location.search]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -1260,7 +1294,11 @@ export default function ClassesPage() {
         ) : (
           <ul className="card-list">
             {visibleClasses.map((classItem) => (
-              <li key={classItem.id} className="card-item">
+              <li
+                key={classItem.id}
+                id={`class-card-${classItem.id}`}
+                className="card-item"
+              >
                 <strong>{classItem.title || 'Untitled Class'}</strong>
 
                 <div className="detail-block">

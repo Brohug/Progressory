@@ -8,6 +8,7 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ProgramsPage = lazy(() => import('./pages/ProgramsPage'));
 const TopicsPage = lazy(() => import('./pages/TopicsPage'));
 const ClassesPage = lazy(() => import('./pages/ClassesPage'));
+const PlannedClassesPage = lazy(() => import('./pages/PlannedClassesPage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
 const LibraryPage = lazy(() => import('./pages/LibraryPage'));
 const MembersPage = lazy(() => import('./pages/MembersPage'));
@@ -58,6 +59,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <CurriculumIndexPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/planned-classes"
+              element={
+                <ProtectedRoute>
+                  <PlannedClassesPage />
                 </ProtectedRoute>
               }
             />
