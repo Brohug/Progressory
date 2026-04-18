@@ -84,9 +84,11 @@ export default function MemberSearchSelect({
                   className={`search-select-option${isSelected ? ' selected' : ''}`}
                   onClick={() => onChange(String(member.id))}
                 >
-                  <span>{member.first_name} {member.last_name}</span>
+                  <span className="search-select-option-main">
+                    {member.first_name} {member.last_name}
+                  </span>
                   {member.email ? (
-                    <span className="meta-text">{member.email}</span>
+                    <span className="search-select-option-subtext meta-text">{member.email}</span>
                   ) : null}
                 </button>
               );

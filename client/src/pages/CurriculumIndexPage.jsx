@@ -258,7 +258,7 @@ export default function CurriculumIndexPage() {
   }, [enrichedEntries, search, categoryFilter, skillLevelFilter]);
 
   const groupedEntries = useMemo(() => {
-    return filteredEntries.reduce((acc, entry) => {
+    const categoryGroups = filteredEntries.reduce((acc, entry) => {
       if (!acc[entry.category]) {
         acc[entry.category] = [];
       }
@@ -266,6 +266,23 @@ export default function CurriculumIndexPage() {
       acc[entry.category].push(entry);
       return acc;
     }, {});
+
+    return Object.fromEntries(
+      Object.entries(categoryGroups).map(([category, entries]) => {
+        const groupedBySubcategory = entries.reduce((acc, entry) => {
+          const subcategoryKey = entry.subcategory || 'Core Topics';
+
+          if (!acc[subcategoryKey]) {
+            acc[subcategoryKey] = [];
+          }
+
+          acc[subcategoryKey].push(entry);
+          return acc;
+        }, {});
+
+        return [category, groupedBySubcategory];
+      })
+    );
   }, [filteredEntries]);
 
   const summaryCards = useMemo(() => {
@@ -554,22 +571,32 @@ export default function CurriculumIndexPage() {
             <p className="empty-state">No index items match that search right now.</p>
           ) : (
             <div className="curriculum-index-groups">
-              {Object.entries(groupedEntries).map(([category, entries]) => (
+              {Object.entries(groupedEntries).map(([category, subcategoryGroups]) => (
                 <section key={category} className="curriculum-index-group">
                   <div className="curriculum-index-group-header">
                     <h4>{category}</h4>
-                    <span className="meta-text">{entries.length} items</span>
+                    <span className="meta-text">
+                      {Object.values(subcategoryGroups).flat().length} items
+                    </span>
                   </div>
 
-                  <div className="card-list">
-                    {entries.map((entry) => {
+                  <div className="curriculum-index-subgroups">
+                    {Object.entries(subcategoryGroups).map(([subcategory, entries]) => (
+                      <section key={`${category}-${subcategory}`} className="curriculum-index-subgroup">
+                        <div className="curriculum-index-subgroup-header">
+                          <h5>{subcategory}</h5>
+                          <span className="meta-text">{entries.length} items</span>
+                        </div>
+
+                        <div className="card-list">
+                          {entries.map((entry) => {
                       const usageCount = Number(entry.coverage?.total_times_used || 0);
 
                       return (
                         <article key={entry.id} className="card-item curriculum-index-card">
                           <div className="curriculum-index-card-header">
                             <div className="curriculum-index-title-block">
-                              <span className="eyebrow">{entry.subcategory || entry.category}</span>
+                              <span className="eyebrow">{entry.category}</span>
                               <strong>{entry.name}</strong>
                             </div>
                             <span className="curriculum-index-skill-level">{entry.skillLevel}</span>
@@ -577,6 +604,17 @@ export default function CurriculumIndexPage() {
 
                           <div className="detail-block">
                             <div>{entry.description}</div>
+
+                            <div className="curriculum-index-relationship-grid">
+                              <div className="meta-text">
+                                <strong>Section:</strong> {subcategory}
+                              </div>
+                              {entry.topic?.parent_topic_title ? (
+                                <div className="meta-text">
+                                  <strong>Parent topic:</strong> {entry.topic.parent_topic_title}
+                                </div>
+                              ) : null}
+                            </div>
 
                             {entry.tags?.length ? (
                               <div className="curriculum-index-tag-row">
@@ -728,7 +766,7 @@ export default function CurriculumIndexPage() {
                                 ))}
                               </select>
 
-                              <label>Parent topic</label>
+                              <label>Parent topic (optional)</label>
                               <TopicSearchSelect
                                 topics={availableCreateParentTopics}
                                 value={createTopicData.parent_topic_id}
@@ -736,9 +774,9 @@ export default function CurriculumIndexPage() {
                                   ...prev,
                                   parent_topic_id: topicId
                                 }))}
-                                placeholder="Search parent topics..."
-                                emptySelectionLabel="No parent topic selected"
-                                helperText="Search and select a parent topic if this item belongs under another one."
+                                placeholder="Search for a parent topic..."
+                                helperText="Leave this blank if this should stay as a top-level topic."
+                                showEmptyState={false}
                               />
 
                               <label>Description</label>
@@ -813,7 +851,7 @@ export default function CurriculumIndexPage() {
                                 ))}
                               </select>
 
-                              <label>Parent topic</label>
+                              <label>Parent topic (optional)</label>
                               <TopicSearchSelect
                                 topics={availableEditParentTopics}
                                 value={editTopicData.parent_topic_id}
@@ -821,9 +859,9 @@ export default function CurriculumIndexPage() {
                                   ...prev,
                                   parent_topic_id: topicId
                                 }))}
-                                placeholder="Search parent topics..."
-                                emptySelectionLabel="No parent topic selected"
-                                helperText="Search and select a parent topic if this topic belongs under another one."
+                                placeholder="Search for a parent topic..."
+                                helperText="Leave this blank if this should stay as a top-level topic."
+                                showEmptyState={false}
                               />
 
                               <label>Description</label>
@@ -876,7 +914,10 @@ export default function CurriculumIndexPage() {
                           ) : null}
                         </article>
                       );
-                    })}
+                          })}
+                        </div>
+                      </section>
+                    ))}
                   </div>
                 </section>
               ))}

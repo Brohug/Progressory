@@ -346,9 +346,44 @@ const deactivateTrainingScenario = async (req, res) => {
   }
 };
 
+const deleteTrainingScenario = async (req, res) => {
+  try {
+    const gymId = req.user.gym_id;
+    const { id } = req.params;
+
+    const [existingRows] = await pool.query(
+      'SELECT id FROM training_scenarios WHERE id = ? AND gym_id = ?',
+      [id, gymId]
+    );
+
+    if (existingRows.length === 0) {
+      return res.status(404).json({
+        message: 'Training scenario not found'
+      });
+    }
+
+    await pool.query(
+      'DELETE FROM training_scenarios WHERE id = ? AND gym_id = ?',
+      [id, gymId]
+    );
+
+    return res.status(200).json({
+      message: 'Training scenario deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete training scenario error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getTrainingScenarios,
   createTrainingScenario,
   updateTrainingScenario,
-  deactivateTrainingScenario
+  deactivateTrainingScenario,
+  deleteTrainingScenario
 };

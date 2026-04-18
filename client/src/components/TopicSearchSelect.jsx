@@ -7,7 +7,8 @@ export default function TopicSearchSelect({
   placeholder = 'Search topics...',
   emptySelectionLabel = 'No topic selected',
   helperText = 'Select a topic from the matches below.',
-  onCreateOption
+  onCreateOption,
+  showEmptyState = true
 }) {
   const [query, setQuery] = useState('');
 
@@ -60,7 +61,7 @@ export default function TopicSearchSelect({
         <p className="section-note">{helperText}</p>
       )}
 
-      {!selectedTopic && value === '' && (
+      {!selectedTopic && value === '' && showEmptyState && (
         <div className="search-select-empty">{emptySelectionLabel}</div>
       )}
 

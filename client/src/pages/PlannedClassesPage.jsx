@@ -1,14 +1,115 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import Layout from '../components/Layout';
 import TopicSearchSelect from '../components/TopicSearchSelect';
 import { useAuth } from '../hooks/useAuth';
+import curriculumIndexSeed from '../data/curriculumIndexSeed';
 import { formatLabel } from '../utils/formatLabel';
+
+const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const normalizeValue = (value) => (
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+);
+
+const inferTopicType = (entry) => {
+  const category = String(entry.category || '').toLowerCase();
+
+  if (category === 'positions') return 'position';
+  if (category === 'submissions' || category === 'leg locks') return 'submission';
+  if (category === 'escapes' || category === 'submission defense') return 'escape';
+  if (category === 'takedowns') return 'takedown';
+  if (
+    category === 'fundamentals' ||
+    category === 'concepts' ||
+    category === 'strategy and game planning'
+  ) {
+    return 'concept';
+  }
+  if (
+    category === 'drills' ||
+    category === 'constraint-led games' ||
+    category === 'positional sparring'
+  ) {
+    return 'drill_theme';
+  }
+
+  return 'technique';
+};
+
+const formatDateKey = (dateValue) => {
+  if (!dateValue) return '';
+
+  if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return dateValue;
+  }
+
+  const normalizedDate = new Date(dateValue);
+
+  if (Number.isNaN(normalizedDate.getTime())) {
+    return '';
+  }
+
+  return normalizedDate.toISOString().split('T')[0];
+};
+
+const getMonthStart = (dateValue) => new Date(dateValue.getFullYear(), dateValue.getMonth(), 1);
+
+const buildCalendarDays = (visibleMonth, plannedClasses) => {
+  const monthStart = getMonthStart(visibleMonth);
+  const monthEnd = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 0);
+  const calendarStart = new Date(monthStart);
+  calendarStart.setDate(monthStart.getDate() - monthStart.getDay());
+  const calendarEnd = new Date(monthEnd);
+  calendarEnd.setDate(monthEnd.getDate() + (6 - monthEnd.getDay()));
+
+  const plansByDate = plannedClasses.reduce((acc, plannedClass) => {
+    const dateKey = formatDateKey(plannedClass.class_date);
+
+    if (!dateKey) {
+      return acc;
+    }
+
+    if (!acc[dateKey]) {
+      acc[dateKey] = [];
+    }
+
+    acc[dateKey].push(plannedClass);
+    return acc;
+  }, {});
+
+  const days = [];
+  const currentDay = new Date(calendarStart);
+
+  while (currentDay <= calendarEnd) {
+    const dateKey = formatDateKey(currentDay);
+    days.push({
+      date: new Date(currentDay),
+      dateKey,
+      isCurrentMonth: currentDay.getMonth() === visibleMonth.getMonth(),
+      plans: (plansByDate[dateKey] || []).sort((left, right) => {
+        const leftTime = new Date(`1970-01-01T${left.start_time || '00:00:00'}`).getTime();
+        const rightTime = new Date(`1970-01-01T${right.start_time || '00:00:00'}`).getTime();
+        return leftTime - rightTime;
+      })
+    });
+
+    currentDay.setDate(currentDay.getDate() + 1);
+  }
+
+  return days;
+};
 
 export default function PlannedClassesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const formSectionRef = useRef(null);
+  const plansSectionRef = useRef(null);
 
   const [plannedClasses, setPlannedClasses] = useState([]);
   const [programs, setPrograms] = useState([]);
@@ -21,6 +122,8 @@ export default function PlannedClassesPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [editingPlannedClassId, setEditingPlannedClassId] = useState(null);
+  const [activeView, setActiveView] = useState('list');
+  const [visibleMonth, setVisibleMonth] = useState(getMonthStart(new Date()));
   const [selectedTopicId, setSelectedTopicId] = useState('');
   const [selectedTopicIds, setSelectedTopicIds] = useState([]);
   const [formData, setFormData] = useState({
@@ -143,27 +246,46 @@ export default function PlannedClassesPage() {
     [programs]
   );
 
-  const availableTopics = useMemo(() => {
-    return topics.filter((topic) => {
+  const availableTopics = useMemo(() => (
+    topics.filter((topic) => {
       if (!topic.is_active) return false;
       if (!formData.program_id) return true;
       return !topic.program_id || String(topic.program_id) === String(formData.program_id);
-    });
-  }, [formData.program_id, topics]);
+    })
+  ), [formData.program_id, topics]);
 
-  const availableScenarios = useMemo(() => {
-    return trainingScenarios.filter((scenario) => {
+  const availableTopicOptions = useMemo(() => {
+    const existingTopicTitles = new Set(
+      availableTopics.map((topic) => normalizeValue(topic.title))
+    );
+
+    const seedOnlyTopics = curriculumIndexSeed
+      .filter((entry) => !existingTopicTitles.has(normalizeValue(entry.name)))
+      .map((entry) => ({
+        id: `seed:${entry.id}`,
+        title: entry.name,
+        topic_type: inferTopicType(entry),
+        description: entry.description || '',
+        isSeedOnly: true,
+        seedEntryId: entry.id
+      }));
+
+    return [...availableTopics, ...seedOnlyTopics];
+  }, [availableTopics]);
+
+  const availableScenarios = useMemo(() => (
+    trainingScenarios.filter((scenario) => {
       if (!scenario.is_active) return false;
       if (!formData.program_id) return true;
       return !scenario.program_id || String(scenario.program_id) === String(formData.program_id);
-    });
-  }, [formData.program_id, trainingScenarios]);
+    })
+  ), [formData.program_id, trainingScenarios]);
 
   const groupedPlannedClasses = useMemo(() => {
-    const sorted = [...plannedClasses].sort((a, b) => {
-      const left = new Date(`${a.class_date}T${a.start_time || '00:00:00'}`).getTime();
-      const right = new Date(`${b.class_date}T${b.start_time || '00:00:00'}`).getTime();
-      return left - right;
+    const sorted = [...plannedClasses].sort((left, right) => {
+      const leftTime = new Date(`${left.class_date}T${left.start_time || '00:00:00'}`).getTime();
+      const rightTime = new Date(`${right.class_date}T${right.start_time || '00:00:00'}`).getTime();
+      return leftTime - rightTime;
     });
 
     return sorted.reduce((acc, plannedClass) => {
@@ -175,6 +297,11 @@ export default function PlannedClassesPage() {
       return acc;
     }, {});
   }, [plannedClasses]);
+
+  const calendarDays = useMemo(
+    () => buildCalendarDays(visibleMonth, plannedClasses),
+    [plannedClasses, visibleMonth]
+  );
 
   const planSummaryCards = useMemo(() => {
     const today = formatDateForInput(new Date());
@@ -193,10 +320,55 @@ export default function PlannedClassesPage() {
     ];
   }, [activePrograms.length, plannedClasses, selectedTopicIds.length]);
 
+  const selectedTopics = selectedTopicIds
+    .map((topicId) => availableTopics.find((topic) => String(topic.id) === String(topicId)))
+    .filter(Boolean);
+
+  const selectedProgram = activePrograms.find(
+    (program) => String(program.id) === String(formData.program_id)
+  );
+
+  const selectedScenario = availableScenarios.find(
+    (scenario) => String(scenario.id) === String(formData.training_scenario_id)
+  );
+
+  const planReadinessItems = [
+    {
+      label: 'Program',
+      value: selectedProgram?.name || 'Choose a program',
+      complete: Boolean(formData.program_id)
+    },
+    {
+      label: 'Date',
+      value: formData.class_date ? formatDateForDisplay(formData.class_date) : 'Pick a date',
+      complete: Boolean(formData.class_date)
+    },
+    {
+      label: 'Topics',
+      value: selectedTopics.length > 0 ? `${selectedTopics.length} selected` : 'No topics added yet',
+      complete: selectedTopics.length > 0
+    },
+    {
+      label: 'Scenario',
+      value: selectedScenario?.name || 'Optional',
+      complete: Boolean(formData.training_scenario_id)
+    }
+  ];
+
+  const visibleMonthLabel = visibleMonth.toLocaleDateString(undefined, {
+    month: 'long',
+    year: 'numeric'
+  });
+
   const resetForm = () => {
     setEditingPlannedClassId(null);
     setSelectedTopicId('');
     setSelectedTopicIds([]);
+    setShowQuickAdd(false);
+    setQuickAddData({
+      title: '',
+      topic_type: 'technique'
+    });
     setFormData({
       program_id: '',
       training_scenario_id: '',
@@ -226,8 +398,57 @@ export default function PlannedClassesPage() {
     });
   };
 
-  const handleAddTopic = (topicId) => {
+  const handleAddTopic = async (topicId) => {
     if (!topicId) return;
+
+    const selectedTopicOption = availableTopicOptions.find(
+      (topic) => String(topic.id) === String(topicId)
+    );
+
+    if (!selectedTopicOption) {
+      return;
+    }
+
+    if (String(topicId).startsWith('seed:')) {
+      try {
+        setIsCreatingTopic(true);
+        setMessage('');
+        setError('');
+
+        const response = await api.post('/topics', {
+          program_id: formData.program_id ? Number(formData.program_id) : null,
+          parent_topic_id: null,
+          title: selectedTopicOption.title.trim(),
+          topic_type: selectedTopicOption.topic_type,
+          description: selectedTopicOption.description || ''
+        });
+
+        const createdTopic = response.data?.topic;
+        await fetchTopics();
+
+        if (createdTopic?.id) {
+          setSelectedTopicIds((prev) => {
+            if (prev.includes(String(createdTopic.id))) {
+              return prev;
+            }
+
+            return [...prev, String(createdTopic.id)];
+          });
+          setMessage('Topic pulled in from the Curriculum Index and added to this class plan successfully.');
+        }
+      } catch (err) {
+        console.error('Create planned class topic from index error:', err);
+        setError(
+          err.response?.data?.message ||
+            'Couldn\'t pull that topic in from the Curriculum Index just now.'
+        );
+      } finally {
+        setIsCreatingTopic(false);
+        setSelectedTopicId('');
+      }
+
+      return;
+    }
 
     setSelectedTopicIds((prev) => {
       if (prev.includes(String(topicId))) {
@@ -285,7 +506,6 @@ export default function PlannedClassesPage() {
       await fetchTopics();
 
       if (createdTopic?.id) {
-        setSelectedTopicId(String(createdTopic.id));
         setSelectedTopicIds((prev) => {
           if (prev.includes(String(createdTopic.id))) {
             return prev;
@@ -295,6 +515,7 @@ export default function PlannedClassesPage() {
         });
       }
 
+      setSelectedTopicId('');
       setShowQuickAdd(false);
       setQuickAddData({
         title: '',
@@ -360,7 +581,13 @@ export default function PlannedClassesPage() {
         : user?.id || '',
       notes: plannedClass.notes || ''
     });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    window.requestAnimationFrame(() => {
+      if (formSectionRef.current) {
+        const targetTop = formSectionRef.current.getBoundingClientRect().top + window.scrollY - 24;
+        window.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' });
+      }
+    });
   };
 
   const handleDelete = async (plannedClassId) => {
@@ -399,25 +626,81 @@ export default function PlannedClassesPage() {
       setMessage('');
 
       const response = await api.post(`/planned-classes/${plannedClassId}/complete`);
-      await fetchPlannedClasses();
+      const completedClassId = response.data?.classId;
 
-      navigate(`/classes?openClassId=${response.data.classId}`);
+      if (!completedClassId) {
+        throw new Error('The completed class id was missing from the response.');
+      }
+
+      navigate(`/classes?openClassId=${completedClassId}&focus=attendance`);
     } catch (err) {
       console.error('Complete planned class error:', err);
-      setError(err.response?.data?.message || 'Couldn\'t complete that planned class just now.');
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          'Couldn\'t complete that planned class just now.'
+      );
     }
   };
 
-  const selectedTopics = selectedTopicIds
-    .map((topicId) => availableTopics.find((topic) => String(topic.id) === String(topicId)))
-    .filter(Boolean);
+  const handlePreviousMonth = () => {
+    setVisibleMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setVisibleMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const handleCurrentMonth = () => {
+    setVisibleMonth(getMonthStart(new Date()));
+  };
+
+  const scrollToPlansSection = () => {
+    window.requestAnimationFrame(() => {
+      if (plansSectionRef.current) {
+        const targetTop = plansSectionRef.current.getBoundingClientRect().top + window.scrollY - 24;
+        window.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' });
+      }
+    });
+  };
+
+  const handleViewChange = (nextView) => {
+    setActiveView(nextView);
+
+    if (nextView === 'calendar') {
+      scrollToPlansSection();
+    }
+  };
+
+  const handleSelectCalendarDay = (dateValue) => {
+    const normalizedDate = formatDateForInput(dateValue);
+
+    if (!normalizedDate) {
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      class_date: normalizedDate
+    }));
+    setMessage(`Planning date set to ${formatDateForDisplay(normalizedDate)}.`);
+    setError('');
+
+    window.requestAnimationFrame(() => {
+      if (formSectionRef.current) {
+        const targetTop = formSectionRef.current.getBoundingClientRect().top + window.scrollY - 24;
+        window.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' });
+      }
+    });
+  };
 
   return (
     <Layout>
       <div className="planned-classes-page">
         <h2 className="page-title">Planned Classes</h2>
         <p className="page-intro">
-          Map out upcoming classes, tie them to scenarios and topics, then complete the plan after class and finish attendance inside the regular class workflow.
+          Map out upcoming classes, tie them to scenarios and topics, then complete the plan after
+          class and finish attendance inside the regular class workflow.
         </p>
 
         <section className="stats-grid planned-classes-stats-grid">
@@ -429,248 +712,294 @@ export default function PlannedClassesPage() {
           ))}
         </section>
 
-        <section className="page-section planned-classes-form-section">
+        <section className="page-section planned-classes-view-section">
+          <div className="section-header">
+            <div>
+              <h3>Planning view</h3>
+              <p className="section-note">
+                Check the calendar before you build the next class so you can spot open days and
+                keep the week balanced.
+              </p>
+            </div>
+
+            <div className="inline-actions">
+              <div className="planned-classes-view-toggle" role="tablist" aria-label="Planned class view">
+                <button
+                  type="button"
+                  className={`secondary-button${activeView === 'list' ? ' is-active' : ''}`}
+                  onClick={() => handleViewChange('list')}
+                  aria-pressed={activeView === 'list'}
+                >
+                  List
+                </button>
+                <button
+                  type="button"
+                  className={`secondary-button${activeView === 'calendar' ? ' is-active' : ''}`}
+                  onClick={() => handleViewChange('calendar')}
+                  aria-pressed={activeView === 'calendar'}
+                >
+                  Calendar
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section ref={formSectionRef} className="page-section planned-classes-form-section">
           <div className="section-header">
             <div>
               <h3>{editingPlannedClassId ? 'Edit planned class' : 'Create planned class'}</h3>
               <p className="section-note">
-                Choose a program first so the scenario and topic pickers stay focused on the right part of your curriculum.
+                Choose a program first so the scenario and topic pickers stay focused on the right
+                part of your curriculum.
               </p>
             </div>
           </div>
 
-          <form className="form-grid" onSubmit={handleSubmit}>
-          <div>
-            <label>Program</label>
-            <select
-              name="program_id"
-              value={formData.program_id}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Choose a program</option>
-              {activePrograms.map((program) => (
-                <option key={program.id} value={program.id}>
-                  {program.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label>Training Scenario</label>
-            <select
-              name="training_scenario_id"
-              value={formData.training_scenario_id}
-              onChange={handleChange}
-            >
-              <option value="">No scenario</option>
-              {availableScenarios.map((scenario) => (
-                <option key={scenario.id} value={scenario.id}>
-                  {scenario.name}
-                </option>
-              ))}
-            </select>
-            <p className="section-note planned-classes-inline-note">
-              {formData.program_id
-                ? (availableScenarios.length > 0
-                    ? `${availableScenarios.length} matching scenario${availableScenarios.length === 1 ? '' : 's'} available for this program.`
-                    : 'No matching scenarios yet for this program.')
-                : 'You can leave this blank or choose a scenario to seed class training entries later.'}
-            </p>
-          </div>
-
-          <div>
-            <label>Title</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="Optional class title"
-            />
-          </div>
-
-          <div>
-            <label>Class date</label>
-            <input
-              type="date"
-              name="class_date"
-              value={formData.class_date}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div>
-            <label>Start time</label>
-            <input
-              type="time"
-              name="start_time"
-              value={formData.start_time}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>End time</label>
-            <input
-              type="time"
-              name="end_time"
-              value={formData.end_time}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label>Topics</label>
-            <TopicSearchSelect
-              topics={availableTopics}
-              value={selectedTopicId}
-              onChange={setSelectedTopicId}
-              placeholder="Search topics..."
-              emptySelectionLabel="No topic selected yet"
-              helperText="Choose a topic, then click Add Topic below."
-              onCreateOption={handleOpenQuickAdd}
-            />
-
-            <div className="button-row planned-classes-topic-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => handleAddTopic(selectedTopicId)}
-                disabled={!selectedTopicId}
+          <div className="planned-classes-readiness-grid">
+            {planReadinessItems.map((item) => (
+              <div
+                key={item.label}
+                className={`planned-classes-readiness-card${item.complete ? ' complete' : ''}`}
               >
-                Add Topic
-              </button>
+                <span className="meta-text">{item.label}</span>
+                <strong>{item.value}</strong>
+              </div>
+            ))}
+          </div>
 
-              {selectedTopics.length > 0 ? (
+          <form className="form-grid" onSubmit={handleSubmit}>
+            <div>
+              <label>Program</label>
+              <select
+                name="program_id"
+                value={formData.program_id}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Choose a program</option>
+                {activePrograms.map((program) => (
+                  <option key={program.id} value={program.id}>
+                    {program.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label>Training Scenario</label>
+              <select
+                name="training_scenario_id"
+                value={formData.training_scenario_id}
+                onChange={handleChange}
+              >
+                <option value="">No scenario</option>
+                {availableScenarios.map((scenario) => (
+                  <option key={scenario.id} value={scenario.id}>
+                    {scenario.name}
+                  </option>
+                ))}
+              </select>
+              <p className="section-note planned-classes-inline-note">
+                {formData.program_id
+                  ? (
+                    availableScenarios.length > 0
+                      ? `${availableScenarios.length} matching scenario${availableScenarios.length === 1 ? '' : 's'} available for this program.`
+                      : 'No matching scenarios yet for this program.'
+                  )
+                  : 'Choose a program first, then add a scenario if you want the completed class to start with a seeded training entry.'}
+              </p>
+            </div>
+
+            <div>
+              <label>Title</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="Optional class title"
+              />
+            </div>
+
+            <div>
+              <label>Class date</label>
+              <input
+                type="date"
+                name="class_date"
+                value={formData.class_date}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div>
+              <label>Start time</label>
+              <input
+                type="time"
+                name="start_time"
+                value={formData.start_time}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div>
+              <label>End time</label>
+              <input
+                type="time"
+                name="end_time"
+                value={formData.end_time}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label>Topics</label>
+              <TopicSearchSelect
+                topics={availableTopicOptions}
+                value={selectedTopicId}
+                onChange={setSelectedTopicId}
+                placeholder="Search topics..."
+                emptySelectionLabel="No topic selected yet"
+                helperText="Choose a topic, then click Add Topic below."
+                onCreateOption={handleOpenQuickAdd}
+              />
+
+              <div className="button-row planned-classes-topic-actions">
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={() => setSelectedTopicIds([])}
+                  onClick={() => handleAddTopic(selectedTopicId)}
+                  disabled={!selectedTopicId}
                 >
-                  Clear topics
+                  Add Topic
                 </button>
+
+                {selectedTopics.length > 0 ? (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => setSelectedTopicIds([])}
+                  >
+                    Clear topics
+                  </button>
+                ) : null}
+              </div>
+
+              <p className="section-note planned-classes-inline-note">
+                {formData.program_id
+                  ? `${availableTopics.length} matching topic${availableTopics.length === 1 ? '' : 's'} available for this program.`
+                  : 'Choose a program to narrow the topic list, or search across all active topics if this plan crosses categories.'}
+              </p>
+
+              {selectedTopics.length > 0 ? (
+                <>
+                  <p className="section-note planned-classes-inline-note">
+                    {selectedTopics.length} topic{selectedTopics.length === 1 ? '' : 's'} selected
+                    for this class plan.
+                  </p>
+                  <div className="suggestion-chip-row planned-classes-selected-topics">
+                    {selectedTopics.map((topic) => (
+                      <button
+                        key={topic.id}
+                        type="button"
+                        className="suggestion-chip selected"
+                        onClick={() => handleRemoveTopic(topic.id)}
+                        title="Remove topic"
+                      >
+                        {topic.title}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="section-note">No topics added yet.</p>
+              )}
+
+              {showQuickAdd ? (
+                <div className="quick-add-panel" style={{ marginTop: '14px' }}>
+                  <label>New Topic Title</label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={quickAddData.title}
+                    onChange={handleQuickAddChange}
+                  />
+
+                  <label>Topic Type</label>
+                  <select
+                    name="topic_type"
+                    value={quickAddData.topic_type}
+                    onChange={handleQuickAddChange}
+                  >
+                    <option value="position">{formatLabel('position')}</option>
+                    <option value="technique">{formatLabel('technique')}</option>
+                    <option value="concept">{formatLabel('concept')}</option>
+                    <option value="submission">{formatLabel('submission')}</option>
+                    <option value="escape">{formatLabel('escape')}</option>
+                    <option value="takedown">{formatLabel('takedown')}</option>
+                    <option value="drill_theme">{formatLabel('drill_theme')}</option>
+                  </select>
+
+                  <div className="inline-actions">
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={handleCreateTopic}
+                      disabled={isCreatingTopic}
+                    >
+                      {isCreatingTopic ? 'Creating Topic...' : 'Create Topic'}
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => setShowQuickAdd(false)}
+                      disabled={isCreatingTopic}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               ) : null}
             </div>
 
-            <p className="section-note planned-classes-inline-note">
-              {formData.program_id
-                ? `${availableTopics.length} matching topic${availableTopics.length === 1 ? '' : 's'} available for this program.`
-                : 'Choose a program to narrow the topic list, or search across all active topics.'}
-            </p>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label>Notes</label>
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                rows={4}
+                placeholder="Optional notes, coaching reminders, or class goals"
+              />
+            </div>
 
-            {selectedTopics.length > 0 ? (
-              <>
-                <p className="section-note planned-classes-inline-note">
-                  {selectedTopics.length} topic{selectedTopics.length === 1 ? '' : 's'} selected for this class plan.
-                </p>
-                <div className="suggestion-chip-row planned-classes-selected-topics">
-                {selectedTopics.map((topic) => (
-                  <button
-                    key={topic.id}
-                    type="button"
-                    className="suggestion-chip selected"
-                    onClick={() => handleRemoveTopic(topic.id)}
-                    title="Remove topic"
-                  >
-                    {topic.title}
-                  </button>
-                ))}
-                </div>
-              </>
-            ) : (
-              <p className="section-note">No topics added yet.</p>
-            )}
-
-            {showQuickAdd ? (
-              <div className="quick-add-panel" style={{ marginTop: '14px' }}>
-                <label>New Topic Title</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={quickAddData.title}
-                  onChange={handleQuickAddChange}
-                />
-
-                <label>Topic Type</label>
-                <select
-                  name="topic_type"
-                  value={quickAddData.topic_type}
-                  onChange={handleQuickAddChange}
-                >
-                  <option value="position">{formatLabel('position')}</option>
-                  <option value="technique">{formatLabel('technique')}</option>
-                  <option value="concept">{formatLabel('concept')}</option>
-                  <option value="submission">{formatLabel('submission')}</option>
-                  <option value="escape">{formatLabel('escape')}</option>
-                  <option value="takedown">{formatLabel('takedown')}</option>
-                  <option value="drill_theme">{formatLabel('drill_theme')}</option>
-                </select>
-
-                <div className="inline-actions">
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={handleCreateTopic}
-                    disabled={isCreatingTopic}
-                  >
-                    {isCreatingTopic ? 'Creating Topic...' : 'Create Topic'}
-                  </button>
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => setShowQuickAdd(false)}
-                    disabled={isCreatingTopic}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label>Notes</label>
-            <textarea
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              rows={4}
-              placeholder="Optional notes, coaching reminders, or class goals"
-            />
-          </div>
-
-          <div className="button-row">
-            <button type="submit" disabled={submitting}>
-              {submitting
-                ? (editingPlannedClassId ? 'Saving...' : 'Creating...')
-                : (editingPlannedClassId ? 'Save Planned Class' : 'Create Planned Class')}
-            </button>
-
-            {editingPlannedClassId ? (
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={resetForm}
-              >
-                Cancel edit
+            <div className="button-row">
+              <button type="submit" disabled={submitting}>
+                {submitting
+                  ? editingPlannedClassId ? 'Saving...' : 'Creating...'
+                  : editingPlannedClassId ? 'Save Planned Class' : 'Create Planned Class'}
               </button>
-            ) : null}
-          </div>
+
+              {editingPlannedClassId ? (
+                <button type="button" className="secondary-button" onClick={resetForm}>
+                  Cancel edit
+                </button>
+              ) : null}
+            </div>
           </form>
 
           {message ? <p className="success-text">{message}</p> : null}
           {error ? <p className="error-text">{error}</p> : null}
         </section>
 
-        <section className="page-section">
+        <section ref={plansSectionRef} className="page-section">
           <div className="section-header">
             <div>
               <h3>Upcoming planned classes</h3>
               <p className="section-note">
-                Review what is coming up, make quick edits, or complete a plan once class is finished.
+                Review what is coming up, make quick edits, or complete a plan once class is
+                finished.
               </p>
             </div>
           </div>
@@ -681,102 +1010,207 @@ export default function PlannedClassesPage() {
             <p className="empty-state">No planned classes have been added yet.</p>
           ) : null}
 
-          {!loading && Object.entries(groupedPlannedClasses).map(([date, classesForDate]) => (
-            <div key={date} className="detail-block">
-              <h4>{formatDateForDisplay(date)}</h4>
+          {!loading && activeView === 'calendar' ? (
+            <div className="planned-classes-calendar">
+              <div className="planned-classes-calendar-toolbar">
+                <div>
+                  <h4>{visibleMonthLabel}</h4>
+                  <p className="section-note">
+                    Scan what is planned this month by day, program, and primary topic. Click a day
+                    to start planning directly on that date.
+                  </p>
+                </div>
 
-              <div className="card-list">
-                {classesForDate.map((plannedClass) => (
-                  <article key={plannedClass.id} className="item-card">
-                    <div className="item-header">
-                      <div>
-                        <h4>{plannedClass.title || plannedClass.program_name}</h4>
-                        <p className="meta-text">
-                          {formatTimeForDisplay(plannedClass.start_time)}
-                          {plannedClass.end_time
-                            ? ` - ${formatTimeForDisplay(plannedClass.end_time)}`
+                <div className="inline-actions">
+                  <button type="button" className="secondary-button" onClick={handlePreviousMonth}>
+                    Previous
+                  </button>
+                  <button type="button" className="secondary-button" onClick={handleCurrentMonth}>
+                    Today
+                  </button>
+                  <button type="button" className="secondary-button" onClick={handleNextMonth}>
+                    Next
+                  </button>
+                </div>
+              </div>
+
+              <div className="planned-classes-calendar-weekdays">
+                {WEEKDAY_LABELS.map((label) => (
+                  <div key={label} className="planned-classes-calendar-weekday">
+                    {label}
+                  </div>
+                ))}
+              </div>
+
+              <div className="planned-classes-calendar-grid">
+                {calendarDays.map((day) => {
+                  const isToday = day.dateKey === formatDateKey(new Date());
+                  const isSelected = day.dateKey === formData.class_date;
+
+                  return (
+                    <div
+                      key={day.dateKey}
+                      className={`planned-classes-calendar-day${day.isCurrentMonth ? '' : ' is-outside-month'}${isToday ? ' is-today' : ''}${isSelected ? ' is-selected' : ''}`}
+                    >
+                      <div className="planned-classes-calendar-day-header">
+                        <button
+                          type="button"
+                          className="planned-classes-calendar-day-trigger"
+                          onClick={() => handleSelectCalendarDay(day.date)}
+                          disabled={!day.isCurrentMonth}
+                        >
+                          <span>{day.date.toLocaleDateString(undefined, { weekday: 'short' })}</span>
+                          <strong>{day.date.getDate()}</strong>
+                        </button>
+                        <span className="meta-text">
+                          {day.plans.length > 0
+                            ? `${day.plans.length} plan${day.plans.length === 1 ? '' : 's'}`
                             : ''}
+                        </span>
+                      </div>
+
+                      <div className="planned-classes-calendar-items">
+                        {day.plans.length === 0 ? (
+                          <span className="planned-classes-calendar-empty">No class planned</span>
+                        ) : (
+                          day.plans.map((plannedClass) => {
+                            const primaryTopic = plannedClass.topics?.[0]?.title;
+
+                            return (
+                              <button
+                                key={plannedClass.id}
+                                type="button"
+                                className={`planned-classes-calendar-item${plannedClass.status === 'completed' ? ' is-completed' : ''}`}
+                                onClick={() => (
+                                  plannedClass.status === 'planned'
+                                    ? handleEdit(plannedClass)
+                                    : navigate(`/classes?openClassId=${plannedClass.completed_class_id}`)
+                                )}
+                              >
+                                <strong>{formatTimeForDisplay(plannedClass.start_time)}</strong>
+                                <span>{plannedClass.program_name}</span>
+                                {primaryTopic ? <span className="meta-text">{primaryTopic}</span> : null}
+                                <span className="planned-classes-calendar-status">
+                                  {plannedClass.status === 'completed' ? 'Completed' : 'Planned'}
+                                </span>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          {!loading && activeView === 'list' ? (
+            Object.entries(groupedPlannedClasses).map(([date, classesForDate]) => (
+              <div key={date} className="detail-block">
+                <h4>{formatDateForDisplay(date)}</h4>
+
+                <div className="card-list">
+                  {classesForDate.map((plannedClass) => (
+                    <article key={plannedClass.id} className="item-card">
+                      <div className="item-header">
+                        <div>
+                          <h4>{plannedClass.title || plannedClass.program_name}</h4>
+                          <p className="meta-text">
+                            {formatTimeForDisplay(plannedClass.start_time)}
+                            {plannedClass.end_time
+                              ? ` - ${formatTimeForDisplay(plannedClass.end_time)}`
+                              : ''}
+                            {!plannedClass.start_time && !plannedClass.end_time
+                              ? ''
+                              : ` | ${formatDateForDisplay(plannedClass.class_date)}`}
+                          </p>
+                        </div>
+
+                        <span
+                          className={`status-badge${plannedClass.status === 'completed' ? ' inactive' : ''}`}
+                        >
+                          {formatLabel(plannedClass.status)}
+                        </span>
+                      </div>
+
+                      <div className="planned-class-meta-grid">
+                        <p>
+                          <strong>Program:</strong> {plannedClass.program_name}
+                        </p>
+                        <p>
+                          <strong>Head coach:</strong> {plannedClass.head_coach_first_name}{' '}
+                          {plannedClass.head_coach_last_name}
+                        </p>
+                        <p>
+                          <strong>Scenario:</strong>{' '}
+                          {plannedClass.training_scenario_name
+                            || (plannedClass.status === 'completed' ? 'Deleted after use' : 'No scenario planned')}
+                        </p>
+                        <p>
+                          <strong>Topics:</strong>{' '}
+                          {plannedClass.topics.length > 0
+                            ? `${plannedClass.topics.length} planned`
+                            : 'No topics planned yet'}
                         </p>
                       </div>
 
-                      <span className={`status-badge${plannedClass.status === 'completed' ? ' inactive' : ''}`}>
-                        {formatLabel(plannedClass.status)}
-                      </span>
-                    </div>
+                      {plannedClass.topics.length > 0 ? (
+                        <div className="suggestion-chip-row planned-classes-card-topics">
+                          {plannedClass.topics.map((topic) => (
+                            <span
+                              key={`${plannedClass.id}-${topic.curriculum_topic_id}`}
+                              className="suggestion-chip"
+                            >
+                              {topic.title}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
 
-                    <div className="planned-class-meta-grid">
-                      <p>
-                        <strong>Program:</strong> {plannedClass.program_name}
-                      </p>
-                      <p>
-                        <strong>Head coach:</strong> {plannedClass.head_coach_first_name} {plannedClass.head_coach_last_name}
-                      </p>
-                      <p>
-                        <strong>Scenario:</strong> {plannedClass.training_scenario_name || 'No scenario planned'}
-                      </p>
-                      <p>
-                        <strong>Topics:</strong>{' '}
-                        {plannedClass.topics.length > 0
-                          ? `${plannedClass.topics.length} planned`
-                          : 'No topics planned yet'}
-                      </p>
-                    </div>
+                      {plannedClass.notes ? (
+                        <p>
+                          <strong>Notes:</strong> {plannedClass.notes}
+                        </p>
+                      ) : null}
 
-                    {plannedClass.topics.length > 0 ? (
-                      <div className="suggestion-chip-row planned-classes-card-topics">
-                        {plannedClass.topics.map((topic) => (
-                          <span key={`${plannedClass.id}-${topic.curriculum_topic_id}`} className="suggestion-chip">
-                            {topic.title}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-
-                    {plannedClass.notes ? (
-                      <p>
-                        <strong>Notes:</strong> {plannedClass.notes}
-                      </p>
-                    ) : null}
-
-                    <div className="button-row">
-                      {plannedClass.status === 'planned' ? (
-                        <>
+                      <div className="button-row">
+                        {plannedClass.status === 'planned' ? (
+                          <>
+                            <button
+                              type="button"
+                              className="secondary-button"
+                              onClick={() => handleEdit(plannedClass)}
+                            >
+                              Edit plan
+                            </button>
+                            <button type="button" onClick={() => handleComplete(plannedClass.id)}>
+                              Complete class
+                            </button>
+                            <button
+                              type="button"
+                              className="danger-button"
+                              onClick={() => handleDelete(plannedClass.id)}
+                            >
+                              Remove plan
+                            </button>
+                          </>
+                        ) : (
                           <button
                             type="button"
                             className="secondary-button"
-                            onClick={() => handleEdit(plannedClass)}
+                            onClick={() => navigate(`/classes?openClassId=${plannedClass.completed_class_id}`)}
                           >
-                            Edit plan
+                            Open completed class
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => handleComplete(plannedClass.id)}
-                          >
-                            Complete class
-                          </button>
-                          <button
-                            type="button"
-                            className="danger-button"
-                            onClick={() => handleDelete(plannedClass.id)}
-                          >
-                            Remove plan
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          type="button"
-                          className="secondary-button"
-                          onClick={() => navigate(`/classes?openClassId=${plannedClass.completed_class_id}`)}
-                        >
-                          Open completed class
-                        </button>
-                      )}
-                    </div>
-                  </article>
-                ))}
+                        )}
+                      </div>
+                    </article>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : null}
         </section>
       </div>
     </Layout>
