@@ -1,13 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import Layout from '../components/Layout';
-import { formatLabel } from '../utils/formatLabel';
+import { formatSentenceLabel } from '../utils/formatLabel';
 import TopicSearchSelect from '../components/TopicSearchSelect';
 
 export default function LibraryPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [entries, setEntries] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [topics, setTopics] = useState([]);
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [programFilter, setProgramFilter] = useState(searchParams.get('programId') || '');
+  const [topicFilter, setTopicFilter] = useState(searchParams.get('topicId') || '');
+  const [entryTypeFilter, setEntryTypeFilter] = useState(searchParams.get('entryType') || '');
+  const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'updated_desc');
   const [showInactive, setShowInactive] = useState(false);
   const [showCreateEntryForm, setShowCreateEntryForm] = useState(false);
   const [expandedEntryDetails, setExpandedEntryDetails] = useState({});
@@ -23,9 +30,33 @@ export default function LibraryPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const entryTypes = ['technique', 'concept', 'drill', 'cla_game', 'video_note'];
   const visibilityOptions = ['coach_only', 'member_visible'];
+  const quickEntryPresets = [
+    {
+      key: 'video_note',
+      label: 'Video note',
+      entry_type: 'video_note',
+      visibility: 'coach_only',
+      description: 'Quick coach-facing teaching note or video reference.'
+    },
+    {
+      key: 'technique',
+      label: 'Technique resource',
+      entry_type: 'technique',
+      visibility: 'member_visible',
+      description: 'Technique reference meant to support a specific curriculum topic.'
+    },
+    {
+      key: 'concept',
+      label: 'Concept note',
+      entry_type: 'concept',
+      visibility: 'coach_only',
+      description: 'Short conceptual resource for planning, teaching, or review.'
+    }
+  ];
 
   const fetchEntries = async () => {
     const response = await api.get('/library');
@@ -59,12 +90,117 @@ export default function LibraryPage() {
     loadPageData();
   }, []);
 
+  useEffect(() => {
+    const nextParams = new URLSearchParams();
+
+    if (search) nextParams.set('search', search);
+    if (programFilter) nextParams.set('programId', programFilter);
+    if (topicFilter) nextParams.set('topicId', topicFilter);
+    if (entryTypeFilter) nextParams.set('entryType', entryTypeFilter);
+    if (sortBy && sortBy !== 'updated_desc') nextParams.set('sort', sortBy);
+
+    if (nextParams.toString() !== searchParams.toString()) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [search, programFilter, topicFilter, entryTypeFilter, sortBy, searchParams, setSearchParams]);
+
   const orderedEntries = useMemo(() => {
     const active = entries.filter((entry) => entry.is_active);
     const inactive = entries.filter((entry) => !entry.is_active);
 
-    return showInactive ? [...active, ...inactive] : active;
-  }, [entries, showInactive]);
+    const visibleEntries = showInactive ? [...active, ...inactive] : active;
+
+    const getTimestamp = (value) => {
+      const time = value ? new Date(value).getTime() : 0;
+      return Number.isNaN(time) ? 0 : time;
+    };
+
+    return [...visibleEntries].sort((a, b) => {
+      if (sortBy === 'title_asc') {
+        return a.title.localeCompare(b.title);
+      }
+
+      if (sortBy === 'title_desc') {
+        return b.title.localeCompare(a.title);
+      }
+
+      if (sortBy === 'topic_asc') {
+        return String(a.topic_title || 'zzzz').localeCompare(String(b.topic_title || 'zzzz'));
+      }
+
+      if (sortBy === 'created_desc') {
+        return getTimestamp(b.created_at) - getTimestamp(a.created_at);
+      }
+
+      return getTimestamp(b.updated_at || b.created_at) - getTimestamp(a.updated_at || a.created_at);
+    });
+  }, [entries, showInactive, sortBy]);
+
+  const filteredEntries = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    return orderedEntries.filter((entry) => {
+      const matchesSearch = !normalizedSearch || [
+        entry.title,
+        entry.description,
+        entry.program_name,
+        entry.topic_title,
+        formatSentenceLabel(entry.entry_type),
+        formatSentenceLabel(entry.visibility)
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalizedSearch));
+
+      const matchesProgram = !programFilter || String(entry.program_id || '') === programFilter;
+      const matchesTopic = !topicFilter || String(entry.curriculum_topic_id || '') === topicFilter;
+      const matchesEntryType = !entryTypeFilter || entry.entry_type === entryTypeFilter;
+
+      return matchesSearch && matchesProgram && matchesTopic && matchesEntryType;
+    });
+  }, [orderedEntries, search, programFilter, topicFilter, entryTypeFilter]);
+
+  const summaryCards = useMemo(() => {
+    const linkedTopicCount = filteredEntries.filter((entry) => entry.curriculum_topic_id).length;
+    const memberVisibleCount = filteredEntries.filter((entry) => entry.visibility === 'member_visible').length;
+
+    return [
+      { label: 'Visible entries', value: filteredEntries.length },
+      { label: 'Linked to topics', value: linkedTopicCount },
+      { label: 'Member visible', value: memberVisibleCount }
+    ];
+  }, [filteredEntries]);
+
+  const selectedTopic = useMemo(
+    () => topics.find((topic) => String(topic.id) === topicFilter) || null,
+    [topics, topicFilter]
+  );
+
+  const selectedProgram = useMemo(
+    () => programs.find((program) => String(program.id) === programFilter) || null,
+    [programs, programFilter]
+  );
+
+  const activeFilters = useMemo(() => {
+    const nextFilters = [];
+
+    if (search) {
+      nextFilters.push({ key: 'search', label: `Search: ${search}` });
+    }
+
+    if (selectedProgram) {
+      nextFilters.push({ key: 'program', label: `Program: ${selectedProgram.name}` });
+    }
+
+    if (selectedTopic) {
+      nextFilters.push({ key: 'topic', label: `Topic: ${selectedTopic.title}` });
+    }
+
+    if (entryTypeFilter) {
+      nextFilters.push({ key: 'entryType', label: `Type: ${formatSentenceLabel(entryTypeFilter)}` });
+    }
+
+    return nextFilters;
+  }, [search, selectedProgram, selectedTopic, entryTypeFilter]);
 
   const availableTopics = useMemo(() => {
     const activeTopics = topics.filter((topic) => topic.is_active);
@@ -80,7 +216,42 @@ export default function LibraryPage() {
     return matchingTopics.length > 0 ? matchingTopics : activeTopics;
   }, [topics, formData.program_id]);
 
+  const clearTopicFocus = () => {
+    setTopicFilter('');
+  };
+
+  const clearAllFilters = () => {
+    setSearch('');
+    setProgramFilter('');
+    setTopicFilter('');
+    setEntryTypeFilter('');
+    setSortBy('updated_desc');
+  };
+
+  const handleFocusTopic = (topicId) => {
+    setTopicFilter(String(topicId));
+  };
+
+  useEffect(() => {
+    if (!selectedTopic) {
+      return;
+    }
+
+    setFormData((prev) => {
+      if (prev.curriculum_topic_id) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        curriculum_topic_id: String(selectedTopic.id),
+        program_id: prev.program_id || (selectedTopic.program_id ? String(selectedTopic.program_id) : '')
+      };
+    });
+  }, [selectedTopic]);
+
   const handleChange = (e) => {
+    setSuccessMessage('');
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value
@@ -88,16 +259,28 @@ export default function LibraryPage() {
   };
 
   const handleTopicChange = (topicId) => {
+    setSuccessMessage('');
     setFormData((prev) => ({
       ...prev,
       curriculum_topic_id: topicId
     }));
   };
 
+  const handleApplyPreset = (preset) => {
+    setSuccessMessage('');
+    setFormData((prev) => ({
+      ...prev,
+      entry_type: preset.entry_type,
+      visibility: preset.visibility
+    }));
+    setShowCreateEntryForm(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setError('');
+    setSuccessMessage('');
 
     try {
       const payload = {
@@ -125,6 +308,7 @@ export default function LibraryPage() {
       });
 
       await fetchEntries();
+      setSuccessMessage('Library entry saved successfully.');
     } catch (err) {
       console.error('Create library entry error:', err);
       setError(err.response?.data?.message || 'Couldn\'t create that library entry just now.');
@@ -167,6 +351,23 @@ export default function LibraryPage() {
     }));
   };
 
+  const formSelectedProgram = useMemo(
+    () => programs.find((program) => String(program.id) === String(formData.program_id)) || null,
+    [programs, formData.program_id]
+  );
+
+  const formSelectedTopic = useMemo(
+    () => topics.find((topic) => String(topic.id) === String(formData.curriculum_topic_id)) || null,
+    [topics, formData.curriculum_topic_id]
+  );
+
+  const createEntrySummary = useMemo(() => ([
+    { label: 'Type', value: formatSentenceLabel(formData.entry_type) },
+    { label: 'Visibility', value: formatSentenceLabel(formData.visibility) },
+    { label: 'Program', value: formSelectedProgram?.name || 'No program' },
+    { label: 'Linked topic', value: formSelectedTopic?.title || 'No topic linked' }
+  ]), [formData.entry_type, formData.visibility, formSelectedProgram, formSelectedTopic]);
+
   return (
     <Layout>
       <h2 className="page-title">Library</h2>
@@ -189,8 +390,45 @@ export default function LibraryPage() {
             </button>
           </div>
 
+          <div className="library-preset-row">
+            {quickEntryPresets.map((preset) => (
+              <button
+                key={preset.key}
+                type="button"
+                className="secondary-button"
+                onClick={() => handleApplyPreset(preset)}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="library-preset-help meta-text">
+            Pick a quick start above to prefill the most common entry patterns, then open the form only when you are ready to finish the details.
+          </div>
+
           {showCreateEntryForm && (
             <form className="form-grid" onSubmit={handleSubmit}>
+              <div className="class-flow-summary-grid library-create-summary" style={{ gridColumn: '1 / -1' }}>
+                {createEntrySummary.map((item) => (
+                  <div key={item.label} className="summary-card">
+                    <div className="meta-text">{item.label}</div>
+                    <strong>{item.value}</strong>
+                  </div>
+                ))}
+              </div>
+
+              {selectedTopic ? (
+                <div className="library-linked-topic-banner" style={{ gridColumn: '1 / -1', marginBottom: 0 }}>
+                  <div>
+                    <strong>Creating from the current topic focus</strong>
+                    <div className="meta-text">
+                      New entries can start linked to {selectedTopic.title} so your library grows directly around the curriculum.
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
               <div>
                 <label>Title</label>
                 <input
@@ -210,7 +448,7 @@ export default function LibraryPage() {
                 >
                   {entryTypes.map((type) => (
                     <option key={type} value={type}>
-                      {formatLabel(type)}
+                      {formatSentenceLabel(type)}
                     </option>
                   ))}
                 </select>
@@ -244,6 +482,12 @@ export default function LibraryPage() {
                 />
               </div>
 
+              <div style={{ gridColumn: '1 / -1' }}>
+                <div className="meta-text">
+                  Tip: link entries to a curriculum topic whenever possible so they are easier to find from the Index and class-planning flows.
+                </div>
+              </div>
+
               <div>
                 <label>Description</label>
                 <textarea
@@ -273,7 +517,7 @@ export default function LibraryPage() {
                 >
                   {visibilityOptions.map((option) => (
                     <option key={option} value={option}>
-                      {formatLabel(option)}
+                      {formatSentenceLabel(option)}
                     </option>
                   ))}
                 </select>
@@ -284,6 +528,12 @@ export default function LibraryPage() {
                   {submitting ? 'Saving...' : 'Save Library Entry'}
                 </button>
               </div>
+
+              {successMessage ? (
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <p className="success-text" style={{ marginBottom: 0 }}>{successMessage}</p>
+                </div>
+              ) : null}
             </form>
           )}
         </div>
@@ -292,6 +542,124 @@ export default function LibraryPage() {
       {error && <p className="error-text">{error}</p>}
 
       <section className="page-section">
+        <div className="summary-grid" style={{ marginBottom: '16px' }}>
+          {summaryCards.map((card) => (
+            <div key={card.label} className="summary-card">
+              <div className="meta-text">{card.label}</div>
+              <strong style={{ fontSize: '1.4rem' }}>{card.value}</strong>
+            </div>
+          ))}
+        </div>
+
+        <div className="compact-form-shell" style={{ marginBottom: '16px' }}>
+          <div className="compact-form-header">
+            <div>
+              <h3>Find the right resource fast</h3>
+              <p className="section-note">
+                Search by title, topic, program, description, or resource type, then narrow the list with quick filters.
+              </p>
+            </div>
+          </div>
+
+          {selectedTopic ? (
+            <div className="library-linked-topic-banner">
+              <div>
+                <strong>Showing resources linked to {selectedTopic.title}</strong>
+                <div className="meta-text">
+                  This filtered view came from the Curriculum Index, so you can stay focused on supporting material for that topic.
+                </div>
+              </div>
+              <div className="inline-actions">
+                <Link
+                  className="secondary-button"
+                  to={`/index?search=${encodeURIComponent(selectedTopic.title)}`}
+                >
+                  Back to Index item
+                </Link>
+                <button type="button" className="secondary-button" onClick={clearTopicFocus}>
+                  Clear topic focus
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="form-grid">
+            <div>
+              <label>Search</label>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search the library..."
+              />
+            </div>
+
+            <div>
+              <label>Program</label>
+              <select value={programFilter} onChange={(e) => setProgramFilter(e.target.value)}>
+                <option value="">All programs</option>
+                {programs.map((program) => (
+                  <option key={program.id} value={program.id}>
+                    {program.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label>Topic</label>
+              <select value={topicFilter} onChange={(e) => setTopicFilter(e.target.value)}>
+                <option value="">All topics</option>
+                {topics
+                  .filter((topic) => topic.is_active)
+                  .map((topic) => (
+                    <option key={topic.id} value={topic.id}>
+                      {topic.title}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div>
+              <label>Resource Type</label>
+              <select value={entryTypeFilter} onChange={(e) => setEntryTypeFilter(e.target.value)}>
+                <option value="">All resource types</option>
+                {entryTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {formatSentenceLabel(type)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label>Sort</label>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <option value="updated_desc">Recently updated</option>
+                <option value="created_desc">Recently created</option>
+                <option value="title_asc">Title A-Z</option>
+                <option value="title_desc">Title Z-A</option>
+                <option value="topic_asc">Topic A-Z</option>
+              </select>
+            </div>
+          </div>
+
+          {activeFilters.length > 0 ? (
+            <div className="library-active-filters">
+              <div className="library-filter-chip-row">
+                {activeFilters.map((filter) => (
+                  <span key={filter.key} className="library-filter-chip">
+                    {filter.label}
+                  </span>
+                ))}
+              </div>
+              <button type="button" className="secondary-button" onClick={clearAllFilters}>
+                Clear filters
+              </button>
+            </div>
+          ) : null}
+        </div>
+
         <div
           style={{
             display: 'flex',
@@ -312,17 +680,54 @@ export default function LibraryPage() {
 
         {loading ? (
           <p className="empty-state">Loading library...</p>
-        ) : orderedEntries.length === 0 ? (
-          <p className="empty-state">No library entries have been added yet.</p>
+        ) : filteredEntries.length === 0 ? (
+          <div className="empty-state">
+            <p style={{ marginBottom: '10px' }}>No library entries match that search or filter right now.</p>
+            <p className="meta-text" style={{ marginBottom: '12px' }}>
+              This is still a good time to start seeding the library with a few high-value notes, videos, or topic references.
+            </p>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setShowCreateEntryForm(true)}
+            >
+              Create a library entry
+            </button>
+          </div>
         ) : (
           <ul className="card-list">
-            {orderedEntries.map((entry) => (
+            {filteredEntries.map((entry) => (
               <li key={entry.id} className="card-item compact-topic-card">
                 <div className="compact-topic-header">
                   <div>
                     <strong>{entry.title}</strong>
                     <div className="compact-topic-meta meta-text">
-                      {formatLabel(entry.entry_type)} • {entry.program_name || 'No program'} • {entry.topic_title || 'No linked topic'}
+                      {formatSentenceLabel(entry.entry_type)} {' | '} {entry.program_name || 'No program'} {' | '} {entry.topic_title || 'No linked topic'}
+                    </div>
+                    <div className="library-topic-link-row">
+                      <button
+                        type="button"
+                        className="library-topic-chip"
+                        onClick={() => entry.curriculum_topic_id && handleFocusTopic(entry.curriculum_topic_id)}
+                        disabled={!entry.curriculum_topic_id}
+                      >
+                        {entry.topic_title || 'Unlinked library entry'}
+                      </button>
+                      {entry.curriculum_topic_id ? (
+                        <Link
+                          className="secondary-button library-topic-link-button"
+                          to={`/index?search=${encodeURIComponent(entry.topic_title)}`}
+                        >
+                          View in Index
+                        </Link>
+                      ) : null}
+                    </div>
+                    <div className="meta-text" style={{ marginTop: '6px' }}>
+                      {entry.description
+                        ? entry.description.length > 120
+                          ? `${entry.description.slice(0, 120)}...`
+                          : entry.description
+                        : 'No description added yet.'}
                     </div>
                   </div>
                   <button
@@ -336,10 +741,10 @@ export default function LibraryPage() {
 
                 {expandedEntryDetails[entry.id] && (
                   <div className="detail-block">
-                    <div className="meta-text">Type: {formatLabel(entry.entry_type)}</div>
+                    <div className="meta-text">Type: {formatSentenceLabel(entry.entry_type)}</div>
                     <div className="meta-text">Program: {entry.program_name || 'None'}</div>
                     <div className="meta-text">Topic: {entry.topic_title || 'None'}</div>
-                    <div className="meta-text">Visibility: {formatLabel(entry.visibility)}</div>
+                    <div className="meta-text">Visibility: {formatSentenceLabel(entry.visibility)}</div>
                     <div className="meta-text">
                       Active: {entry.is_active ? 'Yes' : 'No'}
                     </div>

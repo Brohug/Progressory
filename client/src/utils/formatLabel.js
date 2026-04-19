@@ -8,3 +8,14 @@ export function formatLabel(value) {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
+
+export function formatSentenceLabel(value) {
+  if (!value) return '';
+
+  const normalized = String(value)
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .trim();
+
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}

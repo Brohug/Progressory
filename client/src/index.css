@@ -1193,6 +1193,20 @@ ul {
   margin-top: 12px;
 }
 
+.curriculum-index-relationship-sections {
+  display: grid;
+  gap: 12px;
+}
+
+.curriculum-index-relationship-section {
+  display: grid;
+  gap: 6px;
+}
+
+.curriculum-index-relationship-section h4 {
+  margin-bottom: 0;
+}
+
 .curriculum-index-title-block .eyebrow {
   margin-bottom: 0;
 }
@@ -1262,6 +1276,101 @@ ul {
 
 .curriculum-index-create-panel {
   margin-top: 14px;
+}
+
+.library-linked-topic-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--accent-soft);
+  border-radius: var(--radius-md);
+  background: rgba(80, 180, 255, 0.08);
+}
+
+.library-topic-link-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.library-topic-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.library-topic-link-button {
+  padding: 6px 10px;
+  font-size: 0.9rem;
+}
+
+.library-active-filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.library-filter-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.library-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.library-topic-chip {
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.library-topic-chip:hover:not(:disabled),
+.library-topic-chip:focus-visible:not(:disabled) {
+  border-color: var(--accent);
+  background: rgba(80, 180, 255, 0.12);
+  color: var(--text-primary);
+}
+
+.library-topic-chip:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.library-preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.library-preset-help {
+  margin-top: 10px;
+}
+
+.library-create-summary {
+  margin-bottom: 4px;
 }
 
 @media (max-width: 640px) {

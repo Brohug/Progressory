@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import api from '../api/axios';
-import { formatLabel } from '../utils/formatLabel';
+import { formatSentenceLabel } from '../utils/formatLabel';
 import TopicSearchSelect from './TopicSearchSelect';
 
 export default function MemberProgressForm({
@@ -194,13 +194,13 @@ export default function MemberProgressForm({
               value={quickAddData.topic_type}
               onChange={handleQuickAddChange}
             >
-              <option value="position">{formatLabel('position')}</option>
-              <option value="technique">{formatLabel('technique')}</option>
-              <option value="concept">{formatLabel('concept')}</option>
-              <option value="submission">{formatLabel('submission')}</option>
-              <option value="escape">{formatLabel('escape')}</option>
-              <option value="takedown">{formatLabel('takedown')}</option>
-              <option value="drill_theme">{formatLabel('drill_theme')}</option>
+              <option value="position">{formatSentenceLabel('position')}</option>
+              <option value="technique">{formatSentenceLabel('technique')}</option>
+              <option value="concept">{formatSentenceLabel('concept')}</option>
+              <option value="submission">{formatSentenceLabel('submission')}</option>
+              <option value="escape">{formatSentenceLabel('escape')}</option>
+              <option value="takedown">{formatSentenceLabel('takedown')}</option>
+              <option value="drill_theme">{formatSentenceLabel('drill_theme')}</option>
             </select>
 
             <div className="inline-actions">
@@ -231,10 +231,10 @@ export default function MemberProgressForm({
             value={formData.status}
             onChange={handleChange}
           >
-            <option value="not_started">{formatLabel('not_started')}</option>
-            <option value="introduced">{formatLabel('introduced')}</option>
-            <option value="developing">{formatLabel('developing')}</option>
-            <option value="competent">{formatLabel('competent')}</option>
+            <option value="not_started">{formatSentenceLabel('not_started')}</option>
+            <option value="introduced">{formatSentenceLabel('introduced')}</option>
+            <option value="developing">{formatSentenceLabel('developing')}</option>
+            <option value="competent">{formatSentenceLabel('competent')}</option>
           </select>
         </div>
 

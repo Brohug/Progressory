@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import Layout from '../components/Layout';
 import TopicSearchSelect from '../components/TopicSearchSelect';
@@ -36,15 +36,57 @@ const inferTopicType = (entry) => {
   return 'technique';
 };
 
+const relationshipGroups = [
+  { key: 'entriesIntoPosition', label: 'Entries' },
+  { key: 'commonAttacks', label: 'Common attacks' },
+  { key: 'commonTransitions', label: 'Common transitions' },
+  { key: 'commonFollowUps', label: 'Common follow-ups' },
+  { key: 'commonDefenses', label: 'Common defensive reactions' }
+];
+
+const getSearchRelevanceScore = (entry, normalizedSearch) => {
+  if (!normalizedSearch) {
+    return 0;
+  }
+
+  const normalizedName = normalizeValue(entry.name);
+  const normalizedCategory = normalizeValue(entry.category);
+  const normalizedSubcategory = normalizeValue(entry.subcategory);
+  const normalizedDescription = normalizeValue(entry.description);
+  const normalizedTags = (entry.tags || []).map(normalizeValue);
+  const normalizedRelatedPositions = (entry.relatedPositions || []).map(normalizeValue);
+  const normalizedEntriesIntoPosition = (entry.entriesIntoPosition || []).map(normalizeValue);
+  const normalizedCommonAttacks = (entry.commonAttacks || []).map(normalizeValue);
+  const normalizedTransitions = (entry.commonTransitions || []).map(normalizeValue);
+  const normalizedFollowUps = (entry.commonFollowUps || []).map(normalizeValue);
+  const normalizedDefenses = (entry.commonDefenses || []).map(normalizeValue);
+
+  if (normalizedName === normalizedSearch) return 100;
+  if (normalizedName.startsWith(normalizedSearch)) return 90;
+  if (normalizedName.includes(normalizedSearch)) return 80;
+  if (normalizedCategory === normalizedSearch || normalizedSubcategory === normalizedSearch) return 70;
+  if (normalizedTags.includes(normalizedSearch)) return 60;
+  if (normalizedRelatedPositions.includes(normalizedSearch)) return 50;
+  if (normalizedEntriesIntoPosition.includes(normalizedSearch)) return 47;
+  if (normalizedCommonAttacks.includes(normalizedSearch)) return 45;
+  if (normalizedTransitions.includes(normalizedSearch)) return 40;
+  if (normalizedFollowUps.includes(normalizedSearch)) return 35;
+  if (normalizedDefenses.includes(normalizedSearch)) return 30;
+  if (normalizedDescription.includes(normalizedSearch)) return 20;
+
+  return 10;
+};
+
 export default function CurriculumIndexPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [topics, setTopics] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [libraryEntries, setLibraryEntries] = useState([]);
   const [topicCoverage, setTopicCoverage] = useState([]);
   const [neglectedTopics, setNeglectedTopics] = useState([]);
-  const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [skillLevelFilter, setSkillLevelFilter] = useState('');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || '');
+  const [skillLevelFilter, setSkillLevelFilter] = useState(searchParams.get('skillLevel') || '');
   const [entryNoticeMap, setEntryNoticeMap] = useState({});
   const [creatingEntryId, setCreatingEntryId] = useState(null);
   const [editingTopicId, setEditingTopicId] = useState(null);
@@ -103,6 +145,18 @@ export default function CurriculumIndexPage() {
 
     loadIndexSignals();
   }, []);
+
+  useEffect(() => {
+    const nextParams = new URLSearchParams();
+
+    if (search) nextParams.set('search', search);
+    if (categoryFilter) nextParams.set('category', categoryFilter);
+    if (skillLevelFilter) nextParams.set('skillLevel', skillLevelFilter);
+
+    if (nextParams.toString() !== searchParams.toString()) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [search, categoryFilter, skillLevelFilter, searchParams, setSearchParams]);
 
   const fetchTopics = async () => {
     const response = await api.get('/topics');
@@ -235,7 +289,7 @@ export default function CurriculumIndexPage() {
   const filteredEntries = useMemo(() => {
     const normalizedSearch = normalizeValue(search);
 
-    return enrichedEntries.filter((entry) => {
+    const matchingEntries = enrichedEntries.filter((entry) => {
       const haystack = [
         entry.category,
         entry.subcategory,
@@ -243,7 +297,12 @@ export default function CurriculumIndexPage() {
         entry.skillLevel,
         entry.description,
         ...(entry.tags || []),
-        ...(entry.relatedPositions || [])
+        ...(entry.relatedPositions || []),
+        ...(entry.entriesIntoPosition || []),
+        ...(entry.commonAttacks || []),
+        ...(entry.commonTransitions || []),
+        ...(entry.commonFollowUps || []),
+        ...(entry.commonDefenses || [])
       ]
         .filter(Boolean)
         .map(normalizeValue)
@@ -254,6 +313,20 @@ export default function CurriculumIndexPage() {
       const matchesSkillLevel = !skillLevelFilter || entry.skillLevel === skillLevelFilter;
 
       return matchesSearch && matchesCategory && matchesSkillLevel;
+    });
+
+    if (!normalizedSearch) {
+      return matchingEntries;
+    }
+
+    return [...matchingEntries].sort((a, b) => {
+      const scoreDifference = getSearchRelevanceScore(b, normalizedSearch) - getSearchRelevanceScore(a, normalizedSearch);
+
+      if (scoreDifference !== 0) {
+        return scoreDifference;
+      }
+
+      return a.name.localeCompare(b.name);
     });
   }, [enrichedEntries, search, categoryFilter, skillLevelFilter]);
 
@@ -632,6 +705,28 @@ export default function CurriculumIndexPage() {
                               </div>
                             ) : null}
 
+                            {relationshipGroups.some((group) => entry[group.key]?.length) ? (
+                              <div className="detail-block">
+                                <h4>Relationship map</h4>
+                                <div className="curriculum-index-relationship-sections">
+                                  {relationshipGroups.map((group) => (
+                                    entry[group.key]?.length ? (
+                                      <div key={`${entry.id}-${group.key}`} className="curriculum-index-relationship-section">
+                                        <span className="meta-text">{group.label}</span>
+                                        <div className="curriculum-index-tag-row">
+                                          {entry[group.key].map((item) => (
+                                            <span key={`${entry.id}-${group.key}-${item}`} className="curriculum-index-tag">
+                                              {item}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ) : null
+                                  ))}
+                                </div>
+                              </div>
+                            ) : null}
+
                             <div className="curriculum-index-status-grid">
                               <div className="curriculum-index-status-card">
                                 <span className="meta-text">Topics</span>
@@ -671,6 +766,16 @@ export default function CurriculumIndexPage() {
                                     ? 'Supporting Library material is already connected.'
                                     : 'No Library entries are linked to this item yet.'}
                                 </div>
+                                {entry.topic ? (
+                                  <div className="inline-actions" style={{ marginTop: '10px' }}>
+                                    <Link
+                                      className="secondary-button curriculum-index-action-link"
+                                      to={`/library?topicId=${entry.topic.id}`}
+                                    >
+                                      {entry.linkedLibraryCount > 0 ? 'View linked library' : 'Open Library for this topic'}
+                                    </Link>
+                                  </div>
+                                ) : null}
                               </div>
                             </div>
                           </div>

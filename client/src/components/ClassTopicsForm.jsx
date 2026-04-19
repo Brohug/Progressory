@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import api from '../api/axios';
-import { formatLabel } from '../utils/formatLabel';
+import { formatSentenceLabel } from '../utils/formatLabel';
 import TopicSearchSelect from './TopicSearchSelect';
 
 export default function ClassTopicsForm({
@@ -194,13 +194,13 @@ export default function ClassTopicsForm({
               value={quickAddData.topic_type}
               onChange={handleQuickAddChange}
             >
-              <option value="position">{formatLabel('position')}</option>
-              <option value="technique">{formatLabel('technique')}</option>
-              <option value="concept">{formatLabel('concept')}</option>
-              <option value="submission">{formatLabel('submission')}</option>
-              <option value="escape">{formatLabel('escape')}</option>
-              <option value="takedown">{formatLabel('takedown')}</option>
-              <option value="drill_theme">{formatLabel('drill_theme')}</option>
+              <option value="position">{formatSentenceLabel('position')}</option>
+              <option value="technique">{formatSentenceLabel('technique')}</option>
+              <option value="concept">{formatSentenceLabel('concept')}</option>
+              <option value="submission">{formatSentenceLabel('submission')}</option>
+              <option value="escape">{formatSentenceLabel('escape')}</option>
+              <option value="takedown">{formatSentenceLabel('takedown')}</option>
+              <option value="drill_theme">{formatSentenceLabel('drill_theme')}</option>
             </select>
 
             <div className="inline-actions">
@@ -231,8 +231,8 @@ export default function ClassTopicsForm({
             value={formData.coverage_type}
             onChange={handleChange}
           >
-            <option value="taught">{formatLabel('taught')}</option>
-            <option value="reviewed">{formatLabel('reviewed')}</option>
+            <option value="taught">{formatSentenceLabel('taught')}</option>
+            <option value="reviewed">{formatSentenceLabel('reviewed')}</option>
           </select>
         </div>
 
@@ -243,9 +243,9 @@ export default function ClassTopicsForm({
             value={formData.focus_level}
             onChange={handleChange}
           >
-            <option value="focus">{formatLabel('focus')}</option>
-            <option value="secondary">{formatLabel('secondary')}</option>
-            <option value="review">{formatLabel('review')}</option>
+            <option value="focus">{formatSentenceLabel('focus')}</option>
+            <option value="secondary">{formatSentenceLabel('secondary')}</option>
+            <option value="review">{formatSentenceLabel('review')}</option>
           </select>
         </div>
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import api from '../api/axios';
-import { formatLabel } from '../utils/formatLabel';
+import { formatSentenceLabel } from '../utils/formatLabel';
 import MemberSearchSelect from './MemberSearchSelect';
 
 export default function ClassAttendanceForm({
@@ -79,7 +79,7 @@ export default function ClassAttendanceForm({
 
       await api.post(`/classes/${classId}/members`, payload);
 
-      setMessage(`Attendance saved as ${formatLabel(attendanceStatus)}.`);
+      setMessage(`Attendance saved as ${formatSentenceLabel(attendanceStatus)}.`);
       setFormData({
         member_id: '',
         attendance_status: 'present'
@@ -129,10 +129,10 @@ export default function ClassAttendanceForm({
 
       if (addedCount > 0 && skippedCount > 0) {
         setMessage(
-          `${addedCount} members marked ${formatLabel(attendanceStatus)}. ${skippedCount} already had attendance recorded.`
+          `${addedCount} members marked ${formatSentenceLabel(attendanceStatus)}. ${skippedCount} already had attendance recorded.`
         );
       } else if (addedCount > 0) {
-        setMessage(`${addedCount} members marked ${formatLabel(attendanceStatus)}.`);
+        setMessage(`${addedCount} members marked ${formatSentenceLabel(attendanceStatus)}.`);
       } else {
         setMessage('Attendance was already recorded for those members.');
       }
@@ -203,8 +203,8 @@ export default function ClassAttendanceForm({
             value={formData.attendance_status}
             onChange={handleChange}
           >
-            <option value="present">{formatLabel('present')}</option>
-            <option value="absent">{formatLabel('absent')}</option>
+            <option value="present">{formatSentenceLabel('present')}</option>
+            <option value="absent">{formatSentenceLabel('absent')}</option>
           </select>
         </div>
 
