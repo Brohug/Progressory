@@ -12,7 +12,8 @@ const {
   deleteClassTopic,
   addClassTrainingEntry,
   getClassTrainingEntries,
-  deleteClassTrainingEntry
+  deleteClassTrainingEntry,
+  applyClassProgress
 } = require('../controllers/classController');
 
 const { protect } = require('../middleware/authMiddleware');
@@ -31,6 +32,7 @@ router.delete('/:id/topics/:topicEntryId', protect, deleteClassTopic);
 router.post('/:id/training-entries', protect, addClassTrainingEntry);
 router.get('/:id/training-entries', protect, getClassTrainingEntries);
 router.delete('/:id/training-entries/:entryId', protect, deleteClassTrainingEntry);
+router.post('/:id/apply-progress', protect, applyClassProgress);
 
 router.use('/:id/members', attendanceRoutes);
 

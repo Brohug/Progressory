@@ -9,6 +9,8 @@ export default function LibraryPage() {
   const [programs, setPrograms] = useState([]);
   const [topics, setTopics] = useState([]);
   const [showInactive, setShowInactive] = useState(false);
+  const [showCreateEntryForm, setShowCreateEntryForm] = useState(false);
+  const [expandedEntryDetails, setExpandedEntryDetails] = useState({});
   const [formData, setFormData] = useState({
     program_id: '',
     curriculum_topic_id: '',
@@ -158,108 +160,133 @@ export default function LibraryPage() {
     }
   };
 
+  const toggleEntryDetails = (entryId) => {
+    setExpandedEntryDetails((prev) => ({
+      ...prev,
+      [entryId]: !prev[entryId]
+    }));
+  };
+
   return (
     <Layout>
       <h2 className="page-title">Library</h2>
 
       <section className="page-section" style={{ maxWidth: '760px' }}>
-        <h3>Create Library Entry</h3>
-
-        <form className="form-grid" onSubmit={handleSubmit}>
-          <div>
-            <label>Title</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Entry Type</label>
-            <select
-              name="entry_type"
-              value={formData.entry_type}
-              onChange={handleChange}
+        <div className="compact-form-shell">
+          <div className="compact-form-header">
+            <div>
+              <h3>Create Library Entry</h3>
+              <p className="section-note">
+                Add a teaching resource, video note, or reference and only open the full form when you are ready to log it.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setShowCreateEntryForm((prev) => !prev)}
             >
-              {entryTypes.map((type) => (
-                <option key={type} value={type}>
-                  {formatLabel(type)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label>Program</label>
-            <select
-              name="program_id"
-              value={formData.program_id}
-              onChange={handleChange}
-            >
-              <option value="">No program</option>
-              {programs.map((program) => (
-                <option key={program.id} value={program.id}>
-                  {program.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label>Curriculum Topic</label>
-            <TopicSearchSelect
-              topics={availableTopics}
-              value={formData.curriculum_topic_id}
-              onChange={handleTopicChange}
-              placeholder="Search curriculum topics for this entry..."
-              emptySelectionLabel="No topic selected"
-              helperText="Search and select a curriculum topic if this entry should be linked."
-            />
-          </div>
-
-          <div>
-            <label>Description</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows="4"
-            />
-          </div>
-
-          <div>
-            <label>Video URL</label>
-            <input
-              type="text"
-              name="video_url"
-              value={formData.video_url}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Visibility</label>
-            <select
-              name="visibility"
-              value={formData.visibility}
-              onChange={handleChange}
-            >
-              {visibilityOptions.map((option) => (
-                <option key={option} value={option}>
-                  {formatLabel(option)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <button type="submit" disabled={submitting}>
-              {submitting ? 'Saving...' : 'Save Library Entry'}
+              {showCreateEntryForm ? 'Hide form' : 'Show form'}
             </button>
           </div>
-        </form>
+
+          {showCreateEntryForm && (
+            <form className="form-grid" onSubmit={handleSubmit}>
+              <div>
+                <label>Title</label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <label>Entry Type</label>
+                <select
+                  name="entry_type"
+                  value={formData.entry_type}
+                  onChange={handleChange}
+                >
+                  {entryTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {formatLabel(type)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label>Program</label>
+                <select
+                  name="program_id"
+                  value={formData.program_id}
+                  onChange={handleChange}
+                >
+                  <option value="">No program</option>
+                  {programs.map((program) => (
+                    <option key={program.id} value={program.id}>
+                      {program.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label>Curriculum Topic</label>
+                <TopicSearchSelect
+                  topics={availableTopics}
+                  value={formData.curriculum_topic_id}
+                  onChange={handleTopicChange}
+                  placeholder="Search curriculum topics for this entry..."
+                  emptySelectionLabel="No topic selected"
+                  helperText="Search and select a curriculum topic if this entry should be linked."
+                />
+              </div>
+
+              <div>
+                <label>Description</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows="4"
+                />
+              </div>
+
+              <div>
+                <label>Video URL</label>
+                <input
+                  type="text"
+                  name="video_url"
+                  value={formData.video_url}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <label>Visibility</label>
+                <select
+                  name="visibility"
+                  value={formData.visibility}
+                  onChange={handleChange}
+                >
+                  {visibilityOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {formatLabel(option)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <button type="submit" disabled={submitting}>
+                  {submitting ? 'Saving...' : 'Save Library Entry'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </section>
 
       {error && <p className="error-text">{error}</p>}
@@ -290,32 +317,48 @@ export default function LibraryPage() {
         ) : (
           <ul className="card-list">
             {orderedEntries.map((entry) => (
-              <li key={entry.id} className="card-item">
-                <strong>{entry.title}</strong>
-
-                <div className="detail-block">
-                  <div className="meta-text">Type: {formatLabel(entry.entry_type)}</div>
-                  <div className="meta-text">Program: {entry.program_name || 'None'}</div>
-                  <div className="meta-text">Topic: {entry.topic_title || 'None'}</div>
-                  <div className="meta-text">Visibility: {formatLabel(entry.visibility)}</div>
-                  <div className="meta-text">
-                    Active: {entry.is_active ? 'Yes' : 'No'}
-                  </div>
-                  <div className="meta-text">
-                    Created By: {entry.created_by_first_name} {entry.created_by_last_name}
-                  </div>
-                  {entry.created_at && (
-                    <div className="meta-text">
-                      Created: {new Date(entry.created_at).toLocaleString()}
+              <li key={entry.id} className="card-item compact-topic-card">
+                <div className="compact-topic-header">
+                  <div>
+                    <strong>{entry.title}</strong>
+                    <div className="compact-topic-meta meta-text">
+                      {formatLabel(entry.entry_type)} • {entry.program_name || 'No program'} • {entry.topic_title || 'No linked topic'}
                     </div>
-                  )}
-                  {entry.updated_at && (
-                    <div className="meta-text">
-                      Updated: {new Date(entry.updated_at).toLocaleString()}
-                    </div>
-                  )}
-                  <div>{entry.description || 'No description added yet.'}</div>
+                  </div>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => toggleEntryDetails(entry.id)}
+                  >
+                    {expandedEntryDetails[entry.id] ? 'Hide details' : 'Show details'}
+                  </button>
                 </div>
+
+                {expandedEntryDetails[entry.id] && (
+                  <div className="detail-block">
+                    <div className="meta-text">Type: {formatLabel(entry.entry_type)}</div>
+                    <div className="meta-text">Program: {entry.program_name || 'None'}</div>
+                    <div className="meta-text">Topic: {entry.topic_title || 'None'}</div>
+                    <div className="meta-text">Visibility: {formatLabel(entry.visibility)}</div>
+                    <div className="meta-text">
+                      Active: {entry.is_active ? 'Yes' : 'No'}
+                    </div>
+                    <div className="meta-text">
+                      Created By: {entry.created_by_first_name} {entry.created_by_last_name}
+                    </div>
+                    {entry.created_at && (
+                      <div className="meta-text">
+                        Created: {new Date(entry.created_at).toLocaleString()}
+                      </div>
+                    )}
+                    {entry.updated_at && (
+                      <div className="meta-text">
+                        Updated: {new Date(entry.updated_at).toLocaleString()}
+                      </div>
+                    )}
+                    <div>{entry.description || 'No description added yet.'}</div>
+                  </div>
+                )}
 
                 <div className="inline-actions">
                   {entry.video_url && (

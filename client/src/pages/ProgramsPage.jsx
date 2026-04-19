@@ -4,6 +4,8 @@ import Layout from '../components/Layout';
 
 export default function ProgramsPage() {
   const [programs, setPrograms] = useState([]);
+  const [showCreateProgramForm, setShowCreateProgramForm] = useState(false);
+  const [expandedProgramDetails, setExpandedProgramDetails] = useState({});
   const [formData, setFormData] = useState({
     name: '',
     description: ''
@@ -144,40 +146,65 @@ export default function ProgramsPage() {
     }
   };
 
+  const toggleProgramDetails = (programId) => {
+    setExpandedProgramDetails((prev) => ({
+      ...prev,
+      [programId]: !prev[programId]
+    }));
+  };
+
   return (
     <Layout>
       <h2 className="page-title">Programs</h2>
 
       <section className="page-section" style={{ maxWidth: '760px' }}>
-        <h3>Create Program</h3>
-
-        <form className="form-grid" onSubmit={handleSubmit}>
-          <div>
-            <label>Program Name</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Description</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows="4"
-            />
-          </div>
-
-          <div>
-            <button type="submit" disabled={submitting}>
-              {submitting ? 'Saving...' : 'Save Program'}
+        <div className="compact-form-shell">
+          <div className="compact-form-header">
+            <div>
+              <h3>Create Program</h3>
+              <p className="section-note">
+                Add a program when you need it, but keep the page light by hiding the longer setup form until then.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setShowCreateProgramForm((prev) => !prev)}
+            >
+              {showCreateProgramForm ? 'Hide form' : 'Show form'}
             </button>
           </div>
-        </form>
+
+          {showCreateProgramForm && (
+            <form className="form-grid" onSubmit={handleSubmit}>
+              <div>
+                <label>Program Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <label>Description</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows="4"
+                />
+              </div>
+
+              <div>
+                <button type="submit" disabled={submitting}>
+                  {submitting ? 'Saving...' : 'Save Program'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </section>
 
       {error && <p className="error-text">{error}</p>}
@@ -208,24 +235,41 @@ export default function ProgramsPage() {
         ) : (
           <ul className="card-list">
             {orderedPrograms.map((program) => (
-              <li key={program.id} className="card-item">
-                <strong>{program.name}</strong>
-                <div className="detail-block">
-                  <div>{program.description || 'No description added yet.'}</div>
-                  <div className="meta-text">
-                    Active: {program.is_active ? 'Yes' : 'No'}
+              <li key={program.id} className="card-item compact-topic-card">
+                <div className="compact-topic-header">
+                  <div>
+                    <strong>{program.name}</strong>
+                    <div className="compact-topic-meta meta-text">
+                      {program.is_active ? 'Active' : 'Inactive'} • {program.description ? 'Description added' : 'No description yet'}
+                    </div>
                   </div>
-                  {program.created_at && (
-                    <div className="meta-text">
-                      Created: {new Date(program.created_at).toLocaleString()}
-                    </div>
-                  )}
-                  {program.updated_at && (
-                    <div className="meta-text">
-                      Updated: {new Date(program.updated_at).toLocaleString()}
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => toggleProgramDetails(program.id)}
+                  >
+                    {expandedProgramDetails[program.id] ? 'Hide details' : 'Show details'}
+                  </button>
                 </div>
+
+                {expandedProgramDetails[program.id] && (
+                  <div className="detail-block">
+                    <div>{program.description || 'No description added yet.'}</div>
+                    <div className="meta-text">
+                      Active: {program.is_active ? 'Yes' : 'No'}
+                    </div>
+                    {program.created_at && (
+                      <div className="meta-text">
+                        Created: {new Date(program.created_at).toLocaleString()}
+                      </div>
+                    )}
+                    {program.updated_at && (
+                      <div className="meta-text">
+                        Updated: {new Date(program.updated_at).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="inline-actions">
                   <button
@@ -247,9 +291,15 @@ export default function ProgramsPage() {
 
                 {editingPrograms[program.id] && (
                   <div className="detail-block">
-                    <section className="page-section">
-                      <h4>Edit Program Details</h4>
-
+                    <section className="compact-form-shell">
+                      <div className="compact-form-header">
+                        <div>
+                          <h4>Edit Program Details</h4>
+                          <p className="section-note">
+                            Adjust the program name, description, or active state here without adding more clutter to the main list.
+                          </p>
+                        </div>
+                      </div>
                       <form
                         className="form-grid"
                         onSubmit={(e) => {

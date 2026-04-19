@@ -82,6 +82,115 @@ const addMemberToClass = async (req, res) => {
   }
 };
 
+const addMembersToClassBulk = async (req, res) => {
+  const connection = await pool.getConnection();
+  let transactionStarted = false;
+
+  try {
+    const gymId = req.user.gym_id;
+    const { id } = req.params;
+    const { member_ids, attendance_status } = req.body;
+
+    if (!Array.isArray(member_ids) || member_ids.length === 0) {
+      connection.release();
+      return res.status(400).json({
+        message: 'member_ids must be a non-empty array'
+      });
+    }
+
+    const normalizedMemberIds = [...new Set(member_ids.map(Number).filter(Boolean))];
+    const finalAttendanceStatus = attendance_status || 'present';
+    const validStatuses = ['present', 'absent', 'excused'];
+
+    if (!validStatuses.includes(finalAttendanceStatus)) {
+      connection.release();
+      return res.status(400).json({
+        message: 'Invalid attendance_status'
+      });
+    }
+
+    const [classRows] = await connection.query(
+      'SELECT id FROM classes WHERE id = ? AND gym_id = ?',
+      [id, gymId]
+    );
+
+    if (classRows.length === 0) {
+      connection.release();
+      return res.status(404).json({
+        message: 'Class not found'
+      });
+    }
+
+    const [memberRows] = await connection.query(
+      `SELECT id
+       FROM members
+       WHERE gym_id = ?
+         AND id IN (${normalizedMemberIds.map(() => '?').join(', ')})`,
+      [gymId, ...normalizedMemberIds]
+    );
+
+    if (memberRows.length !== normalizedMemberIds.length) {
+      connection.release();
+      return res.status(400).json({
+        message: 'One or more members were not found for this gym'
+      });
+    }
+
+    const [existingRows] = await connection.query(
+      `SELECT member_id
+       FROM class_members
+       WHERE class_id = ?
+         AND member_id IN (${normalizedMemberIds.map(() => '?').join(', ')})`,
+      [id, ...normalizedMemberIds]
+    );
+
+    const existingMemberIds = new Set(existingRows.map((row) => Number(row.member_id)));
+    const insertableMemberIds = normalizedMemberIds.filter(
+      (memberId) => !existingMemberIds.has(Number(memberId))
+    );
+
+    if (insertableMemberIds.length === 0) {
+      connection.release();
+      return res.status(200).json({
+        message: 'Attendance was already recorded for those members.',
+        addedCount: 0,
+        skippedCount: normalizedMemberIds.length
+      });
+    }
+
+    await connection.beginTransaction();
+    transactionStarted = true;
+
+    for (const memberId of insertableMemberIds) {
+      await connection.query(
+        `INSERT INTO class_members (class_id, member_id, attendance_status)
+         VALUES (?, ?, ?)`,
+        [id, memberId, finalAttendanceStatus]
+      );
+    }
+
+    await connection.commit();
+    connection.release();
+
+    return res.status(201).json({
+      message: 'Bulk attendance saved successfully',
+      addedCount: insertableMemberIds.length,
+      skippedCount: normalizedMemberIds.length - insertableMemberIds.length
+    });
+  } catch (error) {
+    if (transactionStarted) {
+      await connection.rollback();
+    }
+    connection.release();
+    console.error('Bulk add members to class error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
 const getClassMembers = async (req, res) => {
   try {
     const gymId = req.user.gym_id;
@@ -165,6 +274,7 @@ const removeMemberFromClass = async (req, res) => {
 
 module.exports = {
   addMemberToClass,
+  addMembersToClassBulk,
   getClassMembers,
   removeMemberFromClass
 };

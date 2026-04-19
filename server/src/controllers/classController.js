@@ -666,6 +666,137 @@ const deleteClassTrainingEntry = async (req, res) => {
     });
   }
 };
+
+const progressStatusRank = {
+  not_started: 0,
+  introduced: 1,
+  developing: 2,
+  competent: 3
+};
+
+const applyClassProgress = async (req, res) => {
+  const connection = await pool.getConnection();
+  let transactionStarted = false;
+
+  try {
+    const gymId = req.user.gym_id;
+    const updatedByUserId = req.user.id;
+    const { id } = req.params;
+
+    const [classRows] = await connection.query(
+      'SELECT id FROM classes WHERE id = ? AND gym_id = ?',
+      [id, gymId]
+    );
+
+    if (classRows.length === 0) {
+      connection.release();
+      return res.status(404).json({
+        message: 'Class not found'
+      });
+    }
+
+    const [presentMemberRows] = await connection.query(
+      `SELECT DISTINCT cm.member_id
+       FROM class_members cm
+       JOIN members m ON cm.member_id = m.id
+       WHERE cm.class_id = ?
+         AND m.gym_id = ?
+         AND cm.attendance_status = 'present'`,
+      [id, gymId]
+    );
+
+    if (presentMemberRows.length === 0) {
+      connection.release();
+      return res.status(400).json({
+        message: 'No present members are available for this class yet.'
+      });
+    }
+
+    const [topicRows] = await connection.query(
+      `SELECT DISTINCT ct.curriculum_topic_id
+       FROM class_topics ct
+       JOIN curriculum_topics ctopic ON ct.curriculum_topic_id = ctopic.id
+       WHERE ct.class_id = ?
+         AND ctopic.gym_id = ?`,
+      [id, gymId]
+    );
+
+    if (topicRows.length === 0) {
+      connection.release();
+      return res.status(400).json({
+        message: 'No class topics have been logged yet.'
+      });
+    }
+
+    await connection.beginTransaction();
+    transactionStarted = true;
+
+    let insertedCount = 0;
+    let reviewedCount = 0;
+
+    for (const memberRow of presentMemberRows) {
+      for (const topicRow of topicRows) {
+        const memberId = memberRow.member_id;
+        const topicId = topicRow.curriculum_topic_id;
+
+        const [existingRows] = await connection.query(
+          `SELECT status
+           FROM member_topic_progress
+           WHERE member_id = ? AND curriculum_topic_id = ?`,
+          [memberId, topicId]
+        );
+
+        if (existingRows.length > 0) {
+          const existingStatus = existingRows[0].status;
+          const nextStatus =
+            progressStatusRank[existingStatus] >= progressStatusRank.introduced
+              ? existingStatus
+              : 'introduced';
+
+          await connection.query(
+            `UPDATE member_topic_progress
+             SET status = ?, last_reviewed_at = CURRENT_TIMESTAMP, updated_by_user_id = ?
+             WHERE member_id = ? AND curriculum_topic_id = ?`,
+            [nextStatus, updatedByUserId, memberId, topicId]
+          );
+
+          reviewedCount += 1;
+        } else {
+          await connection.query(
+            `INSERT INTO member_topic_progress
+             (member_id, curriculum_topic_id, status, last_reviewed_at, notes, updated_by_user_id)
+             VALUES (?, ?, 'introduced', CURRENT_TIMESTAMP, NULL, ?)`,
+            [memberId, topicId, updatedByUserId]
+          );
+
+          insertedCount += 1;
+        }
+      }
+    }
+
+    await connection.commit();
+    connection.release();
+
+    return res.status(200).json({
+      message: 'Class progress applied successfully',
+      presentMemberCount: presentMemberRows.length,
+      topicCount: topicRows.length,
+      insertedCount,
+      reviewedCount
+    });
+  } catch (error) {
+    if (transactionStarted) {
+      await connection.rollback();
+    }
+    connection.release();
+    console.error('Apply class progress error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
 module.exports = {
   createClass,
   getClasses,
@@ -677,5 +808,6 @@ module.exports = {
   deleteClassTopic,
   addClassTrainingEntry,
   getClassTrainingEntries,
-  deleteClassTrainingEntry
+  deleteClassTrainingEntry,
+  applyClassProgress
 };

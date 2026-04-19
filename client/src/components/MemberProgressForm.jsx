@@ -9,7 +9,8 @@ export default function MemberProgressForm({
   suggestedTopics = [],
   defaultProgramId = '',
   onTopicCreated,
-  onSuccess
+  onSuccess,
+  compact = false
 }) {
   const [formData, setFormData] = useState({
     curriculum_topic_id: '',
@@ -139,8 +140,10 @@ export default function MemberProgressForm({
     }
   };
 
+  const Container = compact ? 'div' : 'section';
+
   return (
-    <section className="page-section">
+    <Container className={compact ? '' : 'page-section'}>
       <h4>Update Member Progress</h4>
 
       <form className="form-grid" onSubmit={handleSubmit}>
@@ -254,6 +257,6 @@ export default function MemberProgressForm({
 
       {message && <p className="success-text">{message}</p>}
       {error && <p className="error-text">{error}</p>}
-    </section>
+    </Container>
   );
 }

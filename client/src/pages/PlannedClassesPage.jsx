@@ -8,6 +8,7 @@ import curriculumIndexSeed from '../data/curriculumIndexSeed';
 import { formatLabel } from '../utils/formatLabel';
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const READY_FOR_ATTENDANCE_KEY = 'progressory-ready-for-attendance';
 
 const normalizeValue = (value) => (
   String(value || '')
@@ -105,6 +106,16 @@ const buildCalendarDays = (visibleMonth, plannedClasses) => {
   return days;
 };
 
+const storeReadyForAttendanceIds = (classIds) => {
+  if (typeof window === 'undefined' || !Array.isArray(classIds) || classIds.length === 0) {
+    return;
+  }
+
+  const existingIds = JSON.parse(window.sessionStorage.getItem(READY_FOR_ATTENDANCE_KEY) || '[]');
+  const mergedIds = [...new Set([...existingIds, ...classIds.map(String)])];
+  window.sessionStorage.setItem(READY_FOR_ATTENDANCE_KEY, JSON.stringify(mergedIds));
+};
+
 export default function PlannedClassesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -122,6 +133,8 @@ export default function PlannedClassesPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [editingPlannedClassId, setEditingPlannedClassId] = useState(null);
+  const [showPlanForm, setShowPlanForm] = useState(true);
+  const [expandedPlannedClassDetailsMap, setExpandedPlannedClassDetailsMap] = useState({});
   const [activeView, setActiveView] = useState('list');
   const [visibleMonth, setVisibleMonth] = useState(getMonthStart(new Date()));
   const [selectedTopicId, setSelectedTopicId] = useState('');
@@ -209,11 +222,23 @@ export default function PlannedClassesPage() {
     setTrainingScenarios(response.data);
   };
 
+  const processDuePlannedClasses = async () => {
+    try {
+      const response = await api.post('/planned-classes/process-due');
+      return response.data;
+    } catch (err) {
+      console.error('Process due planned classes error:', err);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const loadPageData = async () => {
       try {
         setLoading(true);
         setError('');
+
+        const processedResult = await processDuePlannedClasses();
 
         await Promise.all([
           fetchPlannedClasses(),
@@ -221,6 +246,15 @@ export default function PlannedClassesPage() {
           fetchTopics(),
           fetchTrainingScenarios()
         ]);
+
+        if (processedResult?.processedCount > 0) {
+          storeReadyForAttendanceIds(processedResult.processed.map((item) => item.classId));
+          setMessage(
+            processedResult.processedCount === 1
+              ? '1 planned class moved into Completed Classes and is ready for attendance.'
+              : `${processedResult.processedCount} planned classes moved into Completed Classes and are ready for attendance.`
+          );
+        }
       } catch (err) {
         console.error('Load planned classes page error:', err);
         setError(err.response?.data?.message || 'Couldn\'t load planned classes right now.');
@@ -282,10 +316,36 @@ export default function PlannedClassesPage() {
   ), [formData.program_id, trainingScenarios]);
 
   const groupedPlannedClasses = useMemo(() => {
+    const todayKey = formatDateForInput(new Date());
+    const sortWeight = (plannedClass) => {
+      const classDateKey = formatDateForInput(plannedClass.class_date);
+
+      if (plannedClass.status === 'planned') {
+        if (!classDateKey || classDateKey < todayKey) {
+          return 2;
+        }
+
+        return 0;
+      }
+
+      return 1;
+    };
+
     const sorted = [...plannedClasses].sort((left, right) => {
+      const weightDifference = sortWeight(left) - sortWeight(right);
+
+      if (weightDifference !== 0) {
+        return weightDifference;
+      }
+
       const leftTime = new Date(`${left.class_date}T${left.start_time || '00:00:00'}`).getTime();
       const rightTime = new Date(`${right.class_date}T${right.start_time || '00:00:00'}`).getTime();
-      return leftTime - rightTime;
+
+      if (leftTime !== rightTime) {
+        return leftTime - rightTime;
+      }
+
+      return left.id - right.id;
     });
 
     return sorted.reduce((acc, plannedClass) => {
@@ -379,6 +439,13 @@ export default function PlannedClassesPage() {
       head_coach_user_id: user?.id || '',
       notes: ''
     });
+  };
+
+  const togglePlannedClassDetails = (plannedClassId) => {
+    setExpandedPlannedClassDetailsMap((prev) => ({
+      ...prev,
+      [plannedClassId]: !prev[plannedClassId]
+    }));
   };
 
   const handleChange = (e) => {
@@ -551,8 +618,18 @@ export default function PlannedClassesPage() {
         setMessage('Planned class created successfully.');
       }
 
+      const processedResult = await processDuePlannedClasses();
       resetForm();
       await fetchPlannedClasses();
+
+      if (processedResult?.processedCount > 0) {
+        storeReadyForAttendanceIds(processedResult.processed.map((item) => item.classId));
+        setMessage(
+          processedResult.processedCount === 1
+            ? 'Planned class saved and moved into Completed Classes because its scheduled end time is already in the past.'
+            : `${processedResult.processedCount} planned classes were moved into Completed Classes because their scheduled end times are already in the past.`
+        );
+      }
     } catch (err) {
       console.error('Save planned class error:', err);
       setError(err.response?.data?.message || 'Couldn\'t save that planned class just now.');
@@ -562,6 +639,7 @@ export default function PlannedClassesPage() {
   };
 
   const handleEdit = (plannedClass) => {
+    setShowPlanForm(true);
     setEditingPlannedClassId(plannedClass.id);
     setSelectedTopicId('');
     setSelectedTopicIds(
@@ -632,6 +710,7 @@ export default function PlannedClassesPage() {
         throw new Error('The completed class id was missing from the response.');
       }
 
+      storeReadyForAttendanceIds([completedClassId]);
       navigate(`/classes?openClassId=${completedClassId}&focus=attendance`);
     } catch (err) {
       console.error('Complete planned class error:', err);
@@ -754,6 +833,13 @@ export default function PlannedClassesPage() {
                 part of your curriculum.
               </p>
             </div>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setShowPlanForm((prev) => !prev)}
+            >
+              {showPlanForm ? 'Hide form' : 'Show form'}
+            </button>
           </div>
 
           <div className="planned-classes-readiness-grid">
@@ -768,6 +854,8 @@ export default function PlannedClassesPage() {
             ))}
           </div>
 
+          {showPlanForm ? (
+          <>
           <form className="form-grid" onSubmit={handleSubmit}>
             <div>
               <label>Program</label>
@@ -991,6 +1079,8 @@ export default function PlannedClassesPage() {
 
           {message ? <p className="success-text">{message}</p> : null}
           {error ? <p className="error-text">{error}</p> : null}
+          </>
+          ) : null}
         </section>
 
         <section ref={plansSectionRef} className="page-section">
@@ -1112,7 +1202,7 @@ export default function PlannedClassesPage() {
 
                 <div className="card-list">
                   {classesForDate.map((plannedClass) => (
-                    <article key={plannedClass.id} className="item-card">
+                    <article key={plannedClass.id} className="item-card compact-topic-card">
                       <div className="item-header">
                         <div>
                           <h4>{plannedClass.title || plannedClass.program_name}</h4>
@@ -1134,47 +1224,62 @@ export default function PlannedClassesPage() {
                         </span>
                       </div>
 
-                      <div className="planned-class-meta-grid">
-                        <p>
-                          <strong>Program:</strong> {plannedClass.program_name}
-                        </p>
-                        <p>
-                          <strong>Head coach:</strong> {plannedClass.head_coach_first_name}{' '}
-                          {plannedClass.head_coach_last_name}
-                        </p>
-                        <p>
-                          <strong>Scenario:</strong>{' '}
-                          {plannedClass.training_scenario_name
-                            || (plannedClass.status === 'completed' ? 'Deleted after use' : 'No scenario planned')}
-                        </p>
-                        <p>
-                          <strong>Topics:</strong>{' '}
-                          {plannedClass.topics.length > 0
-                            ? `${plannedClass.topics.length} planned`
-                            : 'No topics planned yet'}
-                        </p>
+                      <div className="meta-text compact-topic-meta">
+                        {plannedClass.program_name} • {plannedClass.topics.length} topic{plannedClass.topics.length === 1 ? '' : 's'}
                       </div>
 
-                      {plannedClass.topics.length > 0 ? (
-                        <div className="suggestion-chip-row planned-classes-card-topics">
-                          {plannedClass.topics.map((topic) => (
-                            <span
-                              key={`${plannedClass.id}-${topic.curriculum_topic_id}`}
-                              className="suggestion-chip"
-                            >
-                              {topic.title}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
+                      {expandedPlannedClassDetailsMap[plannedClass.id] ? (
+                        <>
+                          <div className="planned-class-meta-grid">
+                            <p>
+                              <strong>Program:</strong> {plannedClass.program_name}
+                            </p>
+                            <p>
+                              <strong>Head coach:</strong> {plannedClass.head_coach_first_name}{' '}
+                              {plannedClass.head_coach_last_name}
+                            </p>
+                            <p>
+                              <strong>Scenario:</strong>{' '}
+                              {plannedClass.training_scenario_name
+                                || (plannedClass.status === 'completed' ? 'Deleted after use' : 'No scenario planned')}
+                            </p>
+                            <p>
+                              <strong>Topics:</strong>{' '}
+                              {plannedClass.topics.length > 0
+                                ? `${plannedClass.topics.length} planned`
+                                : 'No topics planned yet'}
+                            </p>
+                          </div>
 
-                      {plannedClass.notes ? (
-                        <p>
-                          <strong>Notes:</strong> {plannedClass.notes}
-                        </p>
+                          {plannedClass.topics.length > 0 ? (
+                            <div className="suggestion-chip-row planned-classes-card-topics">
+                              {plannedClass.topics.map((topic) => (
+                                <span
+                                  key={`${plannedClass.id}-${topic.curriculum_topic_id}`}
+                                  className="suggestion-chip"
+                                >
+                                  {topic.title}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null}
+
+                          {plannedClass.notes ? (
+                            <p>
+                              <strong>Notes:</strong> {plannedClass.notes}
+                            </p>
+                          ) : null}
+                        </>
                       ) : null}
 
                       <div className="button-row">
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => togglePlannedClassDetails(plannedClass.id)}
+                        >
+                          {expandedPlannedClassDetailsMap[plannedClass.id] ? 'Hide details' : 'Show details'}
+                        </button>
                         {plannedClass.status === 'planned' ? (
                           <>
                             <button

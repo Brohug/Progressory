@@ -1,5 +1,103 @@
 const pool = require('../config/db');
 
+const completePlannedClassRecord = async ({
+  connection,
+  gymId,
+  plannedClass,
+  plannedClassId,
+  loggedByUserId
+}) => {
+  const [classInsert] = await connection.query(
+    `INSERT INTO classes
+     (gym_id, program_id, title, class_date, start_time, end_time, head_coach_user_id, logged_by_user_id, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      gymId,
+      plannedClass.program_id,
+      plannedClass.title,
+      plannedClass.class_date,
+      plannedClass.start_time,
+      plannedClass.end_time,
+      plannedClass.head_coach_user_id,
+      loggedByUserId,
+      plannedClass.notes
+    ]
+  );
+
+  const completedClassId = classInsert.insertId;
+
+  const [plannedTopicRows] = await connection.query(
+    `SELECT curriculum_topic_id, focus_level
+     FROM planned_class_topics
+     WHERE planned_class_id = ?`,
+    [plannedClassId]
+  );
+
+  for (const plannedTopic of plannedTopicRows) {
+    await connection.query(
+      `INSERT INTO class_topics
+       (class_id, curriculum_topic_id, coverage_type, focus_level, notes)
+       VALUES (?, ?, 'taught', ?, NULL)`,
+      [completedClassId, plannedTopic.curriculum_topic_id, plannedTopic.focus_level]
+    );
+  }
+
+  if (plannedClass.training_scenario_id) {
+    const [scenarioRows] = await connection.query(
+      `SELECT *
+       FROM training_scenarios
+       WHERE id = ? AND gym_id = ?`,
+      [plannedClass.training_scenario_id, gymId]
+    );
+
+    if (scenarioRows.length > 0) {
+      const scenario = scenarioRows[0];
+      const durationMinutes = scenario.round_duration_seconds
+        ? Math.max(1, Math.round(scenario.round_duration_seconds / 60))
+        : null;
+
+      await connection.query(
+        `INSERT INTO class_training_entries
+         (
+           class_id,
+           training_method_id,
+           training_scenario_id,
+           curriculum_topic_id,
+           segment_title,
+           segment_order,
+           duration_minutes,
+           constraints_text,
+           win_condition_top,
+           win_condition_bottom,
+           notes
+         )
+         VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)`,
+        [
+          completedClassId,
+          scenario.training_method_id,
+          scenario.id,
+          scenario.starting_position_topic_id || null,
+          scenario.name,
+          durationMinutes,
+          scenario.constraints_text || null,
+          scenario.top_objective || null,
+          scenario.bottom_objective || null,
+          scenario.description || null
+        ]
+      );
+    }
+  }
+
+  await connection.query(
+    `UPDATE planned_classes
+     SET status = 'completed', completed_class_id = ?
+     WHERE id = ? AND gym_id = ?`,
+    [completedClassId, plannedClassId, gymId]
+  );
+
+  return completedClassId;
+};
+
 const getPlannedClasses = async (req, res) => {
   try {
     const gymId = req.user.gym_id;
@@ -402,6 +500,70 @@ const deletePlannedClass = async (req, res) => {
   }
 };
 
+const processDuePlannedClasses = async (req, res) => {
+  const connection = await pool.getConnection();
+  let transactionStarted = false;
+
+  try {
+    const gymId = req.user.gym_id;
+    const loggedByUserId = req.user.id;
+
+    await connection.beginTransaction();
+    transactionStarted = true;
+
+    const [dueRows] = await connection.query(
+      `SELECT *
+       FROM planned_classes
+       WHERE gym_id = ?
+         AND status = 'planned'
+         AND (
+           (end_time IS NOT NULL AND TIMESTAMP(class_date, end_time) <= NOW())
+           OR (end_time IS NULL AND class_date < CURDATE())
+         )
+       ORDER BY class_date ASC, end_time ASC, created_at ASC
+       FOR UPDATE`,
+      [gymId]
+    );
+
+    const processed = [];
+
+    for (const plannedClass of dueRows) {
+      const classId = await completePlannedClassRecord({
+        connection,
+        gymId,
+        plannedClass,
+        plannedClassId: plannedClass.id,
+        loggedByUserId
+      });
+
+      processed.push({
+        plannedClassId: plannedClass.id,
+        classId
+      });
+    }
+
+    await connection.commit();
+    connection.release();
+
+    return res.status(200).json({
+      message: 'Due planned classes processed successfully',
+      processedCount: processed.length,
+      processed
+    });
+  } catch (error) {
+    if (transactionStarted) {
+      await connection.rollback();
+    }
+    connection.release();
+    console.error('Process due planned classes error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
 const completePlannedClass = async (req, res) => {
   const connection = await pool.getConnection();
   let transactionStarted = false;
@@ -417,7 +579,8 @@ const completePlannedClass = async (req, res) => {
     const [plannedRows] = await connection.query(
       `SELECT *
        FROM planned_classes
-       WHERE id = ? AND gym_id = ?`,
+       WHERE id = ? AND gym_id = ?
+       FOR UPDATE`,
       [id, gymId]
     );
 
@@ -439,93 +602,13 @@ const completePlannedClass = async (req, res) => {
       });
     }
 
-    const [classInsert] = await connection.query(
-      `INSERT INTO classes
-       (gym_id, program_id, title, class_date, start_time, end_time, head_coach_user_id, logged_by_user_id, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        gymId,
-        plannedClass.program_id,
-        plannedClass.title,
-        plannedClass.class_date,
-        plannedClass.start_time,
-        plannedClass.end_time,
-        plannedClass.head_coach_user_id,
-        loggedByUserId,
-        plannedClass.notes
-      ]
-    );
-
-    const completedClassId = classInsert.insertId;
-
-    const [plannedTopicRows] = await connection.query(
-      `SELECT curriculum_topic_id, focus_level
-       FROM planned_class_topics
-       WHERE planned_class_id = ?`,
-      [id]
-    );
-
-    for (const plannedTopic of plannedTopicRows) {
-      await connection.query(
-        `INSERT INTO class_topics
-         (class_id, curriculum_topic_id, coverage_type, focus_level, notes)
-         VALUES (?, ?, 'taught', ?, NULL)`,
-        [completedClassId, plannedTopic.curriculum_topic_id, plannedTopic.focus_level]
-      );
-    }
-
-    if (plannedClass.training_scenario_id) {
-      const [scenarioRows] = await connection.query(
-        `SELECT *
-         FROM training_scenarios
-         WHERE id = ? AND gym_id = ?`,
-        [plannedClass.training_scenario_id, gymId]
-      );
-
-      if (scenarioRows.length > 0) {
-        const scenario = scenarioRows[0];
-        const durationMinutes = scenario.round_duration_seconds
-          ? Math.max(1, Math.round(scenario.round_duration_seconds / 60))
-          : null;
-
-        await connection.query(
-          `INSERT INTO class_training_entries
-           (
-             class_id,
-             training_method_id,
-             training_scenario_id,
-             curriculum_topic_id,
-             segment_title,
-             segment_order,
-             duration_minutes,
-             constraints_text,
-             win_condition_top,
-             win_condition_bottom,
-             notes
-           )
-           VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)`,
-          [
-            completedClassId,
-            scenario.training_method_id,
-            scenario.id,
-            scenario.starting_position_topic_id || null,
-            scenario.name,
-            durationMinutes,
-            scenario.constraints_text || null,
-            scenario.top_objective || null,
-            scenario.bottom_objective || null,
-            scenario.description || null
-          ]
-        );
-      }
-    }
-
-    await connection.query(
-      `UPDATE planned_classes
-       SET status = 'completed', completed_class_id = ?
-       WHERE id = ? AND gym_id = ?`,
-      [completedClassId, id, gymId]
-    );
+    const completedClassId = await completePlannedClassRecord({
+      connection,
+      gymId,
+      plannedClass,
+      plannedClassId: id,
+      loggedByUserId
+    });
 
     await connection.commit();
     connection.release();
@@ -553,5 +636,6 @@ module.exports = {
   createPlannedClass,
   updatePlannedClass,
   deletePlannedClass,
+  processDuePlannedClasses,
   completePlannedClass
 };

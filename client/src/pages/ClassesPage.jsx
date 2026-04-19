@@ -8,6 +8,32 @@ import ClassTrainingEntriesForm from '../components/ClassTrainingEntriesForm';
 import ClassAttendanceForm from '../components/ClassAttendanceForm';
 import { formatLabel } from '../utils/formatLabel';
 
+const READY_FOR_ATTENDANCE_KEY = 'progressory-ready-for-attendance';
+
+const readReadyForAttendanceIds = () => {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
+  try {
+    const rawValue = window.sessionStorage.getItem(READY_FOR_ATTENDANCE_KEY);
+    const parsedValue = JSON.parse(rawValue || '[]');
+    return Array.isArray(parsedValue) ? parsedValue.map(String) : [];
+  } catch (error) {
+    console.error('Read ready-for-attendance ids error:', error);
+    return [];
+  }
+};
+
+const storeReadyForAttendanceIds = (classIds) => {
+  if (typeof window === 'undefined' || !Array.isArray(classIds) || classIds.length === 0) {
+    return;
+  }
+
+  const mergedIds = [...new Set([...readReadyForAttendanceIds(), ...classIds.map(String)])];
+  window.sessionStorage.setItem(READY_FOR_ATTENDANCE_KEY, JSON.stringify(mergedIds));
+};
+
 export default function ClassesPage() {
   const { user } = useAuth();
   const location = useLocation();
@@ -27,6 +53,9 @@ export default function ClassesPage() {
   const [showAllClasses, setShowAllClasses] = useState(false);
   const [showCreateClassForm, setShowCreateClassForm] = useState(false);
   const [classSearch, setClassSearch] = useState('');
+  const [expandedTopicDetailsMap, setExpandedTopicDetailsMap] = useState({});
+  const [expandedTrainingEntryDetailsMap, setExpandedTrainingEntryDetailsMap] = useState({});
+  const [expandedClassFormSectionsMap, setExpandedClassFormSectionsMap] = useState({});
 
   const [formData, setFormData] = useState({
     program_id: '',
@@ -43,6 +72,7 @@ export default function ClassesPage() {
   const [classMessage, setClassMessage] = useState('');
   const [error, setError] = useState('');
   const [guidedAttendanceClassId, setGuidedAttendanceClassId] = useState(null);
+  const [readyForAttendanceClassIds, setReadyForAttendanceClassIds] = useState([]);
 
   const clearClassFeedback = (classId) => {
     setClassFeedbackMap((prev) => ({
@@ -124,11 +154,22 @@ export default function ClassesPage() {
     }
   };
 
+  const processDuePlannedClasses = async () => {
+    try {
+      const response = await api.post('/planned-classes/process-due');
+      return response.data;
+    } catch (err) {
+      console.error('Process due planned classes error:', err);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const loadPageData = async () => {
       try {
         setLoading(true);
         setError('');
+        const processedResult = await processDuePlannedClasses();
         await Promise.all([
           fetchClasses(),
           fetchPrograms(),
@@ -137,6 +178,17 @@ export default function ClassesPage() {
           fetchTrainingScenarios(),
           fetchAllMembers()
         ]);
+
+        if (processedResult?.processedCount > 0) {
+          storeReadyForAttendanceIds(processedResult.processed.map((item) => item.classId));
+          setClassMessage(
+            processedResult.processedCount === 1
+              ? '1 planned class was moved into Completed Classes and is ready for attendance.'
+              : `${processedResult.processedCount} planned classes were moved into Completed Classes and are ready for attendance.`
+          );
+        }
+
+        setReadyForAttendanceClassIds(readReadyForAttendanceIds());
       } finally {
         setLoading(false);
       }
@@ -196,6 +248,114 @@ export default function ClassesPage() {
       : sortedClasses.slice(0, 20);
 
   useEffect(() => {
+    const missingClassIds = visibleClasses
+      .map((classItem) => classItem.id)
+      .filter((classId) => classMembersMap[classId] === undefined);
+
+    if (missingClassIds.length === 0) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const loadVisibleAttendance = async () => {
+      try {
+        const attendanceResponses = await Promise.all(
+          missingClassIds.map(async (classId) => {
+            const response = await api.get(`/classes/${classId}/members`);
+            return { classId, data: response.data };
+          })
+        );
+
+        if (isCancelled) {
+          return;
+        }
+
+        setClassMembersMap((prev) => {
+          const next = { ...prev };
+
+          attendanceResponses.forEach(({ classId, data }) => {
+            next[classId] = data;
+          });
+
+          return next;
+        });
+      } catch (err) {
+        console.error('Load visible class attendance error:', err);
+      }
+    };
+
+    loadVisibleAttendance();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [classMembersMap, visibleClasses]);
+
+  useEffect(() => {
+    const missingClassIds = visibleClasses
+      .map((classItem) => classItem.id)
+      .filter(
+        (classId) => (
+          classTopicsMap[classId] === undefined || classTrainingEntriesMap[classId] === undefined
+        )
+      );
+
+    if (missingClassIds.length === 0) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const loadVisibleWorkflowDetails = async () => {
+      try {
+        const detailResponses = await Promise.all(
+          missingClassIds.map(async (classId) => {
+            const [topicsResponse, trainingEntriesResponse] = await Promise.all([
+              api.get(`/classes/${classId}/topics`),
+              api.get(`/classes/${classId}/training-entries`)
+            ]);
+
+            return {
+              classId,
+              topics: topicsResponse.data,
+              trainingEntries: trainingEntriesResponse.data
+            };
+          })
+        );
+
+        if (isCancelled) {
+          return;
+        }
+
+        setClassTopicsMap((prev) => {
+          const next = { ...prev };
+          detailResponses.forEach(({ classId, topics }) => {
+            next[classId] = topics;
+          });
+          return next;
+        });
+
+        setClassTrainingEntriesMap((prev) => {
+          const next = { ...prev };
+          detailResponses.forEach(({ classId, trainingEntries }) => {
+            next[classId] = trainingEntries;
+          });
+          return next;
+        });
+      } catch (err) {
+        console.error('Load visible class workflow details error:', err);
+      }
+    };
+
+    loadVisibleWorkflowDetails();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [classTopicsMap, classTrainingEntriesMap, visibleClasses]);
+
+  useEffect(() => {
     const params = new URLSearchParams(location.search);
     const openClassId = params.get('openClassId');
     const shouldGuideAttendance = params.get('focus') === 'attendance';
@@ -226,6 +386,8 @@ export default function ClassesPage() {
 
       if (shouldGuideAttendance) {
         setGuidedAttendanceClassId(String(openClassId));
+        storeReadyForAttendanceIds([openClassId]);
+        setReadyForAttendanceClassIds(readReadyForAttendanceIds());
       }
 
       const scrollTargetId = shouldGuideAttendance
@@ -546,6 +708,90 @@ export default function ClassesPage() {
     }
   };
 
+  const handleApplyClassProgress = async (classItem) => {
+    try {
+      clearClassFeedback(classItem.id);
+      setError('');
+
+      const response = await api.post(`/classes/${classItem.id}/apply-progress`);
+      const insertedCount = response.data?.insertedCount || 0;
+      const reviewedCount = response.data?.reviewedCount || 0;
+      const presentMemberCount = response.data?.presentMemberCount || 0;
+      const topicCount = response.data?.topicCount || 0;
+
+      let message = 'Member progress updated successfully.';
+
+      if (insertedCount > 0 && reviewedCount > 0) {
+        message = `${insertedCount} new progress updates added and ${reviewedCount} existing progress records reviewed across ${presentMemberCount} present members and ${topicCount} topics.`;
+      } else if (insertedCount > 0) {
+        message = `${insertedCount} progress updates added across ${presentMemberCount} present members and ${topicCount} topics.`;
+      } else if (reviewedCount > 0) {
+        message = `${reviewedCount} existing progress records reviewed across ${presentMemberCount} present members and ${topicCount} topics.`;
+      }
+
+      setClassFeedback(classItem.id, {
+        message,
+        error: ''
+      });
+    } catch (err) {
+      console.error('Apply class progress error:', err);
+      setClassFeedback(classItem.id, {
+        message: '',
+        error: err.response?.data?.message || 'Couldn\'t apply member progress just now.'
+      });
+    }
+  };
+
+  const toggleTopicDetails = (topicEntryId) => {
+    setExpandedTopicDetailsMap((prev) => ({
+      ...prev,
+      [topicEntryId]: !prev[topicEntryId]
+    }));
+  };
+
+  const toggleTrainingEntryDetails = (entryId) => {
+    setExpandedTrainingEntryDetailsMap((prev) => ({
+      ...prev,
+      [entryId]: !prev[entryId]
+    }));
+  };
+
+  const toggleClassFormSection = (classId, sectionKey) => {
+    setExpandedClassFormSectionsMap((prev) => ({
+      ...prev,
+      [classId]: {
+        ...prev[classId],
+        [sectionKey]: !prev[classId]?.[sectionKey]
+      }
+    }));
+  };
+
+  const scrollToClassSection = (targetId) => {
+    window.requestAnimationFrame(() => {
+      const element = document.getElementById(targetId);
+
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  };
+
+  const handleGoToNextStep = async (classItem, nextActionTarget) => {
+    if (!nextActionTarget) {
+      return;
+    }
+
+    if (!expandedClasses[classItem.id]) {
+      await toggleClassDetails(classItem);
+      window.setTimeout(() => {
+        scrollToClassSection(`class-${nextActionTarget}-${classItem.id}`);
+      }, 160);
+      return;
+    }
+
+    scrollToClassSection(`class-${nextActionTarget}-${classItem.id}`);
+  };
+
   return (
       <Layout>
         <h2 className="page-title">Classes</h2>
@@ -701,15 +947,106 @@ export default function ClassesPage() {
           </p>
         ) : (
           <ul className="card-list">
-            {visibleClasses.map((classItem) => (
+            {visibleClasses.map((classItem) => {
+              const eligibleMembers = getMembersForClass(classItem);
+              const recordedMembers = classMembersMap[classItem.id] || [];
+              const loggedTopics = classTopicsMap[classItem.id] || [];
+              const loggedTrainingEntries = classTrainingEntriesMap[classItem.id] || [];
+              const showReadyBadge =
+                readyForAttendanceClassIds.includes(String(classItem.id)) &&
+                !(recordedMembers.length > 0);
+              const isAttendanceComplete =
+                eligibleMembers.length > 0 && recordedMembers.length >= eligibleMembers.length;
+              const isClassLogComplete =
+                (isAttendanceComplete || eligibleMembers.length === 0) &&
+                (loggedTopics.length > 0 || loggedTrainingEntries.length > 0);
+              const attendanceStatus = eligibleMembers.length === 0
+                ? {
+                  label: 'No members available',
+                  className: 'attendance-status-neutral'
+                }
+                : isAttendanceComplete
+                  ? {
+                    label: 'Attendance complete',
+                    className: 'attendance-status-complete'
+                  }
+                  : recordedMembers.length > 0
+                    ? {
+                      label: `Attendance in progress (${recordedMembers.length}/${eligibleMembers.length})`,
+                      className: 'attendance-status-progress'
+                    }
+                    : {
+                      label: 'Attendance not started',
+                      className: 'attendance-status-pending'
+                    };
+              const topicsStatus = loggedTopics.length > 0
+                ? {
+                  label: `Topics logged (${loggedTopics.length})`,
+                  className: 'workflow-status-complete'
+                }
+                : {
+                  label: 'Topics logged (0)',
+                  className: 'workflow-status-neutral'
+                };
+              const trainingEntryStatus = loggedTrainingEntries.length > 0
+                ? {
+                  label: `Training entries logged (${loggedTrainingEntries.length})`,
+                  className: 'workflow-status-complete'
+                }
+                : {
+                  label: 'Training entries logged (0)',
+                  className: 'workflow-status-neutral'
+                };
+              const canApplyClassProgress = recordedMembers.some(
+                (member) => member.attendance_status === 'present'
+              ) && loggedTopics.length > 0;
+              const nextActionTarget = !isAttendanceComplete && eligibleMembers.length > 0
+                ? 'attendance'
+                : loggedTopics.length === 0
+                  ? 'topics'
+                  : loggedTrainingEntries.length === 0
+                    ? 'training-entries'
+                    : canApplyClassProgress
+                      ? 'member-progress'
+                      : '';
+              const nextActionHint = !isAttendanceComplete && eligibleMembers.length > 0
+                ? 'Next: finish attendance.'
+                : loggedTopics.length === 0 && loggedTrainingEntries.length === 0
+                  ? 'Next: log topics or training entries.'
+                  : loggedTopics.length === 0
+                    ? 'Next: log the topics covered.'
+                    : loggedTrainingEntries.length === 0
+                      ? 'Next: add training entries if you used them.'
+                      : !isClassLogComplete
+                        ? 'Next: review member progress if you want to track learning from this class.'
+                        : '';
+
+              return (
               <li
                 key={classItem.id}
                 id={`class-card-${classItem.id}`}
-                className="card-item"
+                className={`card-item${showReadyBadge ? ' class-ready-card' : ''}`}
               >
                 <strong>{classItem.title || 'Untitled Class'}</strong>
 
                 <div className="detail-block">
+                  {showReadyBadge ? (
+                    <div className="class-ready-badge">Ready for attendance</div>
+                  ) : null}
+                  {isClassLogComplete ? (
+                    <div className="class-log-complete-badge">Class log complete</div>
+                  ) : null}
+                  <div className={`class-attendance-status ${attendanceStatus.className}`}>
+                    {attendanceStatus.label}
+                  </div>
+                  <div className="class-workflow-status-row">
+                    <div className={`class-workflow-status ${topicsStatus.className}`}>
+                      {topicsStatus.label}
+                    </div>
+                    <div className={`class-workflow-status ${trainingEntryStatus.className}`}>
+                      {trainingEntryStatus.label}
+                    </div>
+                  </div>
                   <div className="meta-text">Program: {classItem.program_name}</div>
                   <div className="meta-text">
                     Coach: {classItem.head_coach_first_name} {classItem.head_coach_last_name}
@@ -720,10 +1057,21 @@ export default function ClassesPage() {
                   <div className="meta-text">
                     Time: {classItem.start_time || 'N/A'} - {classItem.end_time || 'N/A'}
                   </div>
+                  {nextActionHint ? (
+                    <div className="class-next-action-hint">{nextActionHint}</div>
+                  ) : null}
                   <div>{classItem.notes || 'No notes'}</div>
                 </div>
 
                 <div className="inline-actions">
+                  {nextActionTarget ? (
+                    <button
+                      className="secondary-button"
+                      onClick={() => handleGoToNextStep(classItem, nextActionTarget)}
+                    >
+                      Go To Next Step
+                    </button>
+                  ) : null}
                   <button
                     className="secondary-button"
                     onClick={() => toggleClassDetails(classItem)}
@@ -734,84 +1082,134 @@ export default function ClassesPage() {
 
                 {expandedClasses[classItem.id] && (
                   <div className="detail-block">
-                    <section className="page-section">
-                      <h4>Edit Class Details</h4>
-
-                      <form
-                        className="form-grid"
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          handleUpdateClass(classItem);
-                        }}
-                      >
+                    <section className="page-section compact-form-shell">
+                      <div className="compact-form-header">
                         <div>
-                          <label>Class Title</label>
-                          <input
-                            type="text"
-                            name="title"
-                            value={editClassMap[classItem.id]?.title || ''}
-                            onChange={(e) => handleEditClassChange(classItem.id, e)}
-                          />
+                          <h4>Edit Class Details</h4>
+                          <p className="section-note">
+                            Open this when you need to adjust the title, date, time, or notes after class.
+                          </p>
                         </div>
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => toggleClassFormSection(classItem.id, 'editDetails')}
+                        >
+                          {expandedClassFormSectionsMap[classItem.id]?.editDetails ? 'Hide form' : 'Show form'}
+                        </button>
+                      </div>
 
-                        <div>
-                          <label>Class Date</label>
-                          <input
-                            type="date"
-                            name="class_date"
-                            value={editClassMap[classItem.id]?.class_date || ''}
-                            onChange={(e) => handleEditClassChange(classItem.id, e)}
-                          />
-                        </div>
+                      {expandedClassFormSectionsMap[classItem.id]?.editDetails ? (
+                        <>
+                          <form
+                            className="form-grid"
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              handleUpdateClass(classItem);
+                            }}
+                          >
+                            <div>
+                              <label>Class Title</label>
+                              <input
+                                type="text"
+                                name="title"
+                                value={editClassMap[classItem.id]?.title || ''}
+                                onChange={(e) => handleEditClassChange(classItem.id, e)}
+                              />
+                            </div>
 
-                        <div>
-                          <label>Start Time</label>
-                          <input
-                            type="time"
-                            name="start_time"
-                            value={editClassMap[classItem.id]?.start_time || ''}
-                            onChange={(e) => handleEditClassChange(classItem.id, e)}
-                          />
-                        </div>
+                            <div>
+                              <label>Class Date</label>
+                              <input
+                                type="date"
+                                name="class_date"
+                                value={editClassMap[classItem.id]?.class_date || ''}
+                                onChange={(e) => handleEditClassChange(classItem.id, e)}
+                              />
+                            </div>
 
-                        <div>
-                          <label>End Time</label>
-                          <input
-                            type="time"
-                            name="end_time"
-                            value={editClassMap[classItem.id]?.end_time || ''}
-                            onChange={(e) => handleEditClassChange(classItem.id, e)}
-                          />
-                        </div>
+                            <div>
+                              <label>Start Time</label>
+                              <input
+                                type="time"
+                                name="start_time"
+                                value={editClassMap[classItem.id]?.start_time || ''}
+                                onChange={(e) => handleEditClassChange(classItem.id, e)}
+                              />
+                            </div>
 
-                        <div>
-                          <label>Notes</label>
-                          <textarea
-                            name="notes"
-                            value={editClassMap[classItem.id]?.notes || ''}
-                            onChange={(e) => handleEditClassChange(classItem.id, e)}
-                            rows="3"
-                          />
-                        </div>
+                            <div>
+                              <label>End Time</label>
+                              <input
+                                type="time"
+                                name="end_time"
+                                value={editClassMap[classItem.id]?.end_time || ''}
+                                onChange={(e) => handleEditClassChange(classItem.id, e)}
+                              />
+                            </div>
 
-                        <div className="inline-actions">
-                          <button type="submit">Save Class Details</button>
-                        </div>
-                      </form>
+                            <div>
+                              <label>Notes</label>
+                              <textarea
+                                name="notes"
+                                value={editClassMap[classItem.id]?.notes || ''}
+                                onChange={(e) => handleEditClassChange(classItem.id, e)}
+                                rows="3"
+                              />
+                            </div>
 
-                      {classFeedbackMap[classItem.id]?.message && (
-                        <p className="success-text">
-                          {classFeedbackMap[classItem.id].message}
-                        </p>
-                      )}
-                      {classFeedbackMap[classItem.id]?.error && (
-                        <p className="error-text">
-                          {classFeedbackMap[classItem.id].error}
-                        </p>
-                      )}
+                            <div className="inline-actions">
+                              <button type="submit">Save Class Details</button>
+                            </div>
+                          </form>
+
+                          {classFeedbackMap[classItem.id]?.message && (
+                            <p className="success-text">
+                              {classFeedbackMap[classItem.id].message}
+                            </p>
+                          )}
+                          {classFeedbackMap[classItem.id]?.error && (
+                            <p className="error-text">
+                              {classFeedbackMap[classItem.id].error}
+                            </p>
+                          )}
+                        </>
+                      ) : null}
                     </section>
 
+                    {guidedAttendanceClassId === String(classItem.id) ? (
+                      <div className="class-flow-note">
+                        <strong>This class was just completed from a plan.</strong>
+                        <p>
+                          Add attendance first, then review the imported topics and training entries
+                          below to make any final adjustments.
+                        </p>
+                      </div>
+                    ) : null}
+
                     <h4>Attendance</h4>
+                    <div className="class-flow-summary-grid">
+                      <div className="class-flow-summary-card">
+                        <span className="meta-text">Recorded</span>
+                        <strong>{classMembersMap[classItem.id]?.length || 0}</strong>
+                      </div>
+                      <div className="class-flow-summary-card">
+                        <span className="meta-text">Present</span>
+                        <strong>
+                          {(classMembersMap[classItem.id] || []).filter((member) => (
+                            member.attendance_status === 'present'
+                          )).length}
+                        </strong>
+                      </div>
+                      <div className="class-flow-summary-card">
+                        <span className="meta-text">Absent</span>
+                        <strong>
+                          {(classMembersMap[classItem.id] || []).filter((member) => (
+                            member.attendance_status === 'absent'
+                          )).length}
+                        </strong>
+                      </div>
+                    </div>
                     {classMembersMap[classItem.id]?.length ? (
                       <ul className="card-list">
                         {classMembersMap[classItem.id].map((member) => (
@@ -842,36 +1240,120 @@ export default function ClassesPage() {
                       <ClassAttendanceForm
                         classId={classItem.id}
                         members={getMembersForClass(classItem)}
+                        recordedMemberIds={(classMembersMap[classItem.id] || []).map((member) => member.member_id)}
                         onSuccess={() => loadClassDetails(classItem.id)}
                       />
                     </div>
 
-                    <ClassTopicsForm
-                      classId={classItem.id}
-                      topics={getTopicsForClass(classItem)}
-                      suggestedTopics={getSuggestedTopicsForClass(classItem)}
-                      defaultProgramId={classItem.program_id ? String(classItem.program_id) : ''}
-                      onTopicCreated={fetchAllTopics}
-                      onSuccess={() => loadClassDetails(classItem.id)}
-                    />
+                    {canApplyClassProgress ? (
+                      <section id={`class-member-progress-${classItem.id}`} className="page-section">
+                        <h4>Member Progress</h4>
+                        <p className="section-note">
+                          Apply an introduced progress update for present members across the topics
+                          logged in this class.
+                        </p>
+                        <div className="inline-actions">
+                          <button
+                            type="button"
+                            className="secondary-button"
+                            onClick={() => handleApplyClassProgress(classItem)}
+                          >
+                            Apply Progress For Present Members
+                          </button>
+                        </div>
+                        {classFeedbackMap[classItem.id]?.message ? (
+                          <p className="success-text">
+                            {classFeedbackMap[classItem.id].message}
+                          </p>
+                        ) : null}
+                        {classFeedbackMap[classItem.id]?.error ? (
+                          <p className="error-text">
+                            {classFeedbackMap[classItem.id].error}
+                          </p>
+                        ) : null}
+                      </section>
+                    ) : null}
 
-                    <ClassTrainingEntriesForm
-                      classId={classItem.id}
-                      trainingMethods={trainingMethods}
-                      trainingScenarios={getScenariosForClass(classItem)}
-                      topics={getTopicsForClass(classItem)}
-                      onSuccess={() => loadClassDetails(classItem.id)}
-                    />
+                    <div id={`class-topics-${classItem.id}`} className="page-section compact-form-shell">
+                      <div className="compact-form-header">
+                        <div>
+                          <h4>Add Topic to Class</h4>
+                          <p className="section-note">
+                            Open this when you want to log a topic taught or reviewed in class.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => toggleClassFormSection(classItem.id, 'topics')}
+                        >
+                          {expandedClassFormSectionsMap[classItem.id]?.topics ? 'Hide form' : 'Show form'}
+                        </button>
+                      </div>
+                      {expandedClassFormSectionsMap[classItem.id]?.topics ? (
+                        <ClassTopicsForm
+                          classId={classItem.id}
+                          topics={getTopicsForClass(classItem)}
+                          suggestedTopics={getSuggestedTopicsForClass(classItem)}
+                          defaultProgramId={classItem.program_id ? String(classItem.program_id) : ''}
+                          onTopicCreated={fetchAllTopics}
+                          onSuccess={() => loadClassDetails(classItem.id)}
+                        />
+                      ) : null}
+                    </div>
+
+                    <div id={`class-training-entries-${classItem.id}`} className="page-section compact-form-shell">
+                      <div className="compact-form-header">
+                        <div>
+                          <h4>Add Training Entry</h4>
+                          <p className="section-note">
+                            Open this when you want to log rounds, scenarios, or other training structure from class.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => toggleClassFormSection(classItem.id, 'trainingEntries')}
+                        >
+                          {expandedClassFormSectionsMap[classItem.id]?.trainingEntries ? 'Hide form' : 'Show form'}
+                        </button>
+                      </div>
+                      {expandedClassFormSectionsMap[classItem.id]?.trainingEntries ? (
+                        <ClassTrainingEntriesForm
+                          classId={classItem.id}
+                          trainingMethods={trainingMethods}
+                          trainingScenarios={getScenariosForClass(classItem)}
+                          topics={getTopicsForClass(classItem)}
+                          onSuccess={() => loadClassDetails(classItem.id)}
+                        />
+                      ) : null}
+                    </div>
 
                     <h4>Topics Covered</h4>
                     {classTopicsMap[classItem.id]?.length ? (
                       <ul className="card-list">
                         {classTopicsMap[classItem.id].map((topic) => (
-                          <li key={topic.id} className="card-item">
-                            <strong>{topic.topic_title}</strong> - {formatLabel(topic.topic_type)} - {formatLabel(topic.coverage_type)} - {formatLabel(topic.focus_level)}
-                            <div className="detail-block">
-                              <div>{topic.notes || 'No notes'}</div>
+                          <li key={topic.id} className="card-item compact-topic-card">
+                            <div className="compact-topic-header">
+                              <div>
+                                <strong>{topic.topic_title}</strong>
+                                <div className="meta-text compact-topic-meta">
+                                  {formatLabel(topic.topic_type)} • {formatLabel(topic.coverage_type)} • {formatLabel(topic.focus_level)}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                className="secondary-button"
+                                onClick={() => toggleTopicDetails(topic.id)}
+                              >
+                                {expandedTopicDetailsMap[topic.id] ? 'Hide details' : 'Show details'}
+                              </button>
                             </div>
+                            {expandedTopicDetailsMap[topic.id] ? (
+                              <div className="detail-block">
+                                <div><strong>Notes:</strong> {topic.notes || 'No notes'}</div>
+                              </div>
+                            ) : null}
                             <div className="inline-actions">
                               <button
                                 className="danger-button"
@@ -891,21 +1373,35 @@ export default function ClassesPage() {
                     {classTrainingEntriesMap[classItem.id]?.length ? (
                       <ul className="card-list">
                         {classTrainingEntriesMap[classItem.id].map((entry) => (
-                          <li key={entry.id} className="card-item">
-                            <strong>{entry.segment_title || 'Untitled Segment'}</strong>
-                            <div className="detail-block">
-                              <div className="meta-text">Method: {entry.training_method_name}</div>
-                              <div className="meta-text">
-                                Scenario: {entry.training_scenario_name || (entry.segment_title ? 'Deleted scenario' : 'None')}
+                          <li key={entry.id} className="card-item compact-topic-card">
+                            <div className="compact-topic-header">
+                              <div>
+                                <strong>{entry.segment_title || 'Untitled Segment'}</strong>
+                                <div className="meta-text compact-topic-meta">
+                                  {entry.training_method_name || 'No method'} • {entry.curriculum_topic_title || 'No topic'}
+                                </div>
                               </div>
-                              <div className="meta-text">Topic: {entry.curriculum_topic_title || 'None'}</div>
-                              <div className="meta-text">Order: {entry.segment_order}</div>
-                              <div className="meta-text">Duration: {entry.duration_minutes || 0} minutes</div>
-                              {entry.constraints_text && <div>Constraints: {entry.constraints_text}</div>}
-                              {entry.win_condition_top && <div>Top Win: {entry.win_condition_top}</div>}
-                              {entry.win_condition_bottom && <div>Bottom Win: {entry.win_condition_bottom}</div>}
-                              {entry.notes && <div>Notes: {entry.notes}</div>}
+                              <button
+                                type="button"
+                                className="secondary-button"
+                                onClick={() => toggleTrainingEntryDetails(entry.id)}
+                              >
+                                {expandedTrainingEntryDetailsMap[entry.id] ? 'Hide details' : 'Show details'}
+                              </button>
                             </div>
+                            {expandedTrainingEntryDetailsMap[entry.id] ? (
+                              <div className="detail-block">
+                                <div className="meta-text">
+                                  Scenario: {entry.training_scenario_name || (entry.segment_title ? 'Deleted scenario' : 'None')}
+                                </div>
+                                <div className="meta-text">Order: {entry.segment_order}</div>
+                                <div className="meta-text">Duration: {entry.duration_minutes || 0} minutes</div>
+                                {entry.constraints_text && <div><strong>Constraints:</strong> {entry.constraints_text}</div>}
+                                {entry.win_condition_top && <div><strong>Top Win:</strong> {entry.win_condition_top}</div>}
+                                {entry.win_condition_bottom && <div><strong>Bottom Win:</strong> {entry.win_condition_bottom}</div>}
+                                {entry.notes && <div><strong>Notes:</strong> {entry.notes}</div>}
+                              </div>
+                            ) : null}
                             <div className="inline-actions">
                               <button
                                 className="danger-button"
@@ -923,7 +1419,8 @@ export default function ClassesPage() {
                   </div>
                 )}
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
 

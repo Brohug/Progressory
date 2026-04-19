@@ -52,7 +52,10 @@ export default function TopicSearchSelect({
           <button
             type="button"
             className="secondary-button"
-            onClick={() => onChange('')}
+            onClick={() => {
+              setQuery('');
+              onChange('');
+            }}
           >
             Clear
           </button>
@@ -88,7 +91,10 @@ export default function TopicSearchSelect({
                   key={topic.id}
                   type="button"
                   className={`search-select-option${isSelected ? ' selected' : ''}`}
-                  onClick={() => onChange(String(topic.id))}
+                  onClick={() => {
+                    setQuery('');
+                    onChange(String(topic.id));
+                  }}
                 >
                   {topic.title}
                 </button>

@@ -410,6 +410,222 @@ ul {
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
 }
 
+.class-flow-note {
+  margin: 16px 0 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(56, 189, 248, 0.24);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.class-flow-note strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.class-flow-note p {
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+.class-flow-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.class-flow-summary-card {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.62);
+  display: grid;
+  gap: 4px;
+}
+
+.class-flow-summary-card strong {
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.class-ready-card {
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.12);
+}
+
+.class-ready-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.16);
+  color: #bae6fd;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.class-log-complete-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.16);
+  color: #bbf7d0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.class-attendance-status {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.attendance-status-complete {
+  background: rgba(34, 197, 94, 0.16);
+  color: #bbf7d0;
+}
+
+.attendance-status-progress {
+  background: rgba(56, 189, 248, 0.16);
+  color: #bae6fd;
+}
+
+.attendance-status-pending {
+  background: rgba(250, 204, 21, 0.16);
+  color: #fde68a;
+}
+
+.attendance-status-neutral {
+  background: rgba(148, 163, 184, 0.16);
+  color: #cbd5e1;
+}
+
+.class-workflow-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.class-next-action-hint {
+  margin: 8px 0 10px;
+  color: #cbd5e1;
+  font-size: 0.95rem;
+}
+
+.compact-topic-card {
+  padding: 14px 16px;
+}
+
+.compact-topic-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.compact-topic-meta {
+  margin-top: 4px;
+}
+
+.compact-form-shell {
+  padding: 16px 18px;
+}
+
+.compact-form-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.compact-form-header .section-note {
+  margin-bottom: 0;
+}
+
+.class-workflow-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.workflow-status-complete {
+  background: rgba(34, 197, 94, 0.12);
+  color: #bbf7d0;
+}
+
+.workflow-status-pending {
+  background: rgba(250, 204, 21, 0.12);
+  color: #fde68a;
+}
+
+.workflow-status-neutral {
+  background: rgba(148, 163, 184, 0.14);
+  color: #cbd5e1;
+}
+
+.class-attendance-roster {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.class-attendance-roster-list {
+  display: grid;
+  gap: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.class-attendance-roster-item {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.class-attendance-roster-primary {
+  flex: 1;
+  text-align: left;
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.72);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.class-attendance-roster-primary:hover {
+  background: rgba(30, 41, 59, 0.9);
+}
+
+.class-attendance-roster-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .search-select {
   display: grid;
   gap: 10px;
@@ -519,6 +735,10 @@ ul {
 .search-select-option.selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.15);
+}
+
+.search-select-roster-note {
+  margin: 0 0 4px;
 }
 
 .quick-add-panel {

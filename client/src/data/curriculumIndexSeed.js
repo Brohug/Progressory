@@ -4831,4 +4831,17 @@ const curriculumIndexSeed = [
   }
 ];
 
-export default curriculumIndexSeed;
+const normalizeSeedName = (value) => (
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+);
+
+const dedupedCurriculumIndexSeed = curriculumIndexSeed.filter((entry, index, entries) => {
+  const normalizedName = normalizeSeedName(entry.name);
+
+  return entries.findIndex((candidate) => normalizeSeedName(candidate.name) === normalizedName) === index;
+});
+
+export default dedupedCurriculumIndexSeed;

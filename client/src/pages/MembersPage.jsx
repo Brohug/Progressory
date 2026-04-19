@@ -10,6 +10,10 @@ export default function MembersPage() {
   const [topics, setTopics] = useState([]);
   const [memberProgressMap, setMemberProgressMap] = useState({});
   const [expandedMembers, setExpandedMembers] = useState({});
+  const [expandedMemberDetails, setExpandedMemberDetails] = useState({});
+  const [expandedProgressDetails, setExpandedProgressDetails] = useState({});
+  const [showCreateMemberForm, setShowCreateMemberForm] = useState(false);
+  const [showMemberProgressFormMap, setShowMemberProgressFormMap] = useState({});
   const [editingMembers, setEditingMembers] = useState({});
   const [editMemberMap, setEditMemberMap] = useState({});
   const [showInactive, setShowInactive] = useState(false);
@@ -243,76 +247,115 @@ export default function MembersPage() {
     return getTopicsForMember(member).slice(0, 6);
   };
 
+  const toggleMemberDetails = (memberId) => {
+    setExpandedMemberDetails((prev) => ({
+      ...prev,
+      [memberId]: !prev[memberId]
+    }));
+  };
+
+  const toggleProgressDetails = (progressId) => {
+    setExpandedProgressDetails((prev) => ({
+      ...prev,
+      [progressId]: !prev[progressId]
+    }));
+  };
+
+  const toggleMemberProgressForm = (memberId) => {
+    setShowMemberProgressFormMap((prev) => ({
+      ...prev,
+      [memberId]: !prev[memberId]
+    }));
+  };
+
   return (
     <Layout>
       <h2 className="page-title">Members</h2>
 
       <section className="page-section" style={{ maxWidth: '760px' }}>
-        <h3>Create Member</h3>
-
-        <form className="form-grid" onSubmit={handleSubmit}>
-          <div>
-            <label>Program</label>
-            <select
-              name="program_id"
-              value={formData.program_id}
-              onChange={handleChange}
+        <div className="compact-form-shell">
+          <div className="compact-form-header">
+            <div>
+              <h3>Create Member</h3>
+              <p className="section-note">
+                Add a new student to the gym roster, then fill in their progress only when needed.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setShowCreateMemberForm((prev) => !prev)}
             >
-              <option value="">No program</option>
-              {programs.map((program) => (
-                <option key={program.id} value={program.id}>
-                  {program.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label>First Name</label>
-            <input
-              type="text"
-              name="first_name"
-              value={formData.first_name}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Last Name</label>
-            <input
-              type="text"
-              name="last_name"
-              value={formData.last_name}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label>Belt Rank</label>
-            <input
-              type="text"
-              name="belt_rank"
-              value={formData.belt_rank}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <button type="submit" disabled={submitting}>
-              {submitting ? 'Saving...' : 'Save Member'}
+              {showCreateMemberForm ? 'Hide form' : 'Show form'}
             </button>
           </div>
-        </form>
+
+          {showCreateMemberForm && (
+            <form className="form-grid" onSubmit={handleSubmit}>
+              <div>
+                <label>Program</label>
+                <select
+                  name="program_id"
+                  value={formData.program_id}
+                  onChange={handleChange}
+                >
+                  <option value="">No program</option>
+                  {programs.map((program) => (
+                    <option key={program.id} value={program.id}>
+                      {program.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label>First Name</label>
+                <input
+                  type="text"
+                  name="first_name"
+                  value={formData.first_name}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <label>Last Name</label>
+                <input
+                  type="text"
+                  name="last_name"
+                  value={formData.last_name}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <label>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <label>Belt Rank</label>
+                <input
+                  type="text"
+                  name="belt_rank"
+                  value={formData.belt_rank}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <button type="submit" disabled={submitting}>
+                  {submitting ? 'Saving...' : 'Save Member'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </section>
 
       {error && <p className="error-text">{error}</p>}
@@ -344,28 +387,24 @@ export default function MembersPage() {
           <ul className="card-list">
             {orderedMembers.map((member) => (
               <li key={member.id} className="card-item">
-                <strong>
-                  {member.first_name} {member.last_name}
-                </strong>
-
-                <div className="detail-block">
-                  <div className="meta-text">Program: {member.program_name || 'None'}</div>
-                  <div className="meta-text">Email: {member.email || 'Not added yet'}</div>
-                  <div className="meta-text">Belt Rank: {member.belt_rank || 'Not added yet'}</div>
-                  <div className="meta-text">Active: {member.is_active ? 'Yes' : 'No'}</div>
-                  {member.created_at && (
-                    <div className="meta-text">
-                      Created: {new Date(member.created_at).toLocaleString()}
+                <div className="compact-topic-header">
+                  <div>
+                    <strong>
+                      {member.first_name} {member.last_name}
+                    </strong>
+                    <div className="compact-topic-meta meta-text">
+                      {member.program_name || 'No program'} • {member.belt_rank || 'No belt rank'} • {member.is_active ? 'Active' : 'Inactive'}
                     </div>
-                  )}
-                  {member.updated_at && (
-                    <div className="meta-text">
-                      Updated: {new Date(member.updated_at).toLocaleString()}
-                    </div>
-                  )}
+                  </div>
                 </div>
 
                 <div className="inline-actions">
+                  <button
+                    className="secondary-button"
+                    onClick={() => toggleMemberDetails(member.id)}
+                  >
+                    {expandedMemberDetails[member.id] ? 'Hide details' : 'Show details'}
+                  </button>
                   <button
                     className="secondary-button"
                     onClick={() => toggleMemberProgress(member.id)}
@@ -388,11 +427,36 @@ export default function MembersPage() {
                   ) : null}
                 </div>
 
+                {expandedMemberDetails[member.id] && (
+                  <div className="detail-block">
+                    <div className="meta-text">Program: {member.program_name || 'None'}</div>
+                    <div className="meta-text">Email: {member.email || 'Not added yet'}</div>
+                    <div className="meta-text">Belt Rank: {member.belt_rank || 'Not added yet'}</div>
+                    <div className="meta-text">Active: {member.is_active ? 'Yes' : 'No'}</div>
+                    {member.created_at && (
+                      <div className="meta-text">
+                        Created: {new Date(member.created_at).toLocaleString()}
+                      </div>
+                    )}
+                    {member.updated_at && (
+                      <div className="meta-text">
+                        Updated: {new Date(member.updated_at).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {editingMembers[member.id] && (
                   <div className="detail-block">
-                    <section className="page-section">
-                      <h4>Edit Member Details</h4>
-
+                    <section className="compact-form-shell">
+                      <div className="compact-form-header">
+                        <div>
+                          <h4>Edit Member Details</h4>
+                          <p className="section-note">
+                            Update roster details here without opening up the whole card all the time.
+                          </p>
+                        </div>
+                      </div>
                       <form
                         className="form-grid"
                         onSubmit={(e) => {
@@ -478,34 +542,72 @@ export default function MembersPage() {
 
                 {expandedMembers[member.id] && (
                   <div className="detail-block">
-                    <MemberProgressForm
-                      memberId={member.id}
-                      topics={getTopicsForMember(member)}
-                      suggestedTopics={getSuggestedTopicsForMember(member)}
-                      defaultProgramId={member.program_id ? String(member.program_id) : ''}
-                      onTopicCreated={fetchTopics}
-                      onSuccess={() => loadMemberProgress(member.id)}
-                    />
+                    <div className="compact-form-shell">
+                      <div className="compact-form-header">
+                        <div>
+                          <h4>Member Progress</h4>
+                          <p className="section-note">
+                            Review progress records and only open the update form when you need to log something new.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => toggleMemberProgressForm(member.id)}
+                        >
+                          {showMemberProgressFormMap[member.id] ? 'Hide form' : 'Show form'}
+                        </button>
+                      </div>
+
+                      {showMemberProgressFormMap[member.id] && (
+                        <MemberProgressForm
+                          memberId={member.id}
+                          topics={getTopicsForMember(member)}
+                          suggestedTopics={getSuggestedTopicsForMember(member)}
+                          defaultProgramId={member.program_id ? String(member.program_id) : ''}
+                          onTopicCreated={fetchTopics}
+                          onSuccess={() => loadMemberProgress(member.id)}
+                          compact
+                        />
+                      )}
+                    </div>
 
                     <h4>Progress Records</h4>
                     {memberProgressMap[member.id]?.length ? (
                       <ul className="card-list">
                         {memberProgressMap[member.id].map((progress) => (
-                          <li key={progress.id} className="card-item">
-                            <strong>{progress.topic_title}</strong> - {formatLabel(progress.topic_type)}
-                            <div className="detail-block">
-                              <div className="meta-text">Status: {formatLabel(progress.status)}</div>
-                              <div className="meta-text">
-                                Updated By: {progress.updated_by_first_name} {progress.updated_by_last_name}
+                          <li key={progress.id} className="card-item compact-topic-card">
+                            <div className="compact-topic-header">
+                              <div>
+                                <strong>{progress.topic_title}</strong>
+                                <div className="compact-topic-meta meta-text">
+                                  {formatLabel(progress.topic_type)} • {formatLabel(progress.status)}
+                                </div>
                               </div>
-                              <div className="meta-text">
-                                Last Reviewed:{' '}
-                                {progress.last_reviewed_at
-                                  ? new Date(progress.last_reviewed_at).toLocaleString()
-                                  : 'None'}
-                              </div>
-                              <div>Notes: {progress.notes || 'None'}</div>
+                              <button
+                                type="button"
+                                className="secondary-button"
+                                onClick={() => toggleProgressDetails(progress.id)}
+                              >
+                                {expandedProgressDetails[progress.id] ? 'Hide details' : 'Show details'}
+                              </button>
                             </div>
+
+                            {expandedProgressDetails[progress.id] && (
+                              <div className="detail-block">
+                                <div className="meta-text">Status: {formatLabel(progress.status)}</div>
+                                <div className="meta-text">
+                                  Updated By: {progress.updated_by_first_name} {progress.updated_by_last_name}
+                                </div>
+                                <div className="meta-text">
+                                  Last Reviewed:{' '}
+                                  {progress.last_reviewed_at
+                                    ? new Date(progress.last_reviewed_at).toLocaleString()
+                                    : 'None'}
+                                </div>
+                                <div>Notes: {progress.notes || 'None'}</div>
+                              </div>
+                            )}
                           </li>
                         ))}
                       </ul>

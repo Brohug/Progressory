@@ -8,6 +8,7 @@ export default function TrainingScenariosPage() {
   const [trainingMethods, setTrainingMethods] = useState([]);
   const [trainingScenarios, setTrainingScenarios] = useState([]);
   const [editingScenarios, setEditingScenarios] = useState({});
+  const [expandedScenarioDetails, setExpandedScenarioDetails] = useState({});
   const [editScenarioMap, setEditScenarioMap] = useState({});
   const [scenarioFeedbackMap, setScenarioFeedbackMap] = useState({});
   const [showInactiveScenarios, setShowInactiveScenarios] = useState(false);
@@ -337,6 +338,13 @@ export default function TrainingScenariosPage() {
     }
   };
 
+  const toggleScenarioDetails = (scenarioId) => {
+    setExpandedScenarioDetails((prev) => ({
+      ...prev,
+      [scenarioId]: !prev[scenarioId]
+    }));
+  };
+
   return (
     <Layout>
       <div className="training-scenarios-page">
@@ -398,7 +406,7 @@ export default function TrainingScenariosPage() {
         </section>
 
         {showCreateScenarioForm ? (
-          <section className="page-section" style={{ maxWidth: '760px' }}>
+          <section className="page-section compact-form-shell" style={{ maxWidth: '760px' }}>
             <h3>Create Training Scenario</h3>
             <p className="section-note">
               Give coaches a reusable setup they can pull into planning or live class logs later.
@@ -557,29 +565,41 @@ export default function TrainingScenariosPage() {
           ) : (
             <ul className="card-list">
               {orderedScenarios.map((scenario) => (
-                <li key={scenario.id} className="card-item">
-                  <strong>{scenario.name}</strong>
-                  <div className="detail-block">
-                    <div className="meta-text">
-                      Program: {scenario.program_name || 'No Program'}
+                <li key={scenario.id} className="card-item compact-topic-card">
+                  <div className="compact-topic-header">
+                    <div>
+                      <strong>{scenario.name}</strong>
+                      <div className="meta-text compact-topic-meta">
+                        {(scenario.training_method_name || 'No method')}
+                        {' • '}
+                        {(scenario.program_name || 'No Program')}
+                      </div>
                     </div>
-                    <div className="meta-text">
-                      Training Method: {scenario.training_method_name}
-                    </div>
-                    <div className="meta-text">
-                      Starting Topic: {scenario.starting_position_title || 'None'}
-                    </div>
-                    <div className="meta-text">
-                      Duration: {scenario.round_duration_seconds || 'None'} seconds
-                    </div>
-                    <div className="meta-text">
-                      Active: {scenario.is_active ? 'Yes' : 'No'}
-                    </div>
-                    <div>Description: {scenario.description || 'None'}</div>
-                    <div>Top Objective: {scenario.top_objective || 'None'}</div>
-                    <div>Bottom Objective: {scenario.bottom_objective || 'None'}</div>
-                    <div>Constraints: {scenario.constraints_text || 'None'}</div>
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => toggleScenarioDetails(scenario.id)}
+                    >
+                      {expandedScenarioDetails[scenario.id] ? 'Hide details' : 'Show details'}
+                    </button>
                   </div>
+                  {expandedScenarioDetails[scenario.id] ? (
+                    <div className="detail-block">
+                      <div className="meta-text">
+                        Starting Topic: {scenario.starting_position_title || 'None'}
+                      </div>
+                      <div className="meta-text">
+                        Duration: {scenario.round_duration_seconds || 'None'} seconds
+                      </div>
+                      <div className="meta-text">
+                        Active: {scenario.is_active ? 'Yes' : 'No'}
+                      </div>
+                      <div><strong>Description:</strong> {scenario.description || 'None'}</div>
+                      <div><strong>Top Objective:</strong> {scenario.top_objective || 'None'}</div>
+                      <div><strong>Bottom Objective:</strong> {scenario.bottom_objective || 'None'}</div>
+                      <div><strong>Constraints:</strong> {scenario.constraints_text || 'None'}</div>
+                    </div>
+                  ) : null}
 
                   <div className="inline-actions">
                     <button
@@ -614,7 +634,7 @@ export default function TrainingScenariosPage() {
 
                   {editingScenarios[scenario.id] ? (
                     <div className="detail-block">
-                      <section className="page-section">
+                      <section className="page-section compact-form-shell">
                         <h4>Edit Training Scenario</h4>
 
                         <form
