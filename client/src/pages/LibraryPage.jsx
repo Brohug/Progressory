@@ -14,10 +14,22 @@ export default function LibraryPage() {
   const [programFilter, setProgramFilter] = useState(searchParams.get('programId') || '');
   const [topicFilter, setTopicFilter] = useState(searchParams.get('topicId') || '');
   const [entryTypeFilter, setEntryTypeFilter] = useState(searchParams.get('entryType') || '');
+  const [needsTopicOnly, setNeedsTopicOnly] = useState(searchParams.get('needsTopic') === 'true');
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'updated_desc');
   const [showInactive, setShowInactive] = useState(false);
   const [showCreateEntryForm, setShowCreateEntryForm] = useState(false);
+  const [showLibraryGuide, setShowLibraryGuide] = useState(false);
   const [expandedEntryDetails, setExpandedEntryDetails] = useState({});
+  const [editingEntryId, setEditingEntryId] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    program_id: '',
+    curriculum_topic_id: '',
+    title: '',
+    entry_type: 'video_note',
+    description: '',
+    video_url: '',
+    visibility: 'coach_only'
+  });
   const [formData, setFormData] = useState({
     program_id: '',
     curriculum_topic_id: '',
@@ -97,12 +109,13 @@ export default function LibraryPage() {
     if (programFilter) nextParams.set('programId', programFilter);
     if (topicFilter) nextParams.set('topicId', topicFilter);
     if (entryTypeFilter) nextParams.set('entryType', entryTypeFilter);
+    if (needsTopicOnly) nextParams.set('needsTopic', 'true');
     if (sortBy && sortBy !== 'updated_desc') nextParams.set('sort', sortBy);
 
     if (nextParams.toString() !== searchParams.toString()) {
       setSearchParams(nextParams, { replace: true });
     }
-  }, [search, programFilter, topicFilter, entryTypeFilter, sortBy, searchParams, setSearchParams]);
+  }, [search, programFilter, topicFilter, entryTypeFilter, needsTopicOnly, sortBy, searchParams, setSearchParams]);
 
   const orderedEntries = useMemo(() => {
     const active = entries.filter((entry) => entry.is_active);
@@ -124,8 +137,14 @@ export default function LibraryPage() {
         return b.title.localeCompare(a.title);
       }
 
-      if (sortBy === 'topic_asc') {
-        return String(a.topic_title || 'zzzz').localeCompare(String(b.topic_title || 'zzzz'));
+      if (sortBy === 'category_asc') {
+        const categorySort = formatSentenceLabel(a.entry_type).localeCompare(formatSentenceLabel(b.entry_type));
+
+        if (categorySort !== 0) {
+          return categorySort;
+        }
+
+        return a.title.localeCompare(b.title);
       }
 
       if (sortBy === 'created_desc') {
@@ -154,19 +173,22 @@ export default function LibraryPage() {
       const matchesProgram = !programFilter || String(entry.program_id || '') === programFilter;
       const matchesTopic = !topicFilter || String(entry.curriculum_topic_id || '') === topicFilter;
       const matchesEntryType = !entryTypeFilter || entry.entry_type === entryTypeFilter;
+      const matchesNeedsTopic = !needsTopicOnly || !entry.curriculum_topic_id;
 
-      return matchesSearch && matchesProgram && matchesTopic && matchesEntryType;
+      return matchesSearch && matchesProgram && matchesTopic && matchesEntryType && matchesNeedsTopic;
     });
-  }, [orderedEntries, search, programFilter, topicFilter, entryTypeFilter]);
+  }, [orderedEntries, search, programFilter, topicFilter, entryTypeFilter, needsTopicOnly]);
 
   const summaryCards = useMemo(() => {
     const linkedTopicCount = filteredEntries.filter((entry) => entry.curriculum_topic_id).length;
     const memberVisibleCount = filteredEntries.filter((entry) => entry.visibility === 'member_visible').length;
+    const videoCount = filteredEntries.filter((entry) => entry.video_url).length;
 
     return [
       { label: 'Visible entries', value: filteredEntries.length },
       { label: 'Linked to topics', value: linkedTopicCount },
-      { label: 'Member visible', value: memberVisibleCount }
+      { label: 'Member visible', value: memberVisibleCount },
+      { label: 'Videos linked', value: videoCount }
     ];
   }, [filteredEntries]);
 
@@ -199,8 +221,12 @@ export default function LibraryPage() {
       nextFilters.push({ key: 'entryType', label: `Type: ${formatSentenceLabel(entryTypeFilter)}` });
     }
 
+    if (needsTopicOnly) {
+      nextFilters.push({ key: 'needsTopic', label: 'Needs topic' });
+    }
+
     return nextFilters;
-  }, [search, selectedProgram, selectedTopic, entryTypeFilter]);
+  }, [search, selectedProgram, selectedTopic, entryTypeFilter, needsTopicOnly]);
 
   const availableTopics = useMemo(() => {
     const activeTopics = topics.filter((topic) => topic.is_active);
@@ -225,6 +251,7 @@ export default function LibraryPage() {
     setProgramFilter('');
     setTopicFilter('');
     setEntryTypeFilter('');
+    setNeedsTopicOnly(false);
     setSortBy('updated_desc');
   };
 
@@ -258,9 +285,25 @@ export default function LibraryPage() {
     }));
   };
 
+  const handleEditChange = (e) => {
+    setSuccessMessage('');
+    setEditFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
+
   const handleTopicChange = (topicId) => {
     setSuccessMessage('');
     setFormData((prev) => ({
+      ...prev,
+      curriculum_topic_id: topicId
+    }));
+  };
+
+  const handleEditTopicChange = (topicId) => {
+    setSuccessMessage('');
+    setEditFormData((prev) => ({
       ...prev,
       curriculum_topic_id: topicId
     }));
@@ -344,6 +387,65 @@ export default function LibraryPage() {
     }
   };
 
+  const startEditingEntry = (entry) => {
+    setSuccessMessage('');
+    setError('');
+    setEditingEntryId(entry.id);
+    setEditFormData({
+      program_id: entry.program_id ? String(entry.program_id) : '',
+      curriculum_topic_id: entry.curriculum_topic_id ? String(entry.curriculum_topic_id) : '',
+      title: entry.title || '',
+      entry_type: entry.entry_type || 'video_note',
+      description: entry.description || '',
+      video_url: entry.video_url || '',
+      visibility: entry.visibility || 'coach_only'
+    });
+  };
+
+  const cancelEditingEntry = () => {
+    setEditingEntryId(null);
+    setEditFormData({
+      program_id: '',
+      curriculum_topic_id: '',
+      title: '',
+      entry_type: 'video_note',
+      description: '',
+      video_url: '',
+      visibility: 'coach_only'
+    });
+  };
+
+  const handleUpdateEntry = async (e, entry) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError('');
+    setSuccessMessage('');
+
+    try {
+      await api.put(`/library/${entry.id}`, {
+        program_id: editFormData.program_id ? Number(editFormData.program_id) : null,
+        curriculum_topic_id: editFormData.curriculum_topic_id
+          ? Number(editFormData.curriculum_topic_id)
+          : null,
+        title: editFormData.title,
+        entry_type: editFormData.entry_type,
+        description: editFormData.description || null,
+        video_url: editFormData.video_url || null,
+        visibility: editFormData.visibility,
+        is_active: entry.is_active
+      });
+
+      await fetchEntries();
+      cancelEditingEntry();
+      setSuccessMessage('Library entry updated successfully.');
+    } catch (err) {
+      console.error('Update library entry error:', err);
+      setError(err.response?.data?.message || 'Couldn\'t update that library entry right now.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const toggleEntryDetails = (entryId) => {
     setExpandedEntryDetails((prev) => ({
       ...prev,
@@ -367,6 +469,20 @@ export default function LibraryPage() {
     { label: 'Program', value: formSelectedProgram?.name || 'No program' },
     { label: 'Linked topic', value: formSelectedTopic?.title || 'No topic linked' }
   ]), [formData.entry_type, formData.visibility, formSelectedProgram, formSelectedTopic]);
+
+  const getTopicsForProgram = (programId) => {
+    const activeTopics = topics.filter((topic) => topic.is_active);
+
+    if (!programId) {
+      return activeTopics;
+    }
+
+    const matchingTopics = activeTopics.filter((topic) => (
+      topic.program_id === null || String(topic.program_id) === String(programId)
+    ));
+
+    return matchingTopics.length > 0 ? matchingTopics : activeTopics;
+  };
 
   return (
     <Layout>
@@ -559,7 +675,42 @@ export default function LibraryPage() {
                 Search by title, topic, program, description, or resource type, then narrow the list with quick filters.
               </p>
             </div>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setShowLibraryGuide((prev) => !prev)}
+            >
+              {showLibraryGuide ? 'Hide guide' : 'How Library Works'}
+            </button>
           </div>
+
+          {showLibraryGuide ? (
+            <div className="library-guide-panel">
+              <div>
+                <strong>Before Library can show resources, the topic must exist in this gym&apos;s Curriculum Index.</strong>
+                <p className="meta-text">
+                  The full Index gives you the master map, but Library only searches saved resources for this gym. If no video or note has been created yet, Library will correctly show nothing.
+                </p>
+              </div>
+              <div className="library-guide-steps">
+                <span>1. Add the topic from Curriculum Index into this gym&apos;s curriculum topics.</span>
+                <span>2. Create a library entry, video note, or teaching resource.</span>
+                <span>3. Link that resource to the added topic so it appears in Library searches.</span>
+              </div>
+              <div className="inline-actions">
+                <Link className="secondary-button library-topic-link-button" to="/index">
+                  Go to Curriculum Index
+                </Link>
+                <button
+                  type="button"
+                  className="secondary-button library-topic-link-button"
+                  onClick={() => setShowCreateEntryForm(true)}
+                >
+                  Create Library Entry
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           {selectedTopic ? (
             <div className="library-linked-topic-banner">
@@ -608,16 +759,14 @@ export default function LibraryPage() {
 
             <div>
               <label>Topic</label>
-              <select value={topicFilter} onChange={(e) => setTopicFilter(e.target.value)}>
-                <option value="">All topics</option>
-                {topics
-                  .filter((topic) => topic.is_active)
-                  .map((topic) => (
-                    <option key={topic.id} value={topic.id}>
-                      {topic.title}
-                    </option>
-                  ))}
-              </select>
+              <TopicSearchSelect
+                topics={topics.filter((topic) => topic.is_active)}
+                value={topicFilter}
+                onChange={setTopicFilter}
+                placeholder="Search added curriculum topics..."
+                emptySelectionLabel="All topics"
+                helperText="Library links to topics added to this gym. Add missing items from the Curriculum Index first."
+              />
             </div>
 
             <div>
@@ -638,10 +787,22 @@ export default function LibraryPage() {
                 <option value="updated_desc">Recently updated</option>
                 <option value="created_desc">Recently created</option>
                 <option value="title_asc">Title A-Z</option>
-                <option value="title_desc">Title Z-A</option>
-                <option value="topic_asc">Topic A-Z</option>
+                <option value="category_asc">Category A-Z</option>
               </select>
             </div>
+          </div>
+
+          <div className="library-quick-filter-row">
+            <button
+              type="button"
+              className={`library-filter-toggle${needsTopicOnly ? ' is-active' : ''}`}
+              onClick={() => setNeedsTopicOnly((prev) => !prev)}
+            >
+              Needs topic
+            </button>
+            <span className="meta-text">
+              Use this to clean up resources that are not tied to the Curriculum Index yet.
+            </span>
           </div>
 
           {activeFilters.length > 0 ? (
@@ -682,10 +843,27 @@ export default function LibraryPage() {
           <p className="empty-state">Loading library...</p>
         ) : filteredEntries.length === 0 ? (
           <div className="empty-state">
-            <p style={{ marginBottom: '10px' }}>No library entries match that search or filter right now.</p>
-            <p className="meta-text" style={{ marginBottom: '12px' }}>
-              This is still a good time to start seeding the library with a few high-value notes, videos, or topic references.
-            </p>
+            <div className="library-empty-callout">
+              <strong>No saved library resources found yet.</strong>
+              <p className="meta-text">
+                Library does not pull every Curriculum Index item automatically. First add the topic to this gym&apos;s Curriculum Index, then create a video note, teaching resource, or concept note linked to it.
+              </p>
+              <p className="meta-text">
+                If you searched for a technique and this is blank, it usually means no video/resource has been saved for that topic yet.
+              </p>
+            </div>
+            <div className="inline-actions" style={{ justifyContent: 'center' }}>
+              <Link className="secondary-button" to="/index">
+                Add Topic in Curriculum Index
+              </Link>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setShowLibraryGuide(true)}
+              >
+                Show Library Guide
+              </button>
+            </div>
             <button
               type="button"
               className="secondary-button"
@@ -700,11 +878,18 @@ export default function LibraryPage() {
               <li key={entry.id} className="card-item compact-topic-card">
                 <div className="compact-topic-header">
                   <div>
-                    <strong>{entry.title}</strong>
-                    <div className="compact-topic-meta meta-text">
-                      {formatSentenceLabel(entry.entry_type)} {' | '} {entry.program_name || 'No program'} {' | '} {entry.topic_title || 'No linked topic'}
+                    <div className="library-card-title-row">
+                      <strong>{entry.title}</strong>
+                      <span className={`library-status-chip ${entry.visibility === 'member_visible' ? 'is-member-visible' : ''}`}>
+                        {formatSentenceLabel(entry.visibility)}
+                      </span>
+                      {!entry.curriculum_topic_id && (
+                        <span className="library-status-chip is-warning">Needs topic</span>
+                      )}
                     </div>
-                    <div className="library-topic-link-row">
+                    <div className="library-card-chip-row">
+                      <span className="library-info-chip">{formatSentenceLabel(entry.entry_type)}</span>
+                      <span className="library-info-chip">{entry.program_name || 'No program'}</span>
                       <button
                         type="button"
                         className="library-topic-chip"
@@ -713,6 +898,8 @@ export default function LibraryPage() {
                       >
                         {entry.topic_title || 'Unlinked library entry'}
                       </button>
+                    </div>
+                    <div className="library-topic-link-row">
                       {entry.curriculum_topic_id ? (
                         <Link
                           className="secondary-button library-topic-link-button"
@@ -738,6 +925,107 @@ export default function LibraryPage() {
                     {expandedEntryDetails[entry.id] ? 'Hide details' : 'Show details'}
                   </button>
                 </div>
+
+                {editingEntryId === entry.id && (
+                  <form className="form-grid library-edit-form" onSubmit={(event) => handleUpdateEntry(event, entry)}>
+                    <div>
+                      <label>Title</label>
+                      <input
+                        type="text"
+                        name="title"
+                        value={editFormData.title}
+                        onChange={handleEditChange}
+                      />
+                    </div>
+
+                    <div>
+                      <label>Entry Type</label>
+                      <select
+                        name="entry_type"
+                        value={editFormData.entry_type}
+                        onChange={handleEditChange}
+                      >
+                        {entryTypes.map((type) => (
+                          <option key={type} value={type}>
+                            {formatSentenceLabel(type)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label>Program</label>
+                      <select
+                        name="program_id"
+                        value={editFormData.program_id}
+                        onChange={handleEditChange}
+                      >
+                        <option value="">No program</option>
+                        {programs.map((program) => (
+                          <option key={program.id} value={program.id}>
+                            {program.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label>Curriculum Topic</label>
+                      <TopicSearchSelect
+                        topics={getTopicsForProgram(editFormData.program_id)}
+                        value={editFormData.curriculum_topic_id}
+                        onChange={handleEditTopicChange}
+                        placeholder="Search curriculum topics for this entry..."
+                        emptySelectionLabel="No topic selected"
+                        helperText="Attach this resource to the best matching Index topic."
+                      />
+                    </div>
+
+                    <div>
+                      <label>Video URL</label>
+                      <input
+                        type="text"
+                        name="video_url"
+                        value={editFormData.video_url}
+                        onChange={handleEditChange}
+                      />
+                    </div>
+
+                    <div>
+                      <label>Visibility</label>
+                      <select
+                        name="visibility"
+                        value={editFormData.visibility}
+                        onChange={handleEditChange}
+                      >
+                        {visibilityOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {formatSentenceLabel(option)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <label>Description</label>
+                      <textarea
+                        name="description"
+                        value={editFormData.description}
+                        onChange={handleEditChange}
+                        rows="4"
+                      />
+                    </div>
+
+                    <div className="inline-actions" style={{ gridColumn: '1 / -1' }}>
+                      <button type="submit" disabled={submitting}>
+                        {submitting ? 'Saving...' : 'Save changes'}
+                      </button>
+                      <button type="button" className="secondary-button" onClick={cancelEditingEntry}>
+                        Cancel edit
+                      </button>
+                    </div>
+                  </form>
+                )}
 
                 {expandedEntryDetails[entry.id] && (
                   <div className="detail-block">
@@ -766,9 +1054,18 @@ export default function LibraryPage() {
                 )}
 
                 <div className="inline-actions">
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => (
+                      editingEntryId === entry.id ? cancelEditingEntry() : startEditingEntry(entry)
+                    )}
+                  >
+                    {editingEntryId === entry.id ? 'Close edit' : 'Edit entry'}
+                  </button>
                   {entry.video_url && (
-                    <a href={entry.video_url} target="_blank" rel="noreferrer">
-                      Open Video Link
+                    <a className="library-resource-link" href={entry.video_url} target="_blank" rel="noreferrer">
+                      Open resource
                     </a>
                   )}
                   {entry.is_active ? (

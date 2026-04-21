@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import curriculumIndexSeed from '../data/curriculumIndexSeed';
 
@@ -201,6 +202,37 @@ const getSelectedStyleHints = (filters) => uniqueValues(
   Object.entries(filters).flatMap(([key, value]) => filterConfig[key]?.[value] || [])
 );
 
+const getOptionReasons = ({ entry, groupKey, filters }) => {
+  const reasons = [];
+  const styleHints = getSelectedStyleHints(filters);
+
+  if (entry?.skillLevel && filters.experience && entry.skillLevel === filters.experience) {
+    reasons.push(`Matches ${filters.experience.toLowerCase()} level`);
+  }
+
+  if (filters.ruleSet && optionMatchesStyles(entry || {}, filterConfig.ruleSet[filters.ruleSet] || [])) {
+    reasons.push(filters.ruleSet === 'gi' ? 'Fits gi context' : 'Fits no-gi context');
+  }
+
+  if (filters.weakArea && optionMatchesStyles(entry || {}, filterConfig.weakArea[filters.weakArea] || [])) {
+    reasons.push('Targets selected weak area');
+  }
+
+  if (styleHints.length && optionMatchesStyles(entry || {}, styleHints)) {
+    reasons.push('Matches active style tags');
+  }
+
+  if (groupKey === 'commonDefenses' && filters.weakArea === 'escapes') {
+    reasons.push('Defense branch prioritized');
+  }
+
+  if (!reasons.length) {
+    reasons.push(entry ? 'Connected from current focus' : 'Referenced by this focus');
+  }
+
+  return reasons.slice(0, 2);
+};
+
 const scoreOption = ({ entry, groupKey, filters }) => {
   let score = 0;
   const styleHints = getSelectedStyleHints(filters);
@@ -250,7 +282,8 @@ const getFilteredBranches = ({ focusEntry, entryMap, filters }) => {
         return {
           name,
           entry,
-          score: scoreOption({ entry: entry || { name }, groupKey: group.key, filters })
+          score: scoreOption({ entry: entry || { name }, groupKey: group.key, filters }),
+          reasons: getOptionReasons({ entry: entry || { name }, groupKey: group.key, filters })
         };
       })
       .filter((option) => (
@@ -274,6 +307,8 @@ export default function DecisionTreePage() {
   const [focusId, setFocusId] = useState('positions-closed-guard');
   const [history, setHistory] = useState([]);
   const [filters, setFilters] = useState(defaultFilters);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showPartnerContext, setShowPartnerContext] = useState(false);
   const [showSimulation, setShowSimulation] = useState(false);
 
   const entries = curriculumIndexSeed;
@@ -358,6 +393,14 @@ export default function DecisionTreePage() {
               {focusEntry.subcategory && <span className="curriculum-index-tag">{focusEntry.subcategory}</span>}
               {focusEntry.skillLevel && <span className="curriculum-index-tag">{focusEntry.skillLevel}</span>}
             </div>
+            <div className="decision-tree-focus-links">
+              <Link className="secondary-button" to={`/index?search=${encodeURIComponent(focusEntry.name)}`}>
+                View in Index
+              </Link>
+              <Link className="secondary-button" to={`/library?search=${encodeURIComponent(focusEntry.name)}`}>
+                Find Library Resources
+              </Link>
+            </div>
           </div>
           <div className="decision-tree-hero-actions">
             <button className="secondary-button" type="button" onClick={goBack} disabled={!history.length}>
@@ -397,128 +440,149 @@ export default function DecisionTreePage() {
           )}
         </section>
 
-        <section className="page-section">
-          <h3>Simple filters</h3>
-          <p className="meta-text">
-            These filters shrink and rank the answers. Hard-to-measure athletic traits are held for advanced simulation later.
-          </p>
-
-          <div className="decision-tree-filter-grid">
-            <label>
-              User experience
-              <select value={filters.experience} onChange={(event) => handleFilterChange('experience', event.target.value)}>
-                <option value="">Any experience</option>
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
-              </select>
-            </label>
-
-            <label>
-              Gi / no-gi
-              <select value={filters.ruleSet} onChange={(event) => handleFilterChange('ruleSet', event.target.value)}>
-                <option value="">Either</option>
-                <option value="gi">Gi</option>
-                <option value="nogi">No-gi</option>
-              </select>
-            </label>
-
-            <label>
-              Preferred style
-              <select value={filters.preferredStyle} onChange={(event) => handleFilterChange('preferredStyle', event.target.value)}>
-                <option value="">Any style</option>
-                <option value="pressure">Pressure / control</option>
-                <option value="guard">Guard player</option>
-                <option value="wrestling">Wrestling / front headlock</option>
-                <option value="legLocks">Leg locks</option>
-                <option value="backTakes">Back takes</option>
-                <option value="submissions">Submission hunting</option>
-                <option value="scrambles">Scrambly / mobile</option>
-                <option value="defense">Defensive / escape work</option>
-              </select>
-            </label>
-
-            <label>
-              Top / bottom preference
-              <select value={filters.topBottom} onChange={(event) => handleFilterChange('topBottom', event.target.value)}>
-                <option value="">Any preference</option>
-                <option value="top">Top</option>
-                <option value="bottom">Bottom</option>
-                <option value="standing">Standing</option>
-              </select>
-            </label>
-
-            <label>
-              Body type
-              <select value={filters.bodyType} onChange={(event) => handleFilterChange('bodyType', event.target.value)}>
-                <option value="">Any body type</option>
-                <option value="smaller">Smaller / faster</option>
-                <option value="larger">Larger / pressure</option>
-                <option value="longer">Longer limbs</option>
-                <option value="compact">Compact / stocky</option>
-              </select>
-            </label>
-
-            <label>
-              Flexibility
-              <select value={filters.flexibility} onChange={(event) => handleFilterChange('flexibility', event.target.value)}>
-                <option value="">Any flexibility</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </label>
-
-            <label>
-              Wrestling familiarity
-              <select value={filters.wrestlingFamiliarity} onChange={(event) => handleFilterChange('wrestlingFamiliarity', event.target.value)}>
-                <option value="">Any familiarity</option>
-                <option value="new">New to wrestling</option>
-                <option value="comfortable">Comfortable wrestling</option>
-              </select>
-            </label>
-
-            <label>
-              Leg lock familiarity
-              <select value={filters.legLockFamiliarity} onChange={(event) => handleFilterChange('legLockFamiliarity', event.target.value)}>
-                <option value="">Any familiarity</option>
-                <option value="avoid">Avoid for now</option>
-                <option value="learning">Learning</option>
-                <option value="comfortable">Comfortable</option>
-              </select>
-            </label>
-
-            <label>
-              Risk tolerance
-              <select value={filters.riskTolerance} onChange={(event) => handleFilterChange('riskTolerance', event.target.value)}>
-                <option value="">Any risk tolerance</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </label>
-
-            <label>
-              Weak areas
-              <select value={filters.weakArea} onChange={(event) => handleFilterChange('weakArea', event.target.value)}>
-                <option value="">No weakness filter</option>
-                <option value="guardPassing">Guard passing</option>
-                <option value="guardRetention">Guard retention</option>
-                <option value="escapes">Escapes</option>
-                <option value="submissions">Submissions</option>
-                <option value="takedowns">Takedowns</option>
-                <option value="legLocks">Leg locks</option>
-                <option value="backTakes">Back takes</option>
-                <option value="sweeps">Sweeps</option>
-                <option value="frontHeadlock">Front headlock</option>
-              </select>
-            </label>
+        <section className="page-section compact-form-shell">
+          <div className="compact-form-header">
+            <div>
+              <h3>Simple filters</h3>
+              <p className="meta-text">
+                These filters shrink and rank the answers. Open them when you want more specific suggestions.
+              </p>
+            </div>
+            <button className="secondary-button" type="button" onClick={() => setShowFilters((value) => !value)}>
+              {showFilters ? 'Hide filters' : 'Show filters'}
+            </button>
           </div>
+
+          {showFilters && (
+            <div className="decision-tree-filter-grid">
+              <label>
+                User experience
+                <select value={filters.experience} onChange={(event) => handleFilterChange('experience', event.target.value)}>
+                  <option value="">Any experience</option>
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                </select>
+              </label>
+
+              <label>
+                Gi / no-gi
+                <select value={filters.ruleSet} onChange={(event) => handleFilterChange('ruleSet', event.target.value)}>
+                  <option value="">Either</option>
+                  <option value="gi">Gi</option>
+                  <option value="nogi">No-gi</option>
+                </select>
+              </label>
+
+              <label>
+                Preferred style
+                <select value={filters.preferredStyle} onChange={(event) => handleFilterChange('preferredStyle', event.target.value)}>
+                  <option value="">Any style</option>
+                  <option value="pressure">Pressure / control</option>
+                  <option value="guard">Guard player</option>
+                  <option value="wrestling">Wrestling / front headlock</option>
+                  <option value="legLocks">Leg locks</option>
+                  <option value="backTakes">Back takes</option>
+                  <option value="submissions">Submission hunting</option>
+                  <option value="scrambles">Scrambly / mobile</option>
+                  <option value="defense">Defensive / escape work</option>
+                </select>
+              </label>
+
+              <label>
+                Top / bottom preference
+                <select value={filters.topBottom} onChange={(event) => handleFilterChange('topBottom', event.target.value)}>
+                  <option value="">Any preference</option>
+                  <option value="top">Top</option>
+                  <option value="bottom">Bottom</option>
+                  <option value="standing">Standing</option>
+                </select>
+              </label>
+
+              <label>
+                Body type
+                <select value={filters.bodyType} onChange={(event) => handleFilterChange('bodyType', event.target.value)}>
+                  <option value="">Any body type</option>
+                  <option value="smaller">Smaller / faster</option>
+                  <option value="larger">Larger / pressure</option>
+                  <option value="longer">Longer limbs</option>
+                  <option value="compact">Compact / stocky</option>
+                </select>
+              </label>
+
+              <label>
+                Flexibility
+                <select value={filters.flexibility} onChange={(event) => handleFilterChange('flexibility', event.target.value)}>
+                  <option value="">Any flexibility</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </label>
+
+              <label>
+                Wrestling familiarity
+                <select value={filters.wrestlingFamiliarity} onChange={(event) => handleFilterChange('wrestlingFamiliarity', event.target.value)}>
+                  <option value="">Any familiarity</option>
+                  <option value="new">New to wrestling</option>
+                  <option value="comfortable">Comfortable wrestling</option>
+                </select>
+              </label>
+
+              <label>
+                Leg lock familiarity
+                <select value={filters.legLockFamiliarity} onChange={(event) => handleFilterChange('legLockFamiliarity', event.target.value)}>
+                  <option value="">Any familiarity</option>
+                  <option value="avoid">Avoid for now</option>
+                  <option value="learning">Learning</option>
+                  <option value="comfortable">Comfortable</option>
+                </select>
+              </label>
+
+              <label>
+                Risk tolerance
+                <select value={filters.riskTolerance} onChange={(event) => handleFilterChange('riskTolerance', event.target.value)}>
+                  <option value="">Any risk tolerance</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </label>
+
+              <label>
+                Weak areas
+                <select value={filters.weakArea} onChange={(event) => handleFilterChange('weakArea', event.target.value)}>
+                  <option value="">No weakness filter</option>
+                  <option value="guardPassing">Guard passing</option>
+                  <option value="guardRetention">Guard retention</option>
+                  <option value="escapes">Escapes</option>
+                  <option value="submissions">Submissions</option>
+                  <option value="takedowns">Takedowns</option>
+                  <option value="legLocks">Leg locks</option>
+                  <option value="backTakes">Back takes</option>
+                  <option value="sweeps">Sweeps</option>
+                  <option value="frontHeadlock">Front headlock</option>
+                </select>
+              </label>
+            </div>
+          )}
         </section>
 
-        <section className="page-section">
-          <h3>Partner context</h3>
-          <div className="decision-tree-filter-grid">
+        <section className="page-section compact-form-shell">
+          <div className="compact-form-header">
+            <div>
+              <h3>Partner context</h3>
+              <p className="meta-text">
+                Add opponent or training-partner context when you want the tree to behave more like a coaching assistant.
+              </p>
+            </div>
+            <button className="secondary-button" type="button" onClick={() => setShowPartnerContext((value) => !value)}>
+              {showPartnerContext ? 'Hide partner context' : 'Show partner context'}
+            </button>
+          </div>
+
+          {showPartnerContext && (
+            <div className="decision-tree-filter-grid">
             <label>
               Relative size
               <select value={filters.partnerRelativeSize} onChange={(event) => handleFilterChange('partnerRelativeSize', event.target.value)}>
@@ -574,7 +638,8 @@ export default function DecisionTreePage() {
                 <option value="submissions">Submissions</option>
               </select>
             </label>
-          </div>
+            </div>
+          )}
         </section>
 
         <section className="page-section decision-tree-simulation-panel">
@@ -633,6 +698,9 @@ export default function DecisionTreePage() {
                             {option.entry
                               ? `${option.entry.category}${option.entry.skillLevel ? ` | ${option.entry.skillLevel}` : ''}`
                               : 'Not a full Index node yet'}
+                          </span>
+                          <span className="decision-tree-reason-row">
+                            {option.reasons.join(' | ')}
                           </span>
                         </button>
                       </li>
