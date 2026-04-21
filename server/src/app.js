@@ -17,7 +17,20 @@ const usersRoutes = require('./routes/usersRoutes');
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGIN || process.env.CLIENT_URL || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  }
+}));
 app.use(express.json());
 
 app.get('/api/health', async (req, res) => {
@@ -29,11 +42,18 @@ app.get('/api/health', async (req, res) => {
       database: rows[0].ok === 1 ? 'connected' : 'not connected'
     });
   } catch (error) {
-    console.error('Health check error:', error.message);
+    const dbError = {
+      message: error.message,
+      code: error.code,
+      errno: error.errno,
+      sqlState: error.sqlState
+    };
+
+    console.error('Health check error:', dbError);
 
     res.status(500).json({
       message: 'Server error',
-      error: error.message
+      error: error.message || error.code || 'Database connection failed'
     });
   }
 });

@@ -22,6 +22,7 @@ export default function Layout({ children }) {
                 <Link to="/dashboard">Dashboard</Link>
                 <Link to="/programs">Programs</Link>
                 <Link to="/index">Curriculum Index</Link>
+                <Link to="/decision-tree">Decision Tree</Link>
                 <Link to="/planned-classes">Planned Classes</Link>
                 <Link to="/classes">Classes</Link>
                 <Link to="/training-scenarios">Training Scenarios</Link>

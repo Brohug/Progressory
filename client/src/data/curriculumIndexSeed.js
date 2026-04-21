@@ -6740,21 +6740,6 @@ const curriculumIndexSeed = [
     commonDefenses: ['Straight Ankle Lock Boot Defense', 'Clearing The Knee Line', 'Standing Up']
   },
   {
-    id: 'submissions-heel-hook',
-    category: 'Submissions',
-    subcategory: 'Leg Locks',
-    name: 'Heel Hook',
-    skillLevel: 'Advanced',
-    tags: ['submission', 'leg lock', 'rotation'],
-    description: 'A high-consequence leg submission that depends on controlling the knee line before rotational pressure is applied.',
-    relatedPositions: ['Saddle', '50/50', 'Ashi Garami'],
-    entriesIntoPosition: ['Saddle', '50/50', 'Ashi Garami'],
-    commonAttacks: ['Inside Heel Hook', 'Outside Heel Hook', 'Aoki Lock'],
-    commonTransitions: ['Saddle', '50/50', 'Cross Ashi'],
-    commonFollowUps: ['Finish', 'Secondary Leg Lock', 'Sweep'],
-    commonDefenses: ['Heel Hook Line Escape', 'Clearing The Knee Line', 'Turning The Knee Out']
-  },
-  {
     id: 'submissions-inside-heel-hook',
     category: 'Submissions',
     subcategory: 'Leg Locks',
@@ -7415,14 +7400,74 @@ const curriculumIndexSeed = [
     relatedPositions: ['Ashi Garami', 'Single-Leg X']
   },
   {
-    id: 'leg-locks-heel-hook',
+    id: 'leg-locks-belly-down-ankle-lock',
     category: 'Leg Locks',
     subcategory: null,
-    name: 'Heel Hook',
+    name: 'Belly-Down Ankle Lock',
+    skillLevel: 'Intermediate',
+    tags: ['leg lock', 'submission', 'ankle lock'],
+    description: 'A finishing variation of the straight ankle lock that turns belly-down to add hip extension, pressure, and urgency to the breaking line.',
+    relatedPositions: ['Ashi Garami', 'Outside Ashi', 'Straight Ankle Lock']
+  },
+  {
+    id: 'leg-locks-inside-heel-hook',
+    category: 'Leg Locks',
+    subcategory: null,
+    name: 'Inside Heel Hook',
     skillLevel: 'Advanced',
-    tags: ['leg lock', 'submission', 'rotation'],
-    description: 'A high-consequence leg attack that depends on strong control of the knee line and rotational breaking mechanics.',
-    relatedPositions: ['Saddle', '50/50', 'Cross Ashi']
+    tags: ['leg lock', 'submission', 'heel hook'],
+    description: 'A heel-hook finish where inside rotational exposure transfers pressure through the heel into the knee line.',
+    relatedPositions: ['Saddle', 'Inside Sankaku', 'Cross Ashi']
+  },
+  {
+    id: 'leg-locks-outside-heel-hook',
+    category: 'Leg Locks',
+    subcategory: null,
+    name: 'Outside Heel Hook',
+    skillLevel: 'Advanced',
+    tags: ['leg lock', 'submission', 'heel hook'],
+    description: 'A heel-hook finish where outside rotational exposure punishes a trapped knee line from outside ashi, cross ashi, or related entanglements.',
+    relatedPositions: ['Outside Ashi', 'Cross Ashi', '50/50']
+  },
+  {
+    id: 'leg-locks-lachy-lock',
+    category: 'Leg Locks',
+    subcategory: null,
+    name: 'Lachy Lock',
+    skillLevel: 'Advanced',
+    tags: ['leg lock', 'submission', 'heel hook'],
+    description: 'A named heel-hook variation that uses rotational control, bridging pressure, and knee-line isolation to threaten the knee while the foot can also be compromised.',
+    relatedPositions: ['Inside Sankaku', 'Saddle', 'Cross Ashi']
+  },
+  {
+    id: 'leg-locks-mikey-lock',
+    category: 'Leg Locks',
+    subcategory: null,
+    name: 'Mikey Lock',
+    skillLevel: 'Advanced',
+    tags: ['leg lock', 'submission', 'heel hook'],
+    description: 'A modern heel-hook variation that emphasizes trapping the leg, rotating through the heel line, and bridging pressure into the knee structure.',
+    relatedPositions: ['50/50', 'Outside Ashi', 'Cross Ashi']
+  },
+  {
+    id: 'leg-locks-junny-lock',
+    category: 'Leg Locks',
+    subcategory: null,
+    name: 'Junny Lock',
+    skillLevel: 'Advanced',
+    tags: ['leg lock', 'submission', 'heel hook'],
+    description: 'A heel-hook family variation that attacks exposed heel rotation with strong hip extension and bridge mechanics while the knee line stays controlled.',
+    relatedPositions: ['Saddle', 'Inside Sankaku', 'Backside 50/50']
+  },
+  {
+    id: 'leg-locks-abe-lock',
+    category: 'Leg Locks',
+    subcategory: null,
+    name: 'Abe Lock',
+    skillLevel: 'Advanced',
+    tags: ['leg lock', 'submission', 'heel hook'],
+    description: 'A named rotational heel-hook variation that uses bridging force and heel exposure to direct pressure primarily into the knee, with possible foot-line damage.',
+    relatedPositions: ['Reverse Closed Guard']
   },
   {
     id: 'leg-locks-aoki-lock',
@@ -7463,6 +7508,56 @@ const curriculumIndexSeed = [
     tags: ['leg lock', 'submission', 'ankle'],
     description: 'A lower-body attack that punishes specific rotational reactions and exposed foot lines during transitions.',
     relatedPositions: ['Straight Ankle Lock', 'Ashi Garami']
+  },
+  {
+    id: 'leg-locks-calf-slicer',
+    category: 'Leg Locks',
+    subcategory: null,
+    name: 'Calf Slicer',
+    skillLevel: 'Advanced',
+    tags: ['leg lock', 'submission', 'compression'],
+    description: 'A compression lock that folds the leg over a wedge and attacks the calf line while also threatening the knee structure.',
+    relatedPositions: ['Truck', 'Top Half Guard', 'Backside 50/50']
+  },
+  {
+    id: 'leg-locks-hamstring-slicer',
+    category: 'Leg Locks',
+    subcategory: null,
+    name: 'Hamstring Slicer',
+    skillLevel: 'Advanced',
+    tags: ['leg lock', 'submission', 'compression'],
+    description: 'A higher-line compression attack that folds the leg behind the knee and compresses the hamstring and knee line.',
+    relatedPositions: ['Truck', 'Leg Ride Top', 'Top Half Guard']
+  },
+  {
+    id: 'leg-locks-texas-cloverleaf',
+    category: 'Leg Locks',
+    subcategory: null,
+    name: 'Texas Cloverleaf',
+    skillLevel: 'Advanced',
+    tags: ['leg lock', 'submission', 'compression'],
+    description: 'A figure-four leg entanglement that compresses and twists the lower body through a strong control grip.',
+    relatedPositions: ['Truck', 'Leg Entanglement', 'Top Position']
+  },
+  {
+    id: 'leg-locks-banana-split',
+    category: 'Leg Locks',
+    subcategory: null,
+    name: 'Banana Split',
+    skillLevel: 'Advanced',
+    tags: ['leg lock', 'submission', 'split'],
+    description: 'A split-style submission that separates the legs and attacks the groin and hip line through controlled abduction.',
+    relatedPositions: ['Truck', 'Backside 50/50', 'Leg Ride Top']
+  },
+  {
+    id: 'leg-locks-electric-chair',
+    category: 'Leg Locks',
+    subcategory: null,
+    name: 'Electric Chair',
+    skillLevel: 'Advanced',
+    tags: ['leg lock', 'submission', 'lockdown'],
+    description: 'A lockdown-based submission and sweep family that stretches the groin line while controlling the trapped leg.',
+    relatedPositions: ['Lockdown', 'Half Guard', 'Dogfight']
   },
   {
     id: 'turtle-scrambles-building-base',
@@ -8304,9 +8399,13 @@ const normalizeSeedName = (value) => (
 );
 
 const dedupedCurriculumIndexSeed = curriculumIndexSeed.filter((entry, index, entries) => {
+  const normalizedCategory = normalizeSeedName(entry.category);
   const normalizedName = normalizeSeedName(entry.name);
 
-  return entries.findIndex((candidate) => normalizeSeedName(candidate.name) === normalizedName) === index;
+  return entries.findIndex((candidate) => (
+    normalizeSeedName(candidate.category) === normalizedCategory
+    && normalizeSeedName(candidate.name) === normalizedName
+  )) === index;
 });
 
 export default dedupedCurriculumIndexSeed;

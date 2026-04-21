@@ -15,6 +15,7 @@ const LibraryPage = lazy(() => import('./pages/LibraryPage'));
 const MembersPage = lazy(() => import('./pages/MembersPage'));
 const StaffPage = lazy(() => import('./pages/StaffPage'));
 const CurriculumIndexPage = lazy(() => import('./pages/CurriculumIndexPage'));
+const DecisionTreePage = lazy(() => import('./pages/DecisionTreePage'));
 
 function RouteFallback() {
   return (
@@ -60,6 +61,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <CurriculumIndexPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/decision-tree"
+              element={
+                <ProtectedRoute>
+                  <DecisionTreePage />
                 </ProtectedRoute>
               }
             />
