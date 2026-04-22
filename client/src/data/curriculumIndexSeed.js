@@ -958,11 +958,11 @@ const curriculumIndexSeed = [
     tags: ['position', 'guard', 'bottom'],
     description: 'A core guard position built on connection, posture control, and off-balancing opportunities.',
     relatedPositions: ['Mount', 'Open Guard', 'High Guard'],
-    entriesIntoPosition: ['Guard Pull', 'Guard Retention', 'Half Guard To Closed Guard Transition', 'Collar-Sleeve Standing'],
+    entriesIntoPosition: ['Collar-Sleeve Standing', 'Re-Guarding', 'Half Guard'],
     commonAttacks: ['Hip Bump Sweep', 'Flower Sweep', 'Kimura', 'Triangle Choke', 'Straight Armbar From Guard'],
     commonTransitions: ['Half Guard', 'K-Guard', 'High Guard', 'Clamp Guard', 'Shoulder Crunch', 'Rubber Guard', 'Williams Guard', 'Omoplata'],
-    commonFollowUps: ['Sweep', 'Submission', 'Back Take', 'Angle Creation'],
-    commonDefenses: ['Posture', 'Standing To Open', 'Grip Breaking From Guard']
+    commonFollowUps: ['Hip Bump Sweep', 'Flower Sweep', 'Closed Guard Arm Drag To Back', 'Angle Creation'],
+    commonDefenses: ['Posture', 'Closed Guard Posture Control', 'Grip Breaking From Guard']
   },
   {
     id: 'positions-standing',
@@ -973,11 +973,11 @@ const curriculumIndexSeed = [
     tags: ['position', 'standing', 'base'],
     description: 'The broad standing engagement space where stance, posture, head position, and grips decide what opens next.',
     relatedPositions: ['Clinch', 'Front Headlock Standing', 'Collar-Sleeve Standing'],
-    entriesIntoPosition: ['Reset To Neutral', 'Technical Stand-Up', 'Break Contact'],
-    commonAttacks: ['Guard Pull', 'Single Leg', 'Collar-Sleeve Standing'],
+    entriesIntoPosition: ['Technical Stand-Up', 'Grip Fighting', 'Standing'],
+    commonAttacks: ['Double Leg', 'Single Leg', 'Collar-Sleeve Standing'],
     commonTransitions: ['Clinch', 'Collar-Sleeve Standing', 'Front Headlock Standing'],
-    commonFollowUps: ['Takedown', 'Guard Pull', 'Grip Exchange'],
-    commonDefenses: ['Circling Out', 'Stance Recovery', 'Hand Fighting']
+    commonFollowUps: ['Double Leg', 'Single Leg', 'Grip Fighting'],
+    commonDefenses: ['Head Position', 'Technical Stand-Up', 'Hand Fighting']
   },
   {
     id: 'positions-wrestling-stance',
@@ -1050,9 +1050,9 @@ const curriculumIndexSeed = [
     relatedPositions: ['Clinch', 'Over-Under Clinch', 'Back Control'],
     entriesIntoPosition: ['Clinch', 'Over-Under Clinch', 'Duck Under'],
     commonAttacks: ['Body Lock Takedown', 'Mat Return', 'Outside Trip'],
-    commonTransitions: ['Back Control', 'Top Position', 'Standing Return', 'Mat Return'],
-    commonFollowUps: ['Takedown', 'Mat Return', 'Back Take', 'Top Control'],
-    commonDefenses: ['Whizzer', 'Hip Hinge', 'Pummeling For Inside Position']
+    commonTransitions: ['Back Control', 'Mat Return', 'Single Leg Position'],
+    commonFollowUps: ['Body Lock Takedown', 'Mat Return', 'Body Lock To Back'],
+    commonDefenses: ['Overhook', 'Hip Heist', 'Pummeling']
   },
   {
     id: 'positions-front-headlock-standing',
@@ -1066,8 +1066,8 @@ const curriculumIndexSeed = [
     entriesIntoPosition: ['Snap Down', 'Front Headlock Standing', 'Sprawl'],
     commonAttacks: ['Snap Down To Front Headlock', 'Go-Behind', 'Guillotine'],
     commonTransitions: ['Front Headlock', 'Turtle', 'Back Control'],
-    commonFollowUps: ['Back Take', 'Submission', 'Top Control'],
-    commonDefenses: ['Hand Fighting', 'Posture Recovery', 'Peek Out']
+    commonFollowUps: ['Front Headlock Go-Behind', 'Guillotine', 'Front Headlock Spin To Back'],
+    commonDefenses: ['Hand Fighting', 'Posture', 'Peek Out']
   },
   {
     id: 'positions-russian-tie-standing',
@@ -1093,11 +1093,11 @@ const curriculumIndexSeed = [
     tags: ['position', 'standing', 'close range'],
     description: 'A close-range standing exchange where posture, head position, and inside control start deciding the outcome.',
     relatedPositions: ['Standing', 'Over-Under Clinch', 'Body Lock Standing'],
-    entriesIntoPosition: ['Standing', 'Pummeling', 'Snap Down Recovery'],
+    entriesIntoPosition: ['Standing', 'Pummeling', 'Snap Down'],
     commonAttacks: ['Body Lock Takedown', 'Inside Trip', 'Front Headlock Standing'],
     commonTransitions: ['Over-Under Clinch', 'Body Lock Standing', 'Front Headlock Standing'],
-    commonFollowUps: ['Takedown', 'Mat Return', 'Top Position'],
-    commonDefenses: ['Pummeling Inside', 'Head Position Win', 'Circling Off']
+    commonFollowUps: ['Body Lock Takedown', 'Mat Return', 'Single Leg'],
+    commonDefenses: ['Pummeling', 'Head Position', 'Inside Tie']
   },
   {
     id: 'positions-over-under-clinch',
@@ -1156,8 +1156,8 @@ const curriculumIndexSeed = [
     entriesIntoPosition: ['Shin-To-Shin', 'Waiter Guard', 'X-Guard'],
     commonAttacks: ['Straight Ankle Lock', 'Aoki Lock', 'Single-Leg X Stand-Up Sweep'],
     commonTransitions: ['Ashi Garami', 'X-Guard', 'Waiter Guard'],
-    commonFollowUps: ['Sweep', 'Wrestle-Up', 'Straight Ankle Lock'],
-    commonDefenses: ['Clearing The Foot Line', 'Turning The Knee Out', 'Hand Posting']
+    commonFollowUps: ['Single-Leg X Stand-Up Sweep', 'Wrestle-Up Single Leg Sweep', 'Straight Ankle Lock'],
+    commonDefenses: ['Straight Ankle Lock Boot Defense', 'Heel Hook Line Escape', 'Posting']
   },
   {
     id: 'positions-knee-shield-half-guard',
@@ -1168,11 +1168,11 @@ const curriculumIndexSeed = [
     tags: ['position', 'guard', 'frames'],
     description: 'A framing half guard variation that protects posture and builds safer underhook and upper-body entries.',
     relatedPositions: ['Half Guard', 'Z-Guard', 'Butterfly Half'],
-    entriesIntoPosition: ['Half Guard', 'Re-Guarding', 'Guard Retention'],
-    commonAttacks: ['Kimura', 'Underhook To Back', 'Knee Lever Sweep'],
+    entriesIntoPosition: ['Half Guard', 'Re-Guarding', 'Half Guard Recovery'],
+    commonAttacks: ['Kimura', 'Underhook Half Guard To Dogfight To Back', 'Knee Lever Sweep'],
     commonTransitions: ['Half Guard', 'Dogfight', 'Butterfly Half', 'Underhook Half Guard'],
-    commonFollowUps: ['Sweep', 'Back Take', 'Wrestle-Up', 'Upper-Body Control'],
-    commonDefenses: ['Crossface', 'Smash Pass', 'Flattening']
+    commonFollowUps: ['Knee Lever Sweep', 'Underhook Half Guard To Dogfight To Back', 'Wrestle-Up Single Leg Sweep', 'Shoulder Crunch'],
+    commonDefenses: ['Crossface and Underhook Control', 'Smash Pass', 'Knee Cut']
   },
   {
     id: 'positions-butterfly-half',
@@ -1228,11 +1228,11 @@ const curriculumIndexSeed = [
     tags: ['position', 'defense', 'scramble'],
     description: 'A compact defensive position that can lead to recovery, stand-ups, front headlocks, or back exposure.',
     relatedPositions: ['Front Headlock', 'Back Control', 'Standing'],
-    entriesIntoPosition: ['Guard Recovery Failure', 'Stand-Up Defense', 'Scramble'],
+    entriesIntoPosition: ['Re-Guarding During Scrambles', 'Stand-Up From Turtle', 'Granby Roll'],
     commonAttacks: ['Stand-Up From Turtle', 'Granby Roll', 'Sit-Out'],
     commonTransitions: ['Standing', 'Front Headlock', 'Back Control'],
-    commonFollowUps: ['Escape', 'Wrestle-Up', 'Re-Guard'],
-    commonDefenses: ['Spiral Ride', 'Seatbelt', 'Front Headlock Control']
+    commonFollowUps: ['Stand-Up From Turtle', 'Recover Seated Guard', 'Re-Guarding'],
+    commonDefenses: ['Spiral Ride', 'Seatbelt', 'Front Headlock']
   },
   {
     id: 'positions-x-guard',
@@ -1246,8 +1246,8 @@ const curriculumIndexSeed = [
     entriesIntoPosition: ['Butterfly Guard', 'Shin-To-Shin', 'Single-Leg X'],
     commonAttacks: ['X-Guard Overhead Sweep', 'X-Guard To Ankle Pick', 'X-Guard Back Take'],
     commonTransitions: ['Single-Leg X', 'Waiter Guard', 'Leg Drag', 'Ashi Garami'],
-    commonFollowUps: ['Sweep', 'Back Take', 'Wrestle-Up', 'Leg Entanglement Entry'],
-    commonDefenses: ['Posting', 'Backstep', 'Knee Turning']
+    commonFollowUps: ['X-Guard Overhead Sweep', 'X-Guard Back Take', 'Wrestle-Up Single Leg Sweep', 'Ashi Garami'],
+    commonDefenses: ['Posting', 'Backstep Pass', 'Knee Cut']
   },
   {
     id: 'positions-seated-guard',
@@ -1409,10 +1409,10 @@ const curriculumIndexSeed = [
     description: 'A lower-body control position that stabilizes the leg line and opens direct entries into sweeps or submissions.',
     relatedPositions: ['Single-Leg X', 'Straight Ankle Lock', 'Outside Ashi'],
     entriesIntoPosition: ['Single-Leg X', 'X-Guard', 'Shin-To-Shin'],
-    commonAttacks: ['Straight Ankle Lock', 'Aoki Lock', 'Heel Hook'],
+    commonAttacks: ['Straight Ankle Lock', 'Aoki Lock', 'Outside Heel Hook'],
     commonTransitions: ['Outside Ashi', 'Cross Ashi', 'Saddle', '50/50'],
-    commonFollowUps: ['Leg Lock', 'Sweep', 'Wrestle-Up', 'Secondary Leg Lock'],
-    commonDefenses: ['Clearing The Knee Line', 'Turning The Knee Out', 'Hand Fighting']
+    commonFollowUps: ['Straight Ankle Lock', 'Single-Leg X Stand-Up Sweep', 'Wrestle-Up Single Leg Sweep'],
+    commonDefenses: ['Heel Hook Line Escape', 'Kneebar Turn Defense', 'Hand Fighting']
   },
   {
     id: 'positions-outside-ashi',
@@ -1483,10 +1483,10 @@ const curriculumIndexSeed = [
     tags: ['position', 'guard', 'distance'],
     description: 'A broad family of guards that relies on distance control, hooks, frames, and angle creation.',
     relatedPositions: ['Closed Guard', 'Seated Guard', 'Butterfly Guard', 'De La Riva'],
-    entriesIntoPosition: ['Closed Guard Opening', 'Guard Retention', 'Re-Guarding', 'Standing Guard Pull'],
-    commonAttacks: ['Tripod Sweep', 'Collar Drag Sweep', 'Triangle Entries', 'Arm Drag To Back'],
+    entriesIntoPosition: ['Closed Guard', 'Re-Guarding', 'Technical Stand-Up'],
+    commonAttacks: ['Tripod Sweep', 'Collar Drag Sweep', 'Triangle Choke', 'Arm Drag To Back'],
     commonTransitions: ['Seated Guard', 'De La Riva', 'Butterfly Guard', 'K-Guard'],
-    commonFollowUps: ['Sweep', 'Back Take', 'Leg Entanglement Entry', 'Wrestle-Up'],
+    commonFollowUps: ['Technical Stand-Up Sweep', 'Arm Drag To Back', 'Ashi Garami', 'Wrestle-Up Single Leg Sweep'],
     commonDefenses: ['Torreando Pass', 'Body Lock Pass', 'Leg Drag']
   },
   {
@@ -1499,10 +1499,10 @@ const curriculumIndexSeed = [
     description: 'A sleeve-control guard that uses the feet on the arms to manage posture, distance, and off-balancing.',
     relatedPositions: ['Open Guard', 'Lasso Guard', 'Collar-Sleeve Guard', 'Triangle Choke'],
     entriesIntoPosition: ['Open Guard', 'Collar-Sleeve Guard', 'Lasso Guard'],
-    commonAttacks: ['Balloon Sweep', 'Triangle Entries', 'Omoplata Entries'],
+    commonAttacks: ['Balloon Sweep', 'Triangle Choke', 'Omoplata'],
     commonTransitions: ['Lasso Guard', 'Collar-Sleeve Guard', 'Triangle Choke', 'Omoplata'],
-    commonFollowUps: ['Sweep', 'Submission', 'Angle Creation', 'Off-Balance'],
-    commonDefenses: ['Torreando Pass', 'Grip Breaking', 'Leg Throw-By']
+    commonFollowUps: ['Balloon Sweep', 'Triangle Choke', 'Angle Creation', 'Kuzushi'],
+    commonDefenses: ['Torreando Pass', 'Grip Breaking From Guard', 'Leg Drag']
   },
   {
     id: 'positions-lasso-guard',
@@ -1543,11 +1543,11 @@ const curriculumIndexSeed = [
     tags: ['position', 'guard', 'connection'],
     description: 'A highly strategic guard where underhooks, frames, and leg positioning decide whether you are safe or flattened.',
     relatedPositions: ['Knee Shield Half Guard', 'Deep Half Guard', 'Top Half Guard', 'Underhook Half Guard'],
-    entriesIntoPosition: ['Guard Retention', 'Re-Guarding', 'Closed Guard To Half Guard'],
+    entriesIntoPosition: ['Re-Guarding', 'Closed Guard', 'Knee Shield Half Guard'],
     commonAttacks: ['Underhook To Come-Up Sweep', 'Dogfight Sweep', 'Kimura', 'Deep Half Waiter Sweep'],
     commonTransitions: ['Knee Shield Half Guard', 'Deep Half Guard', 'Dogfight', 'Closed Guard', 'Butterfly Half', 'Underhook Half Guard'],
-    commonFollowUps: ['Sweep', 'Back Take', 'Wrestle-Up', 'Top Position'],
-    commonDefenses: ['Crossface', 'Flattening', 'Knee Cut']
+    commonFollowUps: ['Dogfight Sweep', 'Underhook To Come-Up Sweep', 'Wrestle-Up Single Leg Sweep'],
+    commonDefenses: ['Crossface and Underhook Control', 'Smash Pass', 'Knee Cut']
   },
   {
     id: 'positions-butterfly-guard',
@@ -1558,11 +1558,11 @@ const curriculumIndexSeed = [
     tags: ['position', 'guard', 'elevation'],
     description: 'A seated open guard built around inside hooks, angle changes, and powerful elevation-based sweeps.',
     relatedPositions: ['Seated Guard', 'X-Guard', 'Shin-To-Shin', 'Shoulder Crunch'],
-    entriesIntoPosition: ['Seated Guard', 'Guard Retention', 'Half Guard Recovery'],
+    entriesIntoPosition: ['Seated Guard', 'Re-Guarding', 'Half Guard Recovery'],
     commonAttacks: ['Elevator Sweep', 'Arm Drag Butterfly Sweep', 'Shoulder Crunch Butterfly Sweep'],
     commonTransitions: ['X-Guard', 'Single-Leg X', 'Arm Drag To Back', 'Shoulder Crunch'],
-    commonFollowUps: ['Sweep', 'Back Take', 'Leg Entanglement Entry', 'Wrestle-Up'],
-    commonDefenses: ['Posting', 'Head Pressure', 'Flattening']
+    commonFollowUps: ['Elevator Sweep', 'Arm Drag To Back', 'Ashi Garami', 'Wrestle-Up Single Leg Sweep'],
+    commonDefenses: ['Posting', 'Crossface and Underhook Control', 'Smash Pass']
   },
   {
     id: 'positions-shin-to-shin',
@@ -1619,10 +1619,10 @@ const curriculumIndexSeed = [
     description: 'A side-underhook guard that creates wrestle-up angles, reversals, and back exposure from half guard situations.',
     relatedPositions: ['Half Guard', 'Coyote Guard', 'Dogfight'],
     entriesIntoPosition: ['Half Guard', 'Underhook Half Guard'],
-    commonAttacks: ['Wrestle-Up', 'Back Take', 'Sweep'],
-    commonTransitions: ['Dogfight', 'Back Take', 'Top Position', 'Standing'],
-    commonFollowUps: ['Sweep', 'Back Take', 'Top Control', 'Wrestle-Up'],
-    commonDefenses: ['Crossface', 'Whizzer Pressure', 'Flattening']
+    commonAttacks: ['Wrestle-Up Single Leg Sweep', 'Octopus Guard Back Take', 'Dogfight Sweep'],
+    commonTransitions: ['Dogfight', 'Octopus Guard Back Take', 'Single Leg', 'Standing'],
+    commonFollowUps: ['Dogfight Sweep', 'Octopus Guard Back Take', 'Single Leg', 'Wrestle-Up Single Leg Sweep'],
+    commonDefenses: ['Crossface and Underhook Control', 'Overhook', 'Smash Pass']
   },
   {
     id: 'positions-coyote-guard',
@@ -1634,10 +1634,10 @@ const curriculumIndexSeed = [
     description: 'An underhook half guard structure that turns dogfight-style connections into wrestle-ups, sweeps, and back exposure.',
     relatedPositions: ['Half Guard', 'Dogfight', 'Octopus Guard', 'Underhook Half Guard'],
     entriesIntoPosition: ['Half Guard', 'Underhook Half Guard'],
-    commonAttacks: ['Dogfight Sweep', 'Back Take', 'Wrestle-Up'],
-    commonTransitions: ['Dogfight', 'Top Position', 'Back Take', 'Standing'],
-    commonFollowUps: ['Sweep', 'Back Take', 'Top Control', 'Single Leg Finish'],
-    commonDefenses: ['Whizzer Pressure', 'Crossface', 'Flattening']
+    commonAttacks: ['Dogfight Sweep', 'Wrestle-Up To Back', 'Wrestle-Up Single Leg Sweep'],
+    commonTransitions: ['Dogfight', 'Dogfight Sweep', 'Wrestle-Up To Back', 'Standing'],
+    commonFollowUps: ['Dogfight Sweep', 'Wrestle-Up To Back', 'Single Leg', 'Wrestle-Up Single Leg Sweep'],
+    commonDefenses: ['Overhook', 'Crossface and Underhook Control', 'Smash Pass']
   },
   {
     id: 'positions-k-guard',
@@ -1664,10 +1664,10 @@ const curriculumIndexSeed = [
     description: 'A mirrored leg-entanglement position that creates sweeps, heel hooks, ankle locks, and complex hand fighting.',
     relatedPositions: ['Ashi Garami', 'Saddle', 'K-Guard', 'Backside 50/50'],
     entriesIntoPosition: ['K-Guard', 'Ashi Garami', 'Open Guard'],
-    commonAttacks: ['Heel Hook', 'Toe Hold', 'Straight Ankle Lock'],
-    commonTransitions: ['Saddle', 'Backside 50/50', 'Top Position', 'Cross Ashi'],
-    commonFollowUps: ['Finish', 'Sweep', 'Top Control', 'Secondary Leg Lock'],
-    commonDefenses: ['Hand Fighting', 'Heel Hiding', 'Standing Up']
+    commonAttacks: ['Inside Heel Hook', 'Toe Hold', 'Straight Ankle Lock'],
+    commonTransitions: ['Saddle', 'Backside 50/50', 'Basic 50/50 Sweep', 'Cross Ashi'],
+    commonFollowUps: ['Inside Heel Hook', 'Basic 50/50 Sweep', 'Straight Ankle Lock'],
+    commonDefenses: ['Hand Fighting', 'Heel Hook Line Escape', 'Technical Stand-Up']
   },
   {
     id: 'positions-backside-50-50',
@@ -1692,12 +1692,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['position', 'leg entanglement', 'control'],
     description: 'A strong inside leg-entanglement position that controls the knee line and opens powerful finishing options.',
-    relatedPositions: ['50/50', 'Ashi Garami', 'Heel Hook', 'Backside 50/50'],
-    entriesIntoPosition: ['Ashi Garami', 'K-Guard', 'Backside Entry'],
-    commonAttacks: ['Heel Hook', 'Kneebar'],
-    commonTransitions: ['Cross Ashi', 'Backside 50/50', 'Top Position', '50/50'],
-    commonFollowUps: ['Finish', 'Top Position', 'Secondary Leg Lock', 'Back Take'],
-    commonDefenses: ['Clearing The Knee Line', 'Turning The Knee Out', 'Hand Fighting']
+    relatedPositions: ['50/50', 'Ashi Garami', 'Inside Heel Hook', 'Backside 50/50'],
+    entriesIntoPosition: ['Ashi Garami', 'K-Guard', 'Backside 50/50'],
+    commonAttacks: ['Inside Heel Hook', 'Kneebar'],
+    commonTransitions: ['Cross Ashi', 'Backside 50/50', '50/50'],
+    commonFollowUps: ['Inside Heel Hook', 'Kneebar', 'Backside 50/50'],
+    commonDefenses: ['Heel Hook Line Escape', 'Kneebar Turn Defense', 'Hand Fighting']
   },
   {
     id: 'positions-side-control',
@@ -1708,10 +1708,10 @@ const curriculumIndexSeed = [
     tags: ['position', 'pinning', 'top'],
     description: 'A major pinning position where shoulder pressure, hip control, and transitions create strong offense.',
     relatedPositions: ['Mount', 'North-South', 'Knee On Belly'],
-    entriesIntoPosition: ['Guard Pass', 'Takedown To Top', 'Scramble Finish'],
+    entriesIntoPosition: ['Knee Cut', 'Body Lock Pass', 'Double Leg'],
     commonAttacks: ['Kimura', 'Americana', 'Paper Cutter Choke', 'Arm Triangle'],
     commonTransitions: ['Mount', 'North-South', 'Knee On Belly'],
-    commonFollowUps: ['Submission', 'Mount', 'Back Take'],
+    commonFollowUps: ['Mount', 'Side Control To Back', 'Kimura Trap'],
     commonDefenses: ['Underhook Escape', 'Reguard With Knee Inside', 'Elbow Frame Recovery']
   },
   {
@@ -1724,10 +1724,10 @@ const curriculumIndexSeed = [
     description: 'A chest-to-chest half guard battle built around underhooks, knee position, and who wins the rise to the hips first.',
     relatedPositions: ['Half Guard', 'Coyote Guard', 'Standing', 'Octopus Guard'],
     entriesIntoPosition: ['Half Guard', 'Coyote Guard', 'Butterfly Half'],
-    commonAttacks: ['Dogfight Sweep', 'Back Take', 'Single Leg'],
-    commonTransitions: ['Top Position', 'Back Take', 'Standing', 'Body Lock Standing'],
-    commonFollowUps: ['Sweep', 'Wrestle-Up', 'Back Take', 'Takedown Finish'],
-    commonDefenses: ['Whizzer', 'Crossface', 'Hip Pressure']
+    commonAttacks: ['Dogfight Sweep', 'Wrestle-Up To Back', 'Single Leg'],
+    commonTransitions: ['Dogfight Sweep', 'Wrestle-Up To Back', 'Standing', 'Body Lock Standing'],
+    commonFollowUps: ['Dogfight Sweep', 'Wrestle-Up Single Leg Sweep', 'Wrestle-Up To Back', 'Single Leg'],
+    commonDefenses: ['Overhook', 'Crossface and Underhook Control', 'Smash Pass']
   },
   {
     id: 'positions-mount',
@@ -1738,10 +1738,10 @@ const curriculumIndexSeed = [
     tags: ['position', 'pinning', 'top'],
     description: 'A dominant top position that rewards posture control, balance, and disciplined progression to attacks.',
     relatedPositions: ['Technical Mount', 'S-Mount', 'Back Control'],
-    entriesIntoPosition: ['Guard Pass', 'Sweep To Top', 'Back Escape To Top'],
+    entriesIntoPosition: ['Mount Off Knee Cut', 'Weave To Mount', 'Bridge-And-Roll Reversal'],
     commonAttacks: ['Straight Armbar From Mount', 'Mounted Triangle', 'Arm Triangle', 'Punch Choke'],
     commonTransitions: ['Technical Mount', 'S-Mount', 'Back Control'],
-    commonFollowUps: ['Submission', 'Back Take', 'Gift Wrap Control'],
+    commonFollowUps: ['Gift Wrap', 'Technical Mount To Back', 'Straight Armbar From Mount'],
     commonDefenses: ['Elbow-Knee Escape', 'Trap And Roll', 'Kipping Escape']
   },
   {
@@ -1813,11 +1813,11 @@ const curriculumIndexSeed = [
     tags: ['position', 'control', 'submission'],
     description: 'A dominant control position built around connection, hand fighting, and clean choking alignment.',
     relatedPositions: ['Technical Mount', 'Turtle'],
-    entriesIntoPosition: ['Back Take', 'Chair Sit Back Take', 'Technical Mount To Back'],
-    commonAttacks: ['Rear Naked Choke', 'Short Choke', 'Armbar From Back', 'Triangle From Back'],
-    commonTransitions: ['Technical Mount', 'Seatbelt Control', 'Body Triangle'],
-    commonFollowUps: ['Choke', 'Armbar', 'Back Take Retention'],
-    commonDefenses: ['Two-On-One Grip Fight', 'Hide The Choking Side', 'Shoulder Slide Escape']
+    entriesIntoPosition: ['Chair Sit Back Take', 'Technical Mount To Back', 'Seatbelt From Turtle To Hooks'],
+    commonAttacks: ['Rear Naked Choke', 'Short Choke', 'Bow And Arrow Choke', 'Rear Triangle'],
+    commonTransitions: ['Technical Mount', 'Seatbelt', 'Body Triangle'],
+    commonFollowUps: ['Rear Naked Choke', 'Short Choke', 'Body Triangle Rib Compression'],
+    commonDefenses: ['Two-On-One Grip Fight', 'Hook Stripping Escape', 'Shoulder Slide Escape']
   },
   {
     id: 'positions-front-headlock',
@@ -2128,11 +2128,11 @@ const curriculumIndexSeed = [
     tags: ['position', 'defense', 'bottom'],
     description: 'A defensive bad position where framing, hip movement, and underhook timing decide whether guard can be recovered.',
     relatedPositions: ['Side Control', 'Turtle', 'Running Man'],
-    entriesIntoPosition: ['Guard Pass', 'Scramble Loss', 'North-South Transition'],
-    commonAttacks: ['Frame-And-Shrimp To Guard Recovery', 'Underhook To Knees', 'Ghost Escape'],
-    commonTransitions: ['Turtle', 'Guard Recovery', 'Running Man'],
-    commonFollowUps: ['Escape', 'Re-Guard', 'Come Up To Knees'],
-    commonDefenses: ['Crossface', 'Underhook Control', 'Hip Pinning']
+    entriesIntoPosition: ['Knee Cut', 'Leg Drag', 'North-South'],
+    commonAttacks: ['Frame And Shrimp', 'Underhook Escape', 'Ghost Escape'],
+    commonTransitions: ['Turtle', 'Re-Guarding', 'Running Man'],
+    commonFollowUps: ['Frame And Shrimp', 'Re-Guarding', 'Turn-To-Knees Escape'],
+    commonDefenses: ['Crossface and Underhook Control', 'Underhook', 'Side Control Survival']
   },
   {
     id: 'positions-bottom-mount',
@@ -2143,11 +2143,11 @@ const curriculumIndexSeed = [
     tags: ['position', 'defense', 'bottom'],
     description: 'A dangerous defensive position where survival depends on frames, bridge timing, and recovering half or full guard quickly.',
     relatedPositions: ['Mount', 'Bottom Knee-On-Belly', 'Half Guard'],
-    entriesIntoPosition: ['Passed To Mount', 'Scramble Loss', 'Knee Slide To Mount'],
-    commonAttacks: ['Trap-And-Roll Escape', 'Elbow-Knee Escape', 'Kipping Escape'],
-    commonTransitions: ['Half Guard', 'Closed Guard', 'Top Position'],
-    commonFollowUps: ['Escape', 'Re-Guard', 'Reverse'],
-    commonDefenses: ['Crossface', 'High Mount Pressure', 'Gift Wrap Control']
+    entriesIntoPosition: ['Mount Off Knee Cut', 'Weave To Mount', 'High Mount'],
+    commonAttacks: ['Trap And Roll', 'Elbow-Knee Escape', 'Kipping Escape'],
+    commonTransitions: ['Half Guard', 'Closed Guard', 'Bridge-And-Roll Reversal'],
+    commonFollowUps: ['Elbow-Knee Escape', 'Re-Guarding', 'Bridge-And-Roll Reversal'],
+    commonDefenses: ['Crossface and Underhook Control', 'High Mount', 'Gift Wrap']
   },
   {
     id: 'positions-seated-front-headlock',
@@ -2188,11 +2188,11 @@ const curriculumIndexSeed = [
     tags: ['position', 'defense', 'bottom'],
     description: 'A difficult bottom defensive position where shoulder mobility, hip movement, and turning angles decide whether guard can be recovered.',
     relatedPositions: ['North-South', 'Bottom Side Control', 'Turtle'],
-    entriesIntoPosition: ['North-South Transition', 'Side Control Spin', 'Passing Pressure'],
-    commonAttacks: ['Hip Escape To Guard Recovery', 'Turn-To-Knees Escape', 'Shoulder Walk Escape'],
+    entriesIntoPosition: ['North-South', 'Side Control', 'Pressure Passing'],
+    commonAttacks: ['Hip Escape Retention', 'Turn-To-Knees Escape', 'Shoulder Walk Escape'],
     commonTransitions: ['Bottom Side Control', 'Turtle', 'Supine Guard'],
-    commonFollowUps: ['Escape', 'Re-Guard', 'Come Up To Knees'],
-    commonDefenses: ['North-South Choke Threat', 'Hip Blocking', 'Shoulder Pinning']
+    commonFollowUps: ['North-South Escape To Turtle', 'Re-Guarding', 'Turn-To-Knees Escape'],
+    commonDefenses: ['North-South Choke Escape', 'Hip Escape Retention', 'Shoulder Walk Escape']
   },
   {
     id: 'positions-bottom-knee-on-belly',
@@ -2203,11 +2203,11 @@ const curriculumIndexSeed = [
     tags: ['position', 'defense', 'bottom'],
     description: 'A transitional bad position where timing, knee frames, and hip movement can quickly turn pressure into guard recovery or reversals.',
     relatedPositions: ['Knee On Belly', 'Bottom Side Control', 'Bottom Mount'],
-    entriesIntoPosition: ['Knee On Belly Pass', 'Side Control Transition', 'Scramble Loss'],
-    commonAttacks: ['Shrimp To Recover Guard', 'Knee Push Escape', 'Underhook To Single Leg'],
-    commonTransitions: ['Bottom Side Control', 'Half Guard', 'Top Position'],
-    commonFollowUps: ['Escape', 'Re-Guard', 'Single Leg Finish'],
-    commonDefenses: ['Crossface Control', 'Far-Side Posting', 'Hip Pressure']
+    entriesIntoPosition: ['Knee On Belly', 'Side Control', 'Scramble Recognition'],
+    commonAttacks: ['Hip Escape Retention', 'Knee Push Escape', 'Single Leg'],
+    commonTransitions: ['Bottom Side Control', 'Half Guard', 'Single Leg'],
+    commonFollowUps: ['Knee Push Escape', 'Re-Guarding', 'Single Leg'],
+    commonDefenses: ['Crossface and Underhook Control', 'Posting', 'Hip Heist']
   },
   {
     id: 'positions-referees-position-style-turtle',

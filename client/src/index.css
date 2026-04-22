@@ -1611,6 +1611,36 @@ ul {
   font-size: 12px;
 }
 
+.decision-tree-fit-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.decision-tree-fit-chip {
+  display: inline-flex;
+  padding: 3px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.decision-tree-fit-chip.is-match {
+  border-color: rgba(34, 197, 94, 0.44);
+  background: rgba(22, 101, 52, 0.22);
+  color: #bbf7d0;
+}
+
+.decision-tree-fit-chip.is-caution {
+  border-color: rgba(250, 204, 21, 0.44);
+  background: rgba(113, 63, 18, 0.24);
+  color: #fde68a;
+}
+
 .decision-tree-filter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -1621,6 +1651,89 @@ ul {
 .decision-tree-filter-grid label {
   display: grid;
   gap: 8px;
+}
+
+.decision-tree-scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.decision-tree-scenario-groups {
+  display: grid;
+  gap: 20px;
+}
+
+.decision-tree-scenario-group {
+  display: grid;
+  gap: 10px;
+}
+
+.decision-tree-scenario-group h4 {
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.72);
+  color: #e0f2fe;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+
+.decision-tree-scenario-card {
+  display: grid;
+  gap: 8px;
+  min-height: 116px;
+  padding: 14px;
+  text-align: left;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(8, 47, 73, 0.72), rgba(15, 23, 42, 0.82)),
+    rgba(15, 23, 42, 0.78);
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.decision-tree-scenario-card:hover,
+.decision-tree-scenario-card:focus-visible {
+  border-color: var(--accent);
+  background:
+    linear-gradient(135deg, rgba(14, 116, 144, 0.7), rgba(15, 23, 42, 0.88)),
+    rgba(15, 23, 42, 0.84);
+}
+
+.decision-tree-scenario-card strong {
+  color: #f8fafc;
+  font-size: 15px;
+}
+
+.decision-tree-scenario-card span {
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.decision-tree-scenario-card .decision-tree-follow-up-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.decision-tree-follow-up-chip {
+  padding: 4px 8px;
+  border: 1px solid rgba(56, 189, 248, 0.32);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #e0f2fe;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.decision-tree-follow-up-chip:hover,
+.decision-tree-follow-up-chip:focus-visible {
+  border-color: var(--accent);
+  background: rgba(14, 116, 144, 0.72);
+  color: #f8fafc;
 }
 
 .decision-tree-simulation-panel {

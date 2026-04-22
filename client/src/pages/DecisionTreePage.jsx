@@ -12,6 +12,302 @@ const relationshipGroups = [
   { key: 'relatedPositions', label: 'Related positions' }
 ];
 
+const coachingScenarios = [
+  {
+    label: 'I need to pass guard',
+    category: 'Passing and top control',
+    focusName: 'Headquarters',
+    description: 'Start from a common passing hub and bias toward top pressure options.',
+    filters: {
+      preferredStyle: 'pressure',
+      topBottom: 'top',
+      weakArea: 'guardPassing'
+    }
+  },
+  {
+    label: 'I am stuck under pressure',
+    category: 'Escapes and defense',
+    focusName: 'Side Control',
+    description: 'Prioritize defensive reactions, frames, and escape pathways.',
+    filters: {
+      preferredStyle: 'defense',
+      topBottom: 'bottom',
+      weakArea: 'escapes',
+      partnerStyle: 'pressure'
+    }
+  },
+  {
+    label: 'Build a back-take path',
+    category: 'Back takes and control',
+    focusName: 'Back Control',
+    description: 'Surface entries, transitions, and follow-ups that lead toward the back.',
+    filters: {
+      preferredStyle: 'backTakes',
+      weakArea: 'backTakes',
+      riskTolerance: 'medium'
+    }
+  },
+  {
+    label: 'Opponent is leg locking',
+    category: 'Leg locks',
+    focusName: 'Ashi Garami',
+    description: 'Use leg-lock familiarity and weakness filters to shrink the options.',
+    filters: {
+      preferredStyle: 'legLocks',
+      legLockFamiliarity: 'learning',
+      weakArea: 'legLocks',
+      partnerStyle: 'legLocks'
+    }
+  },
+  {
+    label: 'Improve standing exchanges',
+    category: 'Standing and takedowns',
+    focusName: 'Front Headlock',
+    description: 'Bias toward wrestling, front-headlock, and takedown-related branches.',
+    filters: {
+      preferredStyle: 'wrestling',
+      topBottom: 'standing',
+      weakArea: 'takedowns',
+      wrestlingFamiliarity: 'comfortable'
+    }
+  },
+  {
+    label: 'Beginner-safe path',
+    category: 'Beginner paths',
+    focusName: 'Closed Guard',
+    description: 'Keep the tree closer to beginner-friendly guard, posture, and control ideas.',
+    filters: {
+      experience: 'Beginner',
+      riskTolerance: 'low',
+      legLockFamiliarity: 'avoid'
+    }
+  },
+  {
+    label: 'I can’t keep mount',
+    category: 'Passing and top control',
+    focusName: 'Mount',
+    description: 'Work on control, weight distribution, and reactions that help mount stay stable.',
+    filters: {
+      preferredStyle: 'pressure',
+      topBottom: 'top',
+      riskTolerance: 'low'
+    }
+  },
+  {
+    label: 'Opponent turtles a lot',
+    category: 'Back takes and control',
+    focusName: 'Turtle',
+    description: 'Look for back exposure, front-headlock options, and ride-style follow-ups.',
+    filters: {
+      preferredStyle: 'backTakes',
+      topBottom: 'top',
+      weakArea: 'backTakes',
+      partnerStyle: 'scrambles'
+    }
+  },
+  {
+    label: 'I play half guard',
+    category: 'Guard and sweeps',
+    focusName: 'Half Guard',
+    description: 'Find underhook, dogfight, sweep, and recovery paths from half guard.',
+    filters: {
+      preferredStyle: 'guard',
+      topBottom: 'bottom',
+      weakArea: 'sweeps'
+    }
+  },
+  {
+    label: 'Improve guard retention',
+    category: 'Escapes and defense',
+    focusName: 'Open Guard',
+    description: 'Bias toward frames, pummeling, recovery, and defensive guard rebuilding.',
+    filters: {
+      preferredStyle: 'defense',
+      topBottom: 'bottom',
+      weakArea: 'guardRetention',
+      partnerStrength: 'passing'
+    }
+  },
+  {
+    label: 'I need more sweep options',
+    category: 'Guard and sweeps',
+    focusName: 'Butterfly Guard',
+    description: 'Start with a common guard hub, then choose the guard you play to narrow the route.',
+    filters: {
+      preferredStyle: 'guard',
+      topBottom: 'bottom',
+      weakArea: 'sweeps'
+    },
+    followUps: [
+      { label: 'Closed guard', focusName: 'Closed Guard' },
+      { label: 'Half guard', focusName: 'Half Guard' },
+      { label: 'Butterfly guard', focusName: 'Butterfly Guard' },
+      { label: 'Open guard', focusName: 'Open Guard' },
+      { label: 'Spider guard', focusName: 'Spider Guard' },
+      { label: 'X-guard', focusName: 'X-Guard' }
+    ]
+  },
+  {
+    label: 'I can’t hold side control',
+    category: 'Passing and top control',
+    focusName: 'Side Control',
+    description: 'Find control ideas, transitions, and pressure reactions before the opponent reguards.',
+    filters: {
+      preferredStyle: 'pressure',
+      topBottom: 'top',
+      riskTolerance: 'low'
+    }
+  },
+  {
+    label: 'Build submission chains',
+    category: 'Submissions',
+    focusName: 'Triangle Choke',
+    description: 'Start from a major submission family and surface related attacks, reactions, and follow-ups.',
+    filters: {
+      preferredStyle: 'submissions',
+      weakArea: 'submissions',
+      riskTolerance: 'medium'
+    }
+  },
+  {
+    label: 'Win scramble exchanges',
+    category: 'Standing and takedowns',
+    focusName: 'Dogfight',
+    description: 'Use a transitional hub for wrestle-ups, reversals, back exposure, and top control.',
+    filters: {
+      preferredStyle: 'scrambles',
+      wrestlingFamiliarity: 'comfortable',
+      partnerPace: 'aggressive'
+    }
+  },
+  {
+    label: 'Gi guard development',
+    category: 'Guard and sweeps',
+    focusName: 'Spider Guard',
+    description: 'Bias toward gi-specific guard, sleeve control, and off-balancing connections.',
+    filters: {
+      ruleSet: 'gi',
+      preferredStyle: 'guard',
+      topBottom: 'bottom'
+    }
+  },
+  {
+    label: 'Learn X-guard routes',
+    category: 'Guard and sweeps',
+    focusName: 'X-Guard',
+    description: 'Explore technical stand-up, sweep, leg exposure, and transition-heavy lower-body routes.',
+    filters: {
+      preferredStyle: 'guard',
+      topBottom: 'bottom',
+      weakArea: 'sweeps',
+      riskTolerance: 'medium'
+    }
+  },
+  {
+    label: 'I keep getting my guard passed',
+    category: 'Escapes and defense',
+    focusName: 'Open Guard',
+    description: 'Work backward through frames, guard recovery, pummeling, and anti-pressure responses.',
+    filters: {
+      preferredStyle: 'defense',
+      topBottom: 'bottom',
+      weakArea: 'guardRetention',
+      partnerStrength: 'passing'
+    },
+    followUps: [
+      { label: 'Open guard', focusName: 'Open Guard' },
+      { label: 'Half guard', focusName: 'Half Guard' },
+      { label: 'Knee shield', focusName: 'Knee Shield Half Guard' },
+      { label: 'Butterfly guard', focusName: 'Butterfly Guard' },
+      { label: 'Spider guard', focusName: 'Spider Guard' }
+    ]
+  },
+  {
+    label: 'I get stuck in closed guard',
+    category: 'Passing and top control',
+    focusName: 'Closed Guard',
+    description: 'Bias toward posture, opening the guard, and passing without giving up easy attacks.',
+    filters: {
+      preferredStyle: 'pressure',
+      topBottom: 'top',
+      weakArea: 'guardPassing',
+      riskTolerance: 'low'
+    }
+  },
+  {
+    label: 'I can’t finish from the back',
+    category: 'Back takes and control',
+    focusName: 'Back Control',
+    description: 'Look for control upgrades, hand-fighting wins, choke options, and mount transitions.',
+    filters: {
+      preferredStyle: 'submissions',
+      topBottom: 'top',
+      weakArea: 'submissions',
+      riskTolerance: 'medium'
+    }
+  },
+  {
+    label: 'I keep getting submitted',
+    category: 'Escapes and defense',
+    focusName: 'Closed Guard',
+    description: 'Prioritize safer posture, hand fighting, submission defense, and escape reactions.',
+    filters: {
+      preferredStyle: 'defense',
+      topBottom: 'bottom',
+      weakArea: 'escapes',
+      riskTolerance: 'low',
+      partnerStyle: 'submissions'
+    },
+    followUps: [
+      { label: 'Closed guard', focusName: 'Closed Guard' },
+      { label: 'Side control', focusName: 'Side Control' },
+      { label: 'Mount', focusName: 'Mount' },
+      { label: 'Back control', focusName: 'Back Control' },
+      { label: 'Leg locks', focusName: 'Ashi Garami' }
+    ]
+  },
+  {
+    label: 'I want better takedown entries',
+    category: 'Standing and takedowns',
+    focusName: 'Front Headlock',
+    description: 'Choose a standing lane and explore snap-downs, body locks, singles, doubles, and go-behinds.',
+    filters: {
+      preferredStyle: 'wrestling',
+      topBottom: 'standing',
+      weakArea: 'takedowns',
+      wrestlingFamiliarity: 'comfortable'
+    },
+    followUps: [
+      { label: 'Front headlock', focusName: 'Front Headlock' },
+      { label: 'Body lock', focusName: 'Body Lock Standing' },
+      { label: 'Single leg', focusName: 'Single Leg Position' },
+      { label: 'Double leg', focusName: 'Double Leg Position' }
+    ]
+  },
+  {
+    label: 'I need safer submissions',
+    category: 'Submissions',
+    focusName: 'Kimura',
+    description: 'Favor attacks that connect to control, follow-ups, and position instead of one-shot gambles.',
+    filters: {
+      preferredStyle: 'submissions',
+      riskTolerance: 'low',
+      experience: 'Intermediate'
+    }
+  }
+];
+
+const coachingScenarioCategories = [
+  'Passing and top control',
+  'Escapes and defense',
+  'Guard and sweeps',
+  'Back takes and control',
+  'Submissions',
+  'Standing and takedowns',
+  'Leg locks',
+  'Beginner paths'
+];
+
 const skillLevelRank = {
   Beginner: 1,
   Intermediate: 2,
@@ -42,6 +338,14 @@ const getEntryText = (entry) => normalizeValue([
   ...(entry?.commonTransitions || []),
   ...(entry?.commonFollowUps || []),
   ...(entry?.commonDefenses || [])
+].join(' '));
+
+const getEntryProfileText = (entry) => normalizeValue([
+  entry?.name,
+  entry?.category,
+  entry?.subcategory,
+  entry?.description,
+  ...(entry?.tags || [])
 ].join(' '));
 
 const styleMatchers = {
@@ -75,6 +379,131 @@ const styleHintLabels = {
   submissions: 'Submissions',
   escapes: 'Escapes'
 };
+
+const fitProfiles = [
+  {
+    key: 'flexible',
+    label: 'Flexibility helps',
+    terms: [
+      'rubber guard',
+      'mission control',
+      'new york',
+      'chill dog',
+      'meat hook',
+      'crackhead control',
+      'gogoplata',
+      'omoplata',
+      'monoplata',
+      'tarikoplata',
+      'high guard',
+      'clamp guard',
+      'williams guard',
+      'inversion',
+      'inversion position',
+      'invert',
+      'invert to reguard',
+      'shoulder invert recovery',
+      'berimbolo',
+      'baby bolo',
+      'kiss of the dragon',
+      'matrix',
+      'k guard',
+      'k guard entry',
+      'octopus guard',
+      'reverse de la riva spin',
+      'spin under'
+    ],
+    applies: (entry) => ![
+      'Guillotine Position',
+      'Armbar Position',
+      'Spiderweb Position',
+      'Triangle Position'
+    ].includes(entry?.name),
+    matches: ({ filters }) => filters.flexibility === 'high' || filters.bodyType === 'longer',
+    caution: ({ filters }) => filters.flexibility === 'low'
+  },
+  {
+    key: 'hipMobility',
+    label: 'Hip mobility helps',
+    terms: [
+      'granby',
+      'hip heist',
+      'shrimp',
+      'reverse shrimp',
+      'leg pummel',
+      'pummel',
+      'guard retention',
+      'retention',
+      'reguard',
+      're guard',
+      'shoulder walk',
+      'running man',
+      'technical stand up',
+      'seated guard recovery',
+      'supine square up'
+    ],
+    applies: (entry) => !['Grip Fighting'].includes(entry?.category),
+    matches: ({ filters }) => filters.flexibility === 'medium' || filters.flexibility === 'high' || filters.preferredStyle === 'scrambles',
+    caution: ({ filters }) => filters.flexibility === 'low' && filters.preferredStyle !== 'pressure'
+  },
+  {
+    key: 'longLimbs',
+    label: 'Long limbs help',
+    terms: ['triangle', 'd arce', 'darce', 'anaconda', 'arm triangle', 'body triangle', 'spider guard', 'lasso', 'collar sleeve', 'high guard', 'closed guard armbar', 'teepee choke'],
+    applies: () => true,
+    matches: ({ filters }) => filters.bodyType === 'longer',
+    caution: () => false
+  },
+  {
+    key: 'pressure',
+    label: 'Pressure-friendly',
+    terms: ['pressure', 'smash', 'body lock', 'crossface', 'underhook', 'mount', 'side control', 'half guard top', 'headquarters'],
+    applies: (entry) => {
+      if ([
+        'Escapes',
+        'Guard Retention',
+        'Submission Defense',
+        'Sweeps',
+        'Turtle and Scrambles',
+        'Submissions',
+        'Leg Locks',
+        'Self-Defense Basics',
+        'Drills',
+        'Positional Sparring'
+      ].includes(entry?.category)) {
+        return false;
+      }
+
+      const name = normalizeValue(entry?.name);
+      return ![
+        'bottom ',
+        'supine guard',
+        'running man',
+        'lasso guard',
+        'z guard',
+        'knee shield half guard'
+      ].some((term) => name.includes(term));
+    },
+    matches: ({ filters }) => filters.preferredStyle === 'pressure' || filters.bodyType === 'larger' || filters.bodyType === 'compact',
+    caution: () => false
+  },
+  {
+    key: 'scramble',
+    label: 'Scramble-heavy',
+    terms: ['scramble', 'dogfight', 'wrestle up', 'granby', 'sit out', 'turtle', 'front headlock', 'crab ride'],
+    applies: () => true,
+    matches: ({ filters }) => filters.preferredStyle === 'scrambles' || filters.wrestlingFamiliarity === 'comfortable',
+    caution: ({ filters }) => filters.riskTolerance === 'low'
+  },
+  {
+    key: 'legLock',
+    label: 'Leg-lock familiarity helps',
+    terms: ['leg lock', 'heel hook', 'ashi garami', 'outside ashi', 'cross ashi', 'reverse ashi', 'saddle', '50 50', 'kneebar', 'toe hold', 'aoki', 'estima'],
+    applies: (entry) => !['Takedowns'].includes(entry?.category),
+    matches: ({ filters }) => filters.legLockFamiliarity === 'learning' || filters.legLockFamiliarity === 'comfortable',
+    caution: ({ filters }) => filters.legLockFamiliarity === 'avoid'
+  }
+];
 
 const filterConfig = {
   ruleSet: {
@@ -202,9 +631,26 @@ const getSelectedStyleHints = (filters) => uniqueValues(
   Object.entries(filters).flatMap(([key, value]) => filterConfig[key]?.[value] || [])
 );
 
+const getFitProfileMatches = (entry, filters) => {
+  const entryText = getEntryProfileText(entry);
+
+  return fitProfiles
+    .filter((profile) => (
+      profile.applies(entry)
+      && profile.terms.some((term) => entryText.includes(normalizeValue(term)))
+    ))
+    .map((profile) => ({
+      key: profile.key,
+      label: profile.label,
+      isMatch: profile.matches({ filters }),
+      isCaution: profile.caution({ filters })
+    }));
+};
+
 const getOptionReasons = ({ entry, groupKey, filters }) => {
   const reasons = [];
   const styleHints = getSelectedStyleHints(filters);
+  const fitMatches = getFitProfileMatches(entry || {}, filters);
 
   if (entry?.skillLevel && filters.experience && entry.skillLevel === filters.experience) {
     reasons.push(`Matches ${filters.experience.toLowerCase()} level`);
@@ -220,6 +666,15 @@ const getOptionReasons = ({ entry, groupKey, filters }) => {
 
   if (styleHints.length && optionMatchesStyles(entry || {}, styleHints)) {
     reasons.push('Matches active style tags');
+  }
+
+  const matchingFit = fitMatches.find((fit) => fit.isMatch);
+  const cautionFit = fitMatches.find((fit) => fit.isCaution);
+
+  if (matchingFit) {
+    reasons.push(matchingFit.label);
+  } else if (cautionFit) {
+    reasons.push(`May require: ${cautionFit.label.toLowerCase()}`);
   }
 
   if (groupKey === 'commonDefenses' && filters.weakArea === 'escapes') {
@@ -265,6 +720,11 @@ const scoreOption = ({ entry, groupKey, filters }) => {
   if (groupKey === 'entriesIntoPosition' && filters.preferredStyle === 'wrestling') score += 2;
   if (entryText.includes('beginner') && filters.experience === 'Beginner') score += 1;
 
+  getFitProfileMatches(entry, filters).forEach((fit) => {
+    if (fit.isMatch) score += 2;
+    if (fit.isCaution) score -= 3;
+  });
+
   return score;
 };
 
@@ -283,7 +743,8 @@ const getFilteredBranches = ({ focusEntry, entryMap, filters }) => {
           name,
           entry,
           score: scoreOption({ entry: entry || { name }, groupKey: group.key, filters }),
-          reasons: getOptionReasons({ entry: entry || { name }, groupKey: group.key, filters })
+          reasons: getOptionReasons({ entry: entry || { name }, groupKey: group.key, filters }),
+          fitProfiles: getFitProfileMatches(entry || { name }, filters)
         };
       })
       .filter((option) => (
@@ -348,7 +809,42 @@ export default function DecisionTreePage() {
     getFilteredBranches({ focusEntry, entryMap, filters })
   ), [focusEntry, entryMap, filters]);
 
+  const groupedCoachingScenarios = useMemo(() => (
+    coachingScenarioCategories
+      .map((category) => ({
+        category,
+        scenarios: coachingScenarios.filter((scenario) => scenario.category === category)
+      }))
+      .filter((group) => group.scenarios.length > 0)
+  ), []);
+
   const visibleBranchCount = branchGroups.reduce((count, group) => count + group.options.length, 0);
+
+  const applyCoachingScenario = (scenario) => {
+    const scenarioFocus = entries.find((entry) => normalizeValue(entry.name) === normalizeValue(scenario.focusName));
+
+    if (scenarioFocus && scenarioFocus.id !== focusEntry.id) {
+      setHistory((current) => [focusEntry, ...current].slice(0, 8));
+      setFocusId(scenarioFocus.id);
+    }
+
+    setFilters({
+      ...defaultFilters,
+      ...scenario.filters
+    });
+    setSearch('');
+    setShowFilters(true);
+    setShowPartnerContext(Boolean(scenario.filters.partnerStyle));
+  };
+
+  const applyScenarioFollowUp = (event, scenario, followUp) => {
+    event.stopPropagation();
+    applyCoachingScenario({
+      ...scenario,
+      focusName: followUp.focusName,
+      label: `${scenario.label}: ${followUp.label}`
+    });
+  };
 
   const handleFilterChange = (key, value) => {
     setFilters((current) => ({
@@ -438,6 +934,58 @@ export default function DecisionTreePage() {
               ))}
             </ul>
           )}
+        </section>
+
+        <section className="page-section">
+          <div className="decision-tree-section-heading">
+            <div>
+              <h3>Start with a coaching problem</h3>
+              <p className="meta-text">
+                Pick a real-life situation and the tree will choose a useful starting point plus matching filters.
+              </p>
+            </div>
+          </div>
+
+          <div className="decision-tree-scenario-groups">
+            {groupedCoachingScenarios.map((group) => (
+              <div className="decision-tree-scenario-group" key={group.category}>
+                <h4>{group.category}</h4>
+                <div className="decision-tree-scenario-grid">
+                  {group.scenarios.map((scenario) => (
+                    <button
+                      key={scenario.label}
+                      type="button"
+                      className="decision-tree-scenario-card"
+                      onClick={() => applyCoachingScenario(scenario)}
+                    >
+                      <strong>{scenario.label}</strong>
+                      <span>{scenario.description}</span>
+                      {scenario.followUps?.length ? (
+                        <span className="decision-tree-follow-up-row" aria-label="Choose a guard">
+                          {scenario.followUps.map((followUp) => (
+                            <span
+                              key={followUp.focusName}
+                              className="decision-tree-follow-up-chip"
+                              role="button"
+                              tabIndex={0}
+                              onClick={(event) => applyScenarioFollowUp(event, scenario, followUp)}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                  applyScenarioFollowUp(event, scenario, followUp);
+                                }
+                              }}
+                            >
+                              {followUp.label}
+                            </span>
+                          ))}
+                        </span>
+                      ) : null}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="page-section compact-form-shell">
@@ -702,6 +1250,18 @@ export default function DecisionTreePage() {
                           <span className="decision-tree-reason-row">
                             {option.reasons.join(' | ')}
                           </span>
+                          {option.fitProfiles.length > 0 ? (
+                            <span className="decision-tree-fit-row">
+                              {option.fitProfiles.map((profile) => (
+                                <span
+                                  key={profile.key}
+                                  className={`decision-tree-fit-chip${profile.isCaution ? ' is-caution' : ''}${profile.isMatch ? ' is-match' : ''}`}
+                                >
+                                  {profile.label}
+                                </span>
+                              ))}
+                            </span>
+                          ) : null}
                         </button>
                       </li>
                     ))}
