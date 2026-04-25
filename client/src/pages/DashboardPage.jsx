@@ -111,7 +111,7 @@ export default function DashboardPage() {
       <div className="dashboard-page">
         <h2 className="page-title">Dashboard</h2>
         <p className="page-intro">
-          Start here for quick actions, recent activity, and a helpful snapshot of what is happening in your gym.
+          Start by adding your topics and members, then plan classes, log attendance, and build out Library resources as your gym grows.
         </p>
 
         {error && <p className="error-text">{error}</p>}

@@ -766,29 +766,47 @@ export default function CurriculumIndexPage() {
                                     ? 'Supporting Library material is already connected.'
                                     : 'No Library entries are linked to this item yet.'}
                                 </div>
-                                {entry.topic ? (
-                                  <div className="inline-actions" style={{ marginTop: '10px' }}>
+                                <div className="inline-actions curriculum-index-library-action-row">
+                                  {entry.topic ? (
                                     <Link
                                       className="secondary-button curriculum-index-action-link"
                                       to={`/library?topicId=${entry.topic.id}`}
                                     >
                                       {entry.linkedLibraryCount > 0 ? 'View linked library' : 'Open Library for this topic'}
                                     </Link>
-                                  </div>
-                                ) : null}
+                                  ) : (
+                                    <span
+                                      className="ui-tooltip-trigger"
+                                      data-tooltip="This is disabled until the topic has been added."
+                                    >
+                                      <button
+                                        type="button"
+                                        className="secondary-button curriculum-index-action-link is-disabled"
+                                        disabled
+                                      >
+                                        Add to Topics to use Library
+                                      </button>
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
 
                           <div className="inline-actions curriculum-index-actions">
                             {!entry.topic ? (
-                              <button
-                                type="button"
-                                className="secondary-button"
-                                onClick={() => handleOpenCreateTopic(entry)}
+                              <span
+                                className="ui-tooltip-trigger"
+                                data-tooltip="Add this item to your gym Topics first so classes, Library, and progress tracking can link to it."
                               >
-                                Add to Topics
-                              </button>
+                                <button
+                                  type="button"
+                                  className="secondary-button"
+                                  onClick={() => handleOpenCreateTopic(entry)}
+                                >
+                                  Add to Topics
+                                </button>
+                              </span>
                             ) : (
                               <>
                                 <button

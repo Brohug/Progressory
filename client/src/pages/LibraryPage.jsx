@@ -890,14 +890,28 @@ export default function LibraryPage() {
                     <div className="library-card-chip-row">
                       <span className="library-info-chip">{formatSentenceLabel(entry.entry_type)}</span>
                       <span className="library-info-chip">{entry.program_name || 'No program'}</span>
-                      <button
-                        type="button"
-                        className="library-topic-chip"
-                        onClick={() => entry.curriculum_topic_id && handleFocusTopic(entry.curriculum_topic_id)}
-                        disabled={!entry.curriculum_topic_id}
-                      >
-                        {entry.topic_title || 'Unlinked library entry'}
-                      </button>
+                      {entry.curriculum_topic_id ? (
+                        <button
+                          type="button"
+                          className="library-topic-chip"
+                          onClick={() => handleFocusTopic(entry.curriculum_topic_id)}
+                        >
+                          {entry.topic_title}
+                        </button>
+                      ) : (
+                        <span
+                          className="ui-tooltip-trigger"
+                          data-tooltip="Link this Library entry to a Curriculum Index topic first to focus it or open it from Index."
+                        >
+                          <button
+                            type="button"
+                            className="library-topic-chip"
+                            disabled
+                          >
+                            {entry.topic_title || 'Unlinked library entry'}
+                          </button>
+                        </span>
+                      )}
                     </div>
                     <div className="library-topic-link-row">
                       {entry.curriculum_topic_id ? (

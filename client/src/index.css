@@ -1268,6 +1268,64 @@ ul {
 .curriculum-index-action-link {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.curriculum-index-action-link:hover,
+.curriculum-index-action-link:focus-visible {
+  text-decoration: none;
+}
+
+.curriculum-index-library-action-row {
+  margin-top: 10px;
+}
+
+.ui-tooltip-trigger {
+  position: relative;
+  display: inline-flex;
+}
+
+.ui-tooltip-trigger::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%) translateY(4px);
+  width: max-content;
+  max-width: 240px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(15, 23, 42, 0.96);
+  color: #f8fafc;
+  font-size: 12px;
+  line-height: 1.35;
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.28);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 20;
+  text-align: center;
+}
+
+.ui-tooltip-trigger:hover::after,
+.ui-tooltip-trigger:focus-within::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.curriculum-index-action-link.is-disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .curriculum-index-inline-note {
