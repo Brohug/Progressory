@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import curriculumIndexSeed from '../data/curriculumIndexSeed';
@@ -27,7 +27,7 @@ const coachingScenarios = [
   {
     label: 'I am stuck under pressure',
     category: 'Escapes and defense',
-    focusName: 'Side Control',
+    focusName: 'Bottom Side Control',
     description: 'Prioritize defensive reactions, frames, and escape pathways.',
     filters: {
       preferredStyle: 'defense',
@@ -637,6 +637,128 @@ const defaultFilters = {
   partnerStrength: ''
 };
 
+const filterFieldLabels = {
+  experience: 'Experience',
+  ruleSet: 'Ruleset',
+  preferredStyle: 'Style',
+  topBottom: 'Top / bottom',
+  bodyType: 'Body type',
+  flexibility: 'Flexibility',
+  wrestlingFamiliarity: 'Wrestling',
+  legLockFamiliarity: 'Leg locks',
+  riskTolerance: 'Risk',
+  weakArea: 'Weak area',
+  partnerRelativeSize: 'Partner size',
+  partnerStyle: 'Partner style',
+  partnerExperience: 'Partner experience',
+  partnerPace: 'Partner pace',
+  partnerStrength: 'Partner strength'
+};
+
+const filterValueLabels = {
+  experience: {
+    Beginner: 'Beginner',
+    Intermediate: 'Intermediate',
+    Advanced: 'Advanced'
+  },
+  ruleSet: {
+    gi: 'Gi',
+    nogi: 'No-gi'
+  },
+  preferredStyle: {
+    pressure: 'Pressure / control',
+    guard: 'Guard player',
+    wrestling: 'Wrestling / front headlock',
+    legLocks: 'Leg locks',
+    backTakes: 'Back takes',
+    submissions: 'Submission hunting',
+    scrambles: 'Scrambly / mobile',
+    defense: 'Defensive / escape work'
+  },
+  topBottom: {
+    top: 'Top',
+    bottom: 'Bottom',
+    standing: 'Standing'
+  },
+  bodyType: {
+    smaller: 'Smaller / faster',
+    larger: 'Larger / pressure',
+    longer: 'Longer limbs',
+    compact: 'Compact / stocky'
+  },
+  flexibility: {
+    low: 'Low flexibility',
+    medium: 'Medium flexibility',
+    high: 'High flexibility'
+  },
+  wrestlingFamiliarity: {
+    new: 'New to wrestling',
+    comfortable: 'Comfortable wrestling'
+  },
+  legLockFamiliarity: {
+    avoid: 'Avoid for now',
+    learning: 'Learning',
+    comfortable: 'Comfortable'
+  },
+  riskTolerance: {
+    low: 'Low risk',
+    medium: 'Medium risk',
+    high: 'High risk'
+  },
+  weakArea: {
+    guardPassing: 'Guard passing',
+    guardRetention: 'Guard retention',
+    escapes: 'Escapes',
+    submissions: 'Submissions',
+    takedowns: 'Takedowns',
+    legLocks: 'Leg locks',
+    backTakes: 'Back takes',
+    sweeps: 'Sweeps',
+    frontHeadlock: 'Front headlock'
+  },
+  partnerRelativeSize: {
+    bigger: 'Bigger partner',
+    smaller: 'Smaller partner',
+    similar: 'Similar size partner'
+  },
+  partnerStyle: {
+    pressure: 'Pressure passer',
+    guard: 'Guard player',
+    wrestling: 'Wrestler',
+    legLocks: 'Leg locker',
+    submissions: 'Submission hunter',
+    scrambles: 'Scrambler'
+  },
+  partnerExperience: {
+    Beginner: 'Beginner partner',
+    Intermediate: 'Intermediate partner',
+    Advanced: 'Advanced partner'
+  },
+  partnerPace: {
+    calm: 'Calm pace',
+    moderate: 'Moderate pace',
+    aggressive: 'Aggressive pace'
+  },
+  partnerStrength: {
+    passing: 'Passing strength',
+    guard: 'Guard strength',
+    wrestling: 'Wrestling strength',
+    legLocks: 'Leg-lock strength',
+    backControl: 'Back-control strength',
+    submissions: 'Submission strength'
+  }
+};
+
+const buildFilterSummary = (filters, keys) => (
+  keys
+    .filter((key) => Boolean(filters[key]))
+    .map((key) => ({
+      key,
+      label: filterFieldLabels[key],
+      value: filterValueLabels[key]?.[filters[key]] || filters[key]
+    }))
+);
+
 const getStyleTags = (entry) => {
   const text = getEntryText(entry);
 
@@ -766,7 +888,7 @@ const getFilteredBranches = ({ focusEntry, entryMap, filters }) => {
 
   return relationshipGroups.map((group) => {
     const values = uniqueValues(focusEntry[group.key] || []);
-    const options = values
+    const rankedOptions = values
       .map((name) => {
         const entry = findEntryByName(entryMap, name);
         return {
@@ -777,14 +899,24 @@ const getFilteredBranches = ({ focusEntry, entryMap, filters }) => {
           fitProfiles: getFitProfileMatches(entry || { name }, filters)
         };
       })
+      .filter((option) => normalizeValue(option.name) !== normalizeValue(focusEntry.name))
+      .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+
+    const filteredOptions = rankedOptions
       .filter((option) => (
         !shouldShrink
         || !option.entry
         || optionMatchesStyles(option.entry, weakAreaStyles)
         || option.score >= 6
       ))
-      .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
       .slice(0, shouldShrink ? 6 : 10);
+
+    const options = filteredOptions.length
+      ? filteredOptions
+      : rankedOptions.slice(0, shouldShrink ? 4 : 10).map((option) => ({
+          ...option,
+          reasons: ['Connected from current focus', 'Showing fallback path']
+        }));
 
     return {
       ...group,
@@ -801,6 +933,9 @@ export default function DecisionTreePage() {
   const [showFilters, setShowFilters] = useState(false);
   const [showPartnerContext, setShowPartnerContext] = useState(false);
   const [showSimulation, setShowSimulation] = useState(false);
+  const [scenarioFeedback, setScenarioFeedback] = useState('');
+  const [pendingScenarioScroll, setPendingScenarioScroll] = useState(false);
+  const filtersSectionRef = useRef(null);
 
   const entries = curriculumIndexSeed;
 
@@ -849,6 +984,44 @@ export default function DecisionTreePage() {
   ), []);
 
   const visibleBranchCount = branchGroups.reduce((count, group) => count + group.options.length, 0);
+  const activeFilterSummary = useMemo(
+    () => buildFilterSummary(filters, [
+      'experience',
+      'ruleSet',
+      'preferredStyle',
+      'topBottom',
+      'bodyType',
+      'flexibility',
+      'wrestlingFamiliarity',
+      'legLockFamiliarity',
+      'riskTolerance',
+      'weakArea'
+    ]),
+    [filters]
+  );
+  const activePartnerSummary = useMemo(
+    () => buildFilterSummary(filters, [
+      'partnerRelativeSize',
+      'partnerStyle',
+      'partnerExperience',
+      'partnerPace',
+      'partnerStrength'
+    ]),
+    [filters]
+  );
+  const focusDecisionTreeModel = focusEntry.decisionTreeModel || null;
+  const focusReactionGroups = useMemo(() => {
+    if (!focusDecisionTreeModel?.commonReactions?.length) return [];
+
+    return focusDecisionTreeModel.commonReactions
+      .map((reaction) => ({
+        ...reaction,
+        options: (reaction.branches || [])
+          .map((name) => findEntryByName(entryMap, name))
+          .filter(Boolean)
+      }))
+      .filter((reaction) => reaction.options.length > 0);
+  }, [entryMap, focusDecisionTreeModel]);
 
   const topRecommendations = useMemo(() => {
     const seen = new Set();
@@ -872,10 +1045,35 @@ export default function DecisionTreePage() {
       .slice(0, 6);
   }, [branchGroups]);
 
+  useEffect(() => {
+    if (!scenarioFeedback) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setScenarioFeedback('');
+    }, 2800);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [scenarioFeedback]);
+
+  useEffect(() => {
+    if (!pendingScenarioScroll) return;
+
+    const timeoutId = window.setTimeout(() => {
+      filtersSectionRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+      setPendingScenarioScroll(false);
+    }, 120);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [pendingScenarioScroll, focusEntry.id, topRecommendations.length, visibleBranchCount]);
+
   const applyCoachingScenario = (scenario) => {
     const scenarioFocus = entries.find((entry) => normalizeValue(entry.name) === normalizeValue(scenario.focusName));
+    const focusWasUpdated = scenarioFocus && scenarioFocus.id !== focusEntry.id;
 
-    if (scenarioFocus && scenarioFocus.id !== focusEntry.id) {
+    if (focusWasUpdated) {
       setHistory((current) => [focusEntry, ...current].slice(0, 8));
       setFocusId(scenarioFocus.id);
     }
@@ -887,6 +1085,12 @@ export default function DecisionTreePage() {
     setSearch('');
     setShowFilters(true);
     setShowPartnerContext(Boolean(scenario.filters.partnerStyle));
+    setScenarioFeedback(
+      focusWasUpdated
+        ? `Applied "${scenario.label}". Focus moved to ${scenarioFocus.name}, matching filters were turned on, and the page jumped to Simple filters below.`
+        : `Applied "${scenario.label}". Matching filters were turned on and the page jumped to Simple filters below.`
+    );
+    setPendingScenarioScroll(true);
   };
 
   const applyScenarioFollowUp = (event, scenario, followUp) => {
@@ -960,6 +1164,39 @@ export default function DecisionTreePage() {
           </div>
         </section>
 
+        {focusDecisionTreeModel ? (
+          <section className="page-section decision-tree-logic-panel">
+            <div className="decision-tree-section-heading">
+              <div>
+                <h3>How this position usually works</h3>
+                <p className="meta-text">
+                  This layer tracks the common mechanics, goals, and realistic reactions from {focusEntry.name}.
+                </p>
+              </div>
+            </div>
+
+            <div className="decision-tree-logic-grid">
+              <article className="decision-tree-logic-card">
+                <h4>Common mechanics</h4>
+                <ul className="decision-tree-logic-list">
+                  {focusDecisionTreeModel.mechanics?.map((item) => (
+                    <li key={`mechanic-${item}`}>{item}</li>
+                  ))}
+                </ul>
+              </article>
+
+              <article className="decision-tree-logic-card">
+                <h4>Common goals</h4>
+                <ul className="decision-tree-logic-list">
+                  {focusDecisionTreeModel.commonGoals?.map((item) => (
+                    <li key={`goal-${item}`}>{item}</li>
+                  ))}
+                </ul>
+              </article>
+            </div>
+          </section>
+        ) : null}
+
         <section className="page-section">
           <h3>Start point</h3>
           <p className="meta-text">
@@ -997,6 +1234,12 @@ export default function DecisionTreePage() {
               </p>
             </div>
           </div>
+
+          {scenarioFeedback ? (
+            <div className="decision-tree-scenario-feedback" role="status" aria-live="polite">
+              {scenarioFeedback}
+            </div>
+          ) : null}
 
           <div className="decision-tree-scenario-groups">
             {groupedCoachingScenarios.map((group) => (
@@ -1040,7 +1283,7 @@ export default function DecisionTreePage() {
           </div>
         </section>
 
-        <section className="page-section compact-form-shell">
+        <section className={`page-section compact-form-shell decision-tree-collapsible-shell${showFilters ? ' is-open' : ''}`} ref={filtersSectionRef}>
           <div className="compact-form-header">
             <div>
               <h3>Simple filters</h3>
@@ -1052,6 +1295,25 @@ export default function DecisionTreePage() {
               {showFilters ? 'Hide filters' : 'Show filters'}
             </button>
           </div>
+
+          {!showFilters ? (
+            <div className="decision-tree-collapsible-summary">
+              <p className="meta-text">
+                Keep this closed unless you want to narrow the tree further.
+              </p>
+              {activeFilterSummary.length > 0 ? (
+                <div className="decision-tree-summary-chip-row">
+                  {activeFilterSummary.map((item) => (
+                    <span className="curriculum-index-tag" key={`summary-${item.key}`}>
+                      {item.label}: {item.value}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="decision-tree-summary-empty">No extra filters applied yet.</span>
+              )}
+            </div>
+          ) : null}
 
           {showFilters && (
             <div className="decision-tree-filter-grid">
@@ -1168,7 +1430,7 @@ export default function DecisionTreePage() {
           )}
         </section>
 
-        <section className="page-section compact-form-shell">
+        <section className={`page-section compact-form-shell decision-tree-collapsible-shell${showPartnerContext ? ' is-open' : ''}`}>
           <div className="compact-form-header">
             <div>
               <h3>Partner context</h3>
@@ -1180,6 +1442,25 @@ export default function DecisionTreePage() {
               {showPartnerContext ? 'Hide partner context' : 'Show partner context'}
             </button>
           </div>
+
+          {!showPartnerContext ? (
+            <div className="decision-tree-collapsible-summary">
+              <p className="meta-text">
+                Leave this tucked away unless you want the tree to account for a specific training partner or matchup.
+              </p>
+              {activePartnerSummary.length > 0 ? (
+                <div className="decision-tree-summary-chip-row">
+                  {activePartnerSummary.map((item) => (
+                    <span className="curriculum-index-tag" key={`partner-summary-${item.key}`}>
+                      {item.label}: {item.value}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="decision-tree-summary-empty">No partner context applied.</span>
+              )}
+            </div>
+          ) : null}
 
           {showPartnerContext && (
             <div className="decision-tree-filter-grid">
@@ -1242,7 +1523,7 @@ export default function DecisionTreePage() {
           )}
         </section>
 
-        <section className="page-section decision-tree-simulation-panel">
+        <section className={`page-section decision-tree-simulation-panel decision-tree-collapsible-shell${showSimulation ? ' is-open' : ''}`}>
           <div>
             <h3>Advanced simulation</h3>
             <p className="meta-text">
@@ -1252,6 +1533,14 @@ export default function DecisionTreePage() {
           <button className="secondary-button" type="button" onClick={() => setShowSimulation((value) => !value)}>
             {showSimulation ? 'Hide simulation traits' : 'Show simulation traits'}
           </button>
+          {!showSimulation ? (
+            <div className="decision-tree-collapsible-summary">
+              <p className="meta-text">
+                Leave this closed unless you want future simulation-style traits to shape the recommendations more deeply.
+              </p>
+              <span className="decision-tree-summary-empty">No simulation traits in play.</span>
+            </div>
+          ) : null}
           {showSimulation && (
             <div className="decision-tree-simulation-note">
               <span>Explosiveness</span>
@@ -1263,12 +1552,16 @@ export default function DecisionTreePage() {
           )}
         </section>
 
-        <section className="page-section">
+        <section className="page-section decision-tree-branch-spotlight">
           <div className="decision-tree-section-heading">
             <div>
+              <span className="decision-tree-next-step">Next step</span>
               <h3>Tree branches</h3>
               <p className="meta-text">
                 Showing {visibleBranchCount} filtered options from the universal graph.
+              </p>
+              <p className="decision-tree-branch-callout">
+                Most users will work here first after choosing a coaching problem, then fine-tune with filters only if they need to narrow the path further.
               </p>
             </div>
             {activeStyleHints.length > 0 && (
@@ -1279,6 +1572,40 @@ export default function DecisionTreePage() {
               </div>
             )}
           </div>
+
+          {focusReactionGroups.length > 0 ? (
+            <div className="decision-tree-reaction-panel">
+              <div className="decision-tree-section-heading">
+                <div>
+                  <h4>Common reactions from here</h4>
+                  <p className="meta-text">
+                    These branches come from the usual reactions to {focusEntry.name}, not just the first direct links.
+                  </p>
+                </div>
+              </div>
+
+              <div className="decision-tree-reaction-grid">
+                {focusReactionGroups.map((reaction) => (
+                  <article className="decision-tree-reaction-card" key={reaction.reaction}>
+                    <strong>{reaction.reaction}</strong>
+                    <p className="meta-text">{reaction.cue}</p>
+                    <div className="decision-tree-reaction-actions">
+                      {reaction.options.map((option) => (
+                        <button
+                          key={`${reaction.reaction}-${option.id}`}
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => selectFocusEntry(option)}
+                        >
+                          {option.name}
+                        </button>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {topRecommendations.length > 0 ? (
             <div className="decision-tree-top-recommendations">

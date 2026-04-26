@@ -1197,11 +1197,46 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['position', 'half guard', 'butterfly hook'],
     description: 'A half guard variation that uses a butterfly hook to elevate, wrestle up, and create stronger sweeping angles.',
-    relatedPositions: ['Half Guard', 'Butterfly Guard', 'Dogfight', 'Underhook Half Guard'],
+    decisionTreeModel: {
+      mechanics: [
+        'Load weight onto the butterfly hook so elevation becomes available.',
+        'Build a frame wall and attack the edges of the base instead of accepting chest pressure.',
+        'Use the opponent’s reaction to choose between sweeps, wrestle-ups, or leg entries.'
+      ],
+      commonGoals: [
+        'Elevate into sweeps and off-balancing.',
+        'Win the underhook and come up into dogfight or a wrestle-up.',
+        'Recover a stronger half-guard angle if pressure gets heavy.',
+        'Enter Ashi Garami or Saddle when the weight backs away.'
+      ],
+      commonReactions: [
+        {
+          reaction: 'They drive pressure in',
+          cue: 'Heavy chest pressure usually opens the underhook side or creates dogfight timing.',
+          branches: ['Underhook Half Guard', 'Dogfight', 'Underhook To Come-Up Sweep']
+        },
+        {
+          reaction: 'They base wide or post a hand',
+          cue: 'Wide posting exposes off-balance and elevation routes before they can square back up.',
+          branches: ['Half Butterfly Sweep', 'Dogfight Sweep', 'Shoulder Crunch']
+        },
+        {
+          reaction: 'They posture back and sit heavy on the hips',
+          cue: 'A heavy seated posture usually slows the upper body enough to make leg-entry angles and underneath attacks more realistic.',
+          branches: ['Ashi Garami', 'Saddle', 'Straight Ankle Lock']
+        },
+        {
+          reaction: 'As they posture up to disengage, stand, or strip the butterfly hook, it lightens their hips',
+          cue: 'As the hips get lighter or the hook starts getting cleared, the route often shifts toward wrestle-ups, singles, or fast leg re-entry.',
+          branches: ['Single Leg', 'Wrestle-Up Single Leg Sweep', 'Ashi Garami']
+        }
+      ]
+    },
+    relatedPositions: ['Half Guard', 'Butterfly Guard', 'Dogfight', 'Underhook Half Guard', 'Ashi Garami', 'Saddle'],
     entriesIntoPosition: ['Half Guard', 'Butterfly Guard', 'Knee Shield Half Guard'],
-    commonAttacks: ['Half Butterfly Sweep', 'Underhook To Come-Up Sweep', 'Single Leg'],
-    commonTransitions: ['Dogfight', 'Butterfly Guard', 'Half Guard', 'Underhook Half Guard'],
-    commonFollowUps: ['Half Butterfly Sweep', 'Underhook To Come-Up Sweep', 'Dogfight Sweep', 'Wrestle-Up Single Leg Sweep'],
+    commonAttacks: ['Half Butterfly Sweep', 'Underhook To Come-Up Sweep', 'Single Leg', 'Ashi Garami'],
+    commonTransitions: ['Dogfight', 'Butterfly Guard', 'Half Guard', 'Underhook Half Guard', 'Ashi Garami', 'Saddle'],
+    commonFollowUps: ['Half Butterfly Sweep', 'Underhook To Come-Up Sweep', 'Dogfight Sweep', 'Wrestle-Up Single Leg Sweep', 'Ashi Garami', 'Saddle'],
     commonDefenses: ['Crossface and Underhook Control', 'Smash Pass', 'Backstep Pass']
   },
   {
@@ -1557,11 +1592,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['position', 'guard', 'connection'],
     description: 'A highly strategic guard where underhooks, frames, and leg positioning decide whether you are safe or flattened.',
-    relatedPositions: ['Knee Shield Half Guard', 'Deep Half Guard', 'Top Half Guard', 'Underhook Half Guard'],
+    relatedPositions: ['Knee Shield Half Guard', 'Deep Half Guard', 'Top Half Guard', 'Underhook Half Guard', 'Butterfly Half', 'Ashi Garami'],
     entriesIntoPosition: ['Re-Guarding', 'Closed Guard', 'Knee Shield Half Guard'],
     commonAttacks: ['Underhook To Come-Up Sweep', 'Dogfight Sweep', 'Kimura', 'Deep Half Waiter Sweep'],
-    commonTransitions: ['Knee Shield Half Guard', 'Deep Half Guard', 'Dogfight', 'Closed Guard', 'Butterfly Half', 'Underhook Half Guard'],
-    commonFollowUps: ['Dogfight Sweep', 'Underhook To Come-Up Sweep', 'Wrestle-Up Single Leg Sweep'],
+    commonTransitions: ['Knee Shield Half Guard', 'Deep Half Guard', 'Dogfight', 'Closed Guard', 'Butterfly Half', 'Underhook Half Guard', 'Ashi Garami'],
+    commonFollowUps: ['Dogfight Sweep', 'Underhook To Come-Up Sweep', 'Wrestle-Up Single Leg Sweep', 'Butterfly Half', 'Ashi Garami'],
     commonDefenses: ['Crossface and Underhook Control', 'Smash Pass', 'Knee Cut']
   },
   {
@@ -2144,9 +2179,9 @@ const curriculumIndexSeed = [
     description: 'A defensive bad position where framing, hip movement, and underhook timing decide whether guard can be recovered.',
     relatedPositions: ['Side Control', 'Turtle', 'Running Man'],
     entriesIntoPosition: ['Knee Cut', 'Leg Drag', 'North-South'],
-    commonAttacks: ['Frame And Shrimp', 'Underhook Escape', 'Ghost Escape'],
-    commonTransitions: ['Turtle', 'Re-Guarding', 'Running Man'],
-    commonFollowUps: ['Frame And Shrimp', 'Re-Guarding', 'Turn-To-Knees Escape'],
+    commonAttacks: ['Underhook Escape', 'Ghost Escape', 'Bridge And Turn-In'],
+    commonTransitions: ['Turtle', 'Re-Guarding', 'Running Man', 'Half Guard'],
+    commonFollowUps: ['Underhook Escape', 'Ghost Escape', 'Re-Guarding', 'Turn-To-Knees Escape'],
     commonDefenses: ['Crossface and Underhook Control', 'Underhook', 'Side Control Survival']
   },
   {
