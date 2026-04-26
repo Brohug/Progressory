@@ -60,6 +60,36 @@ const coachingScenarios = [
     }
   },
   {
+    label: 'I need safer leg-lock basics',
+    category: 'Leg locks',
+    focusName: 'Straight Ankle Lock',
+    description: 'Start with more teachable lower-body control and lower-risk routes before jumping into deeper heel-hook chains.',
+    filters: {
+      preferredStyle: 'legLocks',
+      legLockFamiliarity: 'learning',
+      riskTolerance: 'low',
+      weakArea: 'legLocks'
+    },
+    followUps: [
+      { label: 'Straight ankle lock', focusName: 'Straight Ankle Lock' },
+      { label: 'Kneebar', focusName: 'Kneebar' },
+      { label: 'Aoki lock', focusName: 'Aoki Lock' }
+    ]
+  },
+  {
+    label: 'I keep getting heel-hooked',
+    category: 'Leg locks',
+    focusName: 'Inside Heel Hook',
+    description: 'Bias toward defensive branches, knee-line awareness, and safer lower-body reactions.',
+    filters: {
+      preferredStyle: 'defense',
+      topBottom: 'bottom',
+      weakArea: 'legLocks',
+      legLockFamiliarity: 'avoid',
+      partnerStyle: 'legLocks'
+    }
+  },
+  {
     label: 'Improve standing exchanges',
     category: 'Standing and takedowns',
     focusName: 'Front Headlock',
@@ -358,7 +388,7 @@ const styleMatchers = {
   mobility: ['mobility', 'float', 'invert', 'berimbolo', 'scramble', 'granby', 'spin'],
   wrestling: ['wrestling', 'single leg', 'double leg', 'snap down', 'front headlock', 'dogfight', 'wrestle up'],
   frontHeadlock: ['front headlock', 'guillotine', 'anaconda', "d'arce", 'snap down', 'sprawl'],
-  legLocks: ['leg lock', 'heel hook', 'ashi', 'saddle', '50 50', 'kneebar', 'toe hold', 'aoki'],
+  legLocks: ['leg lock', 'heel hook', 'ashi', 'saddle', '50 50', 'kneebar', 'toe hold', 'aoki', 'estima', 'inside sankaku', 'backside 50 50', 'abe lock', 'lachy lock', 'mikey lock', 'junny lock'],
   backTakes: ['back take', 'back control', 'seatbelt', 'rear', 'crab ride', 'berimbolo'],
   submissions: ['submission', 'choke', 'armbar', 'kimura', 'triangle', 'finish'],
   escapes: ['escape', 'defense', 'retention', 'reguard', 'survival']
@@ -498,7 +528,7 @@ const fitProfiles = [
   {
     key: 'legLock',
     label: 'Leg-lock familiarity helps',
-    terms: ['leg lock', 'heel hook', 'ashi garami', 'outside ashi', 'cross ashi', 'reverse ashi', 'saddle', '50 50', 'kneebar', 'toe hold', 'aoki', 'estima'],
+    terms: ['leg lock', 'heel hook', 'ashi garami', 'outside ashi', 'cross ashi', 'reverse ashi', 'saddle', '50 50', 'kneebar', 'toe hold', 'aoki', 'estima', 'inside sankaku', 'backside 50 50', 'abe lock', 'lachy lock', 'mikey lock', 'junny lock'],
     applies: (entry) => !['Takedowns'].includes(entry?.category),
     matches: ({ filters }) => filters.legLockFamiliarity === 'learning' || filters.legLockFamiliarity === 'comfortable',
     caution: ({ filters }) => filters.legLockFamiliarity === 'avoid'
@@ -819,6 +849,28 @@ export default function DecisionTreePage() {
   ), []);
 
   const visibleBranchCount = branchGroups.reduce((count, group) => count + group.options.length, 0);
+
+  const topRecommendations = useMemo(() => {
+    const seen = new Set();
+
+    return branchGroups
+      .flatMap((group) => (
+        group.options.map((option) => ({
+          ...option,
+          sourceLabel: group.label,
+          sourceKey: group.key
+        }))
+      ))
+      .filter((option) => option.entry)
+      .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+      .filter((option) => {
+        const key = option.entry.id;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 6);
+  }, [branchGroups]);
 
   const applyCoachingScenario = (scenario) => {
     const scenarioFocus = entries.find((entry) => normalizeValue(entry.name) === normalizeValue(scenario.focusName));
@@ -1228,10 +1280,71 @@ export default function DecisionTreePage() {
             )}
           </div>
 
+          {topRecommendations.length > 0 ? (
+            <div className="decision-tree-top-recommendations">
+              <div className="decision-tree-section-heading">
+                <div>
+                  <h4>Best next moves</h4>
+                  <p className="meta-text">
+                    These are the strongest next branches from the current focus and filters.
+                  </p>
+                </div>
+              </div>
+
+              <div className="decision-tree-top-grid">
+                {topRecommendations.map((option) => (
+                  <article className="decision-tree-top-card" key={`top-${option.entry.id}`}>
+                    <div className="decision-tree-top-card-header">
+                      <div>
+                        <strong>{option.name}</strong>
+                        <span>{option.sourceLabel}</span>
+                      </div>
+                      <span className="curriculum-index-tag">
+                        {option.entry.category}
+                      </span>
+                    </div>
+
+                    <p className="meta-text">
+                      {option.reasons.join(' | ')}
+                    </p>
+
+                    {option.fitProfiles.length > 0 ? (
+                      <div className="decision-tree-fit-row">
+                        {option.fitProfiles.map((profile) => (
+                          <span
+                            key={`top-${option.entry.id}-${profile.key}`}
+                            className={`decision-tree-fit-chip${profile.isCaution ? ' is-caution' : ''}${profile.isMatch ? ' is-match' : ''}`}
+                          >
+                            {profile.label}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    <div className="inline-actions decision-tree-top-actions">
+                      <button type="button" className="secondary-button" onClick={() => selectFocusEntry(option.entry)}>
+                        Open in tree
+                      </button>
+                      <Link className="secondary-button" to={`/index?search=${encodeURIComponent(option.entry.name)}`}>
+                        View in Index
+                      </Link>
+                      <Link className="secondary-button" to={`/library?search=${encodeURIComponent(option.entry.name)}`}>
+                        Library
+                      </Link>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           <div className="decision-tree-branch-grid">
             {branchGroups.map((group) => (
               <div className="decision-tree-branch-group" key={group.key}>
-                <h4>{group.label}</h4>
+                <div className="decision-tree-branch-heading">
+                  <h4>{group.label}</h4>
+                  <span className="meta-text">{group.options.length} shown</span>
+                </div>
                 {group.options.length > 0 ? (
                   <ul className="card-list">
                     {group.options.map((option) => (

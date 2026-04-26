@@ -689,7 +689,7 @@ export default function LibraryPage() {
               <div>
                 <strong>Before Library can show resources, the topic must exist in this gym&apos;s Curriculum Index.</strong>
                 <p className="meta-text">
-                  The full Index gives you the master map, but Library only searches saved resources for this gym. If no video or note has been created yet, Library will correctly show nothing.
+                  The full Index gives you the master map, but Library only searches saved resources for this gym. If you arrive here from the Decision Tree and see nothing, the topic either has not been added to this gym yet or no video/note has been saved for it.
                 </p>
               </div>
               <div className="library-guide-steps">

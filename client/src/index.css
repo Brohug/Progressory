@@ -1828,6 +1828,48 @@ ul {
   gap: 16px;
 }
 
+.decision-tree-top-recommendations {
+  margin-bottom: 24px;
+}
+
+.decision-tree-top-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.decision-tree-top-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(17, 28, 54, 0.96), rgba(11, 19, 37, 0.96));
+}
+
+.decision-tree-top-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.decision-tree-top-card-header strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.decision-tree-top-card-header span:not(.curriculum-index-tag) {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.decision-tree-top-actions {
+  flex-wrap: wrap;
+}
+
 .decision-tree-branch-group {
   padding: 14px;
   border: 1px solid var(--border);
@@ -1835,8 +1877,16 @@ ul {
   background: rgba(15, 23, 42, 0.58);
 }
 
+.decision-tree-branch-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
 .decision-tree-branch-group h4 {
-  margin: 0 0 12px;
+  margin: 0;
 }
 
 .decision-tree-option {
