@@ -12,6 +12,8 @@ const relationshipGroups = [
   { key: 'relatedPositions', label: 'Related positions' }
 ];
 
+const defaultFocusId = '';
+
 const coachingScenarios = [
   {
     label: 'I need to pass guard',
@@ -22,7 +24,61 @@ const coachingScenarios = [
       preferredStyle: 'pressure',
       topBottom: 'top',
       weakArea: 'guardPassing'
-    }
+    },
+    guidedPrompts: [
+      {
+        question: 'Where are you struggling to pass?',
+        expandableLabel: 'Need more options?',
+        options: [
+          { label: 'Closed guard', description: 'Posture breaking and angle control usually matter first.', focusName: 'Closed Guard' },
+          { label: 'Half guard', description: 'Underhooks, flattening, and knee-line control usually decide the pass.', focusName: 'Half Guard' },
+          { label: 'Knee shield', description: 'You usually need angle changes and cleaner knee-line clearing here.', focusName: 'Knee Shield Half Guard' },
+          { label: 'Butterfly guard', description: 'Inside hooks and elevation timing are often the main issue.', focusName: 'Butterfly Guard' },
+          { label: 'Open guard', description: 'Distance, feet, and fast redirection usually matter most.', focusName: 'Open Guard' },
+          { label: 'De La Riva', description: 'Hook control and leg-pin passing usually become more important.', focusName: 'De La Riva' },
+          { label: 'Reverse De La Riva', description: 'Spin-under threats and backside exposure usually change the passing lane.', focusName: 'Reverse De La Riva', isExtended: true },
+          { label: 'Spider / lasso', description: 'Grip breaking and posture management usually matter more here.', focusName: 'Spider Guard', isExtended: true },
+          { label: 'Single-Leg X / leg entanglements', description: 'Base, balance, and leg-line awareness usually decide the pass.', focusName: 'Single-Leg X', isExtended: true },
+          { label: 'X-Guard', description: 'Base management and stepping angles usually matter most.', focusName: 'X-Guard', isExtended: true },
+          { label: 'Half Butterfly', description: 'Balance, pressure shifts, and hook-clearing usually shape the pass here.', focusName: 'Butterfly Half', isExtended: true },
+          { label: 'Reverse X / Reverse Ashi', description: 'Leg-line awareness and angle changes usually matter more here.', focusName: 'Reverse Ashi', isExtended: true },
+          { label: 'Waiter guard', description: 'Underneath balance and leg visibility usually decide the passing lane.', focusName: 'Waiter Guard', isExtended: true },
+          { label: 'Deep half guard', description: 'Hip weight, head position, and base direction usually matter most.', focusName: 'Deep Half Guard', isExtended: true },
+          { label: 'Seated guard', description: 'Distance, front-headlock threats, and wrestle-up entries usually shape the pass.', focusName: 'Seated Guard', isExtended: true },
+          { label: 'Collar-sleeve', description: 'Grips, angle management, and posture discipline usually become the issue.', focusName: 'Collar-Sleeve Guard', isExtended: true },
+          { label: 'Worm / lapel guard', description: 'Grip clearing and hip untangling usually matter more than speed alone.', focusName: 'Worm Guard', isExtended: true }
+        ]
+      },
+      {
+        question: 'What passing style fits you best right now?',
+        options: [
+          {
+            label: 'Pressure passing',
+            description: 'Best for compact or heavier players who like chest-to-chest control.',
+            focusName: 'Body Lock Pass',
+            filters: { preferredStyle: 'pressure', bodyType: 'larger', riskTolerance: 'low' }
+          },
+          {
+            label: 'Mobility passing',
+            description: 'Best for faster players who like circling, redirecting, and staying light.',
+            focusName: 'Toreando Pass',
+            filters: { preferredStyle: 'scrambles', bodyType: 'smaller', riskTolerance: 'medium' }
+          },
+          {
+            label: 'Leg pin passing',
+            description: 'Best for players who like stapling legs and winning angles before control.',
+            focusName: 'Leg Drag',
+            filters: { preferredStyle: 'pressure', riskTolerance: 'medium' }
+          },
+          {
+            label: 'Under / stack passing',
+            description: 'Best for players who like folding the hips and lifting the legs.',
+            focusName: 'Stack Pass',
+            filters: { preferredStyle: 'pressure', bodyType: 'compact', riskTolerance: 'low' }
+          }
+        ]
+      }
+    ]
   },
   {
     label: 'I am stuck under pressure',
@@ -121,7 +177,32 @@ const coachingScenarios = [
       preferredStyle: 'pressure',
       topBottom: 'top',
       riskTolerance: 'low'
-    }
+    },
+    guidedPrompts: [
+      {
+        question: 'How are they usually escaping your mount?',
+        options: [
+          {
+            label: 'Big bridge and roll',
+            description: 'Lower base and weight distribution usually need attention first.',
+            focusName: 'Low Mount',
+            filters: { preferredStyle: 'pressure', riskTolerance: 'low' }
+          },
+          {
+            label: 'Elbow-knee recovery',
+            description: 'Tighter upper-body trapping and higher control usually help more.',
+            focusName: 'Gift Wrap',
+            filters: { preferredStyle: 'pressure', riskTolerance: 'low' }
+          },
+          {
+            label: 'They turn and expose the back',
+            description: 'You likely need a cleaner route into technical mount and back control.',
+            focusName: 'Technical Mount',
+            filters: { preferredStyle: 'backTakes', topBottom: 'top', riskTolerance: 'medium' }
+          }
+        ]
+      }
+    ]
   },
   {
     label: 'Opponent turtles a lot',
@@ -186,7 +267,32 @@ const coachingScenarios = [
       preferredStyle: 'pressure',
       topBottom: 'top',
       riskTolerance: 'low'
-    }
+    },
+    guidedPrompts: [
+      {
+        question: 'What part of side control are you losing most often?',
+        options: [
+          {
+            label: 'They keep finding the underhook',
+            description: 'Upper-body pinning and head control usually need to win earlier.',
+            focusName: 'Crossface and Underhook Control',
+            filters: { preferredStyle: 'pressure', riskTolerance: 'low' }
+          },
+          {
+            label: 'They keep getting the knee back inside',
+            description: 'You may need a sharper transition before they fully reguard.',
+            focusName: 'Knee On Belly',
+            filters: { preferredStyle: 'pressure', riskTolerance: 'medium' }
+          },
+          {
+            label: 'They turn away and start turtling',
+            description: 'You likely need cleaner back-taking and ride-style follow-ups.',
+            focusName: 'Side Control To Back',
+            filters: { preferredStyle: 'backTakes', topBottom: 'top', riskTolerance: 'medium' }
+          }
+        ]
+      }
+    ]
   },
   {
     label: 'Build submission chains',
@@ -351,6 +457,269 @@ const normalizeValue = (value) => (
     .replace(/[^a-z0-9]+/g, ' ')
     .replace(/\s+/g, ' ')
 );
+
+const coachingScenarioGuidedPromptMap = {
+  [normalizeValue('I am stuck under pressure')]: [
+    {
+      question: 'Where are you getting pinned most often?',
+      options: [
+        { label: 'Bottom side control', description: 'Frame building, underhook timing, and reguarding usually decide the escape.', focusName: 'Bottom Side Control' },
+        { label: 'Bottom mount', description: 'Bridge timing, elbow-knee recovery, and top-leg traps usually matter most.', focusName: 'Bottom Mount' },
+        { label: 'Bottom north-south', description: 'Shoulder turns, hip movement, and turtle/recovery timing usually matter here.', focusName: 'Bottom North-South' },
+        { label: 'Bottom knee-on-belly', description: 'Distance management and catching the posting leg usually become the issue.', focusName: 'Bottom Knee-On-Belly' }
+      ]
+    }
+  ],
+  [normalizeValue('Build a back-take path')]: [
+    {
+      question: 'Where are you most often finding the back-take window?',
+      options: [
+        { label: 'Front headlock / snap-downs', description: 'Spin-behinds and ride-style follow-ups usually open first here.', focusName: 'Front Headlock' },
+        { label: 'Turtle reactions', description: 'Hooks, seatbelt control, and ride pressure usually shape the route.', focusName: 'Turtle' },
+        { label: 'Half guard / dogfight', description: 'Underhooks, come-ups, and backside exposure usually create the angle.', focusName: 'Dogfight' },
+        { label: 'Leg entanglements / inversion', description: 'Crab-ride exposure and backside transitions usually become available.', focusName: 'Crab Ride' }
+      ]
+    }
+  ],
+  [normalizeValue('Opponent is leg locking')]: [
+    {
+      question: 'Which leg-lock scenario is causing the problem most often?',
+      options: [
+        { label: 'Standard ashi / straight entanglements', description: 'Booting, clearing the knee line, and stripping grips usually matter first.', focusName: 'Ashi Garami' },
+        { label: '50/50', description: 'Hand fighting, heel hiding, and secondary-leg awareness usually become the priority.', focusName: '50/50' },
+        { label: 'Saddle / inside sankaku', description: 'Heel exposure and knee-line danger usually spike here.', focusName: 'Saddle' },
+        { label: 'Backside 50/50 / deep heel-hook chains', description: 'Rotation awareness and safer defensive reactions become more important.', focusName: 'Backside 50/50' }
+      ]
+    }
+  ],
+  [normalizeValue('I need safer leg-lock basics')]: [
+    {
+      question: 'Which lower-body lane feels safest to build first?',
+      options: [
+        { label: 'Straight ankle lock', description: 'Best if you want clean mechanics and lower-risk finishing habits first.', focusName: 'Straight Ankle Lock' },
+        { label: 'Kneebar', description: 'Best if you like extension-based finishes and strong top control links.', focusName: 'Kneebar' },
+        { label: 'Aoki lock', description: 'Best if you want to learn a rotational finish without diving straight into heel hooks.', focusName: 'Aoki Lock' },
+        { label: 'Ashi control first', description: 'Best if you want to build safer entanglement control before worrying about the finish.', focusName: 'Ashi Garami' }
+      ]
+    }
+  ],
+  [normalizeValue('I keep getting heel-hooked')]: [
+    {
+      question: 'Where are the heel-hook threats usually coming from?',
+      options: [
+        { label: 'Ashi garami', description: 'Knee-line awareness and heel hiding usually decide whether danger builds here.', focusName: 'Ashi Garami' },
+        { label: '50/50', description: 'Secondary-leg control and hand fighting usually matter more than speed alone.', focusName: '50/50' },
+        { label: 'Saddle / inside sankaku', description: 'This usually demands sharper rotation awareness and earlier defensive choices.', focusName: 'Saddle' },
+        { label: 'Backside 50/50', description: 'You usually need safer defensive reactions before the rotation gets too deep.', focusName: 'Backside 50/50' }
+      ]
+    }
+  ],
+  [normalizeValue('Improve standing exchanges')]: [
+    {
+      question: 'Which standing lane feels most natural to you right now?',
+      options: [
+        { label: 'Collar tie / snap-downs', description: 'Best if you like head control, snaps, and front-headlock reactions.', focusName: 'Collar Tie' },
+        { label: 'Underhooks / body lock', description: 'Best if you like pressure, connection, and staying chest-to-chest.', focusName: 'Body Lock Standing' },
+        { label: 'Russian tie / arm drags', description: 'Best if you like angles, off-balancing, and getting behind the opponent.', focusName: 'Russian Tie Standing' },
+        { label: 'Single-leg entries', description: 'Best if you like wrestling up and attacking the legs directly.', focusName: 'Single Leg Position' }
+      ]
+    }
+  ],
+  [normalizeValue('Beginner-safe path')]: [
+    {
+      question: 'What do you want the beginner-safe path to build first?',
+      options: [
+        { label: 'Closed guard basics', description: 'Good for posture, breaking balance, and simple sweep-submission connections.', focusName: 'Closed Guard' },
+        { label: 'Half guard survival', description: 'Good for frames, underhooks, and learning to recover or sweep without rushing.', focusName: 'Half Guard' },
+        { label: 'Side control stability', description: 'Good for learning top pressure and when to move before the escape starts.', focusName: 'Side Control' },
+        { label: 'Mount control', description: 'Good for simple top control, posture, and clean attack progression.', focusName: 'Mount' }
+      ]
+    }
+  ],
+  [normalizeValue('Opponent turtles a lot')]: [
+    {
+      question: 'What first contact do you usually get when they turtle?',
+      options: [
+        { label: 'Front headlock', description: 'Good if you usually catch the head and need better spin-behind or choke decisions.', focusName: 'Front Headlock' },
+        { label: 'Seatbelt / harness', description: 'Good if you are already climbing toward the back but need cleaner control.', focusName: 'Seatbelt' },
+        { label: 'Ride pressure', description: 'Good if you are flattening them but need better follow-ups into hooks or control.', focusName: 'Spiral Ride' },
+        { label: 'Scramble to the side', description: 'Good if the turtle exchange stays loose and timing-based.', focusName: 'Clock-Style Spin To Back' }
+      ]
+    }
+  ],
+  [normalizeValue('I play half guard')]: [
+    {
+      question: 'Which half-guard lane feels most like your game?',
+      options: [
+        { label: 'Underhook half guard', description: 'Best if you like coming up, dogfights, and wrestling-style pressure.', focusName: 'Underhook Half Guard' },
+        { label: 'Butterfly half', description: 'Best if you like elevating, framing, and changing the opponent’s base.', focusName: 'Butterfly Half' },
+        { label: 'Knee shield half guard', description: 'Best if you need more space, angle changes, and safer retention.', focusName: 'Knee Shield Half Guard' },
+        { label: 'Deep half / waiter routes', description: 'Best if you like getting underneath and turning the base.', focusName: 'Deep Half Guard' }
+      ]
+    }
+  ],
+  [normalizeValue('Improve guard retention')]: [
+    {
+      question: 'Where is your guard usually falling apart first?',
+      options: [
+        { label: 'Open guard distance', description: 'Feet, frames, and re-squaring usually need to win earlier here.', focusName: 'Open Guard' },
+        { label: 'Knee shield getting smashed', description: 'Hip line protection and replacing frames usually matter more here.', focusName: 'Knee Shield Half Guard' },
+        { label: 'Butterfly hooks getting cleared', description: 'Timing, elevation threats, and re-pummeling usually become the issue.', focusName: 'Butterfly Guard' },
+        { label: 'Seated guard getting run around', description: 'Distance, front-headlock awareness, and wrestle-up timing usually shape the recovery.', focusName: 'Seated Guard' }
+      ]
+    }
+  ],
+  [normalizeValue('I need more sweep options')]: [
+    {
+      question: 'Which guard do you want more sweep options from?',
+      expandableLabel: 'Need more guards?',
+      options: [
+        { label: 'Closed guard', description: 'Tilt, sit-up, and off-balancing options usually become the first layer here.', focusName: 'Closed Guard' },
+        { label: 'Half guard', description: 'Underhook, dogfight, waiter, and base-changing reactions usually matter most.', focusName: 'Half Guard' },
+        { label: 'Butterfly guard', description: 'Elevation timing and posting reactions usually decide the sweep family.', focusName: 'Butterfly Guard' },
+        { label: 'Open guard', description: 'Distance, posts, and wrestle-up opportunities usually shape the next branch.', focusName: 'Open Guard' },
+        { label: 'Spider guard', description: 'Grip control and angle breaking usually become the main off-balancing tools.', focusName: 'Spider Guard' },
+        { label: 'X-guard', description: 'Base loading and stand-up connections usually drive the sweep path.', focusName: 'X-Guard' },
+        { label: 'Deep half guard', description: 'Underneath loading and turning the hips usually create the sweep route.', focusName: 'Deep Half Guard', isExtended: true },
+        { label: 'Single-Leg X', description: 'Off-balancing and threatening the stand-up usually shape the finish.', focusName: 'Single-Leg X', isExtended: true },
+        { label: 'De La Riva', description: 'Ankle dumps, off-balancing, and backside threats usually become available.', focusName: 'De La Riva', isExtended: true },
+        { label: 'Butterfly half', description: 'Base shifts and elevation reactions usually make the path clearer here.', focusName: 'Butterfly Half', isExtended: true }
+      ]
+    }
+  ],
+  [normalizeValue('Build submission chains')]: [
+    {
+      question: 'Which submission family do you want to build from?',
+      options: [
+        { label: 'Triangle family', description: 'Good if you want angles, posture reactions, and armbar/omoplata links.', focusName: 'Triangle Choke' },
+        { label: 'Kimura family', description: 'Good if you want control-first attacks that often connect to top or back exposure.', focusName: 'Kimura' },
+        { label: 'Front headlock chokes', description: 'Good if you want guillotines, anaconda, and D’Arce-style chains.', focusName: 'Guillotine' },
+        { label: 'Back choke chains', description: 'Good if you want high-percentage finishing routes after back control is won.', focusName: 'Rear Naked Choke' }
+      ]
+    }
+  ],
+  [normalizeValue('Win scramble exchanges')]: [
+    {
+      question: 'Where do your scrambles usually start?',
+      options: [
+        { label: 'Dogfight / half guard', description: 'Good if you are already coming up and need better finishes or back routes.', focusName: 'Dogfight' },
+        { label: 'Turtle reactions', description: 'Good if the exchange gets loose and you need clearer stand-up or back-take choices.', focusName: 'Turtle' },
+        { label: 'Front headlock', description: 'Good if scramble wins usually come from snaps, spin-behinds, or choking pressure.', focusName: 'Front Headlock' },
+        { label: 'Single-leg battles', description: 'Good if you are usually winning or losing the angle off a leg attack.', focusName: 'Single Leg Position' }
+      ]
+    }
+  ],
+  [normalizeValue('Gi guard development')]: [
+    {
+      question: 'Which gi guard are you trying to build right now?',
+      options: [
+        { label: 'Spider guard', description: 'Best if you want sleeve control, off-balancing, and direct triangle/omoplata links.', focusName: 'Spider Guard' },
+        { label: 'Lasso guard', description: 'Best if you want stronger control and slower-breaking attack chains.', focusName: 'Lasso Guard' },
+        { label: 'Collar-sleeve guard', description: 'Best if you want a versatile grip-based hub with sweep and submission options.', focusName: 'Collar-Sleeve Guard' },
+        { label: 'Worm / lapel guard', description: 'Best if you want sticky control and off-balancing through lapel entanglement.', focusName: 'Worm Guard' }
+      ]
+    }
+  ],
+  [normalizeValue('Learn X-guard routes')]: [
+    {
+      question: 'Which X-guard lane do you want to understand better?',
+      options: [
+        { label: 'Classic X-guard sweeps', description: 'Best if you want technical stand-up, overhead, and base-breaking routes.', focusName: 'X-Guard' },
+        { label: 'Single-Leg X connections', description: 'Best if you want a tighter bridge between off-balancing and leg entries.', focusName: 'Single-Leg X' },
+        { label: 'Backside / leg-entanglement transitions', description: 'Best if you want to understand when X-guard opens the lower-body chain.', focusName: 'Backside 50/50' },
+        { label: 'Waiter-style underneath routes', description: 'Best if you like elevating and tipping the base from underneath.', focusName: 'Waiter Guard' }
+      ]
+    }
+  ],
+  [normalizeValue('I keep getting my guard passed')]: [
+    {
+      question: 'Which guard keeps getting passed first?',
+      expandableLabel: 'Need more guards?',
+      options: [
+        { label: 'Open guard', description: 'Distance and hip line protection usually need attention first.', focusName: 'Open Guard' },
+        { label: 'Half guard', description: 'Flattening pressure and underhook battles usually decide the problem.', focusName: 'Half Guard' },
+        { label: 'Knee shield', description: 'Space management and replacing frames usually matter most here.', focusName: 'Knee Shield Half Guard' },
+        { label: 'Butterfly guard', description: 'Hook pummeling and timing usually shape the recovery path.', focusName: 'Butterfly Guard' },
+        { label: 'Spider guard', description: 'Grip breaks and posture disruption usually become the first issue.', focusName: 'Spider Guard' },
+        { label: 'Seated guard', description: 'Distance, front-headlock awareness, and re-squaring usually matter most.', focusName: 'Seated Guard', isExtended: true },
+        { label: 'Collar-sleeve', description: 'Grip retention and angle recovery usually become the issue here.', focusName: 'Collar-Sleeve Guard', isExtended: true },
+        { label: 'De La Riva', description: 'Leg-pinning and backside exposure usually change the defensive problem.', focusName: 'De La Riva', isExtended: true }
+      ]
+    }
+  ],
+  [normalizeValue('I get stuck in closed guard')]: [
+    {
+      question: 'What usually stops your closed-guard pass first?',
+      options: [
+        { label: 'Posture keeps breaking', description: 'You likely need stronger posture discipline before the pass even starts.', focusName: 'Posture' },
+        { label: 'I cannot get the guard open', description: 'You likely need a clearer opening sequence and base position.', focusName: 'Combat Base' },
+        { label: 'They keep climbing attacks', description: 'You likely need safer top positioning before forcing the pass.', focusName: 'Closed Guard Top' },
+        { label: 'They force me forward into sweeps', description: 'You likely need better angle control and pressure direction first.', focusName: 'Double Under Pass' }
+      ]
+    }
+  ],
+  [normalizeValue('I can’t finish from the back')]: [
+    {
+      question: 'What part of the back finish is usually failing?',
+      options: [
+        { label: 'Hand fighting / grip wins', description: 'You likely need cleaner control before the choke becomes available.', focusName: 'Seatbelt' },
+        { label: 'I lose the control position', description: 'You likely need stronger hook or body-triangle management first.', focusName: 'Body Triangle Back Control' },
+        { label: 'They turn and escape the line', description: 'You likely need better transitions when the choke does not finish.', focusName: 'Technical Mount' },
+        { label: 'The choke mechanics stall out', description: 'You likely need a tighter finishing family to branch from.', focusName: 'Short Choke' }
+      ]
+    }
+  ],
+  [normalizeValue('I keep getting submitted')]: [
+    {
+      question: 'Where are you getting submitted most often?',
+      options: [
+        { label: 'Closed guard', description: 'Posture, hand fighting, and angle denial usually matter first.', focusName: 'Closed Guard' },
+        { label: 'Bottom side control', description: 'Frame priority and escape timing usually need to sharpen here.', focusName: 'Bottom Side Control' },
+        { label: 'Bottom mount', description: 'Bridge, elbow-knee recovery, and panic control usually matter most.', focusName: 'Bottom Mount' },
+        { label: 'Back control', description: 'Hand fighting and hook-removal sequencing usually become the issue.', focusName: 'Back Control' },
+        { label: 'Leg entanglements', description: 'Knee-line awareness and earlier defensive choices usually matter here.', focusName: 'Ashi Garami' }
+      ]
+    }
+  ],
+  [normalizeValue('I want better takedown entries')]: [
+    {
+      question: 'Which takedown lane fits you best right now?',
+      options: [
+        { label: 'Front headlock / snap-downs', description: 'Best if you like turning reactions into go-behinds and top control.', focusName: 'Front Headlock' },
+        { label: 'Body lock / clinch', description: 'Best if you like pressure, trips, and chest-to-chest control.', focusName: 'Body Lock Standing' },
+        { label: 'Single-leg entries', description: 'Best if you like level changes, angles, and wrestling finishes.', focusName: 'Single Leg Position' },
+        { label: 'Double-leg entries', description: 'Best if you like direct penetration and driving through the hips.', focusName: 'Double Leg Position' },
+        { label: 'Russian tie / angle entries', description: 'Best if you like drags, outside angles, and getting behind the arms.', focusName: 'Russian Tie Standing' }
+      ]
+    }
+  ],
+  [normalizeValue('I need safer submissions')]: [
+    {
+      question: 'Which control-first submission family fits you best?',
+      options: [
+        { label: 'Kimura family', description: 'Good if you want a submission that often leads to control, back takes, or top position.', focusName: 'Kimura' },
+        { label: 'Arm triangle family', description: 'Good if you prefer pressure-based finishes from stable top control.', focusName: 'Arm Triangle' },
+        { label: 'Back choke family', description: 'Good if you want high-percentage finishes after control is already won.', focusName: 'Rear Naked Choke' },
+        { label: 'Straight ankle family', description: 'Good if you want a simpler lower-body attack before deeper rotational entries.', focusName: 'Straight Ankle Lock' }
+      ]
+    }
+  ]
+};
+
+const escapeContinuationMap = {
+  [normalizeValue('Bridge And Turn-In')]: ['Half Guard', 'Underhook Half Guard', 'Dogfight', 'Open Guard'],
+  [normalizeValue('Underhook Escape')]: ['Underhook Half Guard', 'Dogfight', 'Single Leg Position', 'Half Guard'],
+  [normalizeValue('Ghost Escape')]: ['Turtle', 'Seated Guard', 'Single Leg Position', 'Open Guard'],
+  [normalizeValue('Running Escape')]: ['Running Man', 'Seated Guard', 'Open Guard'],
+  [normalizeValue('Reguard With Knee Inside')]: ['Half Guard', 'Open Guard', 'Butterfly Guard'],
+  [normalizeValue('Elbow Frame Recovery')]: ['Half Guard', 'Knee Shield Half Guard', 'Open Guard'],
+  [normalizeValue('Armbar Hitchhiker')]: ['Top Half Guard', 'Combat Base', 'Single Leg Position'],
+  [normalizeValue('Armbar Stacking Defense')]: ['Combat Base', 'Double Under Pass', 'Top Half Guard'],
+  [normalizeValue('Triangle Posture Escape')]: ['Combat Base', 'Double Under Pass', 'Top Half Guard'],
+  [normalizeValue('Triangle Escape With Hand Fighting/Angles')]: ['Combat Base', 'Double Under Pass', 'Top Half Guard'],
+  [normalizeValue('Shoulder Slide Escape')]: ['Closed Guard', 'Open Guard', 'Top Half Guard'],
+  [normalizeValue('Escape To Top Half')]: ['Top Half Guard', 'Knee On Belly', 'Mount']
+};
 
 const uniqueValues = (values) => (
   Array.from(new Set(values.filter(Boolean)))
@@ -882,9 +1251,10 @@ const scoreOption = ({ entry, groupKey, filters }) => {
 
 const findEntryByName = (entryMap, name) => entryMap.get(normalizeValue(name)) || null;
 
-const getFilteredBranches = ({ focusEntry, entryMap, filters }) => {
+const getFilteredBranches = ({ focusEntry, entryMap, filters, excludedEntryIds = [] }) => {
   const weakAreaStyles = filterConfig.weakArea[filters.weakArea] || [];
   const shouldShrink = Boolean(filters.weakArea);
+  const excludedIds = new Set(excludedEntryIds.filter(Boolean));
 
   return relationshipGroups.map((group) => {
     const values = uniqueValues(focusEntry[group.key] || []);
@@ -900,6 +1270,7 @@ const getFilteredBranches = ({ focusEntry, entryMap, filters }) => {
         };
       })
       .filter((option) => normalizeValue(option.name) !== normalizeValue(focusEntry.name))
+      .filter((option) => !option.entry || !excludedIds.has(option.entry.id))
       .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
 
     const filteredOptions = rankedOptions
@@ -925,17 +1296,101 @@ const getFilteredBranches = ({ focusEntry, entryMap, filters }) => {
   });
 };
 
+const isEscapeContinuationContext = ({ focusEntry, filters }) => {
+  if (!focusEntry) return false;
+
+  return [
+    'Escapes',
+    'Submission Defense',
+    'Guard Retention'
+  ].includes(focusEntry.category) || [
+    'escapes',
+    'guardRetention'
+  ].includes(filters.weakArea);
+};
+
+const getEscapeContinuationOptions = ({
+  focusEntry,
+  entryMap,
+  filters,
+  excludedEntryIds = []
+}) => {
+  if (!focusEntry) return [];
+
+  const excludedIds = new Set(excludedEntryIds.filter(Boolean));
+  const seededNames = escapeContinuationMap[normalizeValue(focusEntry.name)] || [];
+  const candidateNames = uniqueValues([
+    ...seededNames,
+    ...(focusEntry.commonFollowUps || []),
+    ...(focusEntry.commonTransitions || []),
+    ...(focusEntry.commonAttacks || []),
+    ...(focusEntry.relatedPositions || [])
+  ]);
+
+  return candidateNames
+    .map((name, index) => {
+      const entry = findEntryByName(entryMap, name);
+
+      if (!entry || entry.id === focusEntry.id || excludedIds.has(entry.id)) {
+        return null;
+      }
+
+      const text = getEntryText(entry);
+      let score = scoreOption({ entry, groupKey: 'commonFollowUps', filters });
+
+      if (index < seededNames.length) score += 8;
+      if (
+        text.includes('guard')
+        || text.includes('dogfight')
+        || text.includes('single leg')
+        || text.includes('wrestle up')
+        || text.includes('back control')
+        || text.includes('mount')
+        || text.includes('side control')
+        || text.includes('kimura')
+        || text.includes('triangle')
+      ) {
+        score += 3;
+      }
+
+      if (['Positions', 'Pins and Control', 'Back Takes', 'Submissions', 'Sweeps', 'Takedowns'].includes(entry.category)) {
+        score += 2;
+      }
+
+      return {
+        entry,
+        score,
+        reasons: [
+          'Built from the successful escape',
+          seededNames.includes(name) ? 'Common continuation from this reaction' : 'Connected next step'
+        ],
+        fitProfiles: getFitProfileMatches(entry, filters)
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score || a.entry.name.localeCompare(b.entry.name))
+    .slice(0, 4);
+};
+
 export default function DecisionTreePage() {
   const [search, setSearch] = useState('');
-  const [focusId, setFocusId] = useState('positions-closed-guard');
+  const [searchIsActive, setSearchIsActive] = useState(false);
+  const [focusId, setFocusId] = useState(defaultFocusId);
   const [history, setHistory] = useState([]);
+  const [decisionPath, setDecisionPath] = useState([]);
   const [filters, setFilters] = useState(defaultFilters);
   const [showFilters, setShowFilters] = useState(false);
   const [showPartnerContext, setShowPartnerContext] = useState(false);
   const [showSimulation, setShowSimulation] = useState(false);
   const [scenarioFeedback, setScenarioFeedback] = useState('');
-  const [pendingScenarioScroll, setPendingScenarioScroll] = useState(false);
+  const [pendingScrollTarget, setPendingScrollTarget] = useState('');
+  const [activeScenarioPrompt, setActiveScenarioPrompt] = useState(null);
+  const [expandedPromptKeys, setExpandedPromptKeys] = useState({});
+  const [showEscapeContinuation, setShowEscapeContinuation] = useState(false);
   const filtersSectionRef = useRef(null);
+  const scenarioPromptRef = useRef(null);
+  const treeBranchesRef = useRef(null);
+  const recommendationsRef = useRef(null);
 
   const entries = curriculumIndexSeed;
 
@@ -948,15 +1403,22 @@ export default function DecisionTreePage() {
   }, [entries]);
 
   const focusEntry = useMemo(() => (
-    entries.find((entry) => entry.id === focusId) || entries[0]
+    entries.find((entry) => entry.id === focusId) || null
   ), [entries, focusId]);
+  const decisionPathEntries = useMemo(
+    () => decisionPath
+      .map((id) => entries.find((entry) => entry.id === id))
+      .filter(Boolean),
+    [decisionPath, entries]
+  );
+  const previousPathEntryId = decisionPath.length > 1 ? decisionPath[decisionPath.length - 2] : null;
 
   const searchResults = useMemo(() => {
     const normalizedSearch = normalizeValue(search);
 
     if (!normalizedSearch) return [];
 
-    return entries
+    const rankedMatches = entries
       .filter((entry) => getEntryText(entry).includes(normalizedSearch))
       .sort((a, b) => {
         const aName = normalizeValue(a.name);
@@ -964,6 +1426,16 @@ export default function DecisionTreePage() {
         const aScore = aName === normalizedSearch ? 3 : aName.startsWith(normalizedSearch) ? 2 : 1;
         const bScore = bName === normalizedSearch ? 3 : bName.startsWith(normalizedSearch) ? 2 : 1;
         return bScore - aScore || a.name.localeCompare(b.name);
+      });
+
+    const seenNames = new Set();
+
+    return rankedMatches
+      .filter((entry) => {
+        const key = normalizeValue(entry.name);
+        if (seenNames.has(key)) return false;
+        seenNames.add(key);
+        return true;
       })
       .slice(0, 8);
   }, [entries, search]);
@@ -971,17 +1443,44 @@ export default function DecisionTreePage() {
   const activeStyleHints = useMemo(() => getSelectedStyleHints(filters), [filters]);
 
   const branchGroups = useMemo(() => (
-    getFilteredBranches({ focusEntry, entryMap, filters })
-  ), [focusEntry, entryMap, filters]);
+    focusEntry
+      ? getFilteredBranches({
+          focusEntry,
+          entryMap,
+          filters,
+          excludedEntryIds: [previousPathEntryId]
+        })
+      : relationshipGroups.map((group) => ({
+          ...group,
+          options: []
+        }))
+  ), [focusEntry, entryMap, filters, previousPathEntryId]);
+
+  const resolvedCoachingScenarios = useMemo(() => (
+    coachingScenarios.map((scenario) => {
+      if (scenario.guidedPrompts?.length) {
+        return scenario;
+      }
+
+      const mappedGuidedPrompts = coachingScenarioGuidedPromptMap[normalizeValue(scenario.label)];
+
+      return mappedGuidedPrompts?.length
+        ? {
+            ...scenario,
+            guidedPrompts: mappedGuidedPrompts
+          }
+        : scenario;
+    })
+  ), []);
 
   const groupedCoachingScenarios = useMemo(() => (
     coachingScenarioCategories
       .map((category) => ({
         category,
-        scenarios: coachingScenarios.filter((scenario) => scenario.category === category)
+        scenarios: resolvedCoachingScenarios.filter((scenario) => scenario.category === category)
       }))
       .filter((group) => group.scenarios.length > 0)
-  ), []);
+  ), [resolvedCoachingScenarios]);
 
   const visibleBranchCount = branchGroups.reduce((count, group) => count + group.options.length, 0);
   const activeFilterSummary = useMemo(
@@ -1009,7 +1508,7 @@ export default function DecisionTreePage() {
     ]),
     [filters]
   );
-  const focusDecisionTreeModel = focusEntry.decisionTreeModel || null;
+  const focusDecisionTreeModel = focusEntry?.decisionTreeModel || null;
   const focusReactionGroups = useMemo(() => {
     if (!focusDecisionTreeModel?.commonReactions?.length) return [];
 
@@ -1045,6 +1544,19 @@ export default function DecisionTreePage() {
       .slice(0, 6);
   }, [branchGroups]);
 
+  const escapeContinuationOptions = useMemo(() => (
+    getEscapeContinuationOptions({
+      focusEntry,
+      entryMap,
+      filters,
+      excludedEntryIds: decisionPath
+    })
+  ), [focusEntry, entryMap, filters, decisionPath]);
+
+  const showEscapeContinuationAction = useMemo(() => (
+    isEscapeContinuationContext({ focusEntry, filters }) && escapeContinuationOptions.length > 0
+  ), [focusEntry, filters, escapeContinuationOptions.length]);
+
   useEffect(() => {
     if (!scenarioFeedback) return undefined;
 
@@ -1056,41 +1568,106 @@ export default function DecisionTreePage() {
   }, [scenarioFeedback]);
 
   useEffect(() => {
-    if (!pendingScenarioScroll) return;
+    if (!pendingScrollTarget) return;
 
     const timeoutId = window.setTimeout(() => {
-      filtersSectionRef.current?.scrollIntoView({
+      const targetRef = pendingScrollTarget === 'filters'
+        ? filtersSectionRef
+        : pendingScrollTarget === 'prompt'
+          ? scenarioPromptRef
+        : pendingScrollTarget === 'recommendations' && topRecommendations.length > 0
+          ? recommendationsRef
+          : treeBranchesRef;
+
+      targetRef.current?.scrollIntoView({
         behavior: 'smooth',
         block: 'start'
       });
-      setPendingScenarioScroll(false);
+      setPendingScrollTarget('');
     }, 120);
 
     return () => window.clearTimeout(timeoutId);
-  }, [pendingScenarioScroll, focusEntry.id, topRecommendations.length, visibleBranchCount]);
+  }, [pendingScrollTarget, focusEntry?.id, topRecommendations.length, visibleBranchCount]);
 
-  const applyCoachingScenario = (scenario) => {
-    const scenarioFocus = entries.find((entry) => normalizeValue(entry.name) === normalizeValue(scenario.focusName));
-    const focusWasUpdated = scenarioFocus && scenarioFocus.id !== focusEntry.id;
+  const navigateToEntry = (entry, {
+    pathMode = 'append',
+    scrollTarget = '',
+    feedback = '',
+    closeSearch = false
+  } = {}) => {
+    if (!entry) return;
 
-    if (focusWasUpdated) {
-      setHistory((current) => [focusEntry, ...current].slice(0, 8));
-      setFocusId(scenarioFocus.id);
+    if (entry.id !== focusEntry?.id) {
+      setHistory((current) => (focusEntry ? [focusEntry, ...current].slice(0, 8) : current));
+      setFocusId(entry.id);
     }
 
-    setFilters({
-      ...defaultFilters,
-      ...scenario.filters
+    setShowEscapeContinuation(false);
+
+    setDecisionPath((current) => {
+      if (pathMode === 'reset') {
+        return [entry.id];
+      }
+
+      if (current[current.length - 1] === entry.id) {
+        return current;
+      }
+
+      return [...current, entry.id].slice(-8);
     });
-    setSearch('');
+
+    if (closeSearch) {
+      setSearch('');
+      setSearchIsActive(false);
+    }
+
+    if (feedback) {
+      setScenarioFeedback(feedback);
+    }
+
+    if (scrollTarget) {
+      setPendingScrollTarget(scrollTarget);
+    }
+  };
+
+  const applyScenarioSelection = (scenario, overrides = {}) => {
+    const scenarioFocus = entries.find((entry) => normalizeValue(entry.name) === normalizeValue(scenario.focusName));
+    const nextFilters = {
+      ...defaultFilters,
+      ...scenario.filters,
+      ...(overrides.filters || {})
+    };
+    const nextFocusName = overrides.focusName || scenario.focusName;
+    const nextFocus = entries.find((entry) => normalizeValue(entry.name) === normalizeValue(nextFocusName));
+
+    setFilters(nextFilters);
     setShowFilters(true);
-    setShowPartnerContext(Boolean(scenario.filters.partnerStyle));
-    setScenarioFeedback(
-      focusWasUpdated
-        ? `Applied "${scenario.label}". Focus moved to ${scenarioFocus.name}, matching filters were turned on, and the page jumped to Simple filters below.`
+    setShowPartnerContext(Boolean(nextFilters.partnerStyle));
+    navigateToEntry(nextFocus || scenarioFocus, {
+      pathMode: 'reset',
+      scrollTarget: 'filters',
+      closeSearch: true,
+      feedback: (nextFocus || scenarioFocus) && (nextFocus || scenarioFocus).id !== focusEntry?.id
+        ? `Applied "${scenario.label}". Focus moved to ${(nextFocus || scenarioFocus).name}, matching filters were turned on, and the page jumped to Simple filters below.`
         : `Applied "${scenario.label}". Matching filters were turned on and the page jumped to Simple filters below.`
-    );
-    setPendingScenarioScroll(true);
+    });
+  };
+
+  const applyCoachingScenario = (scenario) => {
+    if (scenario.guidedPrompts?.length) {
+      setActiveScenarioPrompt({
+        scenario,
+        stepIndex: 0,
+        selectedFilters: {},
+        selectedFocusName: scenario.focusName
+      });
+      setExpandedPromptKeys({});
+      setScenarioFeedback(`Working through "${scenario.label}". Answer the next question below to narrow the tree.`);
+      setPendingScrollTarget('prompt');
+      return;
+    }
+
+    applyScenarioSelection(scenario);
   };
 
   const applyScenarioFollowUp = (event, scenario, followUp) => {
@@ -1102,6 +1679,34 @@ export default function DecisionTreePage() {
     });
   };
 
+  const applyGuidedScenarioOption = (option) => {
+    if (!activeScenarioPrompt) return;
+
+    const nextFilters = {
+      ...activeScenarioPrompt.selectedFilters,
+      ...(option.filters || {})
+    };
+    const nextFocusName = option.focusName || activeScenarioPrompt.selectedFocusName;
+    const nextStepIndex = activeScenarioPrompt.stepIndex + 1;
+
+    if (nextStepIndex >= activeScenarioPrompt.scenario.guidedPrompts.length) {
+      setActiveScenarioPrompt(null);
+      setExpandedPromptKeys({});
+      applyScenarioSelection(activeScenarioPrompt.scenario, {
+        filters: nextFilters,
+        focusName: nextFocusName
+      });
+      return;
+    }
+
+    setActiveScenarioPrompt({
+      ...activeScenarioPrompt,
+      stepIndex: nextStepIndex,
+      selectedFilters: nextFilters,
+      selectedFocusName: nextFocusName
+    });
+  };
+
   const handleFilterChange = (key, value) => {
     setFilters((current) => ({
       ...current,
@@ -1109,11 +1714,8 @@ export default function DecisionTreePage() {
     }));
   };
 
-  const selectFocusEntry = (entry) => {
-    if (!entry || entry.id === focusEntry.id) return;
-    setHistory((current) => [focusEntry, ...current].slice(0, 8));
-    setFocusId(entry.id);
-    setSearch('');
+  const selectFocusEntry = (entry, options) => {
+    navigateToEntry(entry, options);
   };
 
   const goBack = () => {
@@ -1121,10 +1723,46 @@ export default function DecisionTreePage() {
     if (!previous) return;
     setFocusId(previous.id);
     setHistory(rest);
+    setDecisionPath((current) => (current.length > 1 ? current.slice(0, -1) : current));
+  };
+
+  const resetDecisionTree = () => {
+    setFocusId(defaultFocusId);
+    setHistory([]);
+    setDecisionPath([]);
+    setFilters(defaultFilters);
+    setShowFilters(false);
+    setShowPartnerContext(false);
+    setShowSimulation(false);
+    setSearch('');
+    setSearchIsActive(false);
+    setPendingScrollTarget('');
+    setActiveScenarioPrompt(null);
+    setExpandedPromptKeys({});
+    setShowEscapeContinuation(false);
+    setScenarioFeedback('Submission success logged. The decision tree has been reset for the next scenario.');
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  const resetStartPoint = () => {
+    setFocusId(defaultFocusId);
+    setHistory([]);
+    setDecisionPath([]);
+    setSearch('');
+    setSearchIsActive(false);
+    setPendingScrollTarget('');
+    setActiveScenarioPrompt(null);
+    setExpandedPromptKeys({});
+    setShowEscapeContinuation(false);
+    setScenarioFeedback('Start point cleared. Pick a new coaching problem or search the Index to begin again.');
   };
 
   const resetFilters = () => {
     setFilters(defaultFilters);
+    setScenarioFeedback('Filters reset. Your current tree path stayed in place.');
   };
 
   return (
@@ -1138,28 +1776,30 @@ export default function DecisionTreePage() {
         <section className="page-section decision-tree-hero">
           <div>
             <p className="meta-text">Current focus</p>
-            <h3>{focusEntry.name}</h3>
-            <p>{focusEntry.description || 'No description added yet.'}</p>
+            <h3>{focusEntry?.name || 'No start point selected yet'}</h3>
+            <p>{focusEntry?.description || 'Pick a coaching problem or search the Curriculum Index to start building a real path through the tree.'}</p>
             <div className="decision-tree-chip-row">
-              <span className="curriculum-index-tag">{focusEntry.category}</span>
-              {focusEntry.subcategory && <span className="curriculum-index-tag">{focusEntry.subcategory}</span>}
-              {focusEntry.skillLevel && <span className="curriculum-index-tag">{focusEntry.skillLevel}</span>}
+              {focusEntry?.category && <span className="curriculum-index-tag">{focusEntry.category}</span>}
+              {focusEntry?.subcategory && <span className="curriculum-index-tag">{focusEntry.subcategory}</span>}
+              {focusEntry?.skillLevel && <span className="curriculum-index-tag">{focusEntry.skillLevel}</span>}
             </div>
-            <div className="decision-tree-focus-links">
-              <Link className="secondary-button" to={`/index?search=${encodeURIComponent(focusEntry.name)}`}>
-                View in Index
-              </Link>
-              <Link className="secondary-button" to={`/library?search=${encodeURIComponent(focusEntry.name)}`}>
-                Find Library Resources
-              </Link>
-            </div>
+            {focusEntry ? (
+              <div className="decision-tree-focus-links">
+                <Link className="secondary-button" to={`/index?search=${encodeURIComponent(focusEntry.name)}`}>
+                  View in Index
+                </Link>
+                <Link className="secondary-button" to={`/library?search=${encodeURIComponent(focusEntry.name)}`}>
+                  Find Library Resources
+                </Link>
+              </div>
+            ) : null}
           </div>
           <div className="decision-tree-hero-actions">
             <button className="secondary-button" type="button" onClick={goBack} disabled={!history.length}>
               Back
             </button>
-            <button className="secondary-button" type="button" onClick={resetFilters}>
-              Reset filters
+            <button className="secondary-button" type="button" onClick={resetStartPoint}>
+              Reset start point
             </button>
           </div>
         </section>
@@ -1206,16 +1846,36 @@ export default function DecisionTreePage() {
           <input
             id="decision-tree-search"
             type="text"
+            autoComplete="new-password"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck={false}
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onFocus={() => setSearchIsActive(true)}
+            onBlur={() => {
+              window.setTimeout(() => setSearchIsActive(false), 120);
+            }}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setSearchIsActive(true);
+            }}
             placeholder="Search closed guard, knee cut, front headlock..."
           />
 
-          {searchResults.length > 0 && (
+          {searchIsActive && searchResults.length > 0 && (
             <ul className="card-list decision-tree-search-results">
               {searchResults.map((entry) => (
                 <li className="decision-tree-search-result" key={entry.id}>
-                  <button type="button" onClick={() => selectFocusEntry(entry)}>
+                  <button
+                    type="button"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => selectFocusEntry(entry, {
+                      pathMode: 'reset',
+                      scrollTarget: 'tree',
+                      closeSearch: true,
+                      feedback: `Focused on ${entry.name}. The page jumped to Tree branches below.`
+                    })}
+                  >
                     <strong>{entry.name}</strong>
                     <span>{entry.category}{entry.subcategory ? ` | ${entry.subcategory}` : ''}</span>
                   </button>
@@ -1281,6 +1941,56 @@ export default function DecisionTreePage() {
               </div>
             ))}
           </div>
+
+          {activeScenarioPrompt ? (
+            <div className="decision-tree-guided-prompt" ref={scenarioPromptRef}>
+              {(() => {
+                const prompt = activeScenarioPrompt.scenario.guidedPrompts[activeScenarioPrompt.stepIndex];
+                const promptKey = `${activeScenarioPrompt.scenario.label}-${activeScenarioPrompt.stepIndex}`;
+                const isExpanded = Boolean(expandedPromptKeys[promptKey]);
+                const visibleOptions = prompt.options.filter((option) => isExpanded || !option.isExtended);
+
+                return (
+                  <>
+              <div className="decision-tree-section-heading">
+                <div>
+                  <h4>{activeScenarioPrompt.scenario.label}</h4>
+                  <p className="meta-text">
+                    {prompt.question}
+                  </p>
+                </div>
+              </div>
+
+              <div className="decision-tree-guided-grid">
+                {visibleOptions.map((option) => (
+                  <button
+                    key={`${activeScenarioPrompt.scenario.label}-${option.label}`}
+                    type="button"
+                    className="decision-tree-guided-option"
+                    onClick={() => applyGuidedScenarioOption(option)}
+                  >
+                    <strong>{option.label}</strong>
+                    <span>{option.description}</span>
+                  </button>
+                ))}
+              </div>
+              {prompt.options.some((option) => option.isExtended) ? (
+                <button
+                  type="button"
+                  className="secondary-button decision-tree-guided-toggle"
+                  onClick={() => setExpandedPromptKeys((current) => ({
+                    ...current,
+                    [promptKey]: !isExpanded
+                  }))}
+                >
+                  {isExpanded ? 'Show fewer options' : prompt.expandableLabel || 'Need more options?'}
+                </button>
+              ) : null}
+                  </>
+                );
+              })()}
+            </div>
+          ) : null}
         </section>
 
         <section className={`page-section compact-form-shell decision-tree-collapsible-shell${showFilters ? ' is-open' : ''}`} ref={filtersSectionRef}>
@@ -1291,9 +2001,16 @@ export default function DecisionTreePage() {
                 These filters shrink and rank the answers. Open them when you want more specific suggestions.
               </p>
             </div>
-            <button className="secondary-button" type="button" onClick={() => setShowFilters((value) => !value)}>
-              {showFilters ? 'Hide filters' : 'Show filters'}
-            </button>
+            <div className="decision-tree-header-actions">
+              {showFilters ? (
+                <button className="secondary-button" type="button" onClick={resetFilters}>
+                  Reset filters
+                </button>
+              ) : null}
+              <button className="secondary-button" type="button" onClick={() => setShowFilters((value) => !value)}>
+                {showFilters ? 'Hide filters' : 'Show filters'}
+              </button>
+            </div>
           </div>
 
           {!showFilters ? (
@@ -1552,11 +2269,21 @@ export default function DecisionTreePage() {
           )}
         </section>
 
-        <section className="page-section decision-tree-branch-spotlight">
+        <section className="page-section decision-tree-branch-spotlight" ref={treeBranchesRef}>
           <div className="decision-tree-section-heading">
             <div>
               <span className="decision-tree-next-step">Next step</span>
               <h3>Tree branches</h3>
+              {decisionPathEntries.length > 0 ? (
+                <p className="decision-tree-path-text">
+                  Path: {decisionPathEntries.map((entry, index) => (
+                    <span key={`path-${entry.id}`}>
+                      {index > 0 ? ' -> ' : ''}
+                      {entry.name}
+                    </span>
+                  ))}
+                </p>
+              ) : null}
               <p className="meta-text">
                 Showing {visibleBranchCount} filtered options from the universal graph.
               </p>
@@ -1595,7 +2322,11 @@ export default function DecisionTreePage() {
                           key={`${reaction.reaction}-${option.id}`}
                           type="button"
                           className="secondary-button"
-                          onClick={() => selectFocusEntry(option)}
+                          onClick={() => selectFocusEntry(option, {
+                            pathMode: 'append',
+                            scrollTarget: 'recommendations',
+                            feedback: `Moved from ${focusEntry.name} to ${option.name}. Jumped to the next recommendation layer below.`
+                          })}
                         >
                           {option.name}
                         </button>
@@ -1607,8 +2338,12 @@ export default function DecisionTreePage() {
             </div>
           ) : null}
 
+          {!focusEntry ? (
+            <p className="empty-state">Choose a start point or coaching problem to begin building the tree.</p>
+          ) : null}
+
           {topRecommendations.length > 0 ? (
-            <div className="decision-tree-top-recommendations">
+            <div className="decision-tree-top-recommendations" ref={recommendationsRef}>
               <div className="decision-tree-section-heading">
                 <div>
                   <h4>Best next moves</h4>
@@ -1649,7 +2384,15 @@ export default function DecisionTreePage() {
                     ) : null}
 
                     <div className="inline-actions decision-tree-top-actions">
-                      <button type="button" className="secondary-button" onClick={() => selectFocusEntry(option.entry)}>
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => selectFocusEntry(option.entry, {
+                          pathMode: 'append',
+                          scrollTarget: 'recommendations',
+                          feedback: `Moved from ${focusEntry.name} to ${option.entry.name}. Jumped to the next recommendation layer below.`
+                        })}
+                      >
                         Open in tree
                       </button>
                       <Link className="secondary-button" to={`/index?search=${encodeURIComponent(option.entry.name)}`}>
@@ -1660,6 +2403,66 @@ export default function DecisionTreePage() {
                       </Link>
                     </div>
                   </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {focusEntry ? (
+            <div className="decision-tree-success-row">
+              {showEscapeContinuationAction ? (
+                <button
+                  className="secondary-button decision-tree-continuation-toggle"
+                  type="button"
+                  onClick={() => {
+                    setShowEscapeContinuation((value) => !value);
+                    setScenarioFeedback(
+                      showEscapeContinuation
+                        ? 'Closed the post-escape continuation panel.'
+                        : 'Escape worked. Showing likely next positions and attacks from here.'
+                    );
+                  }}
+                >
+                  {showEscapeContinuation ? 'Hide post-escape options' : 'Escape worked: what next?'}
+                </button>
+              ) : null}
+              <button className="success-button" type="button" onClick={resetDecisionTree}>
+                Submission success
+              </button>
+            </div>
+          ) : null}
+
+          {showEscapeContinuationAction && showEscapeContinuation ? (
+            <div className="decision-tree-guided-prompt decision-tree-continuation-panel">
+              <div className="decision-tree-section-heading">
+                <div>
+                  <h4>After the escape works</h4>
+                  <p className="meta-text">
+                    Turn the recovery into a safer guard, a scramble win, or a dominant follow-up that fits this exact escape.
+                  </p>
+                </div>
+              </div>
+
+              <div className="decision-tree-guided-grid">
+                {escapeContinuationOptions.map((option) => (
+                  <button
+                    key={`escape-continuation-${option.entry.id}`}
+                    type="button"
+                    className="decision-tree-guided-option"
+                    onClick={() => selectFocusEntry(option.entry, {
+                      pathMode: 'append',
+                      scrollTarget: 'recommendations',
+                      feedback: `Escape worked. Continue through ${option.entry.name} from here.`
+                    })}
+                  >
+                    <strong>{option.entry.name}</strong>
+                    <span>
+                      {option.entry.description}
+                    </span>
+                    <span className="decision-tree-reason-row">
+                      {option.reasons.join(' | ')}
+                    </span>
+                  </button>
                 ))}
               </div>
             </div>
@@ -1676,11 +2479,15 @@ export default function DecisionTreePage() {
                   <ul className="card-list">
                     {group.options.map((option) => (
                       <li className="decision-tree-option" key={`${group.key}-${option.name}`}>
-                        <button
-                          type="button"
-                          onClick={() => option.entry && selectFocusEntry(option.entry)}
-                          disabled={!option.entry}
-                        >
+                          <button
+                            type="button"
+                            onClick={() => option.entry && selectFocusEntry(option.entry, {
+                              pathMode: 'append',
+                              scrollTarget: 'recommendations',
+                              feedback: `Moved from ${focusEntry.name} to ${option.entry.name}. Jumped to the next recommendation layer below.`
+                            })}
+                            disabled={!option.entry}
+                          >
                           <strong>{option.name}</strong>
                           <span>
                             {option.entry

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import api from '../api/axios';
 import Layout from '../components/Layout';
 import { useAuth } from '../hooks/useAuth';
@@ -73,6 +73,16 @@ export default function ClassesPage() {
   const [error, setError] = useState('');
   const [guidedAttendanceClassId, setGuidedAttendanceClassId] = useState(null);
   const [readyForAttendanceClassIds, setReadyForAttendanceClassIds] = useState([]);
+
+  const workflowParams = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return {
+      workflow: params.get('workflow') || '',
+      classDate: params.get('classDate') || '',
+      openClassId: params.get('openClassId'),
+      shouldGuideAttendance: params.get('focus') === 'attendance'
+    };
+  }, [location.search]);
 
   const clearClassFeedback = (classId) => {
     setClassFeedbackMap((prev) => ({
@@ -241,8 +251,76 @@ export default function ClassesPage() {
     });
   }, [classSearch, sortedClasses]);
 
-  const visibleClasses = classSearch.trim()
-    ? filteredClasses
+  const getMembersForClass = useCallback((classItem) => {
+    const activeMembers = allMembers.filter((member) => member.is_active);
+
+    if (!classItem.program_id) {
+      return activeMembers;
+    }
+
+    const matchingMembers = activeMembers.filter((member) => {
+      return (
+        member.program_id === null ||
+        String(member.program_id) === String(classItem.program_id)
+      );
+    });
+
+    return matchingMembers.length > 0 ? matchingMembers : activeMembers;
+  }, [allMembers]);
+
+  const workflowFilteredClasses = useMemo(() => {
+    if (workflowParams.workflow === 'today-completed' && workflowParams.classDate) {
+      return filteredClasses.filter((classItem) => classItem.class_date === workflowParams.classDate);
+    }
+
+    if (workflowParams.workflow === 'attendance-ready' && workflowParams.classDate) {
+      return filteredClasses.filter((classItem) => {
+        if (classItem.class_date !== workflowParams.classDate) {
+          return false;
+        }
+
+        const eligibleMembers = getMembersForClass(classItem);
+        const recordedMembers = classMembersMap[classItem.id];
+        const loggedTopics = classTopicsMap[classItem.id];
+        const loggedTrainingEntries = classTrainingEntriesMap[classItem.id];
+
+        if (!recordedMembers) {
+          return true;
+        }
+
+        const isAttendanceComplete = eligibleMembers.length === 0
+          ? recordedMembers.length > 0
+          : recordedMembers.length >= eligibleMembers.length;
+
+        if (!loggedTopics || !loggedTrainingEntries) {
+          return !isAttendanceComplete;
+        }
+
+        const isClassLogComplete =
+          (isAttendanceComplete || eligibleMembers.length === 0) &&
+          (loggedTopics.length > 0 || loggedTrainingEntries.length > 0);
+
+        if (eligibleMembers.length === 0) {
+          return !isClassLogComplete;
+        }
+
+        return !isAttendanceComplete || !isClassLogComplete;
+      });
+    }
+
+    return filteredClasses;
+  }, [
+    classMembersMap,
+    classTopicsMap,
+    classTrainingEntriesMap,
+    filteredClasses,
+    getMembersForClass,
+    workflowParams.classDate,
+    workflowParams.workflow
+  ]);
+
+  const visibleClasses = classSearch.trim() || workflowParams.workflow === 'today-completed' || workflowParams.workflow === 'attendance-ready'
+    ? workflowFilteredClasses
     : showAllClasses
       ? sortedClasses
       : sortedClasses.slice(0, 20);
@@ -356,9 +434,7 @@ export default function ClassesPage() {
   }, [classTopicsMap, classTrainingEntriesMap, visibleClasses]);
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const openClassId = params.get('openClassId');
-    const shouldGuideAttendance = params.get('focus') === 'attendance';
+    const { openClassId, shouldGuideAttendance } = workflowParams;
 
     if (!openClassId) {
       return;
@@ -423,7 +499,33 @@ export default function ClassesPage() {
         cleanup();
       }
     };
-  }, [classes, location.search]);
+  }, [classes, workflowParams]);
+
+  useEffect(() => {
+    if (!workflowParams.workflow) {
+      return;
+    }
+
+    if (workflowParams.workflow === 'create-class') {
+      setShowCreateClassForm(true);
+      setClassMessage('Use New Class below to log a session that already happened but was never planned in the app.');
+      setShowAllClasses(false);
+      return;
+    }
+
+    if (workflowParams.workflow === 'today-completed' && workflowParams.classDate) {
+      setShowCreateClassForm(false);
+      setShowAllClasses(false);
+      setClassMessage('Showing only classes from this day so you can finish notes, topics, training entries, and attendance without extra clutter.');
+      return;
+    }
+
+    if (workflowParams.workflow === 'attendance-ready' && workflowParams.classDate) {
+      setShowCreateClassForm(false);
+      setShowAllClasses(false);
+      setClassMessage('Showing only today’s classes that still need attendance or final class details.');
+    }
+  }, [workflowParams]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -596,23 +698,6 @@ export default function ClassesPage() {
         )
       );
     });
-  };
-
-  const getMembersForClass = (classItem) => {
-    const activeMembers = allMembers.filter((member) => member.is_active);
-
-    if (!classItem.program_id) {
-      return activeMembers;
-    }
-
-    const matchingMembers = activeMembers.filter((member) => {
-      return (
-        member.program_id === null ||
-        String(member.program_id) === String(classItem.program_id)
-      );
-    });
-
-    return matchingMembers.length > 0 ? matchingMembers : activeMembers;
   };
 
   const getSuggestedTopicsForClass = (classItem) => {
@@ -792,6 +877,12 @@ export default function ClassesPage() {
     scrollToClassSection(`class-${nextActionTarget}-${classItem.id}`);
   };
 
+  const isTodayCompletedWorkflow = workflowParams.workflow === 'today-completed' && workflowParams.classDate;
+  const isAttendanceReadyWorkflow = workflowParams.workflow === 'attendance-ready' && workflowParams.classDate;
+  const workflowDateLabel = workflowParams.classDate
+    ? new Date(`${workflowParams.classDate}T12:00:00`).toLocaleDateString()
+    : '';
+
   return (
       <Layout>
         <h2 className="page-title">Classes</h2>
@@ -817,6 +908,26 @@ export default function ClassesPage() {
             </button>
           </div>
         </section>
+
+        {workflowParams.workflow ? (
+          <section className="page-section" style={{ maxWidth: '760px' }}>
+            <div className="section-header">
+              <div>
+                <h3 style={{ marginBottom: 0 }}>Workflow view</h3>
+                <p className="section-note" style={{ marginBottom: 0 }}>
+                  {isTodayCompletedWorkflow
+                    ? `You are viewing only completed classes from ${workflowDateLabel}.`
+                    : isAttendanceReadyWorkflow
+                      ? `You are viewing only classes from ${workflowDateLabel} that still need attendance or final class logging.`
+                    : 'You are in a focused coach workflow view.'}
+                </p>
+              </div>
+              <Link className="secondary-button" to="/classes">
+                Clear workflow view
+              </Link>
+            </div>
+          </section>
+        ) : null}
 
         {showCreateClassForm ? (
         <section className="page-section" style={{ maxWidth: '760px' }}>
@@ -926,13 +1037,18 @@ export default function ClassesPage() {
               type="search"
               value={classSearch}
               onChange={(e) => setClassSearch(e.target.value)}
-              placeholder="Search classes, programs, coach, or date"
+              placeholder={
+                isTodayCompletedWorkflow || isAttendanceReadyWorkflow
+                  ? 'Search today’s classes, programs, coach, or date'
+                  : 'Search classes, programs, coach, or date'
+              }
               aria-label="Search classes"
               style={{ minWidth: '280px' }}
             />
             <button
               className="secondary-button"
               onClick={() => setShowAllClasses((prev) => !prev)}
+              disabled={isTodayCompletedWorkflow || isAttendanceReadyWorkflow}
             >
               {showAllClasses ? 'Show Recent 20 Classes' : 'Show Older Classes'}
             </button>
@@ -943,7 +1059,11 @@ export default function ClassesPage() {
           <p className="empty-state">Loading classes...</p>
         ) : visibleClasses.length === 0 ? (
           <p className="empty-state">
-            {classSearch.trim() ? 'No classes match those filters yet.' : 'No classes have been added yet.'}
+            {classSearch.trim()
+              ? 'No classes match those filters yet.'
+              : isTodayCompletedWorkflow || isAttendanceReadyWorkflow
+                ? 'No completed classes were found for that day yet. Use New Class if you need to log an unplanned session.'
+                : 'No classes have been added yet.'}
           </p>
         ) : (
           <ul className="card-list">

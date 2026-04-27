@@ -364,6 +364,24 @@ a.secondary-button:focus-visible {
   color: white;
 }
 
+.success-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #15803d;
+  color: white;
+  font-weight: 700;
+  transition: background 0.15s ease, transform 0.05s ease, opacity 0.15s ease;
+}
+
+.success-button:hover {
+  background: #16a34a;
+}
+
 .danger-button {
   background: var(--danger);
   color: white;
@@ -576,6 +594,13 @@ a.secondary-button:focus-visible {
 
 .compact-form-header .section-note {
   margin-bottom: 0;
+}
+
+.decision-tree-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .class-workflow-status {
@@ -816,6 +841,22 @@ a.secondary-button:focus-visible {
 
 .dashboard-cta-section {
   margin-top: 6px;
+}
+
+.dashboard-onboarding-section,
+.dashboard-queue-section {
+  margin-top: 6px;
+}
+
+.dashboard-queue-card {
+  min-height: 166px;
+}
+
+.dashboard-queue-value {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #f8fafc;
 }
 
 .planned-classes-page .stats-grid {
@@ -1780,6 +1821,57 @@ a.secondary-button:focus-visible {
   gap: 20px;
 }
 
+.decision-tree-guided-prompt {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(10, 20, 40, 0.94), rgba(9, 16, 30, 0.98)),
+    rgba(15, 23, 42, 0.84);
+}
+
+.decision-tree-guided-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.decision-tree-guided-option {
+  display: grid;
+  gap: 8px;
+  min-height: 110px;
+  padding: 14px;
+  text-align: left;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.6);
+  color: var(--text);
+}
+
+.decision-tree-guided-option:hover,
+.decision-tree-guided-option:focus-visible {
+  border-color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.decision-tree-guided-option strong {
+  color: #f8fafc;
+  font-size: 15px;
+}
+
+.decision-tree-guided-option span {
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.decision-tree-guided-toggle {
+  justify-self: start;
+}
+
 .decision-tree-scenario-group {
   display: grid;
   gap: 10px;
@@ -1931,6 +2023,13 @@ a.secondary-button:focus-visible {
   text-transform: uppercase;
 }
 
+.decision-tree-path-text {
+  margin: 8px 0 0;
+  color: #bae6fd;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .decision-tree-branch-callout {
   margin: 10px 0 0;
   max-width: 760px;
@@ -1970,6 +2069,35 @@ a.secondary-button:focus-visible {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
+}
+
+.decision-tree-success-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.decision-tree-continuation-toggle {
+  border-color: rgba(56, 189, 248, 0.34);
+  background: rgba(8, 47, 73, 0.34);
+  color: #e0f2fe;
+}
+
+.decision-tree-continuation-toggle:hover,
+.decision-tree-continuation-toggle:focus-visible {
+  border-color: var(--accent);
+  background: rgba(14, 116, 144, 0.28);
+}
+
+.decision-tree-continuation-panel {
+  margin-bottom: 20px;
+}
+
+.decision-tree-guided-option .decision-tree-reason-row {
+  color: var(--accent);
+  font-size: 12px;
 }
 
 .decision-tree-top-card {

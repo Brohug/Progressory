@@ -4,6 +4,14 @@ import api from '../api/axios';
 import Layout from '../components/Layout';
 import { formatLabel } from '../utils/formatLabel';
 
+const getLocalIsoDate = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = `${now.getMonth() + 1}`.padStart(2, '0');
+  const day = `${now.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function DashboardPage() {
   const [recentClasses, setRecentClasses] = useState([]);
   const [topicCoverage, setTopicCoverage] = useState([]);
@@ -11,6 +19,8 @@ export default function DashboardPage() {
   const [programs, setPrograms] = useState([]);
   const [topics, setTopics] = useState([]);
   const [classes, setClasses] = useState([]);
+  const [plannedClasses, setPlannedClasses] = useState([]);
+  const [libraryEntries, setLibraryEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -25,14 +35,18 @@ export default function DashboardPage() {
         trainingMethodUsageRes,
         programsRes,
         topicsRes,
-        classesRes
+        classesRes,
+        plannedClassesRes,
+        libraryEntriesRes
       ] = await Promise.all([
         api.get('/reports/recent-classes?limit=5'),
         api.get('/reports/topic-coverage'),
         api.get('/reports/training-method-usage'),
         api.get('/programs'),
         api.get('/topics'),
-        api.get('/classes')
+        api.get('/classes'),
+        api.get('/planned-classes'),
+        api.get('/library')
       ]);
 
       setRecentClasses(recentClassesRes.data);
@@ -41,6 +55,8 @@ export default function DashboardPage() {
       setPrograms(programsRes.data);
       setTopics(topicsRes.data);
       setClasses(classesRes.data);
+      setPlannedClasses(plannedClassesRes.data);
+      setLibraryEntries(libraryEntriesRes.data);
     } catch (err) {
       console.error('Load dashboard error:', err);
       setError(err.response?.data?.message || 'Couldn\'t load the dashboard right now.');
@@ -65,36 +81,92 @@ export default function DashboardPage() {
     }
   ];
 
+  const todayIsoDate = getLocalIsoDate();
+  const todayClassCount = classes.filter((classItem) => classItem.class_date === todayIsoDate).length;
+  const todayPlannedCount = plannedClasses.filter((classItem) => classItem.class_date === todayIsoDate).length;
+  const unlinkedLibraryCount = libraryEntries.filter((entry) => entry.is_active && !entry.curriculum_topic_id).length;
   const quickActions = [
     {
-      title: 'Classes',
-      description: 'Log classes, attendance, topics, and training entries.',
-      to: '/classes'
+      title: 'Need to plan a class?',
+      description: 'Go straight to Planned Classes to build the next session before it gets missed.',
+      to: '/planned-classes'
     },
     {
-      title: 'Members',
-      description: 'Manage member records and track progression.',
-      to: '/members'
+      title: 'Finished a class?',
+      description: todayClassCount > 0
+        ? `Open only today’s ${todayClassCount} completed class${todayClassCount === 1 ? '' : 'es'} so you can finish topics, notes, and attendance fast.`
+        : 'Open today’s completed-class view so you can log topics, notes, and attendance without digging through older sessions.',
+      to: `/classes?workflow=today-completed&classDate=${todayIsoDate}`
     },
     {
-      title: 'Programs',
-      description: 'Organize curriculum tracks and active programs.',
-      to: '/programs'
+      title: 'Need to log an unplanned class?',
+      description: 'Jump into Completed Classes with the New Class form already open for anything that happened off-plan.',
+      to: '/classes?workflow=create-class'
     },
     {
-      title: 'Topics',
-      description: 'Maintain positions, techniques, and curriculum structure.',
-      to: '/topics'
+      title: 'Need reusable scenarios?',
+      description: 'Open Training Scenarios to build class templates you can keep pulling into future sessions.',
+      to: '/training-scenarios'
     },
     {
-      title: 'Library',
-      description: 'Open internal resources, notes, and video references.',
+      title: 'Need to organize your topics for your curriculum?',
+      description: 'Go to Curriculum Index when you need to add topics first so classes, Library, and the Tree stay connected.',
+      to: '/index'
+    },
+    {
+      title: 'Need a teaching resource?',
+      description: 'Open Library to save coach notes, video links, and topic-linked references for later reuse.',
       to: '/library'
     },
     {
-      title: 'Reports',
-      description: 'Review trends, underused topics, and teaching patterns.',
-      to: '/reports'
+      title: 'Need to take attendance?',
+      description: 'Open only today’s classes that still need attendance so coaches can finish class admin fast.',
+      to: `/classes?workflow=attendance-ready&classDate=${todayIsoDate}`
+    }
+  ];
+
+  const firstTimeSteps = [
+    {
+      title: '1. Add curriculum topics',
+      description: 'Start in Curriculum Index so your classes, Library, and Decision Tree all point to the same topic structure.',
+      to: '/index'
+    },
+    {
+      title: '2. Plan your next class',
+      description: 'Build the next session in Planned Classes so coaches know what is supposed to happen before class starts.',
+      to: '/planned-classes'
+    },
+    {
+      title: '3. Finish class admin after training',
+      description: 'Use Completed Classes to log what happened, add attendance, and keep progress clean.',
+      to: `/classes?workflow=today-completed&classDate=${todayIsoDate}`
+    }
+  ];
+
+  const coachingQueue = [
+    {
+      title: 'Plan today’s classes',
+      value: todayPlannedCount,
+      description: todayPlannedCount > 0
+        ? `${todayPlannedCount} planned class${todayPlannedCount === 1 ? '' : 'es'} are scheduled for today.`
+        : 'No planned classes are scheduled for today yet.',
+      to: '/planned-classes'
+    },
+    {
+      title: 'Finish class attendance',
+      value: todayClassCount,
+      description: todayClassCount > 0
+        ? `${todayClassCount} completed class${todayClassCount === 1 ? '' : 'es'} happened today and may still need attendance or notes.`
+        : 'No completed classes are on today’s date yet.',
+      to: `/classes?workflow=attendance-ready&classDate=${todayIsoDate}`
+    },
+    {
+      title: 'Library items needing topics',
+      value: unlinkedLibraryCount,
+      description: unlinkedLibraryCount > 0
+        ? `${unlinkedLibraryCount} library entr${unlinkedLibraryCount === 1 ? 'y still needs a topic link.' : 'ies still need topic links.'}`
+        : 'All active library entries are linked to topics right now.',
+      to: '/library?needsTopic=true'
     }
   ];
 
@@ -111,7 +183,7 @@ export default function DashboardPage() {
       <div className="dashboard-page">
         <h2 className="page-title">Dashboard</h2>
         <p className="page-intro">
-          Start by adding your topics and members, then plan classes, log attendance, and build out Library resources as your gym grows.
+          Use this page like a coach workflow. Pick the next job you need to handle, jump there directly, and keep the day moving without hunting through the app.
         </p>
 
         {error && <p className="error-text">{error}</p>}
@@ -124,7 +196,7 @@ export default function DashboardPage() {
               <div className="section-header">
                 <div>
                   <h3>Quick Actions</h3>
-                  <p className="section-note">Jump into the area you want to work in next.</p>
+                  <p className="section-note">Use these as your next-step guide instead of a second navigation menu.</p>
                 </div>
               </div>
               <div className="action-grid">
@@ -143,6 +215,29 @@ export default function DashboardPage() {
               </div>
             </section>
 
+            <section className="page-section dashboard-onboarding-section">
+              <div className="section-header">
+                <div>
+                  <h3>Start Here</h3>
+                  <p className="section-note">Use this if you are setting up the gym or onboarding a coach for the first time.</p>
+                </div>
+              </div>
+              <div className="action-grid">
+                {firstTimeSteps.map((step) => (
+                  <Link
+                    key={step.title}
+                    to={step.to}
+                    className="action-card dashboard-action-card"
+                  >
+                    <strong>{step.title}</strong>
+                    <div className="detail-block">
+                      <div className="meta-text">{step.description}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
             <section className="stats-grid dashboard-stats-grid">
               {summaryCards.map((card) => (
                 <div key={card.label} className="stat-card">
@@ -150,6 +245,26 @@ export default function DashboardPage() {
                   <div className="stat-value">{card.value}</div>
                 </div>
               ))}
+            </section>
+
+            <section className="page-section dashboard-queue-section">
+              <div className="section-header">
+                <div>
+                  <h3>Today’s Coaching Queue</h3>
+                  <p className="section-note">These are the fastest next-step actions for keeping the gym day clean and current.</p>
+                </div>
+              </div>
+              <div className="action-grid">
+                {coachingQueue.map((item) => (
+                  <Link key={item.title} to={item.to} className="action-card dashboard-action-card dashboard-queue-card">
+                    <strong>{item.title}</strong>
+                    <div className="dashboard-queue-value">{item.value}</div>
+                    <div className="detail-block">
+                      <div className="meta-text">{item.description}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </section>
 
             <section className="page-section dashboard-primary-section">
