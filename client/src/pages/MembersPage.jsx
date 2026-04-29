@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api/axios';
+import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 import MemberProgressForm from '../components/MemberProgressForm';
 import { formatLabel } from '../utils/formatLabel';
@@ -27,6 +29,7 @@ export default function MembersPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [memberMessage, setMemberMessage] = useState('');
 
   const fetchMembers = async () => {
     const response = await api.get('/members');
@@ -78,6 +81,7 @@ export default function MembersPage() {
     e.preventDefault();
     setSubmitting(true);
     setError('');
+    setMemberMessage('');
 
     try {
       const payload = {
@@ -99,6 +103,7 @@ export default function MembersPage() {
       });
 
       await fetchMembers();
+      setMemberMessage('Member saved successfully.');
     } catch (err) {
       console.error('Create member error:', err);
       setError(err.response?.data?.message || 'Couldn\'t create that member just now.');
@@ -355,12 +360,34 @@ export default function MembersPage() {
               </div>
             </form>
           )}
+
+          {memberMessage ? (
+            <div className="success-followup-row">
+              <p className="success-text" style={{ marginBottom: 0 }}>{memberMessage}</p>
+              <Link className="secondary-button" to="/classes?workflow=attendance-ready">
+                Next: Record attendance
+              </Link>
+            </div>
+          ) : null}
         </div>
       </section>
 
       {error && <p className="error-text">{error}</p>}
 
-      <section className="page-section">
+      <ExpandableSection
+        title="Member List"
+        note="Expand this when you are ready to review member details, progress, or inactive students."
+        summary={`${orderedMembers.length} member${orderedMembers.length === 1 ? '' : 's'} available in the current view.`}
+        actions={(
+          <button
+            className="secondary-button"
+            onClick={() => setShowInactive((prev) => !prev)}
+            type="button"
+          >
+            {showInactive ? 'Hide Inactive Members' : 'Show Inactive Members'}
+          </button>
+        )}
+      >
         <div
           style={{
             display: 'flex',
@@ -371,12 +398,6 @@ export default function MembersPage() {
           }}
         >
           <h3 style={{ marginBottom: 0 }}>Member List</h3>
-          <button
-            className="secondary-button"
-            onClick={() => setShowInactive((prev) => !prev)}
-          >
-            {showInactive ? 'Hide Inactive Members' : 'Show Inactive Members'}
-          </button>
         </div>
 
         {loading ? (
@@ -620,7 +641,7 @@ export default function MembersPage() {
             ))}
           </ul>
         )}
-      </section>
+      </ExpandableSection>
     </Layout>
   );
 }

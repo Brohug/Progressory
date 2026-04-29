@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
+import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 import { formatLabel } from '../utils/formatLabel';
 
@@ -89,13 +90,13 @@ export default function ReportsPage() {
               ))}
             </section>
 
-            <section className="page-section reports-priority-section">
-              <div className="section-header">
-                <div>
-                  <h3>Unused / Underutilized Topics</h3>
-                  <p className="section-note">Topics that have not shown up recently and may be worth revisiting in upcoming classes.</p>
-                </div>
-              </div>
+            <ExpandableSection
+              title="Unused / Underutilized Topics"
+              note="Topics that have not shown up recently and may be worth revisiting in upcoming classes."
+              summary="Expand when you want to spot topics that are falling out of the teaching rotation."
+              className="reports-priority-section"
+              defaultOpen
+            >
               {neglectedTopics.length === 0 ? (
                 <p className="empty-state">No underused topics showed up in this time range.</p>
               ) : (
@@ -117,16 +118,15 @@ export default function ReportsPage() {
                   ))}
                 </div>
               )}
-            </section>
+            </ExpandableSection>
 
             <section className="two-column-grid reports-insights-grid">
-              <div className="page-section reports-ranked-section">
-                <div className="section-header">
-                  <div>
-                    <h3>Training Method Usage</h3>
-                    <p className="section-note">How often each training method appears in logged class segments.</p>
-                  </div>
-                </div>
+              <ExpandableSection
+                title="Training Method Usage"
+                note="How often each training method appears in logged class segments."
+                summary="Expand when you want to compare which training methods are getting the most use."
+                className="reports-ranked-section"
+              >
                 {topMethods.length === 0 ? (
                   <p className="empty-state">No training method usage has been logged yet.</p>
                 ) : (
@@ -146,15 +146,14 @@ export default function ReportsPage() {
                     ))}
                   </div>
                 )}
-              </div>
+              </ExpandableSection>
 
-              <div className="page-section reports-ranked-section">
-                <div className="section-header">
-                  <div>
-                    <h3>Top Topic Coverage</h3>
-                    <p className="section-note">The most-used topics ranked by how often they appear in classes.</p>
-                  </div>
-                </div>
+              <ExpandableSection
+                title="Top Topic Coverage"
+                note="The most-used topics ranked by how often they appear in classes."
+                summary="Expand when you want to see which topics dominate the current teaching mix."
+                className="reports-ranked-section"
+              >
                 {topTopics.length === 0 ? (
                   <p className="empty-state">No topic coverage has been logged yet.</p>
                 ) : (
@@ -176,16 +175,15 @@ export default function ReportsPage() {
                     ))}
                   </div>
                 )}
-              </div>
+              </ExpandableSection>
             </section>
 
-            <section className="page-section reports-activity-section">
-              <div className="section-header">
-                <div>
-                  <h3>Recent Classes</h3>
-                  <p className="section-note">The most recent classes included in this reporting view.</p>
-                </div>
-              </div>
+            <ExpandableSection
+              title="Recent Classes"
+              note="The most recent classes included in this reporting view."
+              summary="Expand when you want to connect the reporting signals back to actual recent sessions."
+              className="reports-activity-section"
+            >
               {recentClasses.length === 0 ? (
                 <p className="empty-state">No recent classes to show yet.</p>
               ) : (
@@ -209,7 +207,7 @@ export default function ReportsPage() {
                   ))}
                 </div>
               )}
-            </section>
+            </ExpandableSection>
           </>
         )}
       </div>

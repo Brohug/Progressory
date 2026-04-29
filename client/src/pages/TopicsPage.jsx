@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import api from '../api/axios';
 import Layout from '../components/Layout';
+import ExpandableSection from '../components/ExpandableSection';
 import { formatLabel } from '../utils/formatLabel';
 import TopicSearchSelect from '../components/TopicSearchSelect';
 
@@ -180,8 +181,12 @@ export default function TopicsPage() {
     <Layout>
       <h2 className="page-title">Topics</h2>
 
-      <section className="page-section" style={{ maxWidth: '760px' }}>
-        <h3>Create Topic</h3>
+      <ExpandableSection
+        title="Create Topic"
+        note="Add new topics only when you are ready to build out more of the curriculum."
+        summary="Keep this collapsed until you want to add a new topic to the curriculum."
+        className="topics-create-section"
+      >
 
         <form className="form-grid" onSubmit={handleSubmit}>
           <div>
@@ -253,23 +258,24 @@ export default function TopicsPage() {
             </button>
           </div>
         </form>
-      </section>
+      </ExpandableSection>
 
       {error && <p className="error-text">{error}</p>}
 
-      <section className="page-section">
-        <div className="section-header">
-          <div>
-            <h3>Topic List</h3>
-            <p className="section-note">Search and filter your curriculum as the topic library grows.</p>
-          </div>
+      <ExpandableSection
+        title="Topic List"
+        note="Search and filter your curriculum as the topic library grows."
+        summary="Expand this when you want to search, filter, or review the current topic library."
+        defaultOpen
+        actions={(
           <button
             className="secondary-button"
             onClick={() => setShowInactive((prev) => !prev)}
           >
             {showInactive ? 'Hide Inactive Topics' : 'Show Inactive Topics'}
           </button>
-        </div>
+        )}
+      >
 
         <div className="filter-grid">
           <div>
@@ -355,7 +361,7 @@ export default function TopicsPage() {
             ))}
           </ul>
         )}
-      </section>
+      </ExpandableSection>
     </Layout>
   );
 }

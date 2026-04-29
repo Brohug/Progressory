@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import api from '../api/axios';
+import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 
 export default function ProgramsPage() {
@@ -209,7 +210,20 @@ export default function ProgramsPage() {
 
       {error && <p className="error-text">{error}</p>}
 
-      <section className="page-section">
+      <ExpandableSection
+        title="Program List"
+        note="Review active tracks by default, then expand this section when you need to manage names, descriptions, or inactive programs."
+        summary={`${orderedPrograms.length} program${orderedPrograms.length === 1 ? '' : 's'} ready to review.`}
+        actions={(
+          <button
+            className="secondary-button"
+            onClick={() => setShowInactive((prev) => !prev)}
+            type="button"
+          >
+            {showInactive ? 'Hide Inactive Programs' : 'Show Inactive Programs'}
+          </button>
+        )}
+      >
         <div
           style={{
             display: 'flex',
@@ -220,12 +234,6 @@ export default function ProgramsPage() {
           }}
         >
           <h3 style={{ marginBottom: 0 }}>Program List</h3>
-          <button
-            className="secondary-button"
-            onClick={() => setShowInactive((prev) => !prev)}
-          >
-            {showInactive ? 'Hide Inactive Programs' : 'Show Inactive Programs'}
-          </button>
         </div>
 
         {loading ? (
@@ -350,7 +358,7 @@ export default function ProgramsPage() {
             ))}
           </ul>
         )}
-      </section>
+      </ExpandableSection>
     </Layout>
   );
 }

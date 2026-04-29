@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../api/axios';
+import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 import { useAuth } from '../hooks/useAuth';
 import ClassTopicsForm from '../components/ClassTopicsForm';
@@ -273,12 +274,8 @@ export default function ClassesPage() {
       return filteredClasses.filter((classItem) => classItem.class_date === workflowParams.classDate);
     }
 
-    if (workflowParams.workflow === 'attendance-ready' && workflowParams.classDate) {
+    if (workflowParams.workflow === 'attendance-ready') {
       return filteredClasses.filter((classItem) => {
-        if (classItem.class_date !== workflowParams.classDate) {
-          return false;
-        }
-
         const eligibleMembers = getMembersForClass(classItem);
         const recordedMembers = classMembersMap[classItem.id];
         const loggedTopics = classTopicsMap[classItem.id];
@@ -520,10 +517,10 @@ export default function ClassesPage() {
       return;
     }
 
-    if (workflowParams.workflow === 'attendance-ready' && workflowParams.classDate) {
+    if (workflowParams.workflow === 'attendance-ready') {
       setShowCreateClassForm(false);
       setShowAllClasses(false);
-      setClassMessage('Showing only today’s classes that still need attendance or final class details.');
+      setClassMessage('Showing classes that still need attendance or final class details.');
     }
   }, [workflowParams]);
 
@@ -878,7 +875,7 @@ export default function ClassesPage() {
   };
 
   const isTodayCompletedWorkflow = workflowParams.workflow === 'today-completed' && workflowParams.classDate;
-  const isAttendanceReadyWorkflow = workflowParams.workflow === 'attendance-ready' && workflowParams.classDate;
+  const isAttendanceReadyWorkflow = workflowParams.workflow === 'attendance-ready';
   const workflowDateLabel = workflowParams.classDate
     ? new Date(`${workflowParams.classDate}T12:00:00`).toLocaleDateString()
     : '';
@@ -918,7 +915,7 @@ export default function ClassesPage() {
                   {isTodayCompletedWorkflow
                     ? `You are viewing only completed classes from ${workflowDateLabel}.`
                     : isAttendanceReadyWorkflow
-                      ? `You are viewing only classes from ${workflowDateLabel} that still need attendance or final class logging.`
+                      ? 'You are viewing classes that still need attendance or final class logging.'
                     : 'You are in a focused coach workflow view.'}
                 </p>
               </div>
@@ -1014,7 +1011,14 @@ export default function ClassesPage() {
         {error && <p className="error-text">{error}</p>}
       </section>
       ) : null}
-      <section className="page-section">
+      <ExpandableSection
+        title="Class List"
+        note="Expand this when you are ready to review completed classes, open workflow items, or search older class logs."
+        summary={`${visibleClasses.length} class${visibleClasses.length === 1 ? '' : 'es'} in the current view.`}
+        className="classes-list-section"
+        defaultOpen={isAttendanceReadyWorkflow}
+      >
+      <section className="page-section" style={{ padding: 0, marginBottom: 0, border: 'none', boxShadow: 'none', background: 'transparent' }}>
         <div
           style={{
             display: 'flex',
@@ -1550,6 +1554,7 @@ export default function ClassesPage() {
           </p>
         )}
       </section>
+      </ExpandableSection>
     </Layout>
   );
 }

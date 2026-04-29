@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 import TopicSearchSelect from '../components/TopicSearchSelect';
 import { useAuth } from '../hooks/useAuth';
@@ -132,6 +133,7 @@ export default function PlannedClassesPage() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [lastSavedPlannedClassDate, setLastSavedPlannedClassDate] = useState('');
   const [editingPlannedClassId, setEditingPlannedClassId] = useState(null);
   const [showPlanForm, setShowPlanForm] = useState(true);
   const [expandedPlannedClassDetailsMap, setExpandedPlannedClassDetailsMap] = useState({});
@@ -424,6 +426,7 @@ export default function PlannedClassesPage() {
     setEditingPlannedClassId(null);
     setSelectedTopicId('');
     setSelectedTopicIds([]);
+    setLastSavedPlannedClassDate('');
     setShowQuickAdd(false);
     setQuickAddData({
       title: '',
@@ -602,6 +605,7 @@ export default function PlannedClassesPage() {
     setSubmitting(true);
     setError('');
     setMessage('');
+    setLastSavedPlannedClassDate('');
 
     try {
       const payload = {
@@ -617,6 +621,7 @@ export default function PlannedClassesPage() {
         await api.post('/planned-classes', payload);
         setMessage('Planned class created successfully.');
       }
+      setLastSavedPlannedClassDate(payload.class_date);
 
       const processedResult = await processDuePlannedClasses();
       resetForm();
@@ -1077,13 +1082,31 @@ export default function PlannedClassesPage() {
             </div>
           </form>
 
-          {message ? <p className="success-text">{message}</p> : null}
+          {message ? (
+            <div className="success-followup-row">
+              <p className="success-text">{message}</p>
+              {lastSavedPlannedClassDate ? (
+                <Link
+                  className="secondary-button"
+                  to={`/classes?workflow=today-completed&classDate=${encodeURIComponent(lastSavedPlannedClassDate)}`}
+                >
+                  Next: Finished a class?
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
           {error ? <p className="error-text">{error}</p> : null}
           </>
           ) : null}
         </section>
 
-        <section ref={plansSectionRef} className="page-section">
+        <ExpandableSection
+          title="Upcoming planned classes"
+          note="Review what is coming up, make quick edits, or complete a plan once class is finished."
+          summary={`${plannedClasses.length} planned class${plannedClasses.length === 1 ? '' : 'es'} currently loaded.`}
+          className="planned-classes-results-section"
+        >
+          <section ref={plansSectionRef} className="page-section" style={{ padding: 0, marginBottom: 0, border: 'none', boxShadow: 'none', background: 'transparent' }}>
           <div className="section-header">
             <div>
               <h3>Upcoming planned classes</h3>
@@ -1316,7 +1339,8 @@ export default function PlannedClassesPage() {
               </div>
             ))
           ) : null}
-        </section>
+          </section>
+        </ExpandableSection>
       </div>
     </Layout>
   );

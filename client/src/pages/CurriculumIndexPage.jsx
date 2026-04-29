@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
+import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 import TopicSearchSelect from '../components/TopicSearchSelect';
 import curriculumIndexSeed from '../data/curriculumIndexSeed';
@@ -630,7 +631,12 @@ export default function CurriculumIndexPage() {
           </div>
         </section>
 
-        <section className="page-section">
+        <ExpandableSection
+          title="Index results"
+          note="Use this as both a curriculum reference layer and the first place to add operational topics when they do not exist yet."
+          summary={`${filteredEntries.length} matching index item${filteredEntries.length === 1 ? '' : 's'} in the current view.`}
+          className="curriculum-index-results-section"
+        >
           <div className="section-header">
             <div>
               <h3>Index results</h3>
@@ -1046,7 +1052,7 @@ export default function CurriculumIndexPage() {
               ))}
             </div>
           )}
-        </section>
+        </ExpandableSection>
       </div>
     </Layout>
   );

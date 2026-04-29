@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
+import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 import { formatSentenceLabel } from '../utils/formatLabel';
 import TopicSearchSelect from '../components/TopicSearchSelect';
@@ -43,6 +44,7 @@ export default function LibraryPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [lastSavedTopicTitle, setLastSavedTopicTitle] = useState('');
 
   const entryTypes = ['technique', 'concept', 'drill', 'cla_game', 'video_note'];
   const visibilityOptions = ['coach_only', 'member_visible'];
@@ -324,6 +326,7 @@ export default function LibraryPage() {
     setSubmitting(true);
     setError('');
     setSuccessMessage('');
+    setLastSavedTopicTitle('');
 
     try {
       const payload = {
@@ -352,6 +355,9 @@ export default function LibraryPage() {
 
       await fetchEntries();
       setSuccessMessage('Library entry saved successfully.');
+      setLastSavedTopicTitle(
+        availableTopics.find((topic) => String(topic.id) === String(formData.curriculum_topic_id))?.title || ''
+      );
     } catch (err) {
       console.error('Create library entry error:', err);
       setError(err.response?.data?.message || 'Couldn\'t create that library entry just now.');
@@ -488,8 +494,13 @@ export default function LibraryPage() {
     <Layout>
       <h2 className="page-title">Library</h2>
 
-      <section className="page-section" style={{ maxWidth: '760px' }}>
-        <div className="compact-form-shell">
+      <ExpandableSection
+        title="Create Library Entry"
+        note="Add a teaching resource, video note, or reference and only open the full form when you are ready to log it."
+        summary="Expand this when you want to add a video, note, or teaching resource to the library."
+        className="library-create-section"
+      >
+        <div>
           <div className="compact-form-header">
             <div>
               <h3>Create Library Entry</h3>
@@ -647,17 +658,32 @@ export default function LibraryPage() {
 
               {successMessage ? (
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <p className="success-text" style={{ marginBottom: 0 }}>{successMessage}</p>
+                  <div className="success-followup-row">
+                    <p className="success-text" style={{ marginBottom: 0 }}>{successMessage}</p>
+                    {lastSavedTopicTitle ? (
+                      <Link
+                        className="secondary-button"
+                        to={`/index?search=${encodeURIComponent(lastSavedTopicTitle)}`}
+                      >
+                        Next: View linked topic
+                      </Link>
+                    ) : null}
+                  </div>
                 </div>
               ) : null}
             </form>
           )}
         </div>
-      </section>
+      </ExpandableSection>
 
       {error && <p className="error-text">{error}</p>}
 
-      <section className="page-section">
+      <ExpandableSection
+        title="Find the right resource fast"
+        note="Search by title, topic, program, description, or resource type, then narrow the list with quick filters."
+        summary={`${filteredEntries.length} matching librar${filteredEntries.length === 1 ? 'y entry' : 'y entries'} in the current view.`}
+        className="library-filters-section"
+      >
         <div className="summary-grid" style={{ marginBottom: '16px' }}>
           {summaryCards.map((card) => (
             <div key={card.label} className="summary-card">
@@ -820,7 +846,23 @@ export default function LibraryPage() {
             </div>
           ) : null}
         </div>
+      </ExpandableSection>
 
+      <ExpandableSection
+        title="Library Entries"
+        note="Expand this when you want to review saved resources, edit them, or work through inactive entries."
+        summary={`${filteredEntries.length} librar${filteredEntries.length === 1 ? 'y entry' : 'y entries'} in the current results.`}
+        className="library-entries-section"
+        actions={(
+          <button
+            className="secondary-button"
+            onClick={() => setShowInactive((prev) => !prev)}
+            type="button"
+          >
+            {showInactive ? 'Hide Inactive Entries' : 'Show Inactive Entries'}
+          </button>
+        )}
+      >
         <div
           style={{
             display: 'flex',
@@ -831,12 +873,6 @@ export default function LibraryPage() {
           }}
         >
           <h3 style={{ marginBottom: 0 }}>Library Entries</h3>
-          <button
-            className="secondary-button"
-            onClick={() => setShowInactive((prev) => !prev)}
-          >
-            {showInactive ? 'Hide Inactive Entries' : 'Show Inactive Entries'}
-          </button>
         </div>
 
         {loading ? (
@@ -1102,7 +1138,7 @@ export default function LibraryPage() {
             ))}
           </ul>
         )}
-      </section>
+      </ExpandableSection>
     </Layout>
   );
 }

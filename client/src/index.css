@@ -187,6 +187,71 @@ ul {
   justify-content: flex-end;
 }
 
+.app-guidance-row {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 48px;
+  flex-wrap: nowrap;
+}
+
+.coach-next-step-bar {
+  flex: 1 1 auto;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.78), rgba(11, 18, 32, 0.94));
+}
+
+.coach-next-step-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.coach-next-step-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.coach-next-step-copy .eyebrow {
+  display: block;
+  margin: 0;
+}
+
+.coach-next-step-copy strong {
+  display: block;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.coach-next-step-copy p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 760px;
+}
+
+.coach-next-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.logout-row {
+  flex: 0 0 auto;
+  align-self: center;
+  margin-left: 24px;
+  padding-left: 12px;
+}
+
 .page-title {
   font-size: 28px;
   margin-bottom: 18px;
@@ -395,6 +460,18 @@ a.secondary-button:focus-visible {
   color: var(--success);
 }
 
+.success-followup-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.success-followup-row .success-text {
+  margin: 0;
+}
+
 .error-text {
   color: #f87171;
 }
@@ -601,6 +678,18 @@ a.secondary-button:focus-visible {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.expandable-section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.expandable-section h3 {
+  margin-bottom: 0;
 }
 
 .class-workflow-status {
@@ -813,6 +902,58 @@ a.secondary-button:focus-visible {
   padding: 22px;
 }
 
+.dashboard-guide-section {
+  margin-top: 6px;
+}
+
+.dashboard-guide-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: 16px;
+}
+
+.dashboard-guide-highlight,
+.dashboard-guide-steps {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 16px;
+}
+
+.dashboard-guide-highlight {
+  border: 1px solid rgba(56, 189, 248, 0.24);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(11, 18, 32, 0.96));
+}
+
+.dashboard-guide-highlight strong {
+  font-size: 1.1rem;
+  line-height: 1.45;
+}
+
+.dashboard-guide-highlight p {
+  margin: 0;
+}
+
+.dashboard-guide-steps {
+  border: 1px solid rgba(51, 65, 85, 0.72);
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.dashboard-guide-step {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(51, 65, 85, 0.72);
+  background: rgba(11, 18, 32, 0.66);
+}
+
+.dashboard-guide-step span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .dashboard-action-card,
 .dashboard-report-card {
   min-height: 148px;
@@ -848,6 +989,131 @@ a.secondary-button:focus-visible {
   margin-top: 6px;
 }
 
+.dashboard-extras-section {
+  margin-top: 6px;
+}
+
+.dashboard-onboarding-collapsed {
+  margin-top: 6px;
+}
+
+.dashboard-setup-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.9fr);
+  gap: 16px;
+}
+
+.dashboard-setup-progress {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.dashboard-setup-progress-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dashboard-setup-progress-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(30, 41, 59, 0.9);
+  overflow: hidden;
+}
+
+.dashboard-setup-progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #38bdf8, #22c55e);
+}
+
+.dashboard-setup-progress-checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.dashboard-setup-progress-item {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(51, 65, 85, 0.72);
+  background: rgba(11, 18, 32, 0.66);
+}
+
+.dashboard-setup-progress-item span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.dashboard-setup-progress-item.is-complete {
+  border-color: rgba(34, 197, 94, 0.28);
+  background: rgba(20, 83, 45, 0.24);
+}
+
+.dashboard-setup-card {
+  padding: 18px;
+  border: 1px solid rgba(34, 197, 94, 0.24);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(11, 18, 32, 0.96));
+}
+
+.dashboard-setup-current {
+  min-height: 188px;
+}
+
+.dashboard-setup-upcoming {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.dashboard-setup-list {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-setup-item {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid rgba(51, 65, 85, 0.72);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.56);
+  color: var(--text-primary);
+}
+
+.dashboard-setup-item:hover,
+.dashboard-setup-item:focus-visible {
+  border-color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.dashboard-setup-item span {
+  font-weight: 700;
+}
+
+.dashboard-setup-item small,
+.dashboard-setup-helper {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .dashboard-queue-card {
   min-height: 166px;
 }
@@ -857,6 +1123,35 @@ a.secondary-button:focus-visible {
   font-weight: 800;
   line-height: 1;
   color: #f8fafc;
+}
+
+.dashboard-extra-card {
+  min-height: 166px;
+}
+
+@media (max-width: 900px) {
+  .app-guidance-row,
+  .coach-next-step-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-guide-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .coach-next-step-actions {
+    justify-content: stretch;
+  }
+
+  .coach-next-step-actions .secondary-button {
+    width: 100%;
+  }
+
+  .dashboard-setup-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .planned-classes-page .stats-grid {

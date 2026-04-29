@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import api from '../api/axios';
+import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 
 export default function TrainingScenariosPage() {
@@ -391,7 +392,12 @@ export default function TrainingScenariosPage() {
           ))}
         </section>
 
-        <section className="page-section" style={{ maxWidth: '760px' }}>
+        <ExpandableSection
+          title="Create and reuse scenarios"
+          note="Build a scenario once, then reuse it later in Planned Classes and Completed Classes."
+          summary="Expand this when you are ready to build or edit reusable training scenarios."
+          className="scenarios-create-section"
+        >
           <div className="section-header">
             <div>
               <h3>Create and reuse scenarios</h3>
@@ -403,10 +409,9 @@ export default function TrainingScenariosPage() {
               {showCreateScenarioForm ? 'Hide New Scenario' : 'New Training Scenario'}
             </button>
           </div>
-        </section>
 
-        {showCreateScenarioForm ? (
-          <section className="page-section compact-form-shell" style={{ maxWidth: '760px' }}>
+          {showCreateScenarioForm ? (
+            <section className="page-section compact-form-shell training-scenario-form-shell" style={{ maxWidth: '760px' }}>
             <h3>Create Training Scenario</h3>
             <p className="section-note">
               Give coaches a reusable setup they can pull into planning or live class logs later.
@@ -534,10 +539,24 @@ export default function TrainingScenariosPage() {
 
             {scenarioMessage ? <p className="success-text">{scenarioMessage}</p> : null}
             {scenarioError ? <p className="error-text">{scenarioError}</p> : null}
-          </section>
-        ) : null}
+            </section>
+          ) : null}
+        </ExpandableSection>
 
-        <section className="page-section">
+        <ExpandableSection
+          title="Existing Training Scenarios"
+          note="These scenarios are ready to reuse in Planned Classes and Completed Classes."
+          summary={`${orderedScenarios.length} scenario${orderedScenarios.length === 1 ? '' : 's'} ready to review.`}
+          actions={(
+            <button
+              className="secondary-button"
+              onClick={() => setShowInactiveScenarios((prev) => !prev)}
+              type="button"
+            >
+              {showInactiveScenarios ? 'Hide Inactive Scenarios' : 'Show Inactive Scenarios'}
+            </button>
+          )}
+        >
           <div className="section-header">
             <div>
               <h3>Existing Training Scenarios</h3>
@@ -545,12 +564,6 @@ export default function TrainingScenariosPage() {
                 These scenarios are ready to reuse in Planned Classes and Completed Classes.
               </p>
             </div>
-            <button
-              className="secondary-button"
-              onClick={() => setShowInactiveScenarios((prev) => !prev)}
-            >
-              {showInactiveScenarios ? 'Hide Inactive Scenarios' : 'Show Inactive Scenarios'}
-            </button>
           </div>
 
           <p className="section-note" style={{ marginBottom: '14px' }}>
@@ -778,7 +791,7 @@ export default function TrainingScenariosPage() {
               ))}
             </ul>
           )}
-        </section>
+        </ExpandableSection>
       </div>
     </Layout>
   );
