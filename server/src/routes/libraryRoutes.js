@@ -9,12 +9,12 @@ const {
   deleteLibraryEntry
 } = require('../controllers/libraryController');
 
-const { protect } = require('../middleware/authMiddleware');
+const { protect, requireStaff } = require('../middleware/authMiddleware');
 
-router.post('/', protect, createLibraryEntry);
 router.get('/', protect, getLibraryEntries);
 router.get('/:id', protect, getLibraryEntryById);
-router.put('/:id', protect, updateLibraryEntry);
-router.delete('/:id', protect, deleteLibraryEntry);
+router.post('/', protect, requireStaff, createLibraryEntry);
+router.put('/:id', protect, requireStaff, updateLibraryEntry);
+router.delete('/:id', protect, requireStaff, deleteLibraryEntry);
 
 module.exports = router;

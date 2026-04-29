@@ -5,8 +5,11 @@ import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 import { formatSentenceLabel } from '../utils/formatLabel';
 import TopicSearchSelect from '../components/TopicSearchSelect';
+import { useAuth } from '../hooks/useAuth';
 
 export default function LibraryPage() {
+  const { user } = useAuth();
+  const isMember = user?.role === 'member';
   const [searchParams, setSearchParams] = useSearchParams();
   const [entries, setEntries] = useState([]);
   const [programs, setPrograms] = useState([]);
@@ -92,7 +95,11 @@ export default function LibraryPage() {
       try {
         setLoading(true);
         setError('');
-        await Promise.all([fetchEntries(), fetchPrograms(), fetchTopics()]);
+        if (isMember) {
+          await fetchEntries();
+        } else {
+          await Promise.all([fetchEntries(), fetchPrograms(), fetchTopics()]);
+        }
       } catch (err) {
         console.error('Load library page error:', err);
         setError(err.response?.data?.message || 'Couldn\'t load the library right now.');
@@ -102,7 +109,7 @@ export default function LibraryPage() {
     };
 
     loadPageData();
-  }, []);
+  }, [isMember]);
 
   useEffect(() => {
     const nextParams = new URLSearchParams();
@@ -475,6 +482,111 @@ export default function LibraryPage() {
     { label: 'Program', value: formSelectedProgram?.name || 'No program' },
     { label: 'Linked topic', value: formSelectedTopic?.title || 'No topic linked' }
   ]), [formData.entry_type, formData.visibility, formSelectedProgram, formSelectedTopic]);
+
+  if (isMember) {
+    return (
+      <Layout>
+        <h2 className="page-title">Library</h2>
+        <p className="page-intro">
+          Revisit the videos, notes, and teaching references your coaches have marked as member visible.
+        </p>
+
+        {error ? <p className="error-text">{error}</p> : null}
+
+        <ExpandableSection
+          title="Find Library Resources"
+          note="Search by title, topic, or resource type."
+          summary={`${filteredEntries.length} member-visible librar${filteredEntries.length === 1 ? 'y entry' : 'y entries'} available.`}
+          className="library-filters-section"
+          defaultOpen
+        >
+          <div className="form-grid">
+            <div>
+              <label>Search</label>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search the library..."
+              />
+            </div>
+
+            <div>
+              <label>Resource Type</label>
+              <select value={entryTypeFilter} onChange={(e) => setEntryTypeFilter(e.target.value)}>
+                <option value="">All resource types</option>
+                {entryTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {formatSentenceLabel(type)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label>Sort</label>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <option value="updated_desc">Recently updated</option>
+                <option value="created_desc">Recently created</option>
+                <option value="title_asc">Title A-Z</option>
+                <option value="category_asc">Category A-Z</option>
+              </select>
+            </div>
+          </div>
+        </ExpandableSection>
+
+        <ExpandableSection
+          title="Library Entries"
+          note="Open the resources your gym has shared with members."
+          summary={`${filteredEntries.length} librar${filteredEntries.length === 1 ? 'y entry' : 'y entries'} in the current results.`}
+          className="library-entries-section"
+          defaultOpen
+        >
+          {loading ? (
+            <p className="empty-state">Loading library...</p>
+          ) : filteredEntries.length === 0 ? (
+            <p className="empty-state">No member-visible library entries are available yet.</p>
+          ) : (
+            <ul className="card-list">
+              {filteredEntries.map((entry) => (
+                <li key={entry.id} className="card-item compact-topic-card">
+                  <div className="compact-topic-header">
+                    <div>
+                      <strong>{entry.title}</strong>
+                      <div className="library-card-chip-row">
+                        <span className="library-info-chip">{formatSentenceLabel(entry.entry_type)}</span>
+                        {entry.program_name ? (
+                          <span className="library-info-chip">{entry.program_name}</span>
+                        ) : null}
+                        {entry.topic_title ? (
+                          <span className="library-info-chip">{entry.topic_title}</span>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="detail-block">
+                    <div>{entry.description || 'No description added yet.'}</div>
+                  </div>
+                  <div className="inline-actions">
+                    {entry.video_url ? (
+                      <a className="library-resource-link" href={entry.video_url} target="_blank" rel="noreferrer">
+                        Open resource
+                      </a>
+                    ) : null}
+                    {entry.topic_title ? (
+                      <Link className="secondary-button" to={`/index?search=${encodeURIComponent(entry.topic_title)}`}>
+                        View topic in Index
+                      </Link>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </ExpandableSection>
+      </Layout>
+    );
+  }
 
   const getTopicsForProgram = (programId) => {
     const activeTopics = topics.filter((topic) => topic.is_active);

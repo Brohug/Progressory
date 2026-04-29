@@ -6,9 +6,9 @@ const {
   getMemberProgress
 } = require('../controllers/progressController');
 
-const { protect } = require('../middleware/authMiddleware');
+const { protect, requireStaff } = require('../middleware/authMiddleware');
 
-router.post('/', protect, createOrUpdateMemberProgress);
+router.post('/', protect, requireStaff, createOrUpdateMemberProgress);
 router.get('/', protect, getMemberProgress);
 
 module.exports = router;

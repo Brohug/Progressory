@@ -10,13 +10,13 @@ const {
   completePlannedClass
 } = require('../controllers/plannedClassController');
 
-const { protect } = require('../middleware/authMiddleware');
+const { protect, requireStaff } = require('../middleware/authMiddleware');
 
 router.get('/', protect, getPlannedClasses);
-router.post('/', protect, createPlannedClass);
-router.post('/process-due', protect, processDuePlannedClasses);
-router.put('/:id', protect, updatePlannedClass);
-router.delete('/:id', protect, deletePlannedClass);
-router.post('/:id/complete', protect, completePlannedClass);
+router.post('/', protect, requireStaff, createPlannedClass);
+router.post('/process-due', protect, requireStaff, processDuePlannedClasses);
+router.put('/:id', protect, requireStaff, updatePlannedClass);
+router.delete('/:id', protect, requireStaff, deletePlannedClass);
+router.post('/:id/complete', protect, requireStaff, completePlannedClass);
 
 module.exports = router;

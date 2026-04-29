@@ -119,6 +119,7 @@ const storeReadyForAttendanceIds = (classIds) => {
 
 export default function PlannedClassesPage() {
   const { user } = useAuth();
+  const isMember = user?.role === 'member';
   const navigate = useNavigate();
   const formSectionRef = useRef(null);
   const plansSectionRef = useRef(null);
@@ -240,6 +241,11 @@ export default function PlannedClassesPage() {
         setLoading(true);
         setError('');
 
+        if (isMember) {
+          await fetchPlannedClasses();
+          return;
+        }
+
         const processedResult = await processDuePlannedClasses();
 
         await Promise.all([
@@ -266,7 +272,7 @@ export default function PlannedClassesPage() {
     };
 
     loadPageData();
-  }, []);
+  }, [isMember]);
 
   useEffect(() => {
     if (user?.id) {
@@ -421,6 +427,99 @@ export default function PlannedClassesPage() {
     month: 'long',
     year: 'numeric'
   });
+
+  if (isMember) {
+    const memberVisiblePlannedClasses = plannedClasses.filter((plannedClass) => plannedClass.status === 'planned');
+    const groupedMemberPlannedClasses = memberVisiblePlannedClasses.reduce((acc, plannedClass) => {
+      if (!acc[plannedClass.class_date]) {
+        acc[plannedClass.class_date] = [];
+      }
+
+      acc[plannedClass.class_date].push(plannedClass);
+      return acc;
+    }, {});
+
+    return (
+      <Layout>
+        <div className="planned-classes-page">
+          <h2 className="page-title">Planned Classes</h2>
+          <p className="page-intro">
+            Review the classes your gym has planned next. This member view is read-only on purpose.
+          </p>
+
+          {error ? <p className="error-text">{error}</p> : null}
+
+          <section className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-label">Upcoming plans</div>
+              <div className="stat-value">{memberVisiblePlannedClasses.length}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Programs</div>
+              <div className="stat-value">
+                {new Set(memberVisiblePlannedClasses.map((item) => item.program_name).filter(Boolean)).size}
+              </div>
+            </div>
+          </section>
+
+          <ExpandableSection
+            title="Upcoming planned classes"
+            note="Expand this to review the next planned sessions."
+            summary={`${memberVisiblePlannedClasses.length} planned class${memberVisiblePlannedClasses.length === 1 ? '' : 'es'} available.`}
+            className="planned-classes-results-section"
+            defaultOpen
+          >
+            {loading ? (
+              <p className="empty-state">Loading planned classes...</p>
+            ) : Object.keys(groupedMemberPlannedClasses).length === 0 ? (
+              <p className="empty-state">No planned classes are available right now.</p>
+            ) : (
+              Object.entries(groupedMemberPlannedClasses).map(([date, classesForDate]) => (
+                <div key={date} className="detail-block">
+                  <h4>{formatDateForDisplay(date)}</h4>
+                  <div className="card-list">
+                    {classesForDate.map((plannedClass) => (
+                      <article key={plannedClass.id} className="item-card compact-topic-card">
+                        <div className="item-header">
+                          <div>
+                            <h4>{plannedClass.title || plannedClass.program_name}</h4>
+                            <p className="meta-text">
+                              {formatTimeForDisplay(plannedClass.start_time)}
+                              {plannedClass.end_time
+                                ? ` - ${formatTimeForDisplay(plannedClass.end_time)}`
+                                : ''}
+                            </p>
+                          </div>
+                          <span className="status-badge">{plannedClass.program_name}</span>
+                        </div>
+
+                        {plannedClass.topics?.length > 0 ? (
+                          <div className="suggestion-chip-row planned-classes-card-topics">
+                            {plannedClass.topics.map((topic) => (
+                              <span
+                                key={`${plannedClass.id}-${topic.curriculum_topic_id}`}
+                                className="suggestion-chip"
+                              >
+                                {topic.title}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+
+                        {plannedClass.notes ? (
+                          <p className="meta-text">{plannedClass.notes}</p>
+                        ) : null}
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </ExpandableSection>
+        </div>
+      </Layout>
+    );
+  }
 
   const resetForm = () => {
     setEditingPlannedClassId(null);

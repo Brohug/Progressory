@@ -1,8 +1,8 @@
 const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
 
-const allowedCreateRoles = ['admin', 'coach'];
-const allowedUpdateRoles = ['admin', 'coach'];
+const allowedCreateRoles = ['admin', 'coach', 'member'];
+const allowedUpdateRoles = ['admin', 'coach', 'member'];
 
 const requireOwner = (req, res) => {
   if (req.user.role !== 'owner') {
@@ -25,7 +25,8 @@ const createUser = async (req, res) => {
       last_name,
       email,
       password,
-      role
+      role,
+      member_id
     } = req.body;
 
     if (!first_name || !first_name.trim() || !last_name || !last_name.trim()) {
@@ -48,7 +49,7 @@ const createUser = async (req, res) => {
 
     if (!role || !allowedCreateRoles.includes(role)) {
       return res.status(400).json({
-        message: 'Role must be admin or coach'
+        message: 'Role must be admin, coach, or member'
       });
     }
 
@@ -63,6 +64,35 @@ const createUser = async (req, res) => {
       return res.status(400).json({
         message: 'A user with that email already exists'
       });
+    }
+
+    let linkedMemberId = null;
+
+    if (role === 'member') {
+      if (!member_id) {
+        return res.status(400).json({
+          message: 'member_id is required when creating a member account'
+        });
+      }
+
+      const [memberRows] = await pool.query(
+        'SELECT id, user_id FROM members WHERE id = ? AND gym_id = ?',
+        [member_id, gymId]
+      );
+
+      if (memberRows.length === 0) {
+        return res.status(400).json({
+          message: 'Member not found for this gym'
+        });
+      }
+
+      if (memberRows[0].user_id) {
+        return res.status(400).json({
+          message: 'That member already has a linked login account'
+        });
+      }
+
+      linkedMemberId = Number(memberRows[0].id);
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -82,11 +112,21 @@ const createUser = async (req, res) => {
     );
 
     const [rows] = await pool.query(
-      `SELECT id, gym_id, first_name, last_name, email, role, is_active, created_at, updated_at
-       FROM users
+      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active, u.created_at, u.updated_at,
+              m.id AS member_id
+       FROM users u
+       LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
        WHERE id = ? AND gym_id = ?`,
       [result.insertId, gymId]
     );
+
+    if (linkedMemberId) {
+      await pool.query(
+        'UPDATE members SET user_id = ? WHERE id = ? AND gym_id = ?',
+        [result.insertId, linkedMemberId, gymId]
+      );
+      rows[0].member_id = linkedMemberId;
+    }
 
     return res.status(201).json({
       message: 'Staff user created successfully',
@@ -171,7 +211,8 @@ const updateUser = async (req, res) => {
       email,
       role,
       is_active,
-      password
+      password,
+      member_id
     } = req.body;
 
     const [existingRows] = await pool.query(
@@ -220,6 +261,37 @@ const updateUser = async (req, res) => {
       return res.status(400).json({
         message: 'Invalid role'
       });
+    }
+
+    let linkedMemberId = null;
+
+    if (updatedRole === 'member') {
+      const requestedMemberId = member_id !== undefined ? member_id : null;
+
+      if (!requestedMemberId) {
+        return res.status(400).json({
+          message: 'member_id is required when the role is member'
+        });
+      }
+
+      const [memberRows] = await pool.query(
+        'SELECT id, user_id FROM members WHERE id = ? AND gym_id = ?',
+        [requestedMemberId, gymId]
+      );
+
+      if (memberRows.length === 0) {
+        return res.status(400).json({
+          message: 'Member not found for this gym'
+        });
+      }
+
+      if (memberRows[0].user_id && Number(memberRows[0].user_id) !== Number(id)) {
+        return res.status(400).json({
+          message: 'That member already has a linked login account'
+        });
+      }
+
+      linkedMemberId = Number(memberRows[0].id);
     }
 
     if (currentRecord.role !== 'owner' && updatedRole === 'owner') {
@@ -276,11 +348,31 @@ const updateUser = async (req, res) => {
     }
 
     const [updatedRows] = await pool.query(
-      `SELECT id, gym_id, first_name, last_name, email, role, is_active, created_at, updated_at
-       FROM users
+      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active, u.created_at, u.updated_at,
+              m.id AS member_id
+       FROM users u
+       LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
        WHERE id = ? AND gym_id = ?`,
       [id, gymId]
     );
+
+    if (updatedRole === 'member') {
+      await pool.query(
+        'UPDATE members SET user_id = NULL WHERE user_id = ? AND gym_id = ? AND id <> ?',
+        [id, gymId, linkedMemberId]
+      );
+      await pool.query(
+        'UPDATE members SET user_id = ? WHERE id = ? AND gym_id = ?',
+        [id, linkedMemberId, gymId]
+      );
+      updatedRows[0].member_id = linkedMemberId;
+    } else {
+      await pool.query(
+        'UPDATE members SET user_id = NULL WHERE user_id = ? AND gym_id = ?',
+        [id, gymId]
+      );
+      updatedRows[0].member_id = null;
+    }
 
     return res.status(200).json({
       message: 'User updated successfully',

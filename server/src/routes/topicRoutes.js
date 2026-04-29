@@ -9,12 +9,14 @@ const {
   deleteTopic
 } = require('../controllers/topicController');
 
-const { protect } = require('../middleware/authMiddleware');
+const { protect, requireStaff } = require('../middleware/authMiddleware');
 
-router.post('/', protect, createTopic);
-router.get('/', protect, getTopics);
-router.get('/:id', protect, getTopicById);
-router.put('/:id', protect, updateTopic);
-router.delete('/:id', protect, deleteTopic);
+router.use(protect, requireStaff);
+
+router.post('/', createTopic);
+router.get('/', getTopics);
+router.get('/:id', getTopicById);
+router.put('/:id', updateTopic);
+router.delete('/:id', deleteTopic);
 
 module.exports = router;

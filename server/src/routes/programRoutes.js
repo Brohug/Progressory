@@ -9,12 +9,14 @@ const {
   deactivateProgram
 } = require('../controllers/programController');
 
-const { protect } = require('../middleware/authMiddleware');
+const { protect, requireStaff } = require('../middleware/authMiddleware');
 
-router.post('/', protect, createProgram);
-router.get('/', protect, getPrograms);
-router.get('/:id', protect, getProgramById);
-router.put('/:id', protect, updateProgram);
-router.patch('/:id/deactivate', protect, deactivateProgram);
+router.use(protect, requireStaff);
+
+router.post('/', createProgram);
+router.get('/', getPrograms);
+router.get('/:id', getProgramById);
+router.put('/:id', updateProgram);
+router.patch('/:id/deactivate', deactivateProgram);
 
 module.exports = router;

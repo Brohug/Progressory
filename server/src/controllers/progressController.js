@@ -95,6 +95,25 @@ const getMemberProgress = async (req, res) => {
     const gymId = req.user.gym_id;
     const { id } = req.params;
 
+    if (req.user.role === 'member') {
+      const [linkedMemberRows] = await pool.query(
+        'SELECT id FROM members WHERE user_id = ? AND gym_id = ?',
+        [req.user.id, gymId]
+      );
+
+      if (linkedMemberRows.length === 0) {
+        return res.status(403).json({
+          message: 'Member account is not linked to a roster profile yet'
+        });
+      }
+
+      if (Number(linkedMemberRows[0].id) !== Number(id)) {
+        return res.status(403).json({
+          message: 'Members can only view their own progress'
+        });
+      }
+    }
+
     const [memberRows] = await pool.query(
       'SELECT id FROM members WHERE id = ? AND gym_id = ?',
       [id, gymId]
@@ -128,7 +147,54 @@ const getMemberProgress = async (req, res) => {
   }
 };
 
+const getMyProgress = async (req, res) => {
+  try {
+    const gymId = req.user.gym_id;
+
+    const [memberRows] = await pool.query(
+      'SELECT id, first_name, last_name FROM members WHERE user_id = ? AND gym_id = ?',
+      [req.user.id, gymId]
+    );
+
+    if (memberRows.length === 0) {
+      return res.status(404).json({
+        message: 'This login is not linked to a member profile yet'
+      });
+    }
+
+    const member = memberRows[0];
+
+    const [rows] = await pool.query(
+      `SELECT mtp.*, ct.title AS topic_title, ct.topic_type,
+              u.first_name AS updated_by_first_name, u.last_name AS updated_by_last_name
+       FROM member_topic_progress mtp
+       JOIN curriculum_topics ct ON mtp.curriculum_topic_id = ct.id
+       JOIN users u ON mtp.updated_by_user_id = u.id
+       WHERE mtp.member_id = ?
+       ORDER BY mtp.updated_at DESC`,
+      [member.id]
+    );
+
+    return res.status(200).json({
+      member: {
+        id: member.id,
+        first_name: member.first_name,
+        last_name: member.last_name
+      },
+      progress: rows
+    });
+  } catch (error) {
+    console.error('Get my progress error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createOrUpdateMemberProgress,
-  getMemberProgress
+  getMemberProgress,
+  getMyProgress
 };

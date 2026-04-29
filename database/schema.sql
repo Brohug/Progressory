@@ -13,7 +13,7 @@ CREATE TABLE users (
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('owner', 'admin', 'coach') NOT NULL DEFAULT 'coach',
+    role ENUM('owner', 'admin', 'coach', 'member') NOT NULL DEFAULT 'coach',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -258,6 +258,7 @@ CREATE TABLE library_entries (
 CREATE TABLE members (
     id INT AUTO_INCREMENT PRIMARY KEY,
     gym_id INT NOT NULL,
+    user_id INT NULL,
     program_id INT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
@@ -269,9 +270,14 @@ CREATE TABLE members (
     CONSTRAINT fk_members_gym
         FOREIGN KEY (gym_id) REFERENCES gyms(id)
         ON DELETE CASCADE,
+    CONSTRAINT fk_members_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE SET NULL,
     CONSTRAINT fk_members_program
         FOREIGN KEY (program_id) REFERENCES programs(id)
-        ON DELETE SET NULL
+        ON DELETE SET NULL,
+    CONSTRAINT uq_members_user
+        UNIQUE (user_id)
 );
 
 CREATE TABLE class_members (

@@ -6,10 +6,71 @@ export default function Layout({ children }) {
   const location = useLocation();
 
   const isOwner = user?.role === 'owner';
+  const isMember = user?.role === 'member';
   const searchParams = new URLSearchParams(location.search);
   const workflow = searchParams.get('workflow') || '';
 
   const coachGuide = (() => {
+    if (isMember && location.pathname === '/dashboard') {
+      return {
+        eyebrow: 'Member guide',
+        title: 'Start with your upcoming classes, then review progress, Library, or the Decision Tree.',
+        description: 'This keeps the member side simple: see what is coming up, revisit learning resources, and track what has been logged for you.',
+        primary: { label: 'Open my progress', to: '/my-progress' },
+        secondary: { label: 'Open Library', to: '/library' }
+      };
+    }
+
+    if (isMember && location.pathname === '/planned-classes') {
+      return {
+        eyebrow: 'Member guide',
+        title: 'Use this page to see what classes are planned next.',
+        description: 'This view is read-only so members can stay focused on the class schedule instead of gym admin.',
+        primary: { label: 'Open Curriculum Index', to: '/index' },
+        secondary: { label: 'Open Decision Tree', to: '/decision-tree' }
+      };
+    }
+
+    if (isMember && location.pathname === '/library') {
+      return {
+        eyebrow: 'Member guide',
+        title: 'Library only shows resources your coaches marked as member visible.',
+        description: 'Use this page to revisit videos and notes tied to the curriculum topics your gym wants members to see.',
+        primary: { label: 'Open my progress', to: '/my-progress' },
+        secondary: { label: 'Open Curriculum Index', to: '/index' }
+      };
+    }
+
+    if (isMember && location.pathname === '/my-progress') {
+      return {
+        eyebrow: 'Member guide',
+        title: 'Track what your coaches have logged, then use the Index and Tree to study it more deeply.',
+        description: 'Your progress page is the personal layer. The Index and Decision Tree help you explore the broader map around those topics.',
+        primary: { label: 'Open Curriculum Index', to: '/index' },
+        secondary: { label: 'Open Decision Tree', to: '/decision-tree' }
+      };
+    }
+
+    if (isMember && location.pathname === '/index') {
+      return {
+        eyebrow: 'Member guide',
+        title: 'Use the Curriculum Index as a study map, then jump into Library or Decision Tree when you want more depth.',
+        description: 'This read-only view helps members explore the full curriculum language without changing the gym structure.',
+        primary: { label: 'Open Decision Tree', to: '/decision-tree' },
+        secondary: { label: 'Open Library', to: '/library' }
+      };
+    }
+
+    if (isMember && location.pathname === '/decision-tree') {
+      return {
+        eyebrow: 'Member guide',
+        title: 'Use the Tree to study options, then go back into Library or My Progress when you want a more practical review.',
+        description: 'This keeps the member experience focused on learning, not coach/admin setup.',
+        primary: { label: 'Open my progress', to: '/my-progress' },
+        secondary: { label: 'Open Library', to: '/library' }
+      };
+    }
+
     if (location.pathname === '/dashboard') {
       return {
         eyebrow: 'Coach guide',
@@ -133,16 +194,20 @@ export default function Layout({ children }) {
 
               <nav className="app-nav">
                 <Link to="/dashboard">Dashboard</Link>
-                <Link to="/programs">Programs</Link>
                 <Link to="/index">Curriculum Index</Link>
                 <Link to="/decision-tree">Decision Tree</Link>
                 <Link to="/planned-classes">Planned Classes</Link>
-                <Link to="/classes">Classes</Link>
-                <Link to="/training-scenarios">Training Scenarios</Link>
-                <Link to="/reports">Reports</Link>
                 <Link to="/library">Library</Link>
-                <Link to="/members">Members</Link>
-                {isOwner && <Link to="/staff">Staff</Link>}
+                {isMember ? <Link to="/my-progress">My Progress</Link> : (
+                  <>
+                    <Link to="/programs">Programs</Link>
+                    <Link to="/classes">Classes</Link>
+                    <Link to="/training-scenarios">Training Scenarios</Link>
+                    <Link to="/reports">Reports</Link>
+                    <Link to="/members">Members</Link>
+                    {isOwner && <Link to="/staff">Staff</Link>}
+                  </>
+                )}
               </nav>
 
               <div className="app-guidance-row">

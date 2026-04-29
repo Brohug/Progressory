@@ -16,6 +16,9 @@ const MembersPage = lazy(() => import('./pages/MembersPage'));
 const StaffPage = lazy(() => import('./pages/StaffPage'));
 const CurriculumIndexPage = lazy(() => import('./pages/CurriculumIndexPage'));
 const DecisionTreePage = lazy(() => import('./pages/DecisionTreePage'));
+const MyProgressPage = lazy(() => import('./pages/MyProgressPage'));
+
+const STAFF_ROLES = ['owner', 'admin', 'coach'];
 
 function RouteFallback() {
   return (
@@ -43,7 +46,7 @@ export default function App() {
             <Route
               path="/programs"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={STAFF_ROLES}>
                   <ProgramsPage />
                 </ProtectedRoute>
               }
@@ -51,7 +54,7 @@ export default function App() {
             <Route
               path="/topics"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={STAFF_ROLES}>
                   <TopicsPage />
                 </ProtectedRoute>
               }
@@ -59,7 +62,7 @@ export default function App() {
             <Route
               path="/index"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['owner', ...STAFF_ROLES.slice(1), 'member']}>
                   <CurriculumIndexPage />
                 </ProtectedRoute>
               }
@@ -67,7 +70,7 @@ export default function App() {
             <Route
               path="/decision-tree"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['owner', ...STAFF_ROLES.slice(1), 'member']}>
                   <DecisionTreePage />
                 </ProtectedRoute>
               }
@@ -75,7 +78,7 @@ export default function App() {
             <Route
               path="/planned-classes"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['owner', ...STAFF_ROLES.slice(1), 'member']}>
                   <PlannedClassesPage />
                 </ProtectedRoute>
               }
@@ -83,7 +86,7 @@ export default function App() {
             <Route
               path="/classes"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={STAFF_ROLES}>
                   <ClassesPage />
                 </ProtectedRoute>
               }
@@ -91,7 +94,7 @@ export default function App() {
             <Route
               path="/training-scenarios"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={STAFF_ROLES}>
                   <TrainingScenariosPage />
                 </ProtectedRoute>
               }
@@ -99,7 +102,7 @@ export default function App() {
             <Route
               path="/reports"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={STAFF_ROLES}>
                   <ReportsPage />
                 </ProtectedRoute>
               }
@@ -107,7 +110,7 @@ export default function App() {
             <Route
               path="/library"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['owner', ...STAFF_ROLES.slice(1), 'member']}>
                   <LibraryPage />
                 </ProtectedRoute>
               }
@@ -115,7 +118,7 @@ export default function App() {
             <Route
               path="/members"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={STAFF_ROLES}>
                   <MembersPage />
                 </ProtectedRoute>
               }
@@ -123,8 +126,16 @@ export default function App() {
             <Route
               path="/staff"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['owner']}>
                   <StaffPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-progress"
+              element={
+                <ProtectedRoute allowedRoles={['member']}>
+                  <MyProgressPage />
                 </ProtectedRoute>
               }
             />

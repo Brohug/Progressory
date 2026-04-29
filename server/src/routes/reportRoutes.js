@@ -8,11 +8,13 @@ const {
   getTrainingMethodUsage
 } = require('../controllers/reportController');
 
-const { protect } = require('../middleware/authMiddleware');
+const { protect, requireStaff } = require('../middleware/authMiddleware');
 
-router.get('/recent-classes', protect, getRecentClasses);
-router.get('/topic-coverage', protect, getTopicCoverage);
-router.get('/neglected-topics', protect, getNeglectedTopics);
-router.get('/training-method-usage', protect, getTrainingMethodUsage);
+router.use(protect, requireStaff);
+
+router.get('/recent-classes', getRecentClasses);
+router.get('/topic-coverage', getTopicCoverage);
+router.get('/neglected-topics', getNeglectedTopics);
+router.get('/training-method-usage', getTrainingMethodUsage);
 
 module.exports = router;

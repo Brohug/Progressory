@@ -9,12 +9,14 @@ const {
   deleteTrainingMethod
 } = require('../controllers/trainingMethodController');
 
-const { protect } = require('../middleware/authMiddleware');
+const { protect, requireStaff } = require('../middleware/authMiddleware');
 
-router.post('/', protect, createTrainingMethod);
-router.get('/', protect, getTrainingMethods);
-router.get('/:id', protect, getTrainingMethodById);
-router.put('/:id', protect, updateTrainingMethod);
-router.delete('/:id', protect, deleteTrainingMethod);
+router.use(protect, requireStaff);
+
+router.post('/', createTrainingMethod);
+router.get('/', getTrainingMethods);
+router.get('/:id', getTrainingMethodById);
+router.put('/:id', updateTrainingMethod);
+router.delete('/:id', deleteTrainingMethod);
 
 module.exports = router;

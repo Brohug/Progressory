@@ -16,7 +16,8 @@ const generateToken = (user) => {
       id: user.id,
       gym_id: user.gym_id,
       email: user.email,
-      role: user.role
+      role: user.role,
+      member_id: user.member_id || null
     },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
@@ -119,9 +120,11 @@ const login = async (req, res) => {
 
     const [rows] = await pool.query(
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.password_hash, u.role,
+              m.id AS member_id,
               g.name AS gym_name, g.slug
        FROM users u
        JOIN gyms g ON u.gym_id = g.id
+       LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
        WHERE u.email = ?`,
       [email]
     );
@@ -154,6 +157,7 @@ const login = async (req, res) => {
         last_name: user.last_name,
         email: user.email,
         role: user.role,
+        member_id: user.member_id || null,
         gym_name: user.gym_name,
         slug: user.slug
       }
@@ -172,9 +176,11 @@ const getMe = async (req, res) => {
   try {
     const [rows] = await pool.query(
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
+              m.id AS member_id,
               g.name AS gym_name, g.slug
        FROM users u
        JOIN gyms g ON u.gym_id = g.id
+       LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
        WHERE u.id = ?`,
       [req.user.id]
     );

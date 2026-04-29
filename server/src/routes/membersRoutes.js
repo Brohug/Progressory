@@ -9,16 +9,18 @@ const {
   deleteMember
 } = require('../controllers/membersController');
 
-const { protect } = require('../middleware/authMiddleware');
+const { protect, requireStaff } = require('../middleware/authMiddleware');
 const progressRoutes = require('./progressRoutes');
 
-router.post('/', protect, createMember);
-router.get('/', protect, getMembers);
+router.use(protect, requireStaff);
+
+router.post('/', createMember);
+router.get('/', getMembers);
 
 router.use('/:id/progress', progressRoutes);
 
-router.get('/:id', protect, getMemberById);
-router.put('/:id', protect, updateMember);
-router.delete('/:id', protect, deleteMember);
+router.get('/:id', getMemberById);
+router.put('/:id', updateMember);
+router.delete('/:id', deleteMember);
 
 module.exports = router;

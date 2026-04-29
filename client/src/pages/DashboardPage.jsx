@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import Layout from '../components/Layout';
@@ -16,6 +16,7 @@ const getLocalIsoDate = () => {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const isMember = user?.role === 'member';
   const [recentClasses, setRecentClasses] = useState([]);
   const [topicCoverage, setTopicCoverage] = useState([]);
   const [trainingMethodUsage, setTrainingMethodUsage] = useState([]);
@@ -26,19 +27,26 @@ export default function DashboardPage() {
   const [libraryEntries, setLibraryEntries] = useState([]);
   const [members, setMembers] = useState([]);
   const [trainingScenarios, setTrainingScenarios] = useState([]);
+  const [memberProgress, setMemberProgress] = useState([]);
   const [attendanceSnapshot, setAttendanceSnapshot] = useState({
     classesNeedingAttendance: 0,
     classesWithAttendance: 0
   });
-  const [showDashboardGuide, setShowDashboardGuide] = useState(true);
+  const [tutorialState, setTutorialState] = useState('prompt');
+  const [isMinimizedTutorialExpanded, setIsMinimizedTutorialExpanded] = useState(false);
+  const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const [hideSetupChecklist, setHideSetupChecklist] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const guideStorageKey = user?.id ? `progressory-dashboard-guide-hidden-${user.id}` : '';
-  const setupStorageKey = user?.id ? `progressory-dashboard-setup-hidden-${user.id}` : '';
+  const tutorialStorageKey = user?.id ? `progressory-dashboard-tutorial-state-v7-${user.id}` : '';
+  const setupStorageKey = user?.id ? `progressory-dashboard-setup-hidden-v2-${user.id}` : '';
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
+    if (isMember) {
+      return;
+    }
+
     try {
       setLoading(true);
       setError('');
@@ -126,11 +134,13 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isMember]);
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (!isMember) {
+      loadDashboardData();
+    }
+  }, [isMember, loadDashboardData]);
 
   const summaryCards = [
     { label: 'Programs', value: programs.length },
@@ -209,13 +219,47 @@ export default function DashboardPage() {
   const completedSetupCount = setupTasks.filter((task) => task.complete).length;
   const setupProgressPercent = Math.round((completedSetupCount / setupTasks.length) * 100);
 
+  const tutorialSteps = useMemo(() => {
+    const steps = [
+      {
+        key: 'dashboard-quick-actions',
+        title: 'Quick Actions',
+        description: 'Start here when you already know the coaching job you need to handle right now.'
+      },
+      {
+        key: 'dashboard-start-here',
+        title: 'Start Here',
+        description: 'This checklist is the main owner setup flow: structure first, then daily coaching workflow.'
+      },
+      {
+        key: 'dashboard-coaching-queue',
+        title: 'Today’s Coaching Queue',
+        description: 'Use this to spot the classes or library items that still need follow-through.'
+      }
+    ];
+
+    if (setupComplete) {
+      steps.push({
+        key: 'dashboard-helpful-extras',
+        title: 'Helpful Extras',
+        description: 'Once the gym is already flowing, add videos and other deeper support tools here.'
+      });
+    }
+
+    return steps;
+  }, [setupComplete]);
+
+  const activeTutorialStep = tutorialSteps[currentTutorialStep] || null;
+  const isTutorialActive = tutorialState === 'active';
+
   useEffect(() => {
-    if (!guideStorageKey || typeof window === 'undefined') {
+    if (!tutorialStorageKey || typeof window === 'undefined') {
       return;
     }
 
-    setShowDashboardGuide(window.localStorage.getItem(guideStorageKey) !== 'true');
-  }, [guideStorageKey]);
+    const storedState = window.localStorage.getItem(tutorialStorageKey);
+    setTutorialState(storedState || 'prompt');
+  }, [tutorialStorageKey]);
 
   useEffect(() => {
     if (!setupStorageKey || typeof window === 'undefined') {
@@ -227,6 +271,14 @@ export default function DashboardPage() {
   }, [setupStorageKey]);
 
   useEffect(() => {
+    if (setupComplete) {
+      setHideSetupChecklist(true);
+      if (setupStorageKey && typeof window !== 'undefined') {
+        window.localStorage.setItem(setupStorageKey, 'true');
+      }
+      return;
+    }
+
     if (!setupComplete) {
       setHideSetupChecklist(false);
       if (setupStorageKey && typeof window !== 'undefined') {
@@ -235,10 +287,28 @@ export default function DashboardPage() {
     }
   }, [setupComplete, setupStorageKey]);
 
-  const dismissDashboardGuide = () => {
-    setShowDashboardGuide(false);
-    if (guideStorageKey && typeof window !== 'undefined') {
-      window.localStorage.setItem(guideStorageKey, 'true');
+  useEffect(() => {
+    if (!isTutorialActive || !activeTutorialStep || typeof window === 'undefined') {
+      return;
+    }
+
+    const element = window.document.getElementById(activeTutorialStep.key);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [activeTutorialStep, isTutorialActive]);
+
+  const persistTutorialState = (nextState) => {
+    setTutorialState(nextState);
+    if (tutorialStorageKey && typeof window !== 'undefined') {
+      window.localStorage.setItem(tutorialStorageKey, nextState);
+    }
+  };
+
+  const handleShowSetupChecklist = () => {
+    setHideSetupChecklist(false);
+    if (setupStorageKey && typeof window !== 'undefined') {
+      window.localStorage.removeItem(setupStorageKey);
     }
   };
 
@@ -249,11 +319,47 @@ export default function DashboardPage() {
     }
   };
 
-  const handleShowSetupChecklist = () => {
-    setHideSetupChecklist(false);
-    if (setupStorageKey && typeof window !== 'undefined') {
-      window.localStorage.removeItem(setupStorageKey);
+  const startTutorial = () => {
+    handleShowSetupChecklist();
+    setIsMinimizedTutorialExpanded(false);
+    setCurrentTutorialStep(0);
+    persistTutorialState('active');
+  };
+
+  const minimizeTutorial = () => {
+    setIsMinimizedTutorialExpanded(false);
+    persistTutorialState(setupComplete ? 'completed' : 'minimized');
+  };
+
+  const advanceTutorial = () => {
+    if (currentTutorialStep >= tutorialSteps.length - 1) {
+      persistTutorialState('completed');
+      return;
     }
+
+    setCurrentTutorialStep((prev) => prev + 1);
+  };
+
+  const rewindTutorial = () => {
+    setCurrentTutorialStep((prev) => Math.max(prev - 1, 0));
+  };
+
+  const expandMinimizedTutorial = () => {
+    setIsMinimizedTutorialExpanded(true);
+  };
+
+  const collapseMinimizedTutorial = () => {
+    setIsMinimizedTutorialExpanded(false);
+  };
+
+  const getTutorialSectionClass = (sectionKey) => {
+    if (!isTutorialActive) {
+      return '';
+    }
+
+    return activeTutorialStep?.key === sectionKey
+      ? ' dashboard-tutorial-highlight'
+      : ' dashboard-tutorial-dimmed';
   };
 
   const helpfulExtras = [
@@ -268,6 +374,155 @@ export default function DashboardPage() {
       complete: activeLibraryVideoCount > 0
     }
   ];
+
+  const memberVisibleLibraryEntries = libraryEntries.filter(
+    (entry) => entry.is_active && entry.visibility === 'member_visible'
+  );
+
+  const memberSummaryCards = [
+    { label: 'Upcoming planned classes', value: plannedClasses.filter((item) => item.status === 'planned').length },
+    { label: 'Library resources', value: memberVisibleLibraryEntries.length },
+    { label: 'Tracked topics', value: memberProgress.length },
+    {
+      label: 'Competent topics',
+      value: memberProgress.filter((item) => item.status === 'competent').length
+    }
+  ];
+
+  useEffect(() => {
+    if (!isMember) {
+      return;
+    }
+
+    const loadMemberDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError('');
+
+        const [plannedClassesRes, libraryEntriesRes, myProgressRes] = await Promise.all([
+          api.get('/planned-classes'),
+          api.get('/library'),
+          api.get('/me/progress').catch((err) => {
+            if (err.response?.status === 404) {
+              return { data: { progress: [] } };
+            }
+
+            throw err;
+          })
+        ]);
+
+        setPlannedClasses(plannedClassesRes.data || []);
+        setLibraryEntries(libraryEntriesRes.data || []);
+        setMemberProgress(myProgressRes.data?.progress || []);
+      } catch (err) {
+        console.error('Load member dashboard error:', err);
+        setError(err.response?.data?.message || 'Couldn’t load the member dashboard right now.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMemberDashboardData();
+  }, [isMember]);
+
+  if (isMember) {
+    return (
+      <Layout>
+        <div className="dashboard-page">
+          <h2 className="page-title">Dashboard</h2>
+          <p className="page-intro">
+            Use this page to see what is coming up, review your progress, and reopen the resources your coaches want members to use.
+          </p>
+
+          {error && <p className="error-text">{error}</p>}
+
+          {loading ? (
+            <p className="empty-state">Loading your dashboard...</p>
+          ) : (
+            <>
+              <section className="stats-grid dashboard-stats-grid">
+                {memberSummaryCards.map((card) => (
+                  <div key={card.label} className="stat-card">
+                    <div className="stat-label">{card.label}</div>
+                    <div className="stat-value">{card.value}</div>
+                  </div>
+                ))}
+              </section>
+
+              <section className="page-section dashboard-hero-section">
+                <div className="section-header">
+                  <div>
+                    <h3>Quick Actions</h3>
+                    <p className="section-note">Jump straight into the part of the app that helps you study or prepare next.</p>
+                  </div>
+                </div>
+                <div className="action-grid">
+                  <Link to="/planned-classes" className="action-card dashboard-action-card">
+                    <strong>See upcoming classes</strong>
+                    <div className="detail-block">
+                      <div className="meta-text">Review the classes your gym has planned next.</div>
+                    </div>
+                  </Link>
+                  <Link to="/my-progress" className="action-card dashboard-action-card">
+                    <strong>Open my progress</strong>
+                    <div className="detail-block">
+                      <div className="meta-text">See the topics your coaches have already logged for you.</div>
+                    </div>
+                  </Link>
+                  <Link to="/library" className="action-card dashboard-action-card">
+                    <strong>Open Library</strong>
+                    <div className="detail-block">
+                      <div className="meta-text">Revisit videos and notes your gym marked as member visible.</div>
+                    </div>
+                  </Link>
+                  <Link to="/decision-tree" className="action-card dashboard-action-card">
+                    <strong>Use the Decision Tree</strong>
+                    <div className="detail-block">
+                      <div className="meta-text">Study routes and options around the positions and topics you are learning.</div>
+                    </div>
+                  </Link>
+                </div>
+              </section>
+
+              <section className="page-section dashboard-queue-section">
+                <div className="section-header">
+                  <div>
+                    <h3>What to look at next</h3>
+                    <p className="section-note">Keep the member experience simple: class schedule, progress, and study tools.</p>
+                  </div>
+                </div>
+                <div className="action-grid">
+                  <Link to="/planned-classes" className="action-card dashboard-action-card dashboard-queue-card">
+                    <strong>Upcoming planned classes</strong>
+                    <div className="dashboard-queue-value">
+                      {plannedClasses.filter((item) => item.status === 'planned').length}
+                    </div>
+                    <div className="detail-block">
+                      <div className="meta-text">See what your gym has planned next.</div>
+                    </div>
+                  </Link>
+                  <Link to="/my-progress" className="action-card dashboard-action-card dashboard-queue-card">
+                    <strong>Tracked curriculum topics</strong>
+                    <div className="dashboard-queue-value">{memberProgress.length}</div>
+                    <div className="detail-block">
+                      <div className="meta-text">Review what has already been logged for you.</div>
+                    </div>
+                  </Link>
+                  <Link to="/library" className="action-card dashboard-action-card dashboard-queue-card">
+                    <strong>Member-visible library entries</strong>
+                    <div className="dashboard-queue-value">{memberVisibleLibraryEntries.length}</div>
+                    <div className="detail-block">
+                      <div className="meta-text">Open the videos and notes your coaches have shared with members.</div>
+                    </div>
+                  </Link>
+                </div>
+              </section>
+            </>
+          )}
+        </div>
+      </Layout>
+    );
+  }
 
   const quickActions = [
     {
@@ -358,29 +613,27 @@ export default function DashboardPage() {
           <p className="empty-state">Loading your dashboard...</p>
         ) : (
           <>
-            {showDashboardGuide ? (
+            {tutorialState === 'prompt' ? (
               <section className="page-section dashboard-guide-section">
                 <div className="section-header">
                   <div>
-                    <h3>How the app flows</h3>
+                    <h3>Want a walkthrough of the application?</h3>
                     <p className="section-note">
-                      Use this quick guide if you are opening Progressory for the first time or showing a coach how the system is supposed to work.
+                      This tutorial shows the main owner flow, highlights the biggest sections, and keeps the rest of the dashboard visually quieter while you step through it.
                     </p>
                   </div>
                   <div className="inline-actions">
-                    {!setupComplete || !hideSetupChecklist ? (
-                      <button
-                        type="button"
-                        className="secondary-button"
-                        onClick={handleShowSetupChecklist}
-                      >
-                        Show setup checklist
-                      </button>
-                    ) : null}
                     <button
                       type="button"
                       className="secondary-button"
-                      onClick={dismissDashboardGuide}
+                      onClick={startTutorial}
+                    >
+                      Yes, walk me through it
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={minimizeTutorial}
                     >
                       Not now
                     </button>
@@ -388,7 +641,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="dashboard-guide-grid">
                   <div className="dashboard-guide-highlight">
-                    <span className="eyebrow">Core setup is in place</span>
+                    <span className="eyebrow">Core setup leads the app</span>
                     <strong>
                       Build your structure first, then let the daily coaching workflow take over.
                     </strong>
@@ -414,7 +667,112 @@ export default function DashboardPage() {
               </section>
             ) : null}
 
-            <section className="page-section dashboard-hero-section">
+            {tutorialState === 'minimized' && !setupComplete ? (
+              <section className="page-section dashboard-guide-mini">
+                <div className="section-header">
+                  <div>
+                    <h3>Want a walkthrough later?</h3>
+                    <p className="section-note">
+                      Keep this tucked away for now, then expand it whenever you want the guided owner walkthrough again.
+                    </p>
+                  </div>
+                  <div className="inline-actions">
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={isMinimizedTutorialExpanded ? collapseMinimizedTutorial : expandMinimizedTutorial}
+                    >
+                      {isMinimizedTutorialExpanded ? 'Hide tutorial prompt' : 'Expand tutorial'}
+                    </button>
+                  </div>
+                </div>
+
+                {isMinimizedTutorialExpanded ? (
+                  <div className="dashboard-guide-mini-expanded">
+                    <div className="dashboard-guide-grid">
+                      <div className="dashboard-guide-highlight">
+                        <span className="eyebrow">Core setup leads the app</span>
+                        <strong>
+                          Build your structure first, then let the daily coaching workflow take over.
+                        </strong>
+                        <p className="meta-text">
+                          Start with programs, curriculum topics, reusable scenarios, and members. Then plan classes, finish class admin, record attendance, and add Library resources when you are ready to support coaches and members even more.
+                        </p>
+                      </div>
+                      <div className="dashboard-guide-steps">
+                        <div className="dashboard-guide-step">
+                          <strong>1. Build the structure</strong>
+                          <span>Add programs, curriculum topics, scenarios, and members.</span>
+                        </div>
+                        <div className="dashboard-guide-step">
+                          <strong>2. Run the class workflow</strong>
+                          <span>Plan classes first, then finish attendance, topics, and training entries after class.</span>
+                        </div>
+                        <div className="dashboard-guide-step">
+                          <strong>3. Add the extras later</strong>
+                          <span>Library, Decision Tree, and progress become much stronger once the gym workflow is already moving.</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="inline-actions">
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={startTutorial}
+                      >
+                        Yes, walk me through it
+                      </button>
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={collapseMinimizedTutorial}
+                      >
+                        Keep it minimized
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+
+            {isTutorialActive && activeTutorialStep ? (
+              <div className="dashboard-tutorial-overlay" role="dialog" aria-live="polite">
+                <div className="dashboard-tutorial-card">
+                  <span className="eyebrow">
+                    Tutorial step {currentTutorialStep + 1} of {tutorialSteps.length}
+                  </span>
+                  <strong>{activeTutorialStep.title}</strong>
+                  <p>{activeTutorialStep.description}</p>
+                  <div className="inline-actions">
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={minimizeTutorial}
+                    >
+                      Exit tutorial
+                    </button>
+                    {currentTutorialStep > 0 ? (
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={rewindTutorial}
+                      >
+                        Back
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={advanceTutorial}
+                    >
+                      {currentTutorialStep === tutorialSteps.length - 1 ? 'Finish tutorial' : 'Next'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <section id="dashboard-quick-actions" className={`page-section dashboard-hero-section${getTutorialSectionClass('dashboard-quick-actions')}`}>
               <div className="section-header">
                 <div>
                   <h3>Quick Actions</h3>
@@ -438,7 +796,7 @@ export default function DashboardPage() {
             </section>
 
             {!hideSetupChecklist ? (
-              <section className="page-section dashboard-onboarding-section">
+              <section id="dashboard-start-here" className={`page-section dashboard-onboarding-section${getTutorialSectionClass('dashboard-start-here')}`}>
                 <div className="section-header">
                   <div>
                     <h3>Start Here</h3>
@@ -510,7 +868,7 @@ export default function DashboardPage() {
                 )}
               </section>
             ) : (
-              <section className="page-section dashboard-onboarding-section dashboard-onboarding-collapsed">
+              <section id="dashboard-start-here" className={`page-section dashboard-onboarding-section dashboard-onboarding-collapsed${getTutorialSectionClass('dashboard-start-here')}`}>
                 <div className="section-header">
                   <div>
                     <h3>Setup checklist hidden</h3>
@@ -530,7 +888,7 @@ export default function DashboardPage() {
             )}
 
             {setupComplete ? (
-              <section className="page-section dashboard-extras-section">
+              <section id="dashboard-helpful-extras" className={`page-section dashboard-extras-section${getTutorialSectionClass('dashboard-helpful-extras')}`}>
                 <div className="section-header">
                   <div>
                     <h3>Helpful Extras</h3>
@@ -551,7 +909,7 @@ export default function DashboardPage() {
               </section>
             ) : null}
 
-            <section className="stats-grid dashboard-stats-grid">
+            <section className={`stats-grid dashboard-stats-grid${isTutorialActive ? ' dashboard-tutorial-dimmed' : ''}`}>
               {summaryCards.map((card) => (
                 <div key={card.label} className="stat-card">
                   <div className="stat-label">{card.label}</div>
@@ -560,7 +918,7 @@ export default function DashboardPage() {
               ))}
             </section>
 
-            <section className="page-section dashboard-queue-section">
+            <section id="dashboard-coaching-queue" className={`page-section dashboard-queue-section${getTutorialSectionClass('dashboard-coaching-queue')}`}>
               <div className="section-header">
                 <div>
                   <h3>Today’s Coaching Queue</h3>
@@ -584,10 +942,9 @@ export default function DashboardPage() {
               title="Recent Classes"
               note="The most recent sessions logged by your team."
               summary="Keep this collapsed unless you want a quick look at the most recent logged sessions."
-              className="dashboard-primary-section"
+              className={`dashboard-primary-section${isTutorialActive ? ' dashboard-tutorial-dimmed' : ''}`}
               actions={<Link to="/classes" className="secondary-button">Manage Classes</Link>}
             >
-
               {recentClasses.length === 0 ? (
                 <p className="empty-state">No classes have been logged yet.</p>
               ) : (
@@ -619,10 +976,8 @@ export default function DashboardPage() {
                 title="Top Topic"
                 note="The most-used curriculum topic right now."
                 summary="Expand when you want a quick signal on which topic is showing up the most."
+                className={isTutorialActive ? 'dashboard-tutorial-dimmed' : ''}
               >
-                <div className="section-header">
-                </div>
-
                 {!topTopic ? (
                   <p className="empty-state">No topic usage has been logged yet.</p>
                 ) : (
@@ -648,10 +1003,8 @@ export default function DashboardPage() {
                 title="Top Training Method"
                 note="The method showing up most often in logged segments."
                 summary="Expand when you want a quick signal on which training method is dominating the logged classes."
+                className={isTutorialActive ? 'dashboard-tutorial-dimmed' : ''}
               >
-                <div className="section-header">
-                </div>
-
                 {!topMethod ? (
                   <p className="empty-state">No training method usage has been logged yet.</p>
                 ) : (
@@ -675,7 +1028,7 @@ export default function DashboardPage() {
               title="Want A Closer Look?"
               note="Open Reports when you want a deeper look at trends instead of quick signals."
               summary="Expand when you want to jump from quick workflow actions into deeper reporting."
-              className="dashboard-cta-section"
+              className={`dashboard-cta-section${isTutorialActive ? ' dashboard-tutorial-dimmed' : ''}`}
               defaultOpen={false}
             >
               <Link to="/reports" className="action-card dashboard-report-card">

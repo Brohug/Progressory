@@ -119,6 +119,7 @@ const createLibraryEntry = async (req, res) => {
 const getLibraryEntries = async (req, res) => {
   try {
     const gymId = req.user.gym_id;
+    const isMember = req.user.role === 'member';
 
     const [rows] = await pool.query(
       `SELECT le.*,
@@ -131,8 +132,9 @@ const getLibraryEntries = async (req, res) => {
        LEFT JOIN curriculum_topics ct ON le.curriculum_topic_id = ct.id
        JOIN users u ON le.created_by_user_id = u.id
        WHERE le.gym_id = ?
+         AND (? = FALSE OR (le.is_active = TRUE AND le.visibility = 'member_visible'))
        ORDER BY le.created_at DESC`,
-      [gymId]
+      [gymId, isMember]
     );
 
     return res.status(200).json(rows);
@@ -150,6 +152,7 @@ const getLibraryEntryById = async (req, res) => {
   try {
     const gymId = req.user.gym_id;
     const { id } = req.params;
+    const isMember = req.user.role === 'member';
 
     const [rows] = await pool.query(
       `SELECT le.*,
@@ -161,8 +164,9 @@ const getLibraryEntryById = async (req, res) => {
        LEFT JOIN programs p ON le.program_id = p.id
        LEFT JOIN curriculum_topics ct ON le.curriculum_topic_id = ct.id
        JOIN users u ON le.created_by_user_id = u.id
-       WHERE le.id = ? AND le.gym_id = ?`,
-      [id, gymId]
+       WHERE le.id = ? AND le.gym_id = ?
+         AND (? = FALSE OR (le.is_active = TRUE AND le.visibility = 'member_visible'))`,
+      [id, gymId, isMember]
     );
 
     if (rows.length === 0) {

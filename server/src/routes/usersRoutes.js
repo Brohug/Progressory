@@ -9,12 +9,14 @@ const {
   deactivateUser
 } = require('../controllers/usersController');
 
-const { protect } = require('../middleware/authMiddleware');
+const { protect, requireOwner } = require('../middleware/authMiddleware');
 
-router.post('/', protect, createUser);
-router.get('/', protect, getUsers);
-router.get('/:id', protect, getUserById);
-router.put('/:id', protect, updateUser);
-router.patch('/:id/deactivate', protect, deactivateUser);
+router.use(protect, requireOwner);
+
+router.post('/', createUser);
+router.get('/', getUsers);
+router.get('/:id', getUserById);
+router.put('/:id', updateUser);
+router.patch('/:id/deactivate', deactivateUser);
 
 module.exports = router;

@@ -5,6 +5,7 @@ import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 import TopicSearchSelect from '../components/TopicSearchSelect';
 import curriculumIndexSeed from '../data/curriculumIndexSeed';
+import { useAuth } from '../hooks/useAuth';
 
 const skillLevelOrder = ['Beginner', 'Intermediate', 'Advanced'];
 
@@ -79,6 +80,8 @@ const getSearchRelevanceScore = (entry, normalizedSearch) => {
 };
 
 export default function CurriculumIndexPage() {
+  const { user } = useAuth();
+  const isMember = user?.role === 'member';
   const [searchParams, setSearchParams] = useSearchParams();
   const [topics, setTopics] = useState([]);
   const [programs, setPrograms] = useState([]);
@@ -117,6 +120,15 @@ export default function CurriculumIndexPage() {
         setLoading(true);
         setError('');
 
+        if (isMember) {
+          setTopics([]);
+          setPrograms([]);
+          setLibraryEntries([]);
+          setTopicCoverage([]);
+          setNeglectedTopics([]);
+          return;
+        }
+
         const [
           topicsRes,
           programsRes,
@@ -145,7 +157,7 @@ export default function CurriculumIndexPage() {
     };
 
     loadIndexSignals();
-  }, []);
+  }, [isMember]);
 
   useEffect(() => {
     const nextParams = new URLSearchParams();
@@ -360,6 +372,15 @@ export default function CurriculumIndexPage() {
   }, [filteredEntries]);
 
   const summaryCards = useMemo(() => {
+    if (isMember) {
+      return [
+        { label: 'Indexed Items', value: curriculumIndexSeed.length },
+        { label: 'Categories', value: categories.length },
+        { label: 'Skill Levels', value: skillLevels.length },
+        { label: 'Visible Sections', value: Object.keys(groupedEntries).length }
+      ];
+    }
+
     const linkedTopicCount = enrichedEntries.filter((entry) => entry.topic).length;
     const usedInClassesCount = enrichedEntries.filter(
       (entry) => Number(entry.coverage?.total_times_used || 0) > 0
@@ -371,7 +392,7 @@ export default function CurriculumIndexPage() {
       { label: 'Linked Topics', value: linkedTopicCount },
       { label: 'Used In Class Logs', value: usedInClassesCount }
     ];
-  }, [enrichedEntries, categories.length]);
+  }, [categories.length, enrichedEntries, groupedEntries, isMember, skillLevels.length]);
 
   const handleCheckClassUsage = (entry, usageCount) => {
     setEntryNoticeMap((prev) => ({
@@ -563,11 +584,13 @@ export default function CurriculumIndexPage() {
 
   return (
     <Layout>
-      <div className="curriculum-index-page">
-        <h2 className="page-title">Curriculum Index</h2>
-        <p className="page-intro">
-          Search the broader curriculum map and quickly see whether an item exists in Topics, has shown up in class logs, or already has supporting Library entries.
-        </p>
+        <div className="curriculum-index-page">
+          <h2 className="page-title">Curriculum Index</h2>
+          <p className="page-intro">
+            {isMember
+              ? 'Search the broader curriculum map and use it as a read-only study reference.'
+              : 'Search the broader curriculum map and quickly see whether an item exists in Topics, has shown up in class logs, or already has supporting Library entries.'}
+          </p>
 
         {error && <p className="error-text">{error}</p>}
 
@@ -733,6 +756,7 @@ export default function CurriculumIndexPage() {
                               </div>
                             ) : null}
 
+                            {!isMember ? (
                             <div className="curriculum-index-status-grid">
                               <div className="curriculum-index-status-card">
                                 <span className="meta-text">Topics</span>
@@ -797,8 +821,10 @@ export default function CurriculumIndexPage() {
                                 </div>
                               </div>
                             </div>
+                            ) : null}
                           </div>
 
+                          {!isMember ? (
                           <div className="inline-actions curriculum-index-actions">
                             {!entry.topic ? (
                               <span
@@ -855,8 +881,9 @@ export default function CurriculumIndexPage() {
                               </>
                             )}
                           </div>
+                          ) : null}
 
-                          {creatingEntryId === entry.id ? (
+                          {!isMember && creatingEntryId === entry.id ? (
                             <div className="quick-add-panel curriculum-index-create-panel">
                               <label>Topic title</label>
                               <input
@@ -941,7 +968,7 @@ export default function CurriculumIndexPage() {
                             </div>
                           ) : null}
 
-                          {editingTopicId === entry.topic?.id ? (
+                          {!isMember && editingTopicId === entry.topic?.id ? (
                             <div className="quick-add-panel curriculum-index-create-panel">
                               <label>Topic title</label>
                               <input

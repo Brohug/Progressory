@@ -14,6 +14,7 @@ const reportRoutes = require('./routes/reportRoutes');
 const libraryRoutes = require('./routes/libraryRoutes');
 const membersRoutes = require('./routes/membersRoutes');
 const usersRoutes = require('./routes/usersRoutes');
+const meRoutes = require('./routes/meRoutes');
 
 const app = express();
 
@@ -69,6 +70,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/library', libraryRoutes);
 app.use('/api/members', membersRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/me', meRoutes);
 
 const PORT = process.env.PORT || 4000;
 
