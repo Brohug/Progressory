@@ -45,9 +45,14 @@ const createMember = async (req, res) => {
     );
 
     const [rows] = await pool.query(
-      `SELECT m.*, p.name AS program_name
+      `SELECT m.*, p.name AS program_name,
+              u.email AS login_email,
+              u.role AS login_role,
+              u.is_active AS login_is_active,
+              u.created_at AS login_created_at
        FROM members m
        LEFT JOIN programs p ON m.program_id = p.id
+       LEFT JOIN users u ON m.user_id = u.id AND u.gym_id = m.gym_id
        WHERE m.id = ? AND m.gym_id = ?`,
       [result.insertId, gymId]
     );
@@ -71,9 +76,14 @@ const getMembers = async (req, res) => {
     const gymId = req.user.gym_id;
 
     const [rows] = await pool.query(
-      `SELECT m.*, p.name AS program_name
+      `SELECT m.*, p.name AS program_name,
+              u.email AS login_email,
+              u.role AS login_role,
+              u.is_active AS login_is_active,
+              u.created_at AS login_created_at
        FROM members m
        LEFT JOIN programs p ON m.program_id = p.id
+       LEFT JOIN users u ON m.user_id = u.id AND u.gym_id = m.gym_id
        WHERE m.gym_id = ?
        ORDER BY m.created_at DESC`,
       [gymId]
@@ -96,9 +106,14 @@ const getMemberById = async (req, res) => {
     const { id } = req.params;
 
     const [rows] = await pool.query(
-      `SELECT m.*, p.name AS program_name
+      `SELECT m.*, p.name AS program_name,
+              u.email AS login_email,
+              u.role AS login_role,
+              u.is_active AS login_is_active,
+              u.created_at AS login_created_at
        FROM members m
        LEFT JOIN programs p ON m.program_id = p.id
+       LEFT JOIN users u ON m.user_id = u.id AND u.gym_id = m.gym_id
        WHERE m.id = ? AND m.gym_id = ?`,
       [id, gymId]
     );
@@ -189,9 +204,14 @@ const updateMember = async (req, res) => {
     );
 
     const [updatedRows] = await pool.query(
-      `SELECT m.*, p.name AS program_name
+      `SELECT m.*, p.name AS program_name,
+              u.email AS login_email,
+              u.role AS login_role,
+              u.is_active AS login_is_active,
+              u.created_at AS login_created_at
        FROM members m
        LEFT JOIN programs p ON m.program_id = p.id
+       LEFT JOIN users u ON m.user_id = u.id AND u.gym_id = m.gym_id
        WHERE m.id = ? AND m.gym_id = ?`,
       [id, gymId]
     );

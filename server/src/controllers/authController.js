@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const pool = require('../config/db');
 
 const generateSlug = (name) => {
@@ -119,7 +120,7 @@ const login = async (req, res) => {
     }
 
     const [rows] = await pool.query(
-      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.password_hash, u.role,
+      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.password_hash, u.role, u.is_active,
               m.id AS member_id,
               g.name AS gym_name, g.slug
        FROM users u
@@ -136,6 +137,12 @@ const login = async (req, res) => {
     }
 
     const user = rows[0];
+
+    if (!user.is_active) {
+      return res.status(403).json({
+        message: 'This account is inactive. Finish the member setup link or contact your gym owner.'
+      });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
 
@@ -172,6 +179,160 @@ const login = async (req, res) => {
   }
 };
 
+const findInviteByRawToken = async (rawToken) => {
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+  const [rows] = await pool.query(
+    `SELECT mai.id, mai.gym_id, mai.user_id, mai.member_id, mai.invite_type, mai.expires_at, mai.used_at,
+            u.first_name, u.last_name, u.email, u.role, u.is_active,
+            m.first_name AS member_first_name, m.last_name AS member_last_name,
+            g.name AS gym_name, g.slug
+     FROM member_access_invites mai
+     JOIN users u ON mai.user_id = u.id AND mai.gym_id = u.gym_id
+     JOIN members m ON mai.member_id = m.id AND m.gym_id = mai.gym_id
+     JOIN gyms g ON mai.gym_id = g.id
+     WHERE mai.token_hash = ?`,
+    [tokenHash]
+  );
+
+  if (rows.length === 0) {
+    return null;
+  }
+
+  return rows[0];
+};
+
+const getMemberAccessInvite = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const invite = await findInviteByRawToken(token);
+
+    if (!invite) {
+      return res.status(404).json({
+        message: 'Invite not found'
+      });
+    }
+
+    if (invite.used_at) {
+      return res.status(410).json({
+        message: 'This link has already been used'
+      });
+    }
+
+    if (new Date(invite.expires_at).getTime() < Date.now()) {
+      return res.status(410).json({
+        message: 'This link has expired'
+      });
+    }
+
+    return res.status(200).json({
+      invite: {
+        user_id: invite.user_id,
+        member_id: invite.member_id,
+        type: invite.invite_type,
+        email: invite.email,
+        first_name: invite.member_first_name || invite.first_name,
+        last_name: invite.member_last_name || invite.last_name,
+        gym_name: invite.gym_name,
+        expires_at: invite.expires_at
+      }
+    });
+  } catch (error) {
+    console.error('Get member access invite error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+const setMemberAccessPassword = async (req, res) => {
+  const connection = await pool.getConnection();
+
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 8) {
+      return res.status(400).json({
+        message: 'Password must be at least 8 characters'
+      });
+    }
+
+    const invite = await findInviteByRawToken(token);
+
+    if (!invite) {
+      return res.status(404).json({
+        message: 'Invite not found'
+      });
+    }
+
+    if (invite.used_at) {
+      return res.status(410).json({
+        message: 'This link has already been used'
+      });
+    }
+
+    if (new Date(invite.expires_at).getTime() < Date.now()) {
+      return res.status(410).json({
+        message: 'This link has expired'
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    await connection.beginTransaction();
+
+    await connection.query(
+      `UPDATE users
+       SET password_hash = ?, is_active = TRUE
+       WHERE id = ? AND gym_id = ?`,
+      [passwordHash, invite.user_id, invite.gym_id]
+    );
+
+    await connection.query(
+      `UPDATE member_access_invites
+       SET used_at = NOW()
+       WHERE token_hash = ? AND gym_id = ?`,
+      [tokenHash, invite.gym_id]
+    );
+
+    await connection.commit();
+
+    const [userRows] = await pool.query(
+      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
+              m.id AS member_id,
+              g.name AS gym_name, g.slug
+       FROM users u
+       JOIN gyms g ON u.gym_id = g.id
+       LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
+       WHERE u.id = ? AND u.gym_id = ?`,
+      [invite.user_id, invite.gym_id]
+    );
+
+    const user = userRows[0];
+    const authToken = generateToken(user);
+
+    return res.status(200).json({
+      message: 'Password set successfully',
+      token: authToken,
+      user
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Set member access password error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  } finally {
+    connection.release();
+  }
+};
+
 const getMe = async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -205,5 +366,7 @@ const getMe = async (req, res) => {
 module.exports = {
   register,
   login,
-  getMe
+  getMe,
+  getMemberAccessInvite,
+  setMemberAccessPassword
 };

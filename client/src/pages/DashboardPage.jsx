@@ -378,9 +378,20 @@ export default function DashboardPage() {
   const memberVisibleLibraryEntries = libraryEntries.filter(
     (entry) => entry.is_active && entry.visibility === 'member_visible'
   );
+  const upcomingMemberClasses = plannedClasses
+    .filter((item) => item.status === 'planned')
+    .sort((a, b) => {
+      const left = `${a.class_date || ''} ${a.start_time || '00:00:00'}`;
+      const right = `${b.class_date || ''} ${b.start_time || '00:00:00'}`;
+      return left.localeCompare(right);
+    });
+  const nextPlannedClass = upcomingMemberClasses[0] || null;
+  const recentMemberLibraryEntries = [...memberVisibleLibraryEntries]
+    .sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at))
+    .slice(0, 3);
 
   const memberSummaryCards = [
-    { label: 'Upcoming planned classes', value: plannedClasses.filter((item) => item.status === 'planned').length },
+    { label: 'Upcoming planned classes', value: upcomingMemberClasses.length },
     { label: 'Library resources', value: memberVisibleLibraryEntries.length },
     { label: 'Tracked topics', value: memberProgress.length },
     {
@@ -484,6 +495,57 @@ export default function DashboardPage() {
                 </div>
               </section>
 
+              <section className="page-section dashboard-onboarding-section">
+                <div className="section-header">
+                  <div>
+                    <h3>Member Snapshot</h3>
+                    <p className="section-note">Keep this simple: what class is next, what to study, and what resources your coaches already shared.</p>
+                  </div>
+                </div>
+                <div className="dashboard-setup-grid">
+                  <div className="dashboard-setup-current">
+                    <strong>{nextPlannedClass ? 'Next planned class' : 'No planned classes yet'}</strong>
+                    <div className="detail-block">
+                      {nextPlannedClass ? (
+                        <>
+                          <div className="meta-text">
+                            {nextPlannedClass.title || 'Planned class'} | {new Date(nextPlannedClass.class_date).toLocaleDateString()}
+                          </div>
+                          <div className="meta-text">
+                            {nextPlannedClass.start_time || 'Time not added'} - {nextPlannedClass.end_time || 'Time not added'}
+                          </div>
+                          <div className="dashboard-setup-helper">
+                            Open Planned Classes to review the notes and linked topics before class.
+                          </div>
+                        </>
+                      ) : (
+                        <div className="dashboard-setup-helper">
+                          Your gym has not shared an upcoming planned class yet. Library and Decision Tree are still ready to use.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="dashboard-setup-upcoming">
+                    <strong>Study focus</strong>
+                    <div className="dashboard-setup-list">
+                      <Link to="/my-progress" className="dashboard-setup-item">
+                        <span>Review tracked topics</span>
+                        <small>{memberProgress.length} topic{memberProgress.length === 1 ? '' : 's'} already logged for you.</small>
+                      </Link>
+                      <Link to="/decision-tree" className="dashboard-setup-item">
+                        <span>Use the Decision Tree</span>
+                        <small>Work through likely branches before class instead of guessing what comes next.</small>
+                      </Link>
+                      <Link to="/index" className="dashboard-setup-item">
+                        <span>Browse the Curriculum Index</span>
+                        <small>Use the universal map when you want a cleaner overview of positions, sweeps, and submissions.</small>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
               <section className="page-section dashboard-queue-section">
                 <div className="section-header">
                   <div>
@@ -517,6 +579,44 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               </section>
+
+              <ExpandableSection
+                title="Recently Shared Library Resources"
+                note="Open this when you want a quick study list instead of the full Library page."
+                summary={`${recentMemberLibraryEntries.length} recent member-visible resource${recentMemberLibraryEntries.length === 1 ? '' : 's'} ready to revisit.`}
+              >
+                {recentMemberLibraryEntries.length === 0 ? (
+                  <p className="empty-state">No member-visible resources have been shared yet.</p>
+                ) : (
+                  <ul className="card-list">
+                    {recentMemberLibraryEntries.map((entry) => (
+                      <li key={entry.id} className="card-item compact-topic-card">
+                        <div className="compact-topic-header">
+                          <div>
+                            <strong>{entry.title}</strong>
+                            <div className="meta-text">
+                              {formatLabel(entry.entry_type)}
+                              {entry.program_name ? ` | ${entry.program_name}` : ''}
+                              {entry.topic_title ? ` | ${entry.topic_title}` : ''}
+                            </div>
+                          </div>
+                          {entry.video_url ? (
+                            <a
+                              href={entry.video_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="secondary-button"
+                            >
+                              Open resource
+                            </a>
+                          ) : null}
+                        </div>
+                        {entry.description ? <div className="detail-block">{entry.description}</div> : null}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </ExpandableSection>
             </>
           )}
         </div>

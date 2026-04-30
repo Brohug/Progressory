@@ -4,6 +4,7 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import ProtectedRoute from './components/ProtectedRoute';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const MemberAccessPage = lazy(() => import('./pages/MemberAccessPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ProgramsPage = lazy(() => import('./pages/ProgramsPage'));
 const TopicsPage = lazy(() => import('./pages/TopicsPage'));
@@ -35,6 +36,7 @@ export default function App() {
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<LoginPage />} />
+            <Route path="/member-access/:token" element={<MemberAccessPage />} />
             <Route
               path="/dashboard"
               element={
