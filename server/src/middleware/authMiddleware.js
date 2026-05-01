@@ -1,10 +1,11 @@
 const jwt = require('jsonwebtoken');
+const pool = require('../config/db');
 
 const STAFF_ROLES = ['owner', 'admin', 'coach'];
 
 const isStaffRole = (role) => STAFF_ROLES.includes(role);
 
-const protect = (req, res, next) => {
+const protect = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -18,7 +19,35 @@ const protect = (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = decoded;
+    const [rows] = await pool.query(
+      `SELECT u.id, u.gym_id, u.email, u.role, u.is_active,
+              m.id AS member_id
+       FROM users u
+       LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
+       WHERE u.id = ? AND u.gym_id = ?`,
+      [decoded.id, decoded.gym_id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).json({
+        message: 'Not authorized, account no longer exists'
+      });
+    }
+
+    const currentUser = rows[0];
+
+    if (!currentUser.is_active) {
+      return res.status(401).json({
+        message: 'Not authorized, this account is inactive'
+      });
+    }
+
+    req.user = {
+      ...decoded,
+      role: currentUser.role,
+      email: currentUser.email,
+      member_id: currentUser.member_id || null
+    };
 
     next();
   } catch (error) {

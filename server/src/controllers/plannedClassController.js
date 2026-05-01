@@ -101,6 +101,8 @@ const completePlannedClassRecord = async ({
 const getPlannedClasses = async (req, res) => {
   try {
     const gymId = req.user.gym_id;
+    const isMember = req.user.role === 'member';
+    const plannedStatusClause = isMember ? "AND pc.status = 'planned'" : '';
 
     const [rows] = await pool.query(
       `SELECT
@@ -114,6 +116,7 @@ const getPlannedClasses = async (req, res) => {
       JOIN users hc ON pc.head_coach_user_id = hc.id
       LEFT JOIN training_scenarios ts ON pc.training_scenario_id = ts.id
       WHERE pc.gym_id = ?
+      ${plannedStatusClause}
       ORDER BY pc.class_date ASC, pc.start_time ASC, pc.created_at DESC`,
       [gymId]
     );
@@ -129,6 +132,7 @@ const getPlannedClasses = async (req, res) => {
       JOIN planned_classes pc ON pct.planned_class_id = pc.id
       JOIN curriculum_topics ct ON pct.curriculum_topic_id = ct.id
       WHERE pc.gym_id = ?
+      ${plannedStatusClause}
       ORDER BY pct.created_at ASC`,
       [gymId]
     );

@@ -134,6 +134,8 @@ export default function PlannedClassesPage() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [memberSearch, setMemberSearch] = useState('');
+  const [memberProgramFilter, setMemberProgramFilter] = useState('');
   const [lastSavedPlannedClassDate, setLastSavedPlannedClassDate] = useState('');
   const [editingPlannedClassId, setEditingPlannedClassId] = useState(null);
   const [showPlanForm, setShowPlanForm] = useState(true);
@@ -430,7 +432,22 @@ export default function PlannedClassesPage() {
 
   if (isMember) {
     const memberVisiblePlannedClasses = plannedClasses.filter((plannedClass) => plannedClass.status === 'planned');
-    const groupedMemberPlannedClasses = memberVisiblePlannedClasses.reduce((acc, plannedClass) => {
+    const memberProgramOptions = [...new Set(memberVisiblePlannedClasses.map((item) => item.program_name).filter(Boolean))].sort();
+    const filteredMemberPlannedClasses = memberVisiblePlannedClasses.filter((plannedClass) => {
+      const normalizedSearch = memberSearch.trim().toLowerCase();
+      const matchesSearch = !normalizedSearch || [
+        plannedClass.title,
+        plannedClass.program_name,
+        plannedClass.notes,
+        ...(plannedClass.topics || []).map((topic) => topic.title)
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalizedSearch));
+      const matchesProgram = !memberProgramFilter || plannedClass.program_name === memberProgramFilter;
+
+      return matchesSearch && matchesProgram;
+    });
+    const groupedMemberPlannedClasses = filteredMemberPlannedClasses.reduce((acc, plannedClass) => {
       if (!acc[plannedClass.class_date]) {
         acc[plannedClass.class_date] = [];
       }
@@ -438,6 +455,7 @@ export default function PlannedClassesPage() {
       acc[plannedClass.class_date].push(plannedClass);
       return acc;
     }, {});
+    const nextMemberPlannedClass = filteredMemberPlannedClasses[0] || memberVisiblePlannedClasses[0] || null;
 
     return (
       <Layout>
@@ -462,17 +480,110 @@ export default function PlannedClassesPage() {
             </div>
           </section>
 
+          <section className="page-section dashboard-onboarding-section">
+            <div className="section-header">
+              <div>
+                <h3>Next class snapshot</h3>
+                <p className="section-note">Start with the next class, then use the Index, Library, or Decision Tree if you want to study around it.</p>
+              </div>
+            </div>
+            <div className="dashboard-setup-grid">
+              <div className="dashboard-setup-current">
+                <strong>{nextMemberPlannedClass ? (nextMemberPlannedClass.title || nextMemberPlannedClass.program_name) : 'No class planned yet'}</strong>
+                <div className="detail-block">
+                  {nextMemberPlannedClass ? (
+                    <>
+                      <div className="meta-text">{formatDateForDisplay(nextMemberPlannedClass.class_date)}</div>
+                      <div className="meta-text">
+                        {formatTimeForDisplay(nextMemberPlannedClass.start_time)}
+                        {nextMemberPlannedClass.end_time ? ` - ${formatTimeForDisplay(nextMemberPlannedClass.end_time)}` : ''}
+                      </div>
+                      <div className="meta-text">Program: {nextMemberPlannedClass.program_name || 'No program'}</div>
+                      {nextMemberPlannedClass.topics?.length > 0 ? (
+                        <div className="suggestion-chip-row planned-classes-card-topics">
+                          {nextMemberPlannedClass.topics.slice(0, 4).map((topic) => (
+                            <span
+                              key={`member-next-${nextMemberPlannedClass.id}-${topic.curriculum_topic_id}`}
+                              className="suggestion-chip"
+                            >
+                              {topic.title}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="dashboard-setup-helper">Your coaches have not linked topics to this class yet.</div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="dashboard-setup-helper">
+                      Your gym has not shared an upcoming planned class yet. Library and the Decision Tree are still ready to use.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="dashboard-setup-upcoming">
+                <strong>Study from here</strong>
+                <div className="dashboard-setup-list">
+                  <Link to="/index" className="dashboard-setup-item">
+                    <span>Open Curriculum Index</span>
+                    <small>Use the universal topic map before class starts.</small>
+                  </Link>
+                  <Link to="/library" className="dashboard-setup-item">
+                    <span>Open Library</span>
+                    <small>Revisit the videos and notes your coaches already shared.</small>
+                  </Link>
+                  <Link to="/decision-tree" className="dashboard-setup-item">
+                    <span>Open Decision Tree</span>
+                    <small>Work through likely branches when you want more than a static list.</small>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <ExpandableSection
             title="Upcoming planned classes"
             note="Expand this to review the next planned sessions."
-            summary={`${memberVisiblePlannedClasses.length} planned class${memberVisiblePlannedClasses.length === 1 ? '' : 'es'} available.`}
+            summary={`${filteredMemberPlannedClasses.length} planned class${filteredMemberPlannedClasses.length === 1 ? '' : 'es'} in the current member view.`}
             className="planned-classes-results-section"
             defaultOpen
           >
+            <div className="form-grid" style={{ marginBottom: '16px' }}>
+              <div>
+                <label>Search</label>
+                <input
+                  type="text"
+                  value={memberSearch}
+                  onChange={(e) => setMemberSearch(e.target.value)}
+                  placeholder="Search class title, topic, or notes..."
+                />
+              </div>
+
+              <div>
+                <label>Program</label>
+                <select
+                  value={memberProgramFilter}
+                  onChange={(e) => setMemberProgramFilter(e.target.value)}
+                >
+                  <option value="">All programs</option>
+                  {memberProgramOptions.map((programName) => (
+                    <option key={programName} value={programName}>
+                      {programName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             {loading ? (
               <p className="empty-state">Loading planned classes...</p>
             ) : Object.keys(groupedMemberPlannedClasses).length === 0 ? (
-              <p className="empty-state">No planned classes are available right now.</p>
+              <p className="empty-state">
+                {memberVisiblePlannedClasses.length === 0
+                  ? 'No planned classes are available right now.'
+                  : 'No planned classes match your current search.'}
+              </p>
             ) : (
               Object.entries(groupedMemberPlannedClasses).map(([date, classesForDate]) => (
                 <div key={date} className="detail-block">

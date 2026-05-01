@@ -484,6 +484,8 @@ export default function LibraryPage() {
   ]), [formData.entry_type, formData.visibility, formSelectedProgram, formSelectedTopic]);
 
   if (isMember) {
+    const latestMemberEntry = filteredEntries[0] || null;
+
     return (
       <Layout>
         <h2 className="page-title">Library</h2>
@@ -492,6 +494,85 @@ export default function LibraryPage() {
         </p>
 
         {error ? <p className="error-text">{error}</p> : null}
+
+        <section className="stats-grid">
+          {summaryCards.map((card) => (
+            <div key={card.label} className="stat-card">
+              <div className="stat-label">{card.label}</div>
+              <div className="stat-value">{card.value}</div>
+            </div>
+          ))}
+        </section>
+
+        <section className="page-section dashboard-onboarding-section">
+          <div className="section-header">
+            <div>
+              <h3>Study next</h3>
+              <p className="section-note">Use the latest shared resource as the fast starting point, then narrow the rest of the Library when you need more.</p>
+            </div>
+          </div>
+          <div className="dashboard-setup-grid">
+            <div className="dashboard-setup-current">
+              <strong>{latestMemberEntry ? latestMemberEntry.title : 'No shared resources yet'}</strong>
+              <div className="detail-block">
+                {latestMemberEntry ? (
+                  <>
+                    <div className="meta-text">
+                      {formatSentenceLabel(latestMemberEntry.entry_type)}
+                      {latestMemberEntry.program_name ? ` | ${latestMemberEntry.program_name}` : ''}
+                      {latestMemberEntry.topic_title ? ` | ${latestMemberEntry.topic_title}` : ''}
+                    </div>
+                    <div className="dashboard-setup-helper">
+                      {latestMemberEntry.description || 'Open the resource to review what your coaches shared most recently.'}
+                    </div>
+                    <div className="inline-actions">
+                      {latestMemberEntry.video_url ? (
+                        <a
+                          href={latestMemberEntry.video_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="secondary-button"
+                        >
+                          Open resource
+                        </a>
+                      ) : null}
+                      {latestMemberEntry.topic_title ? (
+                        <Link
+                          className="secondary-button"
+                          to={`/index?search=${encodeURIComponent(latestMemberEntry.topic_title)}`}
+                        >
+                          View topic in Index
+                        </Link>
+                      ) : null}
+                    </div>
+                  </>
+                ) : (
+                  <div className="dashboard-setup-helper">
+                    Your coaches have not shared any member-visible Library entries yet.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="dashboard-setup-upcoming">
+              <strong>Use this with</strong>
+              <div className="dashboard-setup-list">
+                <Link to="/my-progress" className="dashboard-setup-item">
+                  <span>My Progress</span>
+                  <small>See which topics your coaches have already logged for you.</small>
+                </Link>
+                <Link to="/index" className="dashboard-setup-item">
+                  <span>Curriculum Index</span>
+                  <small>Use the topic map when you want the broader structure around a resource.</small>
+                </Link>
+                <Link to="/decision-tree" className="dashboard-setup-item">
+                  <span>Decision Tree</span>
+                  <small>Work through realistic follow-ups when you want more than a static resource.</small>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <ExpandableSection
           title="Find Library Resources"
@@ -533,6 +614,21 @@ export default function LibraryPage() {
               </select>
             </div>
           </div>
+
+          {activeFilters.length > 0 ? (
+            <div className="library-active-filters">
+              <div className="library-filter-chip-row">
+                {activeFilters.map((filter) => (
+                  <span key={filter.key} className="library-filter-chip">
+                    {filter.label}
+                  </span>
+                ))}
+              </div>
+              <button type="button" className="secondary-button" onClick={clearAllFilters}>
+                Clear filters
+              </button>
+            </div>
+          ) : null}
         </ExpandableSection>
 
         <ExpandableSection
