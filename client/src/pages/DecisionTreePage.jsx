@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import curriculumIndexSeed from '../data/curriculumIndexSeed';
 
@@ -13,6 +13,11 @@ const relationshipGroups = [
 ];
 
 const defaultFocusId = '';
+const excludedDecisionTreeSearchCategories = new Set([
+  'Constraint-Led Games',
+  'Drills',
+  'Positional Sparring'
+]);
 
 const coachingScenarios = [
   {
@@ -403,6 +408,31 @@ const coachingScenarios = [
     ]
   },
   {
+    label: 'I need better back escapes',
+    category: 'Escapes and defense',
+    focusName: 'Back Control',
+    description: 'Sharpen hand fighting, hook removal, shoulder alignment, and the next recovery after escaping the back.',
+    filters: {
+      preferredStyle: 'defense',
+      topBottom: 'bottom',
+      weakArea: 'escapes',
+      riskTolerance: 'low'
+    }
+  },
+  {
+    label: 'I need submission defense',
+    category: 'Escapes and defense',
+    focusName: 'Armbar Defense',
+    description: 'Choose the submission giving you trouble and build the safer defensive path plus the next recovery after it works.',
+    filters: {
+      preferredStyle: 'defense',
+      topBottom: 'bottom',
+      weakArea: 'escapes',
+      riskTolerance: 'low',
+      partnerStyle: 'submissions'
+    }
+  },
+  {
     label: 'I want better takedown entries',
     category: 'Standing and takedowns',
     focusName: 'Front Headlock',
@@ -681,6 +711,28 @@ const coachingScenarioGuidedPromptMap = {
       ]
     }
   ],
+  [normalizeValue('I need better back escapes')]: [
+    {
+      question: 'What part of the back escape is usually failing first?',
+      options: [
+        { label: 'I lose the hand-fight immediately', description: 'Start with controlling the choking arm before worrying about the hook line.', focusName: 'Two-On-One Grip Fight' },
+        { label: 'I cannot get my shoulders back to the mat', description: 'The shoulder line usually has to win first before the rest of the escape opens.', focusName: 'Shoulder-To-Mat Escape' },
+        { label: 'The hooks or body triangle keep me stuck', description: 'Hook stripping and lower-body clearing usually become the priority first.', focusName: 'Hook Stripping Escape' },
+        { label: 'I escape but do not know what to do after', description: 'Build the route that turns the back escape into a top or safer recovery.', focusName: 'Escape To Top Half' }
+      ]
+    }
+  ],
+  [normalizeValue('I need submission defense')]: [
+    {
+      question: 'Which submission is giving you the most trouble right now?',
+      options: [
+        { label: 'Armbar', description: 'Start from the armbar problem itself, then choose the defensive answer that fits the direction and timing.', focusName: 'Armbar Defense' },
+        { label: 'Triangle', description: 'Start from the triangle problem itself, then choose the escape that fits the angle and posture battle.', focusName: 'Triangle Escape Family' },
+        { label: 'Kimura', description: 'Start from the kimura problem itself, then choose the shoulder-safe answer before the rotation gets deep.', focusName: 'Kimura Defense' },
+        { label: 'Guillotine / front headlock', description: 'Start from the guillotine problem itself, then choose the hand-fight or exit that fits the squeeze.', focusName: 'Guillotine Defense' }
+      ]
+    }
+  ],
   [normalizeValue('I want better takedown entries')]: [
     {
       question: 'Which takedown lane fits you best right now?',
@@ -707,16 +759,16 @@ const coachingScenarioGuidedPromptMap = {
 };
 
 const escapeContinuationMap = {
-  [normalizeValue('Bridge And Turn-In')]: ['Half Guard', 'Underhook Half Guard', 'Dogfight', 'Open Guard'],
-  [normalizeValue('Underhook Escape')]: ['Underhook Half Guard', 'Dogfight', 'Single Leg Position', 'Half Guard'],
-  [normalizeValue('Ghost Escape')]: ['Turtle', 'Seated Guard', 'Single Leg Position', 'Open Guard'],
-  [normalizeValue('Running Escape')]: ['Running Man', 'Seated Guard', 'Open Guard'],
-  [normalizeValue('Reguard With Knee Inside')]: ['Half Guard', 'Open Guard', 'Butterfly Guard'],
-  [normalizeValue('Elbow Frame Recovery')]: ['Half Guard', 'Knee Shield Half Guard', 'Open Guard'],
-  [normalizeValue('Armbar Hitchhiker')]: ['Top Half Guard', 'Combat Base', 'Single Leg Position'],
-  [normalizeValue('Armbar Stacking Defense')]: ['Combat Base', 'Double Under Pass', 'Top Half Guard'],
-  [normalizeValue('Triangle Posture Escape')]: ['Combat Base', 'Double Under Pass', 'Top Half Guard'],
-  [normalizeValue('Triangle Escape With Hand Fighting/Angles')]: ['Combat Base', 'Double Under Pass', 'Top Half Guard'],
+  [normalizeValue('Bridge And Turn-In')]: ['Half Guard', 'Underhook Escape', 'Underhook Half Guard', 'Dogfight', 'Open Guard'],
+  [normalizeValue('Underhook Escape')]: ['Underhook Half Guard', 'Dogfight', 'Single Leg', 'Half Guard'],
+  [normalizeValue('Ghost Escape')]: ['Turtle', 'Seated Guard', 'Single Leg', 'Open Guard', 'Re-Guarding'],
+  [normalizeValue('Running Escape')]: ['Running Man', 'Turtle', 'Seated Guard', 'Open Guard'],
+  [normalizeValue('Reguard With Knee Inside')]: ['Half Guard', 'Open Guard', 'Butterfly Guard', 'Seated Guard'],
+  [normalizeValue('Elbow Frame Recovery')]: ['Half Guard', 'Knee Shield Half Guard', 'Open Guard', 'Re-Guarding'],
+  [normalizeValue('Armbar Hitchhiker')]: ['Top Half Guard', 'Combat Base', 'Single Leg', 'Open Guard'],
+  [normalizeValue('Armbar Stacking Defense')]: ['Combat Base', 'Double Under Pass', 'Top Half Guard', 'Open Guard'],
+  [normalizeValue('Triangle Posture Escape')]: ['Combat Base', 'Double Under Pass', 'Top Half Guard', 'Open Guard'],
+  [normalizeValue('Triangle Escape With Hand Fighting/Angles')]: ['Combat Base', 'Double Under Pass', 'Top Half Guard', 'Open Guard'],
   [normalizeValue('Shoulder Slide Escape')]: ['Closed Guard', 'Open Guard', 'Top Half Guard'],
   [normalizeValue('Escape To Top Half')]: ['Top Half Guard', 'Knee On Belly', 'Mount']
 };
@@ -1296,6 +1348,66 @@ const getFilteredBranches = ({ focusEntry, entryMap, filters, excludedEntryIds =
   });
 };
 
+const getReactionBranchOptions = ({
+  focusEntry,
+  decisionTreeModel,
+  entryMap,
+  filters,
+  excludedEntryIds = []
+}) => {
+  if (!focusEntry || !decisionTreeModel?.commonReactions?.length) return [];
+
+  const excludedIds = new Set(excludedEntryIds.filter(Boolean));
+  const optionsById = new Map();
+
+  decisionTreeModel.commonReactions.forEach((reaction, reactionIndex) => {
+    (reaction.branches || []).forEach((name, branchIndex) => {
+      const entry = findEntryByName(entryMap, name);
+
+      if (!entry || entry.id === focusEntry.id || excludedIds.has(entry.id)) {
+        return;
+      }
+
+      let score = scoreOption({ entry, groupKey: 'commonTransitions', filters });
+      score += Math.max(0, 8 - reactionIndex);
+      score += Math.max(0, 3 - branchIndex);
+
+      if (['Positions', 'Pins and Control', 'Back Takes', 'Submissions', 'Sweeps', 'Takedowns'].includes(entry.category)) {
+        score += 2;
+      }
+
+      const nextOption = {
+        name: entry.name,
+        entry,
+        score,
+        reasons: uniqueValues([
+          `Common reaction: ${reaction.reaction}`,
+          ...getOptionReasons({ entry, groupKey: 'commonTransitions', filters })
+        ]).slice(0, 3),
+        fitProfiles: getFitProfileMatches(entry, filters),
+        sourceLabel: `Reaction: ${reaction.reaction}`,
+        cue: reaction.cue
+      };
+
+      const existingOption = optionsById.get(entry.id);
+
+      if (!existingOption || nextOption.score > existingOption.score) {
+        optionsById.set(entry.id, nextOption);
+        return;
+      }
+
+      optionsById.set(entry.id, {
+        ...existingOption,
+        reasons: uniqueValues([...existingOption.reasons, ...nextOption.reasons]).slice(0, 3)
+      });
+    });
+  });
+
+  return Array.from(optionsById.values())
+    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+    .slice(0, 6);
+};
+
 const isEscapeContinuationContext = ({ focusEntry, filters }) => {
   if (!focusEntry) return false;
 
@@ -1372,17 +1484,46 @@ const getEscapeContinuationOptions = ({
     .slice(0, 4);
 };
 
+const buildLibraryLink = ({ entryName, focusEntry, decisionPathEntries }) => {
+  const params = new URLSearchParams();
+  params.set('search', entryName);
+
+  if (focusEntry?.name) {
+    params.set('focus', focusEntry.name);
+  }
+
+  if (decisionPathEntries?.length) {
+    params.set('path', decisionPathEntries.map((entry) => entry.name).join(' -> '));
+    params.set('source', 'tree');
+  }
+
+  return `/library?${params.toString()}`;
+};
+
 export default function DecisionTreePage() {
-  const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  const querySearch = searchParams.get('search') || '';
+  const initialQueryMatch = useMemo(() => {
+    const normalizedQuery = normalizeValue(querySearch);
+
+    if (!normalizedQuery) return null;
+
+    return curriculumIndexSeed.find((entry) => normalizeValue(entry.name) === normalizedQuery)
+      || curriculumIndexSeed.find((entry) => getEntryText(entry).includes(normalizedQuery))
+      || null;
+  }, [querySearch]);
+  const [search, setSearch] = useState(querySearch);
   const [searchIsActive, setSearchIsActive] = useState(false);
-  const [focusId, setFocusId] = useState(defaultFocusId);
+  const [focusId, setFocusId] = useState(initialQueryMatch?.id || defaultFocusId);
   const [history, setHistory] = useState([]);
-  const [decisionPath, setDecisionPath] = useState([]);
+  const [decisionPath, setDecisionPath] = useState(initialQueryMatch ? [initialQueryMatch.id] : []);
   const [filters, setFilters] = useState(defaultFilters);
   const [showFilters, setShowFilters] = useState(false);
   const [showPartnerContext, setShowPartnerContext] = useState(false);
   const [showSimulation, setShowSimulation] = useState(false);
-  const [scenarioFeedback, setScenarioFeedback] = useState('');
+  const [scenarioFeedback, setScenarioFeedback] = useState(
+    initialQueryMatch ? `Focused on ${initialQueryMatch.name} from Library. Start tracing the next coaching branches below.` : ''
+  );
   const [pendingScrollTarget, setPendingScrollTarget] = useState('');
   const [activeScenarioPrompt, setActiveScenarioPrompt] = useState(null);
   const [expandedPromptKeys, setExpandedPromptKeys] = useState({});
@@ -1419,6 +1560,7 @@ export default function DecisionTreePage() {
     if (!normalizedSearch) return [];
 
     const rankedMatches = entries
+      .filter((entry) => !excludedDecisionTreeSearchCategories.has(entry.category))
       .filter((entry) => getEntryText(entry).includes(normalizedSearch))
       .sort((a, b) => {
         const aName = normalizeValue(a.name);
@@ -1522,10 +1664,23 @@ export default function DecisionTreePage() {
       .filter((reaction) => reaction.options.length > 0);
   }, [entryMap, focusDecisionTreeModel]);
 
-  const topRecommendations = useMemo(() => {
-    const seen = new Set();
+  const reactionBranchOptions = useMemo(() => (
+    getReactionBranchOptions({
+      focusEntry,
+      decisionTreeModel: focusDecisionTreeModel,
+      entryMap,
+      filters,
+      excludedEntryIds: decisionPath
+    })
+  ), [focusEntry, focusDecisionTreeModel, entryMap, filters, decisionPath]);
 
-    return branchGroups
+  const topRecommendations = useMemo(() => {
+    const priorPathIds = new Set(decisionPath.slice(0, -1));
+    const mergedOptions = new Map();
+
+    [
+      ...reactionBranchOptions,
+      ...branchGroups
       .flatMap((group) => (
         group.options.map((option) => ({
           ...option,
@@ -1533,16 +1688,33 @@ export default function DecisionTreePage() {
           sourceKey: group.key
         }))
       ))
-      .filter((option) => option.entry)
-      .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
-      .filter((option) => {
-        const key = option.entry.id;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
+    ].forEach((option, index) => {
+      if (!option.entry || priorPathIds.has(option.entry.id)) return;
+
+      const existingOption = mergedOptions.get(option.entry.id);
+      const mergedReasons = existingOption
+        ? uniqueValues([...existingOption.reasons, ...option.reasons]).slice(0, 3)
+        : option.reasons;
+
+      if (!existingOption || option.score > existingOption.score) {
+        mergedOptions.set(option.entry.id, {
+          ...option,
+          reasons: mergedReasons,
+          sortIndex: index
+        });
+        return;
+      }
+
+      mergedOptions.set(option.entry.id, {
+        ...existingOption,
+        reasons: mergedReasons
+      });
+    });
+
+    return Array.from(mergedOptions.values())
+      .sort((a, b) => b.score - a.score || a.sortIndex - b.sortIndex || a.name.localeCompare(b.name))
       .slice(0, 6);
-  }, [branchGroups]);
+  }, [branchGroups, decisionPath, reactionBranchOptions]);
 
   const escapeContinuationOptions = useMemo(() => (
     getEscapeContinuationOptions({
@@ -1579,10 +1751,21 @@ export default function DecisionTreePage() {
           ? recommendationsRef
           : treeBranchesRef;
 
-      targetRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      });
+      const targetElement = targetRef.current;
+
+      if (targetElement) {
+        const rect = targetElement.getBoundingClientRect();
+        const currentScrollY = window.scrollY || window.pageYOffset;
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+        const centeredOffset = Math.max(80, (viewportHeight - rect.height) / 2);
+        const nextTop = Math.max(0, currentScrollY + rect.top - centeredOffset);
+
+        window.scrollTo({
+          top: nextTop,
+          behavior: 'smooth'
+        });
+      }
+
       setPendingScrollTarget('');
     }, 120);
 
@@ -1645,11 +1828,11 @@ export default function DecisionTreePage() {
     setShowPartnerContext(Boolean(nextFilters.partnerStyle));
     navigateToEntry(nextFocus || scenarioFocus, {
       pathMode: 'reset',
-      scrollTarget: 'filters',
+      scrollTarget: 'tree',
       closeSearch: true,
       feedback: (nextFocus || scenarioFocus) && (nextFocus || scenarioFocus).id !== focusEntry?.id
-        ? `Applied "${scenario.label}". Focus moved to ${(nextFocus || scenarioFocus).name}, matching filters were turned on, and the page jumped to Simple filters below.`
-        : `Applied "${scenario.label}". Matching filters were turned on and the page jumped to Simple filters below.`
+        ? `Applied "${scenario.label}". Focus moved to ${(nextFocus || scenarioFocus).name}, matching filters were turned on, and the page jumped to Tree branches below.`
+        : `Applied "${scenario.label}". Matching filters were turned on and the page jumped to Tree branches below.`
     });
   };
 
@@ -1788,7 +1971,14 @@ export default function DecisionTreePage() {
                 <Link className="secondary-button" to={`/index?search=${encodeURIComponent(focusEntry.name)}`}>
                   View in Index
                 </Link>
-                <Link className="secondary-button" to={`/library?search=${encodeURIComponent(focusEntry.name)}`}>
+                <Link
+                  className="secondary-button"
+                  to={buildLibraryLink({
+                    entryName: focusEntry.name,
+                    focusEntry,
+                    decisionPathEntries
+                  })}
+                >
                   Find Library Resources
                 </Link>
               </div>
@@ -1993,12 +2183,277 @@ export default function DecisionTreePage() {
           ) : null}
         </section>
 
+        <section className="page-section decision-tree-branch-spotlight" ref={treeBranchesRef}>
+          <div className="decision-tree-section-heading">
+            <div>
+              <span className="decision-tree-next-step">Next step</span>
+              <h3>Tree branches</h3>
+              {decisionPathEntries.length > 0 ? (
+                <p className="decision-tree-path-text">
+                  Path: {decisionPathEntries.map((entry, index) => (
+                    <span key={`path-${entry.id}`}>
+                      {index > 0 ? ' -> ' : ''}
+                      {entry.name}
+                    </span>
+                  ))}
+                </p>
+              ) : null}
+              <p className="meta-text">
+                Showing {visibleBranchCount} filtered options from the universal graph.
+              </p>
+              <p className="decision-tree-branch-callout">
+                Most users will work here first after choosing a coaching problem, then fine-tune with filters only if they need to narrow the path further.
+              </p>
+            </div>
+            {activeStyleHints.length > 0 && (
+              <div className="decision-tree-chip-row">
+                {activeStyleHints.map((hint) => (
+                  <span className="curriculum-index-tag" key={hint}>{styleHintLabels[hint] || hint}</span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {focusReactionGroups.length > 0 ? (
+            <div className="decision-tree-reaction-panel">
+              <div className="decision-tree-section-heading">
+                <div>
+                  <h4>Common reactions from here</h4>
+                  <p className="meta-text">
+                    These branches come from the usual reactions to {focusEntry.name}, not just the first direct links.
+                  </p>
+                </div>
+              </div>
+
+              <div className="decision-tree-reaction-grid">
+                {focusReactionGroups.map((reaction) => (
+                  <article className="decision-tree-reaction-card" key={reaction.reaction}>
+                    <strong>{reaction.reaction}</strong>
+                    <p className="meta-text">{reaction.cue}</p>
+                    <div className="decision-tree-reaction-actions">
+                      {reaction.options.map((option) => (
+                        <button
+                          key={`${reaction.reaction}-${option.id}`}
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => selectFocusEntry(option, {
+                            pathMode: 'append',
+                            scrollTarget: 'recommendations',
+                            feedback: `Moved from ${focusEntry.name} to ${option.name}. Jumped to the next recommendation layer below.`
+                          })}
+                        >
+                          {option.name}
+                        </button>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {!focusEntry ? (
+            <p className="empty-state">Choose a start point or coaching problem to begin building the tree.</p>
+          ) : null}
+
+          {topRecommendations.length > 0 ? (
+            <div className="decision-tree-top-recommendations" ref={recommendationsRef}>
+              <div className="decision-tree-section-heading">
+                <div>
+                  <h4>Best next moves</h4>
+                  <p className="meta-text">
+                    These are the strongest next branches from the current focus, current path, and the realistic reactions that usually happen from here.
+                  </p>
+                </div>
+              </div>
+
+              <div className="decision-tree-top-grid">
+                {topRecommendations.map((option) => (
+                  <article className="decision-tree-top-card" key={`top-${option.entry.id}`}>
+                    <div className="decision-tree-top-card-header">
+                      <div>
+                        <strong>{option.name}</strong>
+                        <span>{option.sourceLabel}</span>
+                      </div>
+                      <span className="curriculum-index-tag">
+                        {option.entry.category}
+                      </span>
+                    </div>
+
+                    <p className="meta-text">
+                      {option.reasons.join(' | ')}
+                    </p>
+
+                    {option.cue ? (
+                      <p className="meta-text decision-tree-top-cue">
+                        {option.cue}
+                      </p>
+                    ) : null}
+
+                    {option.fitProfiles.length > 0 ? (
+                      <div className="decision-tree-fit-row">
+                        {option.fitProfiles.map((profile) => (
+                          <span
+                            key={`top-${option.entry.id}-${profile.key}`}
+                            className={`decision-tree-fit-chip${profile.isCaution ? ' is-caution' : ''}${profile.isMatch ? ' is-match' : ''}`}
+                          >
+                            {profile.label}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    <div className="inline-actions decision-tree-top-actions">
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => selectFocusEntry(option.entry, {
+                          pathMode: 'append',
+                          scrollTarget: 'recommendations',
+                          feedback: `Moved from ${focusEntry.name} to ${option.entry.name}. Jumped to the next recommendation layer below.`
+                        })}
+                      >
+                        Open in tree
+                      </button>
+                      <Link className="secondary-button" to={`/index?search=${encodeURIComponent(option.entry.name)}`}>
+                        View in Index
+                      </Link>
+                      <Link
+                        className="secondary-button"
+                        to={buildLibraryLink({
+                          entryName: option.entry.name,
+                          focusEntry,
+                          decisionPathEntries
+                        })}
+                      >
+                        Library
+                      </Link>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {focusEntry ? (
+            <div className="decision-tree-success-row">
+              {showEscapeContinuationAction ? (
+                <button
+                  className="secondary-button decision-tree-continuation-toggle"
+                  type="button"
+                  onClick={() => {
+                    setShowEscapeContinuation((value) => !value);
+                    setScenarioFeedback(
+                      showEscapeContinuation
+                        ? 'Closed the post-escape continuation panel.'
+                        : 'Escape worked. Showing likely next positions and attacks from here.'
+                    );
+                  }}
+                >
+                  {showEscapeContinuation ? 'Hide post-escape options' : 'Escape worked: what next?'}
+                </button>
+              ) : null}
+              <button className="success-button" type="button" onClick={resetDecisionTree}>
+                Submission success
+              </button>
+            </div>
+          ) : null}
+
+          {showEscapeContinuationAction && showEscapeContinuation ? (
+            <div className="decision-tree-guided-prompt decision-tree-continuation-panel">
+              <div className="decision-tree-section-heading">
+                <div>
+                  <h4>After the escape works</h4>
+                  <p className="meta-text">
+                    Turn the recovery into a safer guard, a scramble win, or a dominant follow-up that fits this exact escape.
+                  </p>
+                </div>
+              </div>
+
+              <div className="decision-tree-guided-grid">
+                {escapeContinuationOptions.map((option) => (
+                  <button
+                    key={`escape-continuation-${option.entry.id}`}
+                    type="button"
+                    className="decision-tree-guided-option"
+                    onClick={() => selectFocusEntry(option.entry, {
+                      pathMode: 'append',
+                      scrollTarget: 'recommendations',
+                      feedback: `Escape worked. Continue through ${option.entry.name} from here.`
+                    })}
+                  >
+                    <strong>{option.entry.name}</strong>
+                    <span>
+                      {option.entry.description}
+                    </span>
+                    <span className="decision-tree-reason-row">
+                      {option.reasons.join(' | ')}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="decision-tree-branch-grid">
+            {branchGroups.map((group) => (
+              <div className="decision-tree-branch-group" key={group.key}>
+                <div className="decision-tree-branch-heading">
+                  <h4>{group.label}</h4>
+                  <span className="meta-text">{group.options.length} shown</span>
+                </div>
+                {group.options.length > 0 ? (
+                  <ul className="card-list">
+                    {group.options.map((option) => (
+                      <li className="decision-tree-option" key={`${group.key}-${option.name}`}>
+                          <button
+                            type="button"
+                            onClick={() => option.entry && selectFocusEntry(option.entry, {
+                              pathMode: 'append',
+                              scrollTarget: 'recommendations',
+                              feedback: `Moved from ${focusEntry.name} to ${option.entry.name}. Jumped to the next recommendation layer below.`
+                            })}
+                            disabled={!option.entry}
+                          >
+                          <strong>{option.name}</strong>
+                          <span>
+                            {option.entry
+                              ? `${option.entry.category}${option.entry.skillLevel ? ` | ${option.entry.skillLevel}` : ''}`
+                              : 'Not a full Index node yet'}
+                          </span>
+                          <span className="decision-tree-reason-row">
+                            {option.reasons.join(' | ')}
+                          </span>
+                          {option.fitProfiles.length > 0 ? (
+                            <span className="decision-tree-fit-row">
+                              {option.fitProfiles.map((profile) => (
+                                <span
+                                  key={profile.key}
+                                  className={`decision-tree-fit-chip${profile.isCaution ? ' is-caution' : ''}${profile.isMatch ? ' is-match' : ''}`}
+                                >
+                                  {profile.label}
+                                </span>
+                              ))}
+                            </span>
+                          ) : null}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="empty-state">No branches match the current filters yet.</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className={`page-section compact-form-shell decision-tree-collapsible-shell${showFilters ? ' is-open' : ''}`} ref={filtersSectionRef}>
           <div className="compact-form-header">
             <div>
               <h3>Simple filters</h3>
               <p className="meta-text">
-                These filters shrink and rank the answers. Open them when you want more specific suggestions.
+                These filters shrink and rank the answers. If you do not want to narrow anything right now, just keep going with the Tree branches above.
               </p>
             </div>
             <div className="decision-tree-header-actions">
@@ -2016,7 +2471,7 @@ export default function DecisionTreePage() {
           {!showFilters ? (
             <div className="decision-tree-collapsible-summary">
               <p className="meta-text">
-                Keep this closed unless you want to narrow the tree further.
+                Leave this closed unless you want more specific suggestions. The main next-step path is already above.
               </p>
               {activeFilterSummary.length > 0 ? (
                 <div className="decision-tree-summary-chip-row">
@@ -2152,7 +2607,7 @@ export default function DecisionTreePage() {
             <div>
               <h3>Partner context</h3>
               <p className="meta-text">
-                Add opponent or training-partner context when you want the tree to behave more like a coaching assistant.
+                Add opponent or training-partner context when you want the tree to behave more like a coaching assistant. If not, keep following the path above.
               </p>
             </div>
             <button className="secondary-button" type="button" onClick={() => setShowPartnerContext((value) => !value)}>
@@ -2267,258 +2722,6 @@ export default function DecisionTreePage() {
               <span>Mobility</span>
             </div>
           )}
-        </section>
-
-        <section className="page-section decision-tree-branch-spotlight" ref={treeBranchesRef}>
-          <div className="decision-tree-section-heading">
-            <div>
-              <span className="decision-tree-next-step">Next step</span>
-              <h3>Tree branches</h3>
-              {decisionPathEntries.length > 0 ? (
-                <p className="decision-tree-path-text">
-                  Path: {decisionPathEntries.map((entry, index) => (
-                    <span key={`path-${entry.id}`}>
-                      {index > 0 ? ' -> ' : ''}
-                      {entry.name}
-                    </span>
-                  ))}
-                </p>
-              ) : null}
-              <p className="meta-text">
-                Showing {visibleBranchCount} filtered options from the universal graph.
-              </p>
-              <p className="decision-tree-branch-callout">
-                Most users will work here first after choosing a coaching problem, then fine-tune with filters only if they need to narrow the path further.
-              </p>
-            </div>
-            {activeStyleHints.length > 0 && (
-              <div className="decision-tree-chip-row">
-                {activeStyleHints.map((hint) => (
-                  <span className="curriculum-index-tag" key={hint}>{styleHintLabels[hint] || hint}</span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {focusReactionGroups.length > 0 ? (
-            <div className="decision-tree-reaction-panel">
-              <div className="decision-tree-section-heading">
-                <div>
-                  <h4>Common reactions from here</h4>
-                  <p className="meta-text">
-                    These branches come from the usual reactions to {focusEntry.name}, not just the first direct links.
-                  </p>
-                </div>
-              </div>
-
-              <div className="decision-tree-reaction-grid">
-                {focusReactionGroups.map((reaction) => (
-                  <article className="decision-tree-reaction-card" key={reaction.reaction}>
-                    <strong>{reaction.reaction}</strong>
-                    <p className="meta-text">{reaction.cue}</p>
-                    <div className="decision-tree-reaction-actions">
-                      {reaction.options.map((option) => (
-                        <button
-                          key={`${reaction.reaction}-${option.id}`}
-                          type="button"
-                          className="secondary-button"
-                          onClick={() => selectFocusEntry(option, {
-                            pathMode: 'append',
-                            scrollTarget: 'recommendations',
-                            feedback: `Moved from ${focusEntry.name} to ${option.name}. Jumped to the next recommendation layer below.`
-                          })}
-                        >
-                          {option.name}
-                        </button>
-                      ))}
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {!focusEntry ? (
-            <p className="empty-state">Choose a start point or coaching problem to begin building the tree.</p>
-          ) : null}
-
-          {topRecommendations.length > 0 ? (
-            <div className="decision-tree-top-recommendations" ref={recommendationsRef}>
-              <div className="decision-tree-section-heading">
-                <div>
-                  <h4>Best next moves</h4>
-                  <p className="meta-text">
-                    These are the strongest next branches from the current focus and filters.
-                  </p>
-                </div>
-              </div>
-
-              <div className="decision-tree-top-grid">
-                {topRecommendations.map((option) => (
-                  <article className="decision-tree-top-card" key={`top-${option.entry.id}`}>
-                    <div className="decision-tree-top-card-header">
-                      <div>
-                        <strong>{option.name}</strong>
-                        <span>{option.sourceLabel}</span>
-                      </div>
-                      <span className="curriculum-index-tag">
-                        {option.entry.category}
-                      </span>
-                    </div>
-
-                    <p className="meta-text">
-                      {option.reasons.join(' | ')}
-                    </p>
-
-                    {option.fitProfiles.length > 0 ? (
-                      <div className="decision-tree-fit-row">
-                        {option.fitProfiles.map((profile) => (
-                          <span
-                            key={`top-${option.entry.id}-${profile.key}`}
-                            className={`decision-tree-fit-chip${profile.isCaution ? ' is-caution' : ''}${profile.isMatch ? ' is-match' : ''}`}
-                          >
-                            {profile.label}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-
-                    <div className="inline-actions decision-tree-top-actions">
-                      <button
-                        type="button"
-                        className="secondary-button"
-                        onClick={() => selectFocusEntry(option.entry, {
-                          pathMode: 'append',
-                          scrollTarget: 'recommendations',
-                          feedback: `Moved from ${focusEntry.name} to ${option.entry.name}. Jumped to the next recommendation layer below.`
-                        })}
-                      >
-                        Open in tree
-                      </button>
-                      <Link className="secondary-button" to={`/index?search=${encodeURIComponent(option.entry.name)}`}>
-                        View in Index
-                      </Link>
-                      <Link className="secondary-button" to={`/library?search=${encodeURIComponent(option.entry.name)}`}>
-                        Library
-                      </Link>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {focusEntry ? (
-            <div className="decision-tree-success-row">
-              {showEscapeContinuationAction ? (
-                <button
-                  className="secondary-button decision-tree-continuation-toggle"
-                  type="button"
-                  onClick={() => {
-                    setShowEscapeContinuation((value) => !value);
-                    setScenarioFeedback(
-                      showEscapeContinuation
-                        ? 'Closed the post-escape continuation panel.'
-                        : 'Escape worked. Showing likely next positions and attacks from here.'
-                    );
-                  }}
-                >
-                  {showEscapeContinuation ? 'Hide post-escape options' : 'Escape worked: what next?'}
-                </button>
-              ) : null}
-              <button className="success-button" type="button" onClick={resetDecisionTree}>
-                Submission success
-              </button>
-            </div>
-          ) : null}
-
-          {showEscapeContinuationAction && showEscapeContinuation ? (
-            <div className="decision-tree-guided-prompt decision-tree-continuation-panel">
-              <div className="decision-tree-section-heading">
-                <div>
-                  <h4>After the escape works</h4>
-                  <p className="meta-text">
-                    Turn the recovery into a safer guard, a scramble win, or a dominant follow-up that fits this exact escape.
-                  </p>
-                </div>
-              </div>
-
-              <div className="decision-tree-guided-grid">
-                {escapeContinuationOptions.map((option) => (
-                  <button
-                    key={`escape-continuation-${option.entry.id}`}
-                    type="button"
-                    className="decision-tree-guided-option"
-                    onClick={() => selectFocusEntry(option.entry, {
-                      pathMode: 'append',
-                      scrollTarget: 'recommendations',
-                      feedback: `Escape worked. Continue through ${option.entry.name} from here.`
-                    })}
-                  >
-                    <strong>{option.entry.name}</strong>
-                    <span>
-                      {option.entry.description}
-                    </span>
-                    <span className="decision-tree-reason-row">
-                      {option.reasons.join(' | ')}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="decision-tree-branch-grid">
-            {branchGroups.map((group) => (
-              <div className="decision-tree-branch-group" key={group.key}>
-                <div className="decision-tree-branch-heading">
-                  <h4>{group.label}</h4>
-                  <span className="meta-text">{group.options.length} shown</span>
-                </div>
-                {group.options.length > 0 ? (
-                  <ul className="card-list">
-                    {group.options.map((option) => (
-                      <li className="decision-tree-option" key={`${group.key}-${option.name}`}>
-                          <button
-                            type="button"
-                            onClick={() => option.entry && selectFocusEntry(option.entry, {
-                              pathMode: 'append',
-                              scrollTarget: 'recommendations',
-                              feedback: `Moved from ${focusEntry.name} to ${option.entry.name}. Jumped to the next recommendation layer below.`
-                            })}
-                            disabled={!option.entry}
-                          >
-                          <strong>{option.name}</strong>
-                          <span>
-                            {option.entry
-                              ? `${option.entry.category}${option.entry.skillLevel ? ` | ${option.entry.skillLevel}` : ''}`
-                              : 'Not a full Index node yet'}
-                          </span>
-                          <span className="decision-tree-reason-row">
-                            {option.reasons.join(' | ')}
-                          </span>
-                          {option.fitProfiles.length > 0 ? (
-                            <span className="decision-tree-fit-row">
-                              {option.fitProfiles.map((profile) => (
-                                <span
-                                  key={profile.key}
-                                  className={`decision-tree-fit-chip${profile.isCaution ? ' is-caution' : ''}${profile.isMatch ? ' is-match' : ''}`}
-                                >
-                                  {profile.label}
-                                </span>
-                              ))}
-                            </span>
-                          ) : null}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="empty-state">No branches match the current filters yet.</p>
-                )}
-              </div>
-            ))}
-          </div>
         </section>
       </div>
     </Layout>

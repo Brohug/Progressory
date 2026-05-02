@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
@@ -121,6 +121,7 @@ export default function PlannedClassesPage() {
   const { user } = useAuth();
   const isMember = user?.role === 'member';
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const formSectionRef = useRef(null);
   const plansSectionRef = useRef(null);
 
@@ -128,6 +129,7 @@ export default function PlannedClassesPage() {
   const [programs, setPrograms] = useState([]);
   const [topics, setTopics] = useState([]);
   const [trainingScenarios, setTrainingScenarios] = useState([]);
+  const [libraryEntries, setLibraryEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isCreatingTopic, setIsCreatingTopic] = useState(false);
@@ -144,6 +146,7 @@ export default function PlannedClassesPage() {
   const [visibleMonth, setVisibleMonth] = useState(getMonthStart(new Date()));
   const [selectedTopicId, setSelectedTopicId] = useState('');
   const [selectedTopicIds, setSelectedTopicIds] = useState([]);
+  const [libraryPlanningContext, setLibraryPlanningContext] = useState(null);
   const [formData, setFormData] = useState({
     program_id: '',
     training_scenario_id: '',
@@ -227,6 +230,11 @@ export default function PlannedClassesPage() {
     setTrainingScenarios(response.data);
   };
 
+  const fetchLibraryEntries = async () => {
+    const response = await api.get('/library');
+    setLibraryEntries(response.data);
+  };
+
   const processDuePlannedClasses = async () => {
     try {
       const response = await api.post('/planned-classes/process-due');
@@ -254,7 +262,8 @@ export default function PlannedClassesPage() {
           fetchPlannedClasses(),
           fetchPrograms(),
           fetchTopics(),
-          fetchTrainingScenarios()
+          fetchTrainingScenarios(),
+          fetchLibraryEntries()
         ]);
 
         if (processedResult?.processedCount > 0) {
@@ -325,6 +334,55 @@ export default function PlannedClassesPage() {
     })
   ), [formData.program_id, trainingScenarios]);
 
+  useEffect(() => {
+    if (isMember || topics.length === 0) return;
+
+    const topicIdFromLibrary = searchParams.get('libraryTopicId');
+    const programIdFromLibrary = searchParams.get('libraryProgramId');
+    const topicTitleFromLibrary = searchParams.get('libraryTopicTitle') || '';
+    const openFormFromLibrary = searchParams.get('openForm') === '1';
+
+    if (!topicIdFromLibrary) return;
+
+    const linkedTopic = topics.find((topic) => String(topic.id) === String(topicIdFromLibrary));
+    if (!linkedTopic) return;
+
+    setShowPlanForm(true);
+    setActiveView('list');
+    setSelectedTopicId(String(linkedTopic.id));
+    setSelectedTopicIds((current) => (
+      current.includes(String(linkedTopic.id)) ? current : [...current, String(linkedTopic.id)]
+    ));
+    setLibraryPlanningContext({
+      topicId: String(linkedTopic.id),
+      topicTitle: linkedTopic.title || topicTitleFromLibrary,
+      programName: linkedTopic.program_name || ''
+    });
+    setMessage(`Planning around "${linkedTopic.title}". Add the date, time, and any supporting topics for this class.`);
+    setFormData((prev) => ({
+      ...prev,
+      program_id: prev.program_id || (programIdFromLibrary ? String(programIdFromLibrary) : linkedTopic.program_id ? String(linkedTopic.program_id) : ''),
+      title: prev.title || linkedTopic.title || '',
+      notes: prev.notes || `Built from Library resource support for ${linkedTopic.title}.`
+    }));
+
+    if (openFormFromLibrary) {
+      window.setTimeout(() => {
+        formSectionRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 120);
+    }
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('libraryTopicId');
+    nextParams.delete('libraryProgramId');
+    nextParams.delete('libraryTopicTitle');
+    nextParams.delete('openForm');
+    setSearchParams(nextParams, { replace: true });
+  }, [isMember, topics, searchParams, setSearchParams]);
+
   const groupedPlannedClasses = useMemo(() => {
     const todayKey = formatDateForInput(new Date());
     const sortWeight = (plannedClass) => {
@@ -393,6 +451,27 @@ export default function PlannedClassesPage() {
   const selectedTopics = selectedTopicIds
     .map((topicId) => availableTopics.find((topic) => String(topic.id) === String(topicId)))
     .filter(Boolean);
+
+  const activeLibraryTopicIds = useMemo(() => (
+    new Set(
+      libraryEntries
+        .filter((entry) => {
+          if (!entry.is_active || !entry.curriculum_topic_id) {
+            return false;
+          }
+
+          const hasVideo = Boolean(String(entry.video_url || '').trim());
+          const hasTeachingNote = Boolean(String(entry.description || '').trim());
+
+          return hasVideo || hasTeachingNote;
+        })
+        .map((entry) => String(entry.curriculum_topic_id))
+    )
+  ), [libraryEntries]);
+
+  const selectedTopicsWithLibrarySupport = useMemo(() => (
+    selectedTopics.filter((topic) => activeLibraryTopicIds.has(String(topic.id)))
+  ), [selectedTopics, activeLibraryTopicIds]);
 
   const selectedProgram = activePrograms.find(
     (program) => String(program.id) === String(formData.program_id)
@@ -637,6 +716,7 @@ export default function PlannedClassesPage() {
     setSelectedTopicId('');
     setSelectedTopicIds([]);
     setLastSavedPlannedClassDate('');
+    setLibraryPlanningContext(null);
     setShowQuickAdd(false);
     setQuickAddData({
       title: '',
@@ -1071,6 +1151,27 @@ export default function PlannedClassesPage() {
 
           {showPlanForm ? (
           <>
+          {libraryPlanningContext ? (
+            <div className="library-linked-topic-banner" style={{ marginBottom: '16px' }}>
+              <div>
+                <strong>Planning from Library: {libraryPlanningContext.topicTitle}</strong>
+                <div className="meta-text">
+                  This plan started from a Library resource, so the topic is already in focus for the class you are building.
+                </div>
+              </div>
+              <div className="inline-actions">
+                <Link
+                  className="secondary-button"
+                  to={`/library?topicId=${encodeURIComponent(libraryPlanningContext.topicId)}`}
+                >
+                  Back to Library
+                </Link>
+                <button type="button" className="secondary-button" onClick={() => setLibraryPlanningContext(null)}>
+                  Clear planning focus
+                </button>
+              </div>
+            </div>
+          ) : null}
           <form className="form-grid" onSubmit={handleSubmit}>
             <div>
               <label>Program</label>
@@ -1214,6 +1315,24 @@ export default function PlannedClassesPage() {
                       </button>
                     ))}
                   </div>
+                  {selectedTopicsWithLibrarySupport.length > 0 ? (
+                    <div className="inline-actions planned-classes-library-actions">
+                      <span className="meta-text">Need coaching resources for one of these topics?</span>
+                      {selectedTopicsWithLibrarySupport.slice(0, 3).map((topic) => (
+                        <Link
+                          key={`plan-library-${topic.id}`}
+                          className="secondary-button"
+                          to={`/library?source=planned-classes&topicId=${encodeURIComponent(topic.id)}&search=${encodeURIComponent(topic.title)}`}
+                        >
+                          Library: {topic.title}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="section-note planned-classes-inline-note">
+                      No Library resources are linked to these selected topics yet.
+                    </p>
+                  )}
                 </>
               ) : (
                 <p className="section-note">No topics added yet.</p>
@@ -1485,16 +1604,39 @@ export default function PlannedClassesPage() {
                           </div>
 
                           {plannedClass.topics.length > 0 ? (
-                            <div className="suggestion-chip-row planned-classes-card-topics">
-                              {plannedClass.topics.map((topic) => (
-                                <span
-                                  key={`${plannedClass.id}-${topic.curriculum_topic_id}`}
-                                  className="suggestion-chip"
-                                >
-                                  {topic.title}
-                                </span>
-                              ))}
-                            </div>
+                            <>
+                              <div className="suggestion-chip-row planned-classes-card-topics">
+                                {plannedClass.topics.map((topic) => (
+                                  <span
+                                    key={`${plannedClass.id}-${topic.curriculum_topic_id}`}
+                                    className="suggestion-chip"
+                                  >
+                                    {topic.title}
+                                  </span>
+                                ))}
+                              </div>
+                              {plannedClass.topics.filter((topic) => activeLibraryTopicIds.has(String(topic.curriculum_topic_id))).length > 0 ? (
+                                <div className="inline-actions planned-classes-library-actions">
+                                  <span className="meta-text">Need supporting resources?</span>
+                                  {plannedClass.topics
+                                    .filter((topic) => activeLibraryTopicIds.has(String(topic.curriculum_topic_id)))
+                                    .slice(0, 3)
+                                    .map((topic) => (
+                                      <Link
+                                        key={`planned-class-library-${plannedClass.id}-${topic.curriculum_topic_id}`}
+                                        className="secondary-button"
+                                        to={`/library?source=planned-classes&topicId=${encodeURIComponent(topic.curriculum_topic_id)}&search=${encodeURIComponent(topic.title)}`}
+                                      >
+                                        Library: {topic.title}
+                                      </Link>
+                                    ))}
+                                </div>
+                              ) : (
+                                <p className="section-note planned-classes-inline-note">
+                                  No Library resources are linked to this class plan&apos;s topics yet.
+                                </p>
+                              )}
+                            </>
                           ) : null}
 
                           {plannedClass.notes ? (

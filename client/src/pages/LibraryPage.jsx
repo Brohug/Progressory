@@ -11,6 +11,11 @@ export default function LibraryPage() {
   const { user } = useAuth();
   const isMember = user?.role === 'member';
   const [searchParams, setSearchParams] = useSearchParams();
+  const librarySource = searchParams.get('source') || '';
+  const cameFromTree = librarySource === 'tree';
+  const cameFromPlannedClasses = librarySource === 'planned-classes';
+  const treeFocusName = searchParams.get('focus') || '';
+  const treePathLabel = searchParams.get('path') || '';
   const [entries, setEntries] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [topics, setTopics] = useState([]);
@@ -47,7 +52,16 @@ export default function LibraryPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [lastSavedTopicId, setLastSavedTopicId] = useState('');
   const [lastSavedTopicTitle, setLastSavedTopicTitle] = useState('');
+  const hasCoachingFocus = Boolean(
+    cameFromTree ||
+    cameFromPlannedClasses ||
+    searchParams.get('topicId') ||
+    searchParams.get('search')
+  );
+  const openFiltersByDefault = Boolean(cameFromTree);
+  const openEntriesByDefault = Boolean(hasCoachingFocus);
 
   const entryTypes = ['technique', 'concept', 'drill', 'cla_game', 'video_note'];
   const visibilityOptions = ['coach_only', 'member_visible'];
@@ -120,11 +134,26 @@ export default function LibraryPage() {
     if (entryTypeFilter) nextParams.set('entryType', entryTypeFilter);
     if (needsTopicOnly) nextParams.set('needsTopic', 'true');
     if (sortBy && sortBy !== 'updated_desc') nextParams.set('sort', sortBy);
+    if (librarySource) nextParams.set('source', librarySource);
+    if (treeFocusName) nextParams.set('focus', treeFocusName);
+    if (treePathLabel) nextParams.set('path', treePathLabel);
 
     if (nextParams.toString() !== searchParams.toString()) {
       setSearchParams(nextParams, { replace: true });
     }
-  }, [search, programFilter, topicFilter, entryTypeFilter, needsTopicOnly, sortBy, searchParams, setSearchParams]);
+  }, [
+    search,
+    programFilter,
+    topicFilter,
+    entryTypeFilter,
+    needsTopicOnly,
+    sortBy,
+    librarySource,
+    treeFocusName,
+    treePathLabel,
+    searchParams,
+    setSearchParams
+  ]);
 
   const orderedEntries = useMemo(() => {
     const active = entries.filter((entry) => entry.is_active);
@@ -188,6 +217,16 @@ export default function LibraryPage() {
     });
   }, [orderedEntries, search, programFilter, topicFilter, entryTypeFilter, needsTopicOnly]);
 
+  const treeFocusedEntriesCount = useMemo(() => {
+    if (!search) return 0;
+    const normalizedSearch = search.trim().toLowerCase();
+    return filteredEntries.filter((entry) => (
+      [entry.title, entry.topic_title, entry.description]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalizedSearch))
+    )).length;
+  }, [filteredEntries, search]);
+
   const summaryCards = useMemo(() => {
     const linkedTopicCount = filteredEntries.filter((entry) => entry.curriculum_topic_id).length;
     const memberVisibleCount = filteredEntries.filter((entry) => entry.visibility === 'member_visible').length;
@@ -237,6 +276,30 @@ export default function LibraryPage() {
     return nextFilters;
   }, [search, selectedProgram, selectedTopic, entryTypeFilter, needsTopicOnly]);
 
+  const getCoachingUseBadges = (entry) => {
+    const badges = [];
+
+    if (entry.curriculum_topic_id) {
+      badges.push('Supports curriculum topic');
+    }
+
+    if (entry.visibility === 'member_visible') {
+      badges.push('Good for member review');
+    } else {
+      badges.push('Coach-facing teaching note');
+    }
+
+    if (entry.video_url) {
+      badges.push('Useful before or after class');
+    }
+
+    if (entry.entry_type === 'drill' || entry.entry_type === 'cla_game') {
+      badges.push('Useful while planning class');
+    }
+
+    return badges.slice(0, 3);
+  };
+
   const availableTopics = useMemo(() => {
     const activeTopics = topics.filter((topic) => topic.is_active);
 
@@ -253,6 +316,14 @@ export default function LibraryPage() {
 
   const clearTopicFocus = () => {
     setTopicFilter('');
+  };
+
+  const clearTreeFlow = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('source');
+    nextParams.delete('focus');
+    nextParams.delete('path');
+    setSearchParams(nextParams, { replace: true });
   };
 
   const clearAllFilters = () => {
@@ -333,6 +404,7 @@ export default function LibraryPage() {
     setSubmitting(true);
     setError('');
     setSuccessMessage('');
+    setLastSavedTopicId('');
     setLastSavedTopicTitle('');
 
     try {
@@ -362,6 +434,7 @@ export default function LibraryPage() {
 
       await fetchEntries();
       setSuccessMessage('Library entry saved successfully.');
+      setLastSavedTopicId(formData.curriculum_topic_id || '');
       setLastSavedTopicTitle(
         availableTopics.find((topic) => String(topic.id) === String(formData.curriculum_topic_id))?.title || ''
       );
@@ -869,12 +942,20 @@ export default function LibraryPage() {
                   <div className="success-followup-row">
                     <p className="success-text" style={{ marginBottom: 0 }}>{successMessage}</p>
                     {lastSavedTopicTitle ? (
-                      <Link
-                        className="secondary-button"
-                        to={`/index?search=${encodeURIComponent(lastSavedTopicTitle)}`}
-                      >
-                        Next: View linked topic
-                      </Link>
+                      <>
+                        <Link
+                          className="secondary-button"
+                          to={`/index?search=${encodeURIComponent(lastSavedTopicTitle)}`}
+                        >
+                          Next: View linked topic
+                        </Link>
+                        <Link
+                          className="secondary-button"
+                          to={`/planned-classes?libraryTopicId=${encodeURIComponent(lastSavedTopicId)}&libraryTopicTitle=${encodeURIComponent(lastSavedTopicTitle)}&openForm=1`}
+                        >
+                          Next: Use in planned classes
+                        </Link>
+                      </>
                     ) : null}
                   </div>
                 </div>
@@ -891,6 +972,7 @@ export default function LibraryPage() {
         note="Search by title, topic, program, description, or resource type, then narrow the list with quick filters."
         summary={`${filteredEntries.length} matching librar${filteredEntries.length === 1 ? 'y entry' : 'y entries'} in the current view.`}
         className="library-filters-section"
+        defaultOpen={openFiltersByDefault}
       >
         <div className="summary-grid" style={{ marginBottom: '16px' }}>
           {summaryCards.map((card) => (
@@ -946,12 +1028,36 @@ export default function LibraryPage() {
             </div>
           ) : null}
 
+          {cameFromTree ? (
+            <div className="library-linked-topic-banner">
+              <div>
+                <strong>Opened from Decision Tree{treeFocusName ? `: ${treeFocusName}` : ''}</strong>
+                <div className="meta-text">
+                  {treePathLabel
+                    ? `Current path: ${treePathLabel}. Use this Library view to find coaching resources that support the exact lane you were tracing in the Tree.`
+                    : `This Library view came from the Decision Tree, so the current search is meant to support the path you were just building.`}
+                </div>
+                <div className="meta-text">
+                  {treeFocusedEntriesCount} matching librar{treeFocusedEntriesCount === 1 ? 'y entry' : 'y entries'} currently fit this Tree-driven search.
+                </div>
+              </div>
+              <div className="inline-actions">
+                <Link className="secondary-button" to="/decision-tree">
+                  Back to Decision Tree
+                </Link>
+                <button type="button" className="secondary-button" onClick={clearTreeFlow}>
+                  Clear Tree context
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           {selectedTopic ? (
             <div className="library-linked-topic-banner">
               <div>
                 <strong>Showing resources linked to {selectedTopic.title}</strong>
                 <div className="meta-text">
-                  This filtered view came from the Curriculum Index, so you can stay focused on supporting material for that topic.
+                  This filtered view keeps the coaching work focused on one topic, so you can move from Library into planning, Index review, or Tree study without losing the thread.
                 </div>
               </div>
               <div className="inline-actions">
@@ -960,6 +1066,12 @@ export default function LibraryPage() {
                   to={`/index?search=${encodeURIComponent(selectedTopic.title)}`}
                 >
                   Back to Index item
+                </Link>
+                <Link
+                  className="secondary-button"
+                  to={`/planned-classes?libraryTopicId=${encodeURIComponent(selectedTopic.id)}&libraryProgramId=${encodeURIComponent(selectedTopic.program_id || '')}&libraryTopicTitle=${encodeURIComponent(selectedTopic.title)}&openForm=1`}
+                >
+                  Use while planning class
                 </Link>
                 <button type="button" className="secondary-button" onClick={clearTopicFocus}>
                   Clear topic focus
@@ -1061,6 +1173,7 @@ export default function LibraryPage() {
         note="Expand this when you want to review saved resources, edit them, or work through inactive entries."
         summary={`${filteredEntries.length} librar${filteredEntries.length === 1 ? 'y entry' : 'y entries'} in the current results.`}
         className="library-entries-section"
+        defaultOpen={openEntriesByDefault}
         actions={(
           <button
             className="secondary-button"
@@ -1156,6 +1269,13 @@ export default function LibraryPage() {
                           </button>
                         </span>
                       )}
+                    </div>
+                    <div className="library-card-chip-row">
+                      {getCoachingUseBadges(entry).map((badge) => (
+                        <span key={`${entry.id}-${badge}`} className="library-info-chip library-coaching-chip">
+                          {badge}
+                        </span>
+                      ))}
                     </div>
                     <div className="library-topic-link-row">
                       {entry.curriculum_topic_id ? (
@@ -1325,6 +1445,31 @@ export default function LibraryPage() {
                     <a className="library-resource-link" href={entry.video_url} target="_blank" rel="noreferrer">
                       Open resource
                     </a>
+                  )}
+                  {entry.curriculum_topic_id ? (
+                    <>
+                      <Link
+                        className="secondary-button"
+                        to={`/decision-tree?search=${encodeURIComponent(entry.topic_title || entry.title)}`}
+                      >
+                        Study in Decision Tree
+                      </Link>
+                      <Link
+                        className="secondary-button"
+                        to={`/planned-classes?libraryTopicId=${encodeURIComponent(entry.curriculum_topic_id)}&libraryProgramId=${encodeURIComponent(entry.program_id || '')}&libraryTopicTitle=${encodeURIComponent(entry.topic_title || entry.title)}&openForm=1`}
+                      >
+                        Use in planned classes
+                      </Link>
+                    </>
+                  ) : (
+                    <span
+                      className="ui-tooltip-trigger"
+                      data-tooltip="Link this Library entry to a curriculum topic first, then you can send it cleanly into class planning or Decision Tree study."
+                    >
+                      <button type="button" className="secondary-button" disabled>
+                        Use in planned classes
+                      </button>
+                    </span>
                   )}
                   {entry.is_active ? (
                     <button
