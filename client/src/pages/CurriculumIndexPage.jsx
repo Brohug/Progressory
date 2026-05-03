@@ -83,6 +83,7 @@ export default function CurriculumIndexPage() {
   const { user } = useAuth();
   const isMember = user?.role === 'member';
   const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedEntryId, setSelectedEntryId] = useState(searchParams.get('entryId') || '');
   const [topics, setTopics] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [libraryEntries, setLibraryEntries] = useState([]);
@@ -165,11 +166,12 @@ export default function CurriculumIndexPage() {
     if (search) nextParams.set('search', search);
     if (categoryFilter) nextParams.set('category', categoryFilter);
     if (skillLevelFilter) nextParams.set('skillLevel', skillLevelFilter);
+    if (selectedEntryId) nextParams.set('entryId', selectedEntryId);
 
     if (nextParams.toString() !== searchParams.toString()) {
       setSearchParams(nextParams, { replace: true });
     }
-  }, [search, categoryFilter, skillLevelFilter, searchParams, setSearchParams]);
+  }, [search, categoryFilter, skillLevelFilter, selectedEntryId, searchParams, setSearchParams]);
 
   const fetchTopics = async () => {
     const response = await api.get('/topics');
@@ -301,6 +303,13 @@ export default function CurriculumIndexPage() {
 
   const filteredEntries = useMemo(() => {
     const normalizedSearch = normalizeValue(search);
+    const exactEntryMatch = selectedEntryId
+      ? enrichedEntries.find((entry) => entry.id === selectedEntryId)
+      : null;
+
+    if (exactEntryMatch) {
+      return [exactEntryMatch];
+    }
 
     const matchingEntries = enrichedEntries.filter((entry) => {
       const haystack = [
@@ -341,7 +350,7 @@ export default function CurriculumIndexPage() {
 
       return a.name.localeCompare(b.name);
     });
-  }, [enrichedEntries, search, categoryFilter, skillLevelFilter]);
+  }, [enrichedEntries, search, categoryFilter, skillLevelFilter, selectedEntryId]);
 
   const groupedEntries = useMemo(() => {
     const categoryGroups = filteredEntries.reduce((acc, entry) => {
@@ -617,7 +626,10 @@ export default function CurriculumIndexPage() {
               <input
                 type="text"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSelectedEntryId('');
+                  setSearch(e.target.value);
+                }}
                 placeholder="Search by name, category, tag, or related position..."
               />
             </div>
@@ -626,7 +638,10 @@ export default function CurriculumIndexPage() {
               <label>Category</label>
               <select
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
+                onChange={(e) => {
+                  setSelectedEntryId('');
+                  setCategoryFilter(e.target.value);
+                }}
               >
                 <option value="">All Categories</option>
                 {categories.map((category) => (
@@ -641,7 +656,10 @@ export default function CurriculumIndexPage() {
               <label>Skill level</label>
               <select
                 value={skillLevelFilter}
-                onChange={(e) => setSkillLevelFilter(e.target.value)}
+                onChange={(e) => {
+                  setSelectedEntryId('');
+                  setSkillLevelFilter(e.target.value);
+                }}
               >
                 <option value="">All skill levels</option>
                 {skillLevels.map((skillLevel) => (

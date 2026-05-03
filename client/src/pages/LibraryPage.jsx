@@ -3,9 +3,27 @@ import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
+import curriculumIndexSeed from '../data/curriculumIndexSeed';
 import { formatSentenceLabel } from '../utils/formatLabel';
 import TopicSearchSelect from '../components/TopicSearchSelect';
 import { useAuth } from '../hooks/useAuth';
+
+const normalizeValue = (value) => (
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+);
+
+const topicTypeCategoryHints = {
+  position: ['Positions'],
+  submission: ['Submissions', 'Leg Locks'],
+  escape: ['Submission Defense', 'Escapes'],
+  takedown: ['Takedowns'],
+  concept: ['Concepts', 'Fundamentals', 'Strategy and Game Planning'],
+  drill_theme: ['Drills', 'Constraint-Led Games', 'Positional Sparring']
+};
 
 export default function LibraryPage() {
   const { user } = useAuth();
@@ -102,6 +120,52 @@ export default function LibraryPage() {
   const fetchTopics = async () => {
     const response = await api.get('/topics');
     setTopics(response.data);
+  };
+
+  const topicById = useMemo(() => {
+    const nextMap = new Map();
+    topics.forEach((topic) => {
+      nextMap.set(String(topic.id), topic);
+    });
+    return nextMap;
+  }, [topics]);
+
+  const buildCurriculumIndexLink = ({ title, topicId = '', topicDescription = '', topicType = '' }) => {
+    const params = new URLSearchParams();
+    params.set('search', title);
+
+    const normalizedTitle = normalizeValue(title);
+    const linkedTopic = topicId ? topicById.get(String(topicId)) : null;
+    const descriptionHint = normalizeValue(topicDescription || linkedTopic?.description || '');
+    const categoryHints = topicTypeCategoryHints[topicType || linkedTopic?.topic_type] || [];
+
+    let candidates = curriculumIndexSeed.filter((entry) => normalizeValue(entry.name) === normalizedTitle);
+
+    if (descriptionHint) {
+      const descriptionMatches = candidates.filter((entry) => {
+        const entryDescription = normalizeValue(entry.description);
+        return entryDescription === descriptionHint
+          || entryDescription.includes(descriptionHint)
+          || descriptionHint.includes(entryDescription);
+      });
+
+      if (descriptionMatches.length > 0) {
+        candidates = descriptionMatches;
+      }
+    }
+
+    if (categoryHints.length > 0) {
+      const categoryMatches = candidates.filter((entry) => categoryHints.includes(entry.category));
+      if (categoryMatches.length > 0) {
+        candidates = categoryMatches;
+      }
+    }
+
+    if (candidates[0]?.id) {
+      params.set('entryId', candidates[0].id);
+    }
+
+    return `/index?${params.toString()}`;
   };
 
   useEffect(() => {
@@ -612,7 +676,12 @@ export default function LibraryPage() {
                       {latestMemberEntry.topic_title ? (
                         <Link
                           className="secondary-button"
-                          to={`/index?search=${encodeURIComponent(latestMemberEntry.topic_title)}`}
+                          to={buildCurriculumIndexLink({
+                            title: latestMemberEntry.topic_title,
+                            topicId: latestMemberEntry.curriculum_topic_id,
+                            topicDescription: latestMemberEntry.description,
+                            topicType: latestMemberEntry.topic_type
+                          })}
                         >
                           View topic in Index
                         </Link>
@@ -743,7 +812,15 @@ export default function LibraryPage() {
                       </a>
                     ) : null}
                     {entry.topic_title ? (
-                      <Link className="secondary-button" to={`/index?search=${encodeURIComponent(entry.topic_title)}`}>
+                      <Link
+                        className="secondary-button"
+                        to={buildCurriculumIndexLink({
+                          title: entry.topic_title,
+                          topicId: entry.curriculum_topic_id,
+                          topicDescription: entry.description,
+                          topicType: entry.topic_type
+                        })}
+                      >
                         View topic in Index
                       </Link>
                     ) : null}
@@ -945,7 +1022,10 @@ export default function LibraryPage() {
                       <>
                         <Link
                           className="secondary-button"
-                          to={`/index?search=${encodeURIComponent(lastSavedTopicTitle)}`}
+                          to={buildCurriculumIndexLink({
+                            title: lastSavedTopicTitle,
+                            topicId: lastSavedTopicId
+                          })}
                         >
                           Next: View linked topic
                         </Link>
@@ -1063,7 +1143,12 @@ export default function LibraryPage() {
               <div className="inline-actions">
                 <Link
                   className="secondary-button"
-                  to={`/index?search=${encodeURIComponent(selectedTopic.title)}`}
+                  to={buildCurriculumIndexLink({
+                    title: selectedTopic.title,
+                    topicId: selectedTopic.id,
+                    topicDescription: selectedTopic.description,
+                    topicType: selectedTopic.topic_type
+                  })}
                 >
                   Back to Index item
                 </Link>
@@ -1281,7 +1366,12 @@ export default function LibraryPage() {
                       {entry.curriculum_topic_id ? (
                         <Link
                           className="secondary-button library-topic-link-button"
-                          to={`/index?search=${encodeURIComponent(entry.topic_title)}`}
+                          to={buildCurriculumIndexLink({
+                            title: entry.topic_title,
+                            topicId: entry.curriculum_topic_id,
+                            topicDescription: entry.description,
+                            topicType: entry.topic_type
+                          })}
                         >
                           View in Index
                         </Link>

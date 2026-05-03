@@ -3897,7 +3897,7 @@ const curriculumIndexSeed = [
     name: 'Triangle Escape With Hand Fighting/Angles',
     skillLevel: 'Intermediate',
     tags: ['escape', 'submission', 'triangle'],
-    description: 'A triangle defense that hand fights the setup picking a side with your elbow to cut an angle to separate the legs and make the triangle harder to lock.',
+    description: 'A triangle defense that hand fights early, hides the trapped shoulder line, and picks a safe angle so the legs separate before the choke fully settles.',
     relatedPositions: ['Combat Base', 'Top Half Guard', 'Open Guard'],
     entriesIntoPosition: ['Closed Guard', 'Triangle Position'],
     commonAttacks: ['Double Under Pass'],
@@ -3912,7 +3912,7 @@ const curriculumIndexSeed = [
     name: 'Kimura Roll Defense',
     skillLevel: 'Intermediate',
     tags: ['escape', 'submission', 'kimura'],
-    description: 'A kimura defense that follows the rotational line safely so the shoulder does not stay trapped under pressure.',
+    description: 'A kimura defense that follows the roll only long enough to free the elbow line, keep the shoulder safe, and recover posture or mat connection before the grip tightens again.',
     relatedPositions: ['Posture', 'Top Half Guard', 'Back To The Mat Escape'],
     commonTransitions: ['Posture', 'Top Half Guard', 'Back To The Mat Escape'],
     commonFollowUps: ['Posture', 'Top Half Guard', 'Back To The Mat Escape']
@@ -3924,7 +3924,7 @@ const curriculumIndexSeed = [
     name: 'Guillotine Hand Fight And Shoulder Pressure Defense',
     skillLevel: 'Intermediate',
     tags: ['escape', 'submission', 'guillotine'],
-    description: 'A guillotine defense that combines early hand fighting with posture and shoulder pressure to reduce finishing leverage.',
+    description: 'A guillotine defense that clears the choking wrist, rebuilds posture, and drives the shoulder into safer alignment before the squeeze line can close.',
     relatedPositions: ['Headlock Escape', 'Shoulder Slide Escape', 'Top Half Guard'],
     commonTransitions: ['Headlock Escape', 'Shoulder Slide Escape', 'Top Half Guard', 'Sit-Out'],
     commonFollowUps: ['Headlock Escape', 'Shoulder Slide Escape', 'Top Half Guard', 'Sit-Out']
@@ -3936,17 +3936,17 @@ const curriculumIndexSeed = [
     name: 'Rear Naked Choke Hand Peel Defense',
     skillLevel: 'Beginner',
     tags: ['escape', 'submission', 'rear naked choke'],
-    description: 'A defensive priority that strips the finishing hand before the full choke line is locked in.',
+    description: 'A rear naked choke defense that first exposes the secondary hand, peels it away to weaken the lock around the neck, and then turns or strips the choking arm once the squeeze opens.',
     relatedPositions: ['Back Control']
   },
   {
     id: 'escapes-americana-defense',
     category: 'Escapes',
     subcategory: 'Submission Escapes',
-    name: 'Americana Defense',
+    name: 'Americana Elbow Recovery Defense',
     skillLevel: 'Beginner',
     tags: ['escape', 'submission', 'americana'],
-    description: 'A shoulder-lock defense that restores elbow positioning and denies the angle needed to finish.',
+    description: 'A shoulder-lock defense that wins the elbow back to safety, rebuilds frames, and denies the angle before the shoulder gets dragged flat.',
     relatedPositions: ['Side Control', 'Mount']
   },
   {
@@ -3996,7 +3996,7 @@ const curriculumIndexSeed = [
     name: 'Bow And Arrow Choke Hand Fight Defense',
     skillLevel: 'Intermediate',
     tags: ['escape', 'submission', 'bow and arrow choke'],
-    description: 'A gi choke defense that prioritizes hand fighting and shoulder alignment before the finishing angle is secured.',
+    description: 'A gi back-choke defense that fights the collar-side control first, squares the shoulders, and gets back toward the mat before the stretching angle becomes clean.',
     relatedPositions: ['Back Control']
   },
   {
@@ -4006,7 +4006,7 @@ const curriculumIndexSeed = [
     name: 'Ezekiel Posture Defense',
     skillLevel: 'Beginner',
     tags: ['escape', 'submission', 'ezekiel'],
-    description: 'A choke defense that rebuilds posture and strips the arm line before the pressure closes around the neck.',
+    description: 'A choke defense that rebuilds posture, turns the chin into safer alignment, and strips the feeding arm before the pressure cinches shut.',
     relatedPositions: ['Mount', 'Closed Guard']
   },
   {
@@ -4141,10 +4141,10 @@ const curriculumIndexSeed = [
     id: 'submission-defense-armbar-defense-family',
     category: 'Submission Defense',
     subcategory: 'Armbar Defense',
-    name: 'Armbar Defense',
+    name: 'Armbar Escape Choices',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'armbar', 'family'],
-    description: 'A defense family for armbars built around safe posture, shoulder direction, thumb-line awareness, and choosing the right escape before the extension gets clean.',
+    description: 'A set of armbar escape choices built around keeping the thumb line safe, choosing the correct turn, and exiting before the extension becomes clean.',
     relatedPositions: ['Shoulder Roll'],
     commonTransitions: ['Armbar Hitchhiker', 'Armbar Stacking Defense', 'Shoulder Roll'],
     commonFollowUps: ['Armbar Hitchhiker', 'Armbar Stacking Defense', 'Shoulder Roll'],
@@ -4154,10 +4154,10 @@ const curriculumIndexSeed = [
     id: 'submission-defense-triangle-escape-family',
     category: 'Submission Defense',
     subcategory: 'Triangle Defense',
-    name: 'Triangle Escape Family',
+    name: 'Triangle Escape Choices',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'triangle', 'family'],
-    description: 'A family concept for triangle defense built around posture, angle denial, hand fighting, and clearing the trapped shoulder line.',
+    description: 'A set of triangle escape choices built around rebuilding posture, killing the angle, and clearing the trapped shoulder before the lock settles.',
     relatedPositions: ['Triangle Posture Escape', 'Triangle Escape With Hand Fighting/Angles'],
     commonTransitions: ['Triangle Posture Escape', 'Triangle Escape With Hand Fighting/Angles'],
     commonFollowUps: ['Triangle Posture Escape', 'Triangle Escape With Hand Fighting/Angles'],
@@ -4167,10 +4167,10 @@ const curriculumIndexSeed = [
     id: 'submission-defense-kimura-defense-family',
     category: 'Submission Defense',
     subcategory: 'Shoulder Lock Defense',
-    name: 'Kimura Defense',
+    name: 'Kimura Escape Choices',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'kimura', 'family'],
-    description: 'A defense family for kimuras built around early elbow-line recovery, shoulder-safe turning, and escaping before the grip can lock the shoulder behind the line.',
+    description: 'A set of kimura escape choices built around recovering the elbow line early, turning the shoulder safely, and getting back to posture or the mat before the grip traps the arm behind the back.',
     relatedPositions: ['Kimura Roll Defense', 'Shoulder Roll', 'Posture', 'Back To The Mat Escape'],
     commonTransitions: ['Kimura Roll Defense', 'Shoulder Roll', 'Posture', 'Back To The Mat Escape'],
     commonFollowUps: ['Kimura Roll Defense', 'Shoulder Roll', 'Posture', 'Back To The Mat Escape'],
@@ -4180,10 +4180,10 @@ const curriculumIndexSeed = [
     id: 'submission-defense-guillotine-defense-family',
     category: 'Submission Defense',
     subcategory: 'Guillotine Defense',
-    name: 'Guillotine Defense',
+    name: 'Guillotine Escape Choices',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'guillotine', 'family'],
-    description: 'A defense family for guillotines built around clearing the hand fight, correcting posture, and using shoulder pressure or exit movement before the finish line tightens.',
+    description: 'A set of guillotine escape choices built around clearing the hand fight, rebuilding posture, and using shoulder pressure or exit movement before the choke line tightens.',
     relatedPositions: ['Guillotine Hand Fight And Shoulder Pressure Defense', 'Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out'],
     commonTransitions: ['Guillotine Hand Fight And Shoulder Pressure Defense', 'Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out'],
     commonFollowUps: ['Guillotine Hand Fight And Shoulder Pressure Defense', 'Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out'],
@@ -4193,21 +4193,92 @@ const curriculumIndexSeed = [
     id: 'submission-defense-rear-naked-choke-escape-family',
     category: 'Submission Defense',
     subcategory: 'Back Control Defense',
-    name: 'Rear Naked Choke Escape Family',
+    name: 'Rear Naked Choke Escape Choices',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'rear naked choke', 'family'],
-    description: 'A defense family centered on hand fighting first, protecting the neck line, and turning the shoulders back to the mat safely.',
-    relatedPositions: ['Back Control', 'Back Mount', 'Body Triangle Back Control']
+    description: 'A set of rear naked choke escape choices centered on exposing the secondary hand first, peeling it away to weaken the choke, and then turning or stripping the primary arm before the lock settles too deeply.',
+    relatedPositions: ['Rear Naked Choke Hand Peel Defense', 'Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Hook Stripping Escape'],
+    commonTransitions: ['Rear Naked Choke Hand Peel Defense', 'Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Hook Stripping Escape'],
+    commonFollowUps: ['Rear Naked Choke Hand Peel Defense', 'Shoulder-To-Mat Escape', 'Hook Stripping Escape', 'Escape To Top Half'],
+    commonDefenses: ['Rear Naked Choke Hand Peel Defense', 'Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Hook Stripping Escape']
+  },
+  {
+    id: 'submission-defense-bow-and-arrow-defense-family',
+    category: 'Submission Defense',
+    subcategory: 'Back Control Defense',
+    name: 'Bow And Arrow Escape Choices',
+    skillLevel: 'Intermediate',
+    tags: ['submission defense', 'bow and arrow', 'family', 'gi choke'],
+    description: 'A set of bow-and-arrow escape choices built around stripping collar control, relieving the shoulder line, and getting back toward the mat before the stretching angle fully settles.',
+    relatedPositions: ['Bow And Arrow Choke Hand Fight Defense', 'Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Back To The Mat Escape'],
+    commonTransitions: ['Bow And Arrow Choke Hand Fight Defense', 'Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Back To The Mat Escape'],
+    commonFollowUps: ['Bow And Arrow Choke Hand Fight Defense', 'Shoulder-To-Mat Escape', 'Back To The Mat Escape', 'Escape To Top Half'],
+    commonDefenses: ['Bow And Arrow Choke Hand Fight Defense', 'Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Back To The Mat Escape']
   },
   {
     id: 'submission-defense-collar-choke-escape-family',
     category: 'Submission Defense',
     subcategory: 'Choke Defense',
-    name: 'Collar Choke Escape Family',
+    name: 'Collar Choke Grip-Stripping Escapes',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'collar choke', 'family'],
-    description: 'A defense family for gi chokes built around early grip stripping, posture recovery, and turning the chin and shoulders into safer alignment.',
-    relatedPositions: ['Back Control', 'Mount', 'Closed Guard']
+    description: 'A set of collar-choke escape choices built around stripping the key grip early, rebuilding posture, and turning the chin and shoulders back into safer alignment.',
+    relatedPositions: ['Ezekiel Posture Defense', 'Loop Choke Escape', 'Two-On-One Grip Fight', 'Posture', 'Hand Fighting'],
+    commonTransitions: ['Ezekiel Posture Defense', 'Loop Choke Escape', 'Two-On-One Grip Fight', 'Posture'],
+    commonFollowUps: ['Ezekiel Posture Defense', 'Loop Choke Escape', 'Two-On-One Grip Fight', 'Posture'],
+    commonDefenses: ['Ezekiel Posture Defense', 'Loop Choke Escape', 'Two-On-One Grip Fight', 'Posture', 'Hand Fighting']
+  },
+  {
+    id: 'submission-defense-americana-defense-family',
+    category: 'Submission Defense',
+    subcategory: 'Shoulder Lock Defense',
+    name: 'Americana Elbow Recovery Escapes',
+    skillLevel: 'Beginner',
+    tags: ['submission defense', 'americana', 'family'],
+    description: 'A set of americana escape choices built around recovering elbow position, rebuilding frames, and turning back toward safer guard or side-control recovery angles.',
+    relatedPositions: ['Americana Elbow Recovery Defense', 'Frame And Shrimp', 'Bridge And Turn-In'],
+    commonTransitions: ['Americana Elbow Recovery Defense', 'Frame And Shrimp', 'Bridge And Turn-In'],
+    commonFollowUps: ['Americana Elbow Recovery Defense', 'Frame And Shrimp', 'Bridge And Turn-In'],
+    commonDefenses: ['Americana Elbow Recovery Defense', 'Frame And Shrimp', 'Bridge And Turn-In']
+  },
+  {
+    id: 'submission-defense-arm-triangle-defense-family',
+    category: 'Submission Defense',
+    subcategory: 'Choke Defense',
+    name: 'Arm Triangle Shoulder-Relief Escapes',
+    skillLevel: 'Intermediate',
+    tags: ['submission defense', 'arm triangle', 'family'],
+    description: 'A set of arm-triangle escape choices built around relieving shoulder pressure, making neck space, and recovering toward half guard or safer bottom structure.',
+    relatedPositions: ['Arm Triangle Escape', 'Hip Escape Retention', 'Bridge And Turn-In'],
+    commonTransitions: ['Arm Triangle Escape', 'Hip Escape Retention', 'Bridge And Turn-In'],
+    commonFollowUps: ['Arm Triangle Escape', 'Hip Escape Retention', 'Bridge And Turn-In'],
+    commonDefenses: ['Arm Triangle Escape', 'Hip Escape Retention', 'Bridge And Turn-In']
+  },
+  {
+    id: 'submission-defense-north-south-choke-defense-family',
+    category: 'Submission Defense',
+    subcategory: 'Choke Defense',
+    name: 'North-South Choke Shoulder-Relief Escapes',
+    skillLevel: 'Intermediate',
+    tags: ['submission defense', 'north-south choke', 'family'],
+    description: 'A set of north-south choke escape choices built around creating shoulder relief, making hip angle, and turning toward turtle or safer guard recovery before the neck line seals.',
+    relatedPositions: ['North-South Choke Escape', 'Shoulder Walk Escape', 'Turn-To-Knees Escape'],
+    commonTransitions: ['North-South Choke Escape', 'Shoulder Walk Escape', 'Turn-To-Knees Escape'],
+    commonFollowUps: ['North-South Choke Escape', 'Shoulder Walk Escape', 'Turn-To-Knees Escape'],
+    commonDefenses: ['North-South Choke Escape', 'Shoulder Walk Escape', 'Turn-To-Knees Escape']
+  },
+  {
+    id: 'submission-defense-front-headlock-choke-family',
+    category: 'Submission Defense',
+    subcategory: 'Choke Defense',
+    name: 'Front Headlock Choke Daylight Escapes',
+    skillLevel: 'Intermediate',
+    tags: ['submission defense', 'front headlock', 'family'],
+    description: 'A defense family for D’Arce- and anaconda-style front headlock chokes built around hand fighting, shoulder-line control, and turning toward daylight before the lock closes.',
+    relatedPositions: ["D'Arce Escape", 'Anaconda Escape', 'Headlock Escape', 'Sit-Out'],
+    commonTransitions: ["D'Arce Escape", 'Anaconda Escape', 'Headlock Escape', 'Sit-Out'],
+    commonFollowUps: ["D'Arce Escape", 'Anaconda Escape', 'Headlock Escape', 'Sit-Out'],
+    commonDefenses: ["D'Arce Escape", 'Anaconda Escape', 'Headlock Escape', 'Sit-Out']
   },
   {
     id: 'submission-defense-heel-hook-escape-family',
@@ -7702,7 +7773,10 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['submission defense', 'back control', 'hand fighting'],
     description: 'An early back-defense priority that focuses on peeling the finishing hand before the choke fully locks.',
-    relatedPositions: ['Back Control']
+    relatedPositions: ['Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Hook Stripping Escape'],
+    commonTransitions: ['Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Hook Stripping Escape'],
+    commonFollowUps: ['Shoulder-To-Mat Escape', 'Hook Stripping Escape', 'Escape To Top Half'],
+    commonDefenses: ['Two-On-One Grip Fight', 'Hand Fighting']
   },
   {
     id: 'submission-defense-bow-and-arrow-hand-fight',
@@ -7712,17 +7786,22 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'back control', 'gi choke'],
     description: 'A defensive sequence that focuses on hand fighting, collar relief, and hip alignment before the stretching angle becomes too strong.',
-    relatedPositions: ['Back Control']
+    relatedPositions: ['Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Back To The Mat Escape'],
+    commonTransitions: ['Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Back To The Mat Escape'],
+    commonFollowUps: ['Shoulder-To-Mat Escape', 'Back To The Mat Escape', 'Escape To Top Half'],
+    commonDefenses: ['Two-On-One Grip Fight', 'Hand Fighting']
   },
   {
     id: 'submission-defense-americana-defense',
     category: 'Submission Defense',
     subcategory: 'Shoulder Lock Defense',
-    name: 'Americana Defense',
+    name: 'Americana Elbow Recovery Defense',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'shoulder lock', 'frames'],
     description: 'A defense that prioritizes elbow positioning, frame recovery, and denying the angle needed to finish.',
-    relatedPositions: ['Side Control', 'Mount']
+    relatedPositions: ['Frame And Shrimp', 'Bridge And Turn-In', 'Hip Escape Retention'],
+    commonTransitions: ['Frame And Shrimp', 'Bridge And Turn-In', 'Hip Escape Retention'],
+    commonFollowUps: ['Frame And Shrimp', 'Bridge And Turn-In', 'Hip Escape Retention']
   },
   {
     id: 'submission-defense-straight-ankle-lock-boot-defense',
@@ -7782,7 +7861,9 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'arm triangle', 'choke'],
     description: 'A head-and-arm choke defense that relieves shoulder pressure, keeps the neck line open, and works back toward half guard or safer frames.',
-    relatedPositions: ['Mount', 'Side Control', 'Arm Triangle']
+    relatedPositions: ['Half Guard', 'Hip Escape Retention', 'Bridge And Turn-In'],
+    commonTransitions: ['Half Guard', 'Hip Escape Retention', 'Bridge And Turn-In'],
+    commonFollowUps: ['Half Guard', 'Hip Escape Retention', 'Bridge And Turn-In']
   },
   {
     id: 'submission-defense-north-south-choke-escape',
@@ -7792,7 +7873,9 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'north-south choke', 'choke'],
     description: 'A defense that creates hip angle and shoulder relief before the chest and armpit pressure fully seals the neck line.',
-    relatedPositions: ['North-South', 'Bottom North-South', 'North-South Choke']
+    relatedPositions: ['Shoulder Walk Escape', 'Turn-To-Knees Escape', 'Bottom North-South'],
+    commonTransitions: ['Shoulder Walk Escape', 'Turn-To-Knees Escape', 'Bottom North-South'],
+    commonFollowUps: ['Shoulder Walk Escape', 'Turn-To-Knees Escape', 'Bottom North-South']
   },
   {
     id: 'submission-defense-darce-escape',
@@ -7802,7 +7885,9 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['submission defense', "d'arce", 'front headlock'],
     description: 'A front-headlock defense that blocks the locking angle, turns toward daylight, and hand fights before the choke structure closes.',
-    relatedPositions: ['Front Headlock', 'Sprawl Front Headlock', "D'Arce Choke"]
+    relatedPositions: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out'],
+    commonTransitions: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out'],
+    commonFollowUps: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out']
   },
   {
     id: 'submission-defense-anaconda-escape',
@@ -7812,7 +7897,9 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['submission defense', 'anaconda', 'front headlock'],
     description: 'A defense that addresses the locking arm early, manages shoulder angle, and prevents the roll-through finish from tightening cleanly.',
-    relatedPositions: ['Front Headlock', 'Sprawl Front Headlock', 'Anaconda Choke']
+    relatedPositions: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out'],
+    commonTransitions: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out'],
+    commonFollowUps: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out']
   },
   {
     id: 'submission-defense-loop-choke-escape',

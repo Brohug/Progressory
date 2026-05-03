@@ -422,7 +422,7 @@ const coachingScenarios = [
   {
     label: 'I need submission defense',
     category: 'Escapes and defense',
-    focusName: 'Armbar Defense',
+    focusName: 'Armbar Escape Choices',
     description: 'Choose the submission giving you trouble and build the safer defensive path plus the next recovery after it works.',
     filters: {
       preferredStyle: 'defense',
@@ -725,11 +725,19 @@ const coachingScenarioGuidedPromptMap = {
   [normalizeValue('I need submission defense')]: [
     {
       question: 'Which submission is giving you the most trouble right now?',
+      expandableLabel: 'Need more submissions?',
       options: [
-        { label: 'Armbar', description: 'Start from the armbar problem itself, then choose the defensive answer that fits the direction and timing.', focusName: 'Armbar Defense' },
-        { label: 'Triangle', description: 'Start from the triangle problem itself, then choose the escape that fits the angle and posture battle.', focusName: 'Triangle Escape Family' },
-        { label: 'Kimura', description: 'Start from the kimura problem itself, then choose the shoulder-safe answer before the rotation gets deep.', focusName: 'Kimura Defense' },
-        { label: 'Guillotine / front headlock', description: 'Start from the guillotine problem itself, then choose the hand-fight or exit that fits the squeeze.', focusName: 'Guillotine Defense' }
+        { label: 'Armbar', description: 'Start from the armbar problem itself, then choose the defensive answer that fits the direction and timing.', focusName: 'Armbar Escape Choices' },
+        { label: 'Triangle', description: 'Start from the triangle problem itself, then choose the escape that fits the angle and posture battle.', focusName: 'Triangle Escape Choices' },
+        { label: 'Kimura', description: 'Start from the kimura problem itself, then choose the shoulder-safe answer before the rotation gets deep.', focusName: 'Kimura Escape Choices' },
+        { label: 'Guillotine / front headlock', description: 'Start from the guillotine problem itself, then choose the hand-fight or exit that fits the squeeze.', focusName: 'Guillotine Escape Choices' },
+        { label: 'Rear naked choke', description: 'Start by exposing the secondary hand, weakening the lock, and then choose the turn or strip that fits once the choke line opens.', focusName: 'Rear Naked Choke Escape Choices', isExtended: true },
+        { label: 'Bow and arrow choke', description: 'Start from the gi back-choke problem itself, then choose the collar-relief and shoulder-line defense that fits.', focusName: 'Bow And Arrow Escape Choices', isExtended: true },
+        { label: 'Collar chokes', description: 'Start from the gi collar-choke problem itself, then choose the posture or grip-stripping answer that fits.', focusName: 'Collar Choke Grip-Stripping Escapes', isExtended: true },
+        { label: 'Americana', description: 'Start from the shoulder-lock problem itself, then choose the frame or turning answer that fits.', focusName: 'Americana Elbow Recovery Escapes', isExtended: true },
+        { label: 'Arm triangle', description: 'Start from the head-and-arm choke problem itself, then choose the escape toward space or half guard.', focusName: 'Arm Triangle Shoulder-Relief Escapes', isExtended: true },
+        { label: 'North-south choke', description: 'Start from the north-south choke problem itself, then choose the shoulder-relief or turn-out answer that fits.', focusName: 'North-South Choke Shoulder-Relief Escapes', isExtended: true },
+        { label: "D'Arce / anaconda", description: 'Start from the front-headlock choke problem itself, then choose the daylight-turning answer that fits.', focusName: 'Front Headlock Choke Daylight Escapes', isExtended: true }
       ]
     }
   ],
@@ -770,7 +778,17 @@ const escapeContinuationMap = {
   [normalizeValue('Triangle Posture Escape')]: ['Combat Base', 'Double Under Pass', 'Top Half Guard', 'Open Guard'],
   [normalizeValue('Triangle Escape With Hand Fighting/Angles')]: ['Combat Base', 'Double Under Pass', 'Top Half Guard', 'Open Guard'],
   [normalizeValue('Shoulder Slide Escape')]: ['Closed Guard', 'Open Guard', 'Top Half Guard'],
-  [normalizeValue('Escape To Top Half')]: ['Top Half Guard', 'Knee On Belly', 'Mount']
+  [normalizeValue('Escape To Top Half')]: ['Top Half Guard', 'Knee On Belly', 'Mount'],
+  [normalizeValue('Rear Naked Choke Hand Peel Defense')]: ['Shoulder-To-Mat Escape', 'Hook Stripping Escape', 'Back To The Mat Escape', 'Escape To Top Half'],
+  [normalizeValue('Bow And Arrow Choke Hand Fight Defense')]: ['Shoulder-To-Mat Escape', 'Back To The Mat Escape', 'Open Guard', 'Escape To Top Half'],
+  [normalizeValue('Ezekiel Posture Defense')]: ['Combat Base', 'Top Half Guard', 'Open Guard', 'Double Under Pass'],
+  [normalizeValue('Loop Choke Escape')]: ['Standing', 'Open Guard', 'Combat Base', 'Single Leg'],
+  [normalizeValue('Two-On-One Grip Fight')]: ['Shoulder-To-Mat Escape', 'Hook Stripping Escape', 'Back To The Mat Escape', 'Escape To Top Half'],
+  [normalizeValue('Back To The Mat Escape')]: ['Open Guard', 'Half Guard', 'Escape To Top Half', 'Standing'],
+  [normalizeValue('Posture')]: ['Combat Base', 'Standing', 'Open Guard', 'Top Half Guard'],
+  [normalizeValue('Collar Choke Grip-Stripping Escapes')]: ['Combat Base', 'Standing', 'Open Guard', 'Top Half Guard', 'Double Under Pass'],
+  [normalizeValue('Rear Naked Choke Escape Choices')]: ['Shoulder-To-Mat Escape', 'Hook Stripping Escape', 'Back To The Mat Escape', 'Escape To Top Half'],
+  [normalizeValue('Bow And Arrow Escape Choices')]: ['Shoulder-To-Mat Escape', 'Back To The Mat Escape', 'Open Guard', 'Escape To Top Half']
 };
 
 const uniqueValues = (values) => (
@@ -1430,14 +1448,16 @@ const getEscapeContinuationOptions = ({
   if (!focusEntry) return [];
 
   const excludedIds = new Set(excludedEntryIds.filter(Boolean));
-  const seededNames = escapeContinuationMap[normalizeValue(focusEntry.name)] || [];
-  const candidateNames = uniqueValues([
-    ...seededNames,
-    ...(focusEntry.commonFollowUps || []),
-    ...(focusEntry.commonTransitions || []),
-    ...(focusEntry.commonAttacks || []),
-    ...(focusEntry.relatedPositions || [])
-  ]);
+  const normalizedFocusName = normalizeValue(focusEntry.name);
+  const seededNames = escapeContinuationMap[normalizedFocusName] || [];
+  const candidateNames = seededNames.length
+    ? uniqueValues(seededNames)
+    : uniqueValues([
+        ...(focusEntry.commonFollowUps || []),
+        ...(focusEntry.commonTransitions || []),
+        ...(focusEntry.commonAttacks || []),
+        ...(focusEntry.relatedPositions || [])
+      ]);
 
   return candidateNames
     .map((name, index) => {
@@ -1498,6 +1518,13 @@ const buildLibraryLink = ({ entryName, focusEntry, decisionPathEntries }) => {
   }
 
   return `/library?${params.toString()}`;
+};
+
+const buildCurriculumIndexLink = (entry) => {
+  const params = new URLSearchParams();
+  params.set('search', entry.name);
+  params.set('entryId', entry.id);
+  return `/index?${params.toString()}`;
 };
 
 export default function DecisionTreePage() {
@@ -1968,7 +1995,7 @@ export default function DecisionTreePage() {
             </div>
             {focusEntry ? (
               <div className="decision-tree-focus-links">
-                <Link className="secondary-button" to={`/index?search=${encodeURIComponent(focusEntry.name)}`}>
+                <Link className="secondary-button" to={buildCurriculumIndexLink(focusEntry)}>
                   View in Index
                 </Link>
                 <Link
@@ -2315,7 +2342,7 @@ export default function DecisionTreePage() {
                       >
                         Open in tree
                       </button>
-                      <Link className="secondary-button" to={`/index?search=${encodeURIComponent(option.entry.name)}`}>
+                      <Link className="secondary-button" to={buildCurriculumIndexLink(option.entry)}>
                         View in Index
                       </Link>
                       <Link
