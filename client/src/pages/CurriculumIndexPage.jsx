@@ -79,6 +79,193 @@ const getSearchRelevanceScore = (entry, normalizedSearch) => {
   return 10;
 };
 
+const getSearchIntentCategoryBonus = (entry, normalizedSearch) => {
+  if (!normalizedSearch) {
+    return 0;
+  }
+
+  const normalizedCategory = normalizeValue(entry.category);
+  const normalizedSubcategory = normalizeValue(entry.subcategory);
+  const isDefenseQuery = normalizedSearch.includes('defense') || normalizedSearch.includes('escape');
+  const isSubmissionQuery = ['submission', 'choke', 'armbar', 'triangle', 'kimura', 'guillotine', 'americana', 'omoplata']
+    .some((term) => normalizedSearch.includes(term));
+  const isLegLockQuery = ['leg lock', 'heel hook', 'ankle lock', 'kneebar', 'toe hold', 'aoki']
+    .some((term) => normalizedSearch.includes(term));
+  const isGripQuery = ['grip', 'hand fight', 'tie']
+    .some((term) => normalizedSearch.includes(term));
+  const isBackTakeQuery = ['back take', 'take back', 'rear angle', 'back exposure']
+    .some((term) => normalizedSearch.includes(term));
+  const isSweepQuery = ['sweep', 'off balance', 'wrestle up']
+    .some((term) => normalizedSearch.includes(term));
+  const isMovementQuery = ['movement', 'granby', 'shrimp', 'hip escape', 'sit out', 'technical stand up', 'roll']
+    .some((term) => normalizedSearch.includes(term));
+  const isStrategyQuery = ['strategy', 'game plan', 'reaction', 'transition', 'decision', 'teaching pattern']
+    .some((term) => normalizedSearch.includes(term));
+  const isDrillQuery = ['drill', 'round', 'sparring', 'game', 'positional']
+    .some((term) => normalizedSearch.includes(term));
+
+  if (isDefenseQuery) {
+    if (normalizedCategory === 'submission defense') return 45;
+    if (normalizedCategory === 'escapes') return 30;
+  }
+
+  if (isLegLockQuery) {
+    if (normalizedCategory === 'leg locks') return 45;
+    if (normalizedCategory === 'submissions') return 30;
+  }
+
+  if (isSubmissionQuery && !isDefenseQuery) {
+    if (normalizedCategory === 'submissions') return 45;
+    if (normalizedCategory === 'leg locks') return 35;
+    if (normalizedCategory === 'submission defense') return 15;
+  }
+
+  if (isGripQuery) {
+    if (normalizedCategory === 'grip fighting' || normalizedSubcategory === 'grip fighting') return 40;
+    if (normalizedCategory === 'positions') return 20;
+  }
+
+  if (isBackTakeQuery) {
+    if (normalizedCategory === 'back takes') return 40;
+    if (normalizedCategory === 'sweeps') return 20;
+  }
+
+  if (isSweepQuery) {
+    if (normalizedCategory === 'sweeps') return 40;
+    if (normalizedCategory === 'back takes') return 20;
+  }
+
+  if (isMovementQuery && !isDefenseQuery) {
+    if (normalizedCategory === 'movements') return 40;
+    if (normalizedCategory === 'escapes') return 15;
+  }
+
+  if (isStrategyQuery) {
+    if (normalizedCategory === 'strategy and game planning') return 35;
+    if (normalizedCategory === 'concepts') return 25;
+  }
+
+  if (isDrillQuery) {
+    if (normalizedCategory === 'positional sparring') return 35;
+    if (normalizedCategory === 'constraint led games') return 30;
+    if (normalizedCategory === 'drills') return 25;
+    if (normalizedCategory === 'grip fighting') return 10;
+  }
+
+  return 0;
+};
+
+const getDefaultCategoryPriority = (entry) => {
+  const normalizedCategory = normalizeValue(entry.category);
+
+  const priorityMap = {
+    'submission defense': 110,
+    escapes: 100,
+    'leg locks': 95,
+    submissions: 90,
+    'back takes': 80,
+    sweeps: 75,
+    'grip fighting': 70,
+    positions: 65,
+    movements: 60,
+    'strategy and game planning': 55,
+    concepts: 50,
+    'positional sparring': 45,
+    'constraint led games': 40,
+    drills: 35
+  };
+
+  return priorityMap[normalizedCategory] || 0;
+};
+
+const duplicateNameCategoryPreference = {
+  'aoki lock': ['Leg Locks', 'Submissions'],
+  'arm drag to back': ['Back Takes', 'Sweeps'],
+  'armbar stacking defense': ['Submission Defense', 'Escapes'],
+  'attack transitions': ['Strategy and Game Planning', 'Concepts'],
+  'banana split': ['Leg Locks', 'Submissions'],
+  'calf slicer': ['Leg Locks', 'Submissions'],
+  'collar tie': ['Grip Fighting', 'Positions'],
+  'electric chair': ['Leg Locks', 'Submissions'],
+  'force predictable reactions': ['Strategy and Game Planning', 'Concepts'],
+  'granby roll': ['Movements', 'Escapes'],
+  'guard retention rounds': ['Positional Sparring', 'Constraint-Led Games'],
+  'hamstring slicer': ['Leg Locks', 'Submissions'],
+  'hand-fight specific rounds': ['Positional Sparring', 'Constraint-Led Games'],
+  'inside heel hook': ['Leg Locks', 'Submissions'],
+  'inside tie': ['Grip Fighting', 'Positions'],
+  kneebar: ['Leg Locks', 'Submissions'],
+  'outside heel hook': ['Leg Locks', 'Submissions'],
+  pummeling: ['Grip Fighting', 'Drills'],
+  'sit-out': ['Movements', 'Escapes'],
+  'straight ankle lock': ['Leg Locks', 'Submissions'],
+  'texas cloverleaf': ['Leg Locks', 'Submissions'],
+  'toe hold': ['Leg Locks', 'Submissions']
+};
+
+const getDuplicateNamePreferenceBonus = (entry) => {
+  const normalizedName = normalizeValue(entry.name);
+  const preferredCategories = duplicateNameCategoryPreference[normalizedName];
+
+  if (!preferredCategories) {
+    return 0;
+  }
+
+  const categoryIndex = preferredCategories.indexOf(entry.category);
+  if (categoryIndex === -1) {
+    return 0;
+  }
+
+  return (preferredCategories.length - categoryIndex) * 20;
+};
+
+const getCollapsedSearchResults = (entries, normalizedSearch, categoryFilter) => {
+  if (!normalizedSearch || categoryFilter) {
+    return entries;
+  }
+
+  const groupedByName = entries.reduce((acc, entry) => {
+    const key = normalizeValue(entry.name);
+    if (!acc.has(key)) {
+      acc.set(key, []);
+    }
+    acc.get(key).push(entry);
+    return acc;
+  }, new Map());
+
+  return Array.from(groupedByName.values()).map((group) => {
+    if (group.length === 1) {
+      return group[0];
+    }
+
+    return [...group].sort((a, b) => {
+      const scoreA = getSearchRelevanceScore(a, normalizedSearch) + getSearchIntentCategoryBonus(a, normalizedSearch);
+      const scoreB = getSearchRelevanceScore(b, normalizedSearch) + getSearchIntentCategoryBonus(b, normalizedSearch);
+      if (scoreB !== scoreA) {
+        return scoreB - scoreA;
+      }
+
+      const descriptionA = normalizeValue(a.description).includes(normalizedSearch) ? 1 : 0;
+      const descriptionB = normalizeValue(b.description).includes(normalizedSearch) ? 1 : 0;
+      if (descriptionB !== descriptionA) {
+        return descriptionB - descriptionA;
+      }
+
+      const duplicatePreferenceDifference = getDuplicateNamePreferenceBonus(b) - getDuplicateNamePreferenceBonus(a);
+      if (duplicatePreferenceDifference !== 0) {
+        return duplicatePreferenceDifference;
+      }
+
+      const defaultPriorityDifference = getDefaultCategoryPriority(b) - getDefaultCategoryPriority(a);
+      if (defaultPriorityDifference !== 0) {
+        return defaultPriorityDifference;
+      }
+
+      return a.category.localeCompare(b.category);
+    })[0];
+  });
+};
+
 export default function CurriculumIndexPage() {
   const { user } = useAuth();
   const isMember = user?.role === 'member';
@@ -337,11 +524,13 @@ export default function CurriculumIndexPage() {
       return matchesSearch && matchesCategory && matchesSkillLevel;
     });
 
+    const dedupedEntries = getCollapsedSearchResults(matchingEntries, normalizedSearch, categoryFilter);
+
     if (!normalizedSearch) {
-      return matchingEntries;
+      return dedupedEntries;
     }
 
-    return [...matchingEntries].sort((a, b) => {
+    return [...dedupedEntries].sort((a, b) => {
       const scoreDifference = getSearchRelevanceScore(b, normalizedSearch) - getSearchRelevanceScore(a, normalizedSearch);
 
       if (scoreDifference !== 0) {
