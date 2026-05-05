@@ -436,6 +436,25 @@ export default function CurriculumIndexPage() {
     return counts;
   }, [libraryEntries]);
 
+  const duplicateNameMap = useMemo(() => {
+    const nextMap = new Map();
+
+    curriculumIndexSeed.forEach((entry) => {
+      const key = normalizeValue(entry.name);
+      if (!nextMap.has(key)) {
+        nextMap.set(key, []);
+      }
+
+      nextMap.get(key).push({
+        id: entry.id,
+        category: entry.category,
+        subcategory: entry.subcategory || 'Core Topics'
+      });
+    });
+
+    return nextMap;
+  }, []);
+
   const enrichedEntries = useMemo(() => {
     return curriculumIndexSeed.map((entry) => {
       const topic = topicMap.get(normalizeValue(entry.name));
@@ -449,10 +468,13 @@ export default function CurriculumIndexPage() {
         topic,
         coverage,
         linkedLibraryCount,
+        duplicateVariants: (duplicateNameMap.get(normalizeValue(entry.name)) || []).filter(
+          (variant) => variant.id !== entry.id
+        ),
         isUnderused: neglectedSet.has(normalizeValue(entry.name))
       };
     });
-  }, [topicMap, coverageMap, libraryCountByTopicId, neglectedSet]);
+  }, [topicMap, coverageMap, libraryCountByTopicId, duplicateNameMap, neglectedSet]);
 
   const availableCreateParentTopics = useMemo(() => {
     const activeTopics = topics.filter((topic) => topic.is_active);
@@ -918,6 +940,14 @@ export default function CurriculumIndexPage() {
                               <div className="meta-text">
                                 <strong>Section:</strong> {subcategory}
                               </div>
+                              {entry.duplicateVariants?.length ? (
+                                <div className="meta-text">
+                                  <strong>Also appears in:</strong>{' '}
+                                  {entry.duplicateVariants
+                                    .map((variant) => `${variant.category}${variant.subcategory ? ` (${variant.subcategory})` : ''}`)
+                                    .join(', ')}
+                                </div>
+                              ) : null}
                               {entry.topic?.parent_topic_title ? (
                                 <div className="meta-text">
                                   <strong>Parent topic:</strong> {entry.topic.parent_topic_title}
