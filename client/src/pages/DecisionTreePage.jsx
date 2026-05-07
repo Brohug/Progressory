@@ -46,7 +46,7 @@ const coachingScenarios = [
           { label: 'Single-Leg X / leg entanglements', description: 'Base, balance, and leg-line awareness usually decide the pass.', focusName: 'Single-Leg X', isExtended: true },
           { label: 'X-Guard', description: 'Base management and stepping angles usually matter most.', focusName: 'X-Guard', isExtended: true },
           { label: 'Half Butterfly', description: 'Balance, pressure shifts, and hook-clearing usually shape the pass here.', focusName: 'Butterfly Half', isExtended: true },
-          { label: 'Reverse X / Reverse Ashi', description: 'Leg-line awareness and angle changes usually matter more here.', focusName: 'Reverse Ashi', isExtended: true },
+          { label: 'Reverse X / Reverse Ashi', description: 'Leg-line awareness and angle changes usually matter more here.', focusName: 'Ashi Garami', isExtended: true },
           { label: 'Waiter guard', description: 'Underneath balance and leg visibility usually decide the passing lane.', focusName: 'Waiter Guard', isExtended: true },
           { label: 'Deep half guard', description: 'Hip weight, head position, and base direction usually matter most.', focusName: 'Deep Half Guard', isExtended: true },
           { label: 'Seated guard', description: 'Distance, front-headlock threats, and wrestle-up entries usually shape the pass.', focusName: 'Seated Guard', isExtended: true },
@@ -66,7 +66,7 @@ const coachingScenarios = [
           {
             label: 'Mobility passing',
             description: 'Best for faster players who like circling, redirecting, and staying light.',
-            focusName: 'Toreando Pass',
+            focusName: 'Bullfighter Pass',
             filters: { preferredStyle: 'scrambles', bodyType: 'smaller', riskTolerance: 'medium' }
           },
           {
@@ -174,7 +174,7 @@ const coachingScenarios = [
     }
   },
   {
-    label: 'I can’t keep mount',
+    label: "I can't keep mount",
     category: 'Passing and top control',
     focusName: 'Mount',
     description: 'Work on control, weight distribution, and reactions that help mount stay stable.',
@@ -264,7 +264,7 @@ const coachingScenarios = [
     ]
   },
   {
-    label: 'I can’t hold side control',
+    label: "I can't hold side control",
     category: 'Passing and top control',
     focusName: 'Side Control',
     description: 'Find control ideas, transitions, and pressure reactions before the opponent reguards.',
@@ -376,7 +376,7 @@ const coachingScenarios = [
     }
   },
   {
-    label: 'I can’t finish from the back',
+    label: "I can't finish from the back",
     category: 'Back takes and control',
     focusName: 'Back Control',
     description: 'Look for control upgrades, hand-fighting wins, choke options, and mount transitions.',
@@ -422,7 +422,7 @@ const coachingScenarios = [
   {
     label: 'I need submission defense',
     category: 'Escapes and defense',
-    focusName: 'Armbar Escape Choices',
+    focusName: 'Armbar Defense',
     description: 'Choose the submission giving you trouble and build the safer defensive path plus the next recovery after it works.',
     filters: {
       preferredStyle: 'defense',
@@ -488,6 +488,225 @@ const normalizeValue = (value) => (
     .replace(/\s+/g, ' ')
 );
 
+const getSearchRelevanceScore = (entry, normalizedSearch) => {
+  if (!normalizedSearch) {
+    return 0;
+  }
+
+  const normalizedName = normalizeValue(entry.name);
+  const normalizedCategory = normalizeValue(entry.category);
+  const normalizedSubcategory = normalizeValue(entry.subcategory);
+  const normalizedDescription = normalizeValue(entry.description);
+  const normalizedTags = (entry.tags || []).map(normalizeValue);
+  const normalizedRelatedPositions = (entry.relatedPositions || []).map(normalizeValue);
+  const normalizedEntriesIntoPosition = (entry.entriesIntoPosition || []).map(normalizeValue);
+  const normalizedCommonAttacks = (entry.commonAttacks || []).map(normalizeValue);
+  const normalizedTransitions = (entry.commonTransitions || []).map(normalizeValue);
+  const normalizedFollowUps = (entry.commonFollowUps || []).map(normalizeValue);
+  const normalizedDefenses = (entry.commonDefenses || []).map(normalizeValue);
+
+  if (normalizedName === normalizedSearch) return 100;
+  if (normalizedName.startsWith(normalizedSearch)) return 90;
+  if (normalizedName.includes(normalizedSearch)) return 80;
+  if (normalizedCategory === normalizedSearch || normalizedSubcategory === normalizedSearch) return 70;
+  if (normalizedTags.includes(normalizedSearch)) return 60;
+  if (normalizedRelatedPositions.includes(normalizedSearch)) return 50;
+  if (normalizedEntriesIntoPosition.includes(normalizedSearch)) return 47;
+  if (normalizedCommonAttacks.includes(normalizedSearch)) return 45;
+  if (normalizedTransitions.includes(normalizedSearch)) return 40;
+  if (normalizedFollowUps.includes(normalizedSearch)) return 35;
+  if (normalizedDefenses.includes(normalizedSearch)) return 30;
+  if (normalizedDescription.includes(normalizedSearch)) return 20;
+
+  return 10;
+};
+
+const getSearchIntentCategoryBonus = (entry, normalizedSearch) => {
+  if (!normalizedSearch) {
+    return 0;
+  }
+
+  const normalizedCategory = normalizeValue(entry.category);
+  const normalizedSubcategory = normalizeValue(entry.subcategory);
+  const isDefenseQuery = normalizedSearch.includes('defense') || normalizedSearch.includes('escape');
+  const isSubmissionQuery = ['submission', 'choke', 'armbar', 'triangle', 'kimura', 'guillotine', 'americana', 'omoplata']
+    .some((term) => normalizedSearch.includes(term));
+  const isLegLockQuery = ['leg lock', 'heel hook', 'ankle lock', 'kneebar', 'toe hold', 'aoki']
+    .some((term) => normalizedSearch.includes(term));
+  const isGripQuery = ['grip', 'hand fight', 'tie']
+    .some((term) => normalizedSearch.includes(term));
+  const isBackTakeQuery = ['back take', 'take back', 'rear angle', 'back exposure']
+    .some((term) => normalizedSearch.includes(term));
+  const isSweepQuery = ['sweep', 'off balance', 'wrestle up']
+    .some((term) => normalizedSearch.includes(term));
+  const isMovementQuery = ['movement', 'granby', 'shrimp', 'hip escape', 'sit out', 'technical stand up', 'roll']
+    .some((term) => normalizedSearch.includes(term));
+  const isStrategyQuery = ['strategy', 'game plan', 'reaction', 'transition', 'decision', 'teaching pattern']
+    .some((term) => normalizedSearch.includes(term));
+  const isDrillQuery = ['drill', 'round', 'sparring', 'game', 'positional']
+    .some((term) => normalizedSearch.includes(term));
+
+  if (isDefenseQuery) {
+    if (normalizedCategory === 'submission defense') return 45;
+    if (normalizedCategory === 'escapes') return 30;
+  }
+
+  if (isLegLockQuery) {
+    if (normalizedCategory === 'leg locks') return 45;
+    if (normalizedCategory === 'submissions') return 30;
+  }
+
+  if (isSubmissionQuery && !isDefenseQuery) {
+    if (normalizedCategory === 'submissions') return 45;
+    if (normalizedCategory === 'leg locks') return 35;
+    if (normalizedCategory === 'submission defense') return 15;
+  }
+
+  if (isGripQuery) {
+    if (normalizedCategory === 'grip fighting' || normalizedSubcategory === 'grip fighting') return 40;
+    if (normalizedCategory === 'positions') return 20;
+  }
+
+  if (isBackTakeQuery) {
+    if (normalizedCategory === 'back takes') return 40;
+    if (normalizedCategory === 'sweeps') return 20;
+  }
+
+  if (isSweepQuery) {
+    if (normalizedCategory === 'sweeps') return 40;
+    if (normalizedCategory === 'back takes') return 20;
+  }
+
+  if (isMovementQuery && !isDefenseQuery) {
+    if (normalizedCategory === 'movements') return 40;
+    if (normalizedCategory === 'escapes') return 15;
+  }
+
+  if (isStrategyQuery) {
+    if (normalizedCategory === 'strategy and game planning') return 35;
+    if (normalizedCategory === 'concepts') return 25;
+  }
+
+  if (isDrillQuery) {
+    if (normalizedCategory === 'positional sparring') return 35;
+    if (normalizedCategory === 'constraint led games') return 30;
+    if (normalizedCategory === 'drills') return 25;
+    if (normalizedCategory === 'grip fighting') return 10;
+  }
+
+  return 0;
+};
+
+const getDefaultCategoryPriority = (entry) => {
+  const normalizedCategory = normalizeValue(entry.category);
+
+  const priorityMap = {
+    'submission defense': 110,
+    escapes: 100,
+    'leg locks': 95,
+    submissions: 90,
+    'back takes': 80,
+    sweeps: 75,
+    'grip fighting': 70,
+    positions: 65,
+    movements: 60,
+    'strategy and game planning': 55,
+    concepts: 50,
+    'positional sparring': 45,
+    'constraint led games': 40,
+    drills: 35
+  };
+
+  return priorityMap[normalizedCategory] || 0;
+};
+
+const duplicateNameCategoryPreference = {
+  'aoki lock': ['Leg Locks', 'Submissions'],
+  'arm drag to back': ['Back Takes', 'Sweeps'],
+  'armbar stacking defense': ['Submission Defense', 'Escapes'],
+  'attack transitions': ['Strategy and Game Planning', 'Concepts'],
+  'banana split': ['Leg Locks', 'Submissions'],
+  'calf slicer': ['Leg Locks', 'Submissions'],
+  'collar tie': ['Grip Fighting', 'Positions'],
+  'electric chair': ['Leg Locks', 'Submissions'],
+  'force predictable reactions': ['Strategy and Game Planning', 'Concepts'],
+  'granby roll': ['Movements', 'Escapes'],
+  'guard retention rounds': ['Positional Sparring', 'Constraint-Led Games'],
+  'hamstring slicer': ['Leg Locks', 'Submissions'],
+  'hand-fight specific rounds': ['Positional Sparring', 'Constraint-Led Games'],
+  'inside heel hook': ['Leg Locks', 'Submissions'],
+  'inside tie': ['Grip Fighting', 'Positions'],
+  kneebar: ['Leg Locks', 'Submissions'],
+  'outside heel hook': ['Leg Locks', 'Submissions'],
+  pummeling: ['Grip Fighting', 'Drills'],
+  'sit-out': ['Movements', 'Escapes'],
+  'straight ankle lock': ['Leg Locks', 'Submissions'],
+  'texas cloverleaf': ['Leg Locks', 'Submissions'],
+  'toe hold': ['Leg Locks', 'Submissions']
+};
+
+const getDuplicateNamePreferenceBonus = (entry) => {
+  const normalizedName = normalizeValue(entry.name);
+  const preferredCategories = duplicateNameCategoryPreference[normalizedName];
+
+  if (!preferredCategories) {
+    return 0;
+  }
+
+  const categoryIndex = preferredCategories.indexOf(entry.category);
+  if (categoryIndex === -1) {
+    return 0;
+  }
+
+  return (preferredCategories.length - categoryIndex) * 20;
+};
+
+const pickCanonicalEntry = (entries, normalizedSearch = '') => {
+  if (!entries.length) return null;
+  if (entries.length === 1) return entries[0];
+
+  return [...entries].sort((a, b) => {
+    const scoreA = getSearchRelevanceScore(a, normalizedSearch) + getSearchIntentCategoryBonus(a, normalizedSearch);
+    const scoreB = getSearchRelevanceScore(b, normalizedSearch) + getSearchIntentCategoryBonus(b, normalizedSearch);
+    if (scoreB !== scoreA) {
+      return scoreB - scoreA;
+    }
+
+    const descriptionA = normalizeValue(a.description).includes(normalizedSearch) ? 1 : 0;
+    const descriptionB = normalizeValue(b.description).includes(normalizedSearch) ? 1 : 0;
+    if (descriptionB !== descriptionA) {
+      return descriptionB - descriptionA;
+    }
+
+    const duplicatePreferenceDifference = getDuplicateNamePreferenceBonus(b) - getDuplicateNamePreferenceBonus(a);
+    if (duplicatePreferenceDifference !== 0) {
+      return duplicatePreferenceDifference;
+    }
+
+    const defaultPriorityDifference = getDefaultCategoryPriority(b) - getDefaultCategoryPriority(a);
+    if (defaultPriorityDifference !== 0) {
+      return defaultPriorityDifference;
+    }
+
+    return a.category.localeCompare(b.category);
+  })[0];
+};
+
+const getCollapsedSearchResults = (entries, normalizedSearch) => {
+  const groupedByName = entries.reduce((acc, entry) => {
+    const key = normalizeValue(entry.name);
+    if (!acc.has(key)) {
+      acc.set(key, []);
+    }
+    acc.get(key).push(entry);
+    return acc;
+  }, new Map());
+
+  return Array.from(groupedByName.values())
+    .map((group) => pickCanonicalEntry(group, normalizedSearch))
+    .filter(Boolean);
+};
+
 const coachingScenarioGuidedPromptMap = {
   [normalizeValue('I am stuck under pressure')]: [
     {
@@ -503,77 +722,104 @@ const coachingScenarioGuidedPromptMap = {
   [normalizeValue('Build a back-take path')]: [
     {
       question: 'Where are you most often finding the back-take window?',
+      expandableLabel: 'Need more back-take routes?',
       options: [
         { label: 'Front headlock / snap-downs', description: 'Spin-behinds and ride-style follow-ups usually open first here.', focusName: 'Front Headlock' },
         { label: 'Turtle reactions', description: 'Hooks, seatbelt control, and ride pressure usually shape the route.', focusName: 'Turtle' },
         { label: 'Half guard / dogfight', description: 'Underhooks, come-ups, and backside exposure usually create the angle.', focusName: 'Dogfight' },
-        { label: 'Leg entanglements / inversion', description: 'Crab-ride exposure and backside transitions usually become available.', focusName: 'Crab Ride' }
+        { label: 'Leg entanglements / inversion', description: 'Crab-ride exposure and backside transitions usually become available.', focusName: 'Crab Ride' },
+        { label: 'Seatbelt already connected', description: 'Best if you are already on the upper body and need cleaner control upgrades.', focusName: 'Seatbelt', isExtended: true },
+        { label: 'Arm drags and rear angles', description: 'Best if you keep getting behind the shoulder line and want cleaner finishing routes.', focusName: 'Arm Drag To Back', isExtended: true },
+        { label: 'Berimbolo / backside routes', description: 'Best if your back takes often come from inversion and backside exposure.', focusName: 'Berimbolo Back Take', isExtended: true }
       ]
     }
   ],
   [normalizeValue('Opponent is leg locking')]: [
     {
       question: 'Which leg-lock scenario is causing the problem most often?',
+      expandableLabel: 'Need more leg-lock scenarios?',
       options: [
         { label: 'Standard ashi / straight entanglements', description: 'Booting, clearing the knee line, and stripping grips usually matter first.', focusName: 'Ashi Garami' },
         { label: '50/50', description: 'Hand fighting, heel hiding, and secondary-leg awareness usually become the priority.', focusName: '50/50' },
         { label: 'Saddle / inside sankaku', description: 'Heel exposure and knee-line danger usually spike here.', focusName: 'Saddle' },
-        { label: 'Backside 50/50 / deep heel-hook chains', description: 'Rotation awareness and safer defensive reactions become more important.', focusName: 'Backside 50/50' }
+        { label: 'Backside 50/50 / deep heel-hook chains', description: 'Rotation awareness and safer defensive reactions become more important.', focusName: 'Backside 50/50' },
+        { label: 'Straight ankle into rotational follow-ups', description: 'Best if the danger starts as a safer foot lock and then becomes more complex.', focusName: 'Straight Ankle Lock', isExtended: true },
+        { label: 'Toe hold / kneebar scrambles', description: 'Best if the leg-lock threat usually appears during top scrambles or transitions.', focusName: 'Toe Hold', isExtended: true },
+        { label: 'I mainly need the escape reactions', description: 'Best if you want the defensive branch instead of starting from the attacking entanglement.', focusName: 'Heel Hook Line Escape', isExtended: true }
       ]
     }
   ],
   [normalizeValue('I need safer leg-lock basics')]: [
     {
       question: 'Which lower-body lane feels safest to build first?',
+      expandableLabel: 'Need more lower-body basics?',
       options: [
         { label: 'Straight ankle lock', description: 'Best if you want clean mechanics and lower-risk finishing habits first.', focusName: 'Straight Ankle Lock' },
         { label: 'Kneebar', description: 'Best if you like extension-based finishes and strong top control links.', focusName: 'Kneebar' },
         { label: 'Aoki lock', description: 'Best if you want to learn a rotational finish without diving straight into heel hooks.', focusName: 'Aoki Lock' },
-        { label: 'Ashi control first', description: 'Best if you want to build safer entanglement control before worrying about the finish.', focusName: 'Ashi Garami' }
+        { label: 'Ashi control first', description: 'Best if you want to build safer entanglement control before worrying about the finish.', focusName: 'Ashi Garami' },
+        { label: 'Toe hold basics', description: 'Best if you want a clearer upper-body-assisted foot attack before deeper heel-hook chains.', focusName: 'Toe Hold', isExtended: true },
+        { label: '50/50 control first', description: 'Best if you want safer lower-body familiarity before chasing the finish.', focusName: '50/50', isExtended: true }
       ]
     }
   ],
   [normalizeValue('I keep getting heel-hooked')]: [
     {
       question: 'Where are the heel-hook threats usually coming from?',
+      expandableLabel: 'Need more heel-hook contexts?',
       options: [
         { label: 'Ashi garami', description: 'Knee-line awareness and heel hiding usually decide whether danger builds here.', focusName: 'Ashi Garami' },
         { label: '50/50', description: 'Secondary-leg control and hand fighting usually matter more than speed alone.', focusName: '50/50' },
         { label: 'Saddle / inside sankaku', description: 'This usually demands sharper rotation awareness and earlier defensive choices.', focusName: 'Saddle' },
-        { label: 'Backside 50/50', description: 'You usually need safer defensive reactions before the rotation gets too deep.', focusName: 'Backside 50/50' }
+        { label: 'Backside 50/50', description: 'You usually need safer defensive reactions before the rotation gets too deep.', focusName: 'Backside 50/50' },
+        { label: 'I need the actual escape branch', description: 'Best if you want the defensive route instead of another attacking entanglement lane.', focusName: 'Heel Hook Line Escape', isExtended: true },
+        { label: 'Outside heel-hook style reactions', description: 'Best if the outside rotational line is what keeps catching you.', focusName: 'Outside Heel Hook', isExtended: true },
+        { label: 'Inside heel-hook style reactions', description: 'Best if the inside rotational line is the main danger you are feeling.', focusName: 'Inside Heel Hook', isExtended: true }
       ]
     }
   ],
   [normalizeValue('Improve standing exchanges')]: [
     {
       question: 'Which standing lane feels most natural to you right now?',
+      expandableLabel: 'Need more standing lanes?',
       options: [
         { label: 'Collar tie / snap-downs', description: 'Best if you like head control, snaps, and front-headlock reactions.', focusName: 'Collar Tie' },
         { label: 'Underhooks / body lock', description: 'Best if you like pressure, connection, and staying chest-to-chest.', focusName: 'Body Lock Standing' },
         { label: 'Russian tie / arm drags', description: 'Best if you like angles, off-balancing, and getting behind the opponent.', focusName: 'Russian Tie Standing' },
-        { label: 'Single-leg entries', description: 'Best if you like wrestling up and attacking the legs directly.', focusName: 'Single Leg Position' }
+        { label: 'Single-leg entries', description: 'Best if you like wrestling up and attacking the legs directly.', focusName: 'Single Leg Position' },
+        { label: 'Inside tie / short offense', description: 'Best if you like compact hand-fighting and quick entries from the center line.', focusName: 'Inside Tie', isExtended: true },
+        { label: 'Ankle-pick timing', description: 'Best if you prefer posture breaks and lower-risk timing attacks.', focusName: 'Ankle Pick', isExtended: true },
+        { label: 'Double-leg pressure shots', description: 'Best if you want a more direct penetration lane off reactions or level change.', focusName: 'Double Leg Position', isExtended: true },
+        { label: 'Judo-style off-balancing', description: 'Best if you like movement-based entries and timing more than pure shots.', focusName: 'O Soto Gari', isExtended: true }
       ]
     }
   ],
   [normalizeValue('Beginner-safe path')]: [
     {
       question: 'What do you want the beginner-safe path to build first?',
+      expandableLabel: 'Need more beginner-safe ideas?',
       options: [
         { label: 'Closed guard basics', description: 'Good for posture, breaking balance, and simple sweep-submission connections.', focusName: 'Closed Guard' },
         { label: 'Half guard survival', description: 'Good for frames, underhooks, and learning to recover or sweep without rushing.', focusName: 'Half Guard' },
         { label: 'Side control stability', description: 'Good for learning top pressure and when to move before the escape starts.', focusName: 'Side Control' },
-        { label: 'Mount control', description: 'Good for simple top control, posture, and clean attack progression.', focusName: 'Mount' }
+        { label: 'Mount control', description: 'Good for simple top control, posture, and clean attack progression.', focusName: 'Mount' },
+        { label: 'Posture and base', description: 'Good if you want safer top habits before branching into more specific attacks.', focusName: 'Posture', isExtended: true },
+        { label: 'Guard retention basics', description: 'Good if you want a defensive-first path through recovery and re-guarding.', focusName: 'Knee-Elbow Recovery', isExtended: true },
+        { label: 'Recovery back to guard', description: 'Good if you want clearer reset routes to safer guard positions.', focusName: 'Recovery To Seated Guard', isExtended: true }
       ]
     }
   ],
   [normalizeValue('Opponent turtles a lot')]: [
     {
       question: 'What first contact do you usually get when they turtle?',
+      expandableLabel: 'Need more turtle follow-ups?',
       options: [
         { label: 'Front headlock', description: 'Good if you usually catch the head and need better spin-behind or choke decisions.', focusName: 'Front Headlock' },
         { label: 'Seatbelt / harness', description: 'Good if you are already climbing toward the back but need cleaner control.', focusName: 'Seatbelt' },
         { label: 'Ride pressure', description: 'Good if you are flattening them but need better follow-ups into hooks or control.', focusName: 'Spiral Ride' },
-        { label: 'Scramble to the side', description: 'Good if the turtle exchange stays loose and timing-based.', focusName: 'Clock-Style Spin To Back' }
+        { label: 'Scramble to the side', description: 'Good if the turtle exchange stays loose and timing-based.', focusName: 'Clock-Style Spin To Back' },
+        { label: 'I usually end up passing instead', description: 'Good if the turtle mostly turns into top control instead of a direct back take.', focusName: 'Pass From Turtle', isExtended: true },
+        { label: 'Back takes from rear angles', description: 'Good if you often catch a loose rear angle and need a cleaner finish to control.', focusName: 'Arm Drag To Back', isExtended: true }
       ]
     }
   ],
@@ -582,7 +828,7 @@ const coachingScenarioGuidedPromptMap = {
       question: 'Which half-guard lane feels most like your game?',
       options: [
         { label: 'Underhook half guard', description: 'Best if you like coming up, dogfights, and wrestling-style pressure.', focusName: 'Underhook Half Guard' },
-        { label: 'Butterfly half', description: 'Best if you like elevating, framing, and changing the opponent’s base.', focusName: 'Butterfly Half' },
+        { label: 'Butterfly half', description: "Best if you like elevating, framing, and changing the opponent's base.", focusName: 'Butterfly Half' },
         { label: 'Knee shield half guard', description: 'Best if you need more space, angle changes, and safer retention.', focusName: 'Knee Shield Half Guard' },
         { label: 'Deep half / waiter routes', description: 'Best if you like getting underneath and turning the base.', focusName: 'Deep Half Guard' }
       ]
@@ -620,22 +866,33 @@ const coachingScenarioGuidedPromptMap = {
   [normalizeValue('Build submission chains')]: [
     {
       question: 'Which submission family do you want to build from?',
+      expandableLabel: 'Need more submissions?',
       options: [
         { label: 'Triangle family', description: 'Good if you want angles, posture reactions, and armbar/omoplata links.', focusName: 'Triangle Choke' },
         { label: 'Kimura family', description: 'Good if you want control-first attacks that often connect to top or back exposure.', focusName: 'Kimura' },
-        { label: 'Front headlock chokes', description: 'Good if you want guillotines, anaconda, and D’Arce-style chains.', focusName: 'Guillotine' },
-        { label: 'Back choke chains', description: 'Good if you want high-percentage finishing routes after back control is won.', focusName: 'Rear Naked Choke' }
+        { label: 'Front headlock chokes', description: "Good if you want guillotines, anaconda, and D'Arce-style chains.", focusName: 'Guillotine' },
+        { label: 'Back choke chains', description: 'Good if you want high-percentage finishing routes after back control is won.', focusName: 'Rear Naked Choke' },
+        { label: 'Armbar family', description: 'Good if you want direct arm-isolation chains from guard or top control.', focusName: 'Straight Armbar From Guard', isExtended: true },
+        { label: 'Omoplata family', description: 'Good if you want shoulder-control chains that connect to sweeps, triangles, and armbars.', focusName: 'Omoplata', isExtended: true },
+        { label: 'Collar choke chains', description: 'Good if you want gi-based posture breaking and layered collar-finishing routes.', focusName: 'Cross Collar Choke', isExtended: true },
+        { label: 'Head-and-arm chokes', description: 'Good if you want pressure-based finishing routes from stable top control.', focusName: 'Arm Triangle', isExtended: true },
+        { label: 'Americana family', description: 'Good if you want shoulder-lock attacks that connect to armbars and top control.', focusName: 'Americana', isExtended: true },
+        { label: 'Straight ankle family', description: 'Good if you want a cleaner lower-body submission chain before deeper rotational finishes.', focusName: 'Straight Ankle Lock', isExtended: true }
       ]
     }
   ],
   [normalizeValue('Win scramble exchanges')]: [
     {
       question: 'Where do your scrambles usually start?',
+      expandableLabel: 'Need more scramble starts?',
       options: [
         { label: 'Dogfight / half guard', description: 'Good if you are already coming up and need better finishes or back routes.', focusName: 'Dogfight' },
         { label: 'Turtle reactions', description: 'Good if the exchange gets loose and you need clearer stand-up or back-take choices.', focusName: 'Turtle' },
         { label: 'Front headlock', description: 'Good if scramble wins usually come from snaps, spin-behinds, or choking pressure.', focusName: 'Front Headlock' },
-        { label: 'Single-leg battles', description: 'Good if you are usually winning or losing the angle off a leg attack.', focusName: 'Single Leg Position' }
+        { label: 'Single-leg battles', description: 'Good if you are usually winning or losing the angle off a leg attack.', focusName: 'Single Leg Position' },
+        { label: 'Granby / sit-out reactions', description: 'Good if the scramble often becomes a rotational or turtle-based recovery battle.', focusName: 'Granby Roll', isExtended: true },
+        { label: 'Sit-out and re-attack exchanges', description: 'Good if you keep escaping the line but need a cleaner turn back on top.', focusName: 'Sit-Out', isExtended: true },
+        { label: 'Recovering half guard under pressure', description: 'Good if your scrambles usually come from bad positions you are trying to survive first.', focusName: 'Recover Half Guard From Turtle', isExtended: true }
       ]
     }
   ],
@@ -683,12 +940,12 @@ const coachingScenarioGuidedPromptMap = {
       options: [
         { label: 'Posture keeps breaking', description: 'You likely need stronger posture discipline before the pass even starts.', focusName: 'Posture' },
         { label: 'I cannot get the guard open', description: 'You likely need a clearer opening sequence and base position.', focusName: 'Combat Base' },
-        { label: 'They keep climbing attacks', description: 'You likely need safer top positioning before forcing the pass.', focusName: 'Closed Guard Top' },
+        { label: 'They keep climbing attacks', description: 'You likely need safer top positioning before forcing the pass.', focusName: 'Posture' },
         { label: 'They force me forward into sweeps', description: 'You likely need better angle control and pressure direction first.', focusName: 'Double Under Pass' }
       ]
     }
   ],
-  [normalizeValue('I can’t finish from the back')]: [
+  [normalizeValue("I can't finish from the back")]: [
     {
       question: 'What part of the back finish is usually failing?',
       options: [
@@ -727,40 +984,50 @@ const coachingScenarioGuidedPromptMap = {
       question: 'Which submission is giving you the most trouble right now?',
       expandableLabel: 'Need more submissions?',
       options: [
-        { label: 'Armbar', description: 'Start from the armbar problem itself, then choose the defensive answer that fits the direction and timing.', focusName: 'Armbar Escape Choices' },
-        { label: 'Triangle', description: 'Start from the triangle problem itself, then choose the escape that fits the angle and posture battle.', focusName: 'Triangle Escape Choices' },
-        { label: 'Kimura', description: 'Start from the kimura problem itself, then choose the shoulder-safe answer before the rotation gets deep.', focusName: 'Kimura Escape Choices' },
-        { label: 'Guillotine / front headlock', description: 'Start from the guillotine problem itself, then choose the hand-fight or exit that fits the squeeze.', focusName: 'Guillotine Escape Choices' },
-        { label: 'Rear naked choke', description: 'Start by exposing the secondary hand, weakening the lock, and then choose the turn or strip that fits once the choke line opens.', focusName: 'Rear Naked Choke Escape Choices', isExtended: true },
-        { label: 'Bow and arrow choke', description: 'Start from the gi back-choke problem itself, then choose the collar-relief and shoulder-line defense that fits.', focusName: 'Bow And Arrow Escape Choices', isExtended: true },
-        { label: 'Collar chokes', description: 'Start from the gi collar-choke problem itself, then choose the posture or grip-stripping answer that fits.', focusName: 'Collar Choke Grip-Stripping Escapes', isExtended: true },
-        { label: 'Americana', description: 'Start from the shoulder-lock problem itself, then choose the frame or turning answer that fits.', focusName: 'Americana Elbow Recovery Escapes', isExtended: true },
-        { label: 'Arm triangle', description: 'Start from the head-and-arm choke problem itself, then choose the escape toward space or half guard.', focusName: 'Arm Triangle Shoulder-Relief Escapes', isExtended: true },
-        { label: 'North-south choke', description: 'Start from the north-south choke problem itself, then choose the shoulder-relief or turn-out answer that fits.', focusName: 'North-South Choke Shoulder-Relief Escapes', isExtended: true },
-        { label: "D'Arce / anaconda", description: 'Start from the front-headlock choke problem itself, then choose the daylight-turning answer that fits.', focusName: 'Front Headlock Choke Daylight Escapes', isExtended: true }
+        { label: 'Armbar', description: 'Start from the armbar problem itself, then choose the defensive answer that fits the direction and timing.', focusName: 'Armbar Defense' },
+        { label: 'Triangle', description: 'Start from the triangle problem itself, then choose the escape that fits the angle and posture battle.', focusName: 'Triangle Defense' },
+        { label: 'Kimura', description: 'Start from the kimura problem itself, then choose the shoulder-safe answer before the rotation gets deep.', focusName: 'Kimura / Americana Defense' },
+        { label: 'Guillotine / front headlock', description: 'Start from the guillotine problem itself, then choose the hand-fight or exit that fits the squeeze.', focusName: 'Guillotine / Front Headlock Choke Defense' },
+        { label: 'Rear naked choke', description: 'Start by exposing the secondary hand, weakening the lock, and then choose the turn or strip that fits once the choke line opens.', focusName: 'Back Choke Defense', isExtended: true },
+        { label: 'Bow and arrow choke', description: 'Start from the gi back-choke problem itself, then choose the collar-relief and shoulder-line defense that fits.', focusName: 'Bow And Arrow Hand-Fight Defense', isExtended: true },
+        { label: 'Collar chokes', description: 'Start from the gi collar-choke problem itself, then choose the posture or grip-stripping answer that fits.', focusName: 'Collar Choke Defense', isExtended: true },
+        { label: 'Americana', description: 'Start from the shoulder-lock problem itself, then choose the frame or turning answer that fits.', focusName: 'Americana Elbow Recovery Defense', isExtended: true },
+        { label: 'Arm triangle', description: 'Start from the head-and-arm choke problem itself, then choose the escape toward space or half guard.', focusName: 'Head-And-Arm Choke Defense', isExtended: true },
+        { label: 'North-south choke', description: 'Start from the north-south choke problem itself, then choose the shoulder-relief or turn-out answer that fits.', focusName: 'North-South Choke Defense', isExtended: true },
+        { label: "D'Arce / anaconda", description: 'Start from the front-headlock choke problem itself, then choose the daylight-turning answer that fits.', focusName: "D'Arce Defense", isExtended: true }
       ]
     }
   ],
   [normalizeValue('I want better takedown entries')]: [
     {
       question: 'Which takedown lane fits you best right now?',
+      expandableLabel: 'Need more takedown entries?',
       options: [
         { label: 'Front headlock / snap-downs', description: 'Best if you like turning reactions into go-behinds and top control.', focusName: 'Front Headlock' },
         { label: 'Body lock / clinch', description: 'Best if you like pressure, trips, and chest-to-chest control.', focusName: 'Body Lock Standing' },
         { label: 'Single-leg entries', description: 'Best if you like level changes, angles, and wrestling finishes.', focusName: 'Single Leg Position' },
         { label: 'Double-leg entries', description: 'Best if you like direct penetration and driving through the hips.', focusName: 'Double Leg Position' },
-        { label: 'Russian tie / angle entries', description: 'Best if you like drags, outside angles, and getting behind the arms.', focusName: 'Russian Tie Standing' }
+        { label: 'Russian tie / angle entries', description: 'Best if you like drags, outside angles, and getting behind the arms.', focusName: 'Russian Tie Standing' },
+        { label: 'Collar tie / snap-down timing', description: 'Best if you want the standing hand-fight hub before choosing the finish.', focusName: 'Collar Tie', isExtended: true },
+        { label: 'Inside tie and short offense', description: 'Best if you prefer compact ties and cleaner centerline attacks.', focusName: 'Inside Tie', isExtended: true },
+        { label: 'Ankle-pick entries', description: 'Best if you want posture breaks and timing-based attacks before bigger shots.', focusName: 'Ankle Pick', isExtended: true },
+        { label: 'Foot sweeps and movement', description: 'Best if you prefer off-balancing and timing over direct penetration shots.', focusName: 'Foot Sweep', isExtended: true }
       ]
     }
   ],
   [normalizeValue('I need safer submissions')]: [
     {
       question: 'Which control-first submission family fits you best?',
+      expandableLabel: 'Need more safer submissions?',
       options: [
         { label: 'Kimura family', description: 'Good if you want a submission that often leads to control, back takes, or top position.', focusName: 'Kimura' },
         { label: 'Arm triangle family', description: 'Good if you prefer pressure-based finishes from stable top control.', focusName: 'Arm Triangle' },
         { label: 'Back choke family', description: 'Good if you want high-percentage finishes after control is already won.', focusName: 'Rear Naked Choke' },
-        { label: 'Straight ankle family', description: 'Good if you want a simpler lower-body attack before deeper rotational entries.', focusName: 'Straight Ankle Lock' }
+        { label: 'Straight ankle family', description: 'Good if you want a simpler lower-body attack before deeper rotational entries.', focusName: 'Straight Ankle Lock' },
+        { label: 'Americana family', description: 'Good if you want a top-control attack that often keeps you in a stable pin.', focusName: 'Americana', isExtended: true },
+        { label: 'Cross-collar chains', description: 'Good if you want slower, control-first gi attacks that build off posture and grips.', focusName: 'Cross Collar Choke', isExtended: true },
+        { label: 'Straight armbar family', description: 'Good if you want direct arm isolation that still links back into top control.', focusName: 'Straight Armbar From Guard', isExtended: true },
+        { label: 'Triangle family', description: 'Good if you want layered reactions into sweeps and arm attacks once posture is broken.', focusName: 'Triangle Choke', isExtended: true }
       ]
     }
   ]
@@ -1324,9 +1591,11 @@ const scoreOption = ({ entry, groupKey, filters }) => {
   return score;
 };
 
-const findEntryByName = (entryMap, name) => entryMap.get(normalizeValue(name)) || null;
+const findEntryByName = (entriesByNameMap, name, normalizedSearch = '') => (
+  pickCanonicalEntry(entriesByNameMap.get(normalizeValue(name)) || [], normalizedSearch)
+);
 
-const getFilteredBranches = ({ focusEntry, entryMap, filters, excludedEntryIds = [] }) => {
+const getFilteredBranches = ({ focusEntry, entriesByNameMap, filters, excludedEntryIds = [] }) => {
   const weakAreaStyles = filterConfig.weakArea[filters.weakArea] || [];
   const shouldShrink = Boolean(filters.weakArea);
   const excludedIds = new Set(excludedEntryIds.filter(Boolean));
@@ -1335,7 +1604,7 @@ const getFilteredBranches = ({ focusEntry, entryMap, filters, excludedEntryIds =
     const values = uniqueValues(focusEntry[group.key] || []);
     const rankedOptions = values
       .map((name) => {
-        const entry = findEntryByName(entryMap, name);
+        const entry = findEntryByName(entriesByNameMap, name, normalizeValue(name));
         return {
           name,
           entry,
@@ -1374,7 +1643,7 @@ const getFilteredBranches = ({ focusEntry, entryMap, filters, excludedEntryIds =
 const getReactionBranchOptions = ({
   focusEntry,
   decisionTreeModel,
-  entryMap,
+  entriesByNameMap,
   filters,
   excludedEntryIds = []
 }) => {
@@ -1385,7 +1654,7 @@ const getReactionBranchOptions = ({
 
   decisionTreeModel.commonReactions.forEach((reaction, reactionIndex) => {
     (reaction.branches || []).forEach((name, branchIndex) => {
-      const entry = findEntryByName(entryMap, name);
+      const entry = findEntryByName(entriesByNameMap, name, normalizeValue(name));
 
       if (!entry || entry.id === focusEntry.id || excludedIds.has(entry.id)) {
         return;
@@ -1446,7 +1715,7 @@ const isEscapeContinuationContext = ({ focusEntry, filters }) => {
 
 const getEscapeContinuationOptions = ({
   focusEntry,
-  entryMap,
+  entriesByNameMap,
   filters,
   excludedEntryIds = []
 }) => {
@@ -1466,7 +1735,7 @@ const getEscapeContinuationOptions = ({
 
   return candidateNames
     .map((name, index) => {
-      const entry = findEntryByName(entryMap, name);
+      const entry = findEntryByName(entriesByNameMap, name, normalizeValue(name));
 
       if (!entry || entry.id === focusEntry.id || excludedIds.has(entry.id)) {
         return null;
@@ -1535,15 +1804,28 @@ const buildCurriculumIndexLink = (entry) => {
 export default function DecisionTreePage() {
   const [searchParams] = useSearchParams();
   const querySearch = searchParams.get('search') || '';
+  const queryEntryId = searchParams.get('entryId') || '';
   const initialQueryMatch = useMemo(() => {
+    if (queryEntryId) {
+      return curriculumIndexSeed.find((entry) => entry.id === queryEntryId) || null;
+    }
+
     const normalizedQuery = normalizeValue(querySearch);
 
     if (!normalizedQuery) return null;
 
-    return curriculumIndexSeed.find((entry) => normalizeValue(entry.name) === normalizedQuery)
-      || curriculumIndexSeed.find((entry) => getEntryText(entry).includes(normalizedQuery))
+    const exactNameMatches = curriculumIndexSeed.filter((entry) => normalizeValue(entry.name) === normalizedQuery);
+    const canonicalExactMatch = pickCanonicalEntry(exactNameMatches, normalizedQuery);
+    if (canonicalExactMatch) {
+      return canonicalExactMatch;
+    }
+
+    return pickCanonicalEntry(
+      curriculumIndexSeed.filter((entry) => getEntryText(entry).includes(normalizedQuery)),
+      normalizedQuery
+    )
       || null;
-  }, [querySearch]);
+  }, [queryEntryId, querySearch]);
   const [search, setSearch] = useState(querySearch);
   const [searchIsActive, setSearchIsActive] = useState(false);
   const [focusId, setFocusId] = useState(initialQueryMatch?.id || defaultFocusId);
@@ -1567,10 +1849,14 @@ export default function DecisionTreePage() {
 
   const entries = curriculumIndexSeed;
 
-  const entryMap = useMemo(() => {
+  const entriesByNameMap = useMemo(() => {
     const nextMap = new Map();
     entries.forEach((entry) => {
-      nextMap.set(normalizeValue(entry.name), entry);
+      const key = normalizeValue(entry.name);
+      if (!nextMap.has(key)) {
+        nextMap.set(key, []);
+      }
+      nextMap.get(key).push(entry);
     });
     return nextMap;
   }, [entries]);
@@ -1591,25 +1877,15 @@ export default function DecisionTreePage() {
 
     if (!normalizedSearch) return [];
 
-    const rankedMatches = entries
+    const matchingEntries = entries
       .filter((entry) => !excludedDecisionTreeSearchCategories.has(entry.category))
-      .filter((entry) => getEntryText(entry).includes(normalizedSearch))
+      .filter((entry) => getEntryText(entry).includes(normalizedSearch));
+
+    return getCollapsedSearchResults(matchingEntries, normalizedSearch)
       .sort((a, b) => {
-        const aName = normalizeValue(a.name);
-        const bName = normalizeValue(b.name);
-        const aScore = aName === normalizedSearch ? 3 : aName.startsWith(normalizedSearch) ? 2 : 1;
-        const bScore = bName === normalizedSearch ? 3 : bName.startsWith(normalizedSearch) ? 2 : 1;
-        return bScore - aScore || a.name.localeCompare(b.name);
-      });
-
-    const seenNames = new Set();
-
-    return rankedMatches
-      .filter((entry) => {
-        const key = normalizeValue(entry.name);
-        if (seenNames.has(key)) return false;
-        seenNames.add(key);
-        return true;
+        const scoreA = getSearchRelevanceScore(a, normalizedSearch) + getSearchIntentCategoryBonus(a, normalizedSearch);
+        const scoreB = getSearchRelevanceScore(b, normalizedSearch) + getSearchIntentCategoryBonus(b, normalizedSearch);
+        return scoreB - scoreA || a.name.localeCompare(b.name);
       })
       .slice(0, 8);
   }, [entries, search]);
@@ -1620,7 +1896,7 @@ export default function DecisionTreePage() {
     focusEntry
       ? getFilteredBranches({
           focusEntry,
-          entryMap,
+          entriesByNameMap,
           filters,
           excludedEntryIds: [previousPathEntryId]
         })
@@ -1628,7 +1904,7 @@ export default function DecisionTreePage() {
           ...group,
           options: []
         }))
-  ), [focusEntry, entryMap, filters, previousPathEntryId]);
+  ), [focusEntry, entriesByNameMap, filters, previousPathEntryId]);
 
   const resolvedCoachingScenarios = useMemo(() => (
     coachingScenarios.map((scenario) => {
@@ -1690,21 +1966,21 @@ export default function DecisionTreePage() {
       .map((reaction) => ({
         ...reaction,
         options: (reaction.branches || [])
-          .map((name) => findEntryByName(entryMap, name))
+          .map((name) => findEntryByName(entriesByNameMap, name, normalizeValue(name)))
           .filter(Boolean)
       }))
       .filter((reaction) => reaction.options.length > 0);
-  }, [entryMap, focusDecisionTreeModel]);
+  }, [entriesByNameMap, focusDecisionTreeModel]);
 
   const reactionBranchOptions = useMemo(() => (
     getReactionBranchOptions({
       focusEntry,
       decisionTreeModel: focusDecisionTreeModel,
-      entryMap,
+      entriesByNameMap,
       filters,
       excludedEntryIds: decisionPath
     })
-  ), [focusEntry, focusDecisionTreeModel, entryMap, filters, decisionPath]);
+  ), [focusEntry, focusDecisionTreeModel, entriesByNameMap, filters, decisionPath]);
 
   const topRecommendations = useMemo(() => {
     const priorPathIds = new Set(decisionPath.slice(0, -1));
@@ -1751,11 +2027,11 @@ export default function DecisionTreePage() {
   const escapeContinuationOptions = useMemo(() => (
     getEscapeContinuationOptions({
       focusEntry,
-      entryMap,
+      entriesByNameMap,
       filters,
       excludedEntryIds: decisionPath
     })
-  ), [focusEntry, entryMap, filters, decisionPath]);
+  ), [focusEntry, entriesByNameMap, filters, decisionPath]);
 
   const showEscapeContinuationAction = useMemo(() => (
     isEscapeContinuationContext({ focusEntry, filters }) && escapeContinuationOptions.length > 0
@@ -1892,6 +2168,39 @@ export default function DecisionTreePage() {
       focusName: followUp.focusName,
       label: `${scenario.label}: ${followUp.label}`
     });
+  };
+
+  const getScenarioPreview = (scenario) => {
+    if (scenario.followUps?.length) {
+      return {
+        items: scenario.followUps.slice(0, 6).map((followUp) => ({
+          key: followUp.focusName,
+          label: followUp.label,
+          interactive: true,
+          followUp
+        })),
+        hint: ''
+      };
+    }
+
+    const firstPrompt = scenario.guidedPrompts?.[0];
+    if (!firstPrompt?.options?.length) {
+      return { items: [], hint: '' };
+    }
+
+    return {
+      items: firstPrompt.options
+        .filter((option) => !option.isExtended)
+        .slice(0, 6)
+        .map((option) => ({
+          key: `${scenario.label}-${option.label}`,
+          label: option.label,
+          interactive: false
+        })),
+      hint: firstPrompt.options.some((option) => option.isExtended)
+        ? firstPrompt.expandableLabel || 'Need more options?'
+        : ''
+    };
   };
 
   const applyGuidedScenarioOption = (option) => {
@@ -2129,35 +2438,55 @@ export default function DecisionTreePage() {
                 <h4>{group.category}</h4>
                 <div className="decision-tree-scenario-grid">
                   {group.scenarios.map((scenario) => (
-                    <button
-                      key={scenario.label}
-                      type="button"
-                      className="decision-tree-scenario-card"
-                      onClick={() => applyCoachingScenario(scenario)}
-                    >
-                      <strong>{scenario.label}</strong>
-                      <span>{scenario.description}</span>
-                      {scenario.followUps?.length ? (
-                        <span className="decision-tree-follow-up-row" aria-label="Choose a guard">
-                          {scenario.followUps.map((followUp) => (
-                            <span
-                              key={followUp.focusName}
-                              className="decision-tree-follow-up-chip"
-                              role="button"
-                              tabIndex={0}
-                              onClick={(event) => applyScenarioFollowUp(event, scenario, followUp)}
-                              onKeyDown={(event) => {
-                                if (event.key === 'Enter' || event.key === ' ') {
-                                  applyScenarioFollowUp(event, scenario, followUp);
-                                }
-                              }}
-                            >
-                              {followUp.label}
+                    (() => {
+                      const preview = getScenarioPreview(scenario);
+
+                      return (
+                        <button
+                          key={scenario.label}
+                          type="button"
+                          className="decision-tree-scenario-card"
+                          onClick={() => applyCoachingScenario(scenario)}
+                        >
+                          <strong>{scenario.label}</strong>
+                          <span>{scenario.description}</span>
+                          {preview.items.length || preview.hint ? (
+                            <span className="decision-tree-follow-up-row" aria-label="Scenario preview options">
+                              {preview.items.map((item) => (
+                                item.interactive ? (
+                                  <span
+                                    key={item.key}
+                                    className="decision-tree-follow-up-chip"
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={(event) => applyScenarioFollowUp(event, scenario, item.followUp)}
+                                    onKeyDown={(event) => {
+                                      if (event.key === 'Enter' || event.key === ' ') {
+                                        applyScenarioFollowUp(event, scenario, item.followUp);
+                                      }
+                                    }}
+                                  >
+                                    {item.label}
+                                  </span>
+                                ) : (
+                                  <span
+                                    key={item.key}
+                                    className="decision-tree-follow-up-chip decision-tree-follow-up-chip-static"
+                                  >
+                                    {item.label}
+                                  </span>
+                                )
+                              ))}
+                              {preview.hint ? (
+                                <span className="decision-tree-follow-up-chip decision-tree-follow-up-hint">
+                                  {preview.hint}
+                                </span>
+                              ) : null}
                             </span>
-                          ))}
-                        </span>
-                      ) : null}
-                    </button>
+                          ) : null}
+                        </button>
+                      );
+                    })()
                   ))}
                 </div>
               </div>
@@ -2345,7 +2674,7 @@ export default function DecisionTreePage() {
                           feedback: `Moved from ${focusEntry.name} to ${option.entry.name}. Jumped to the next recommendation layer below.`
                         })}
                       >
-                        Open in tree
+                        Go to next step
                       </button>
                       <Link className="secondary-button" to={buildCurriculumIndexLink(option.entry)}>
                         View in Index

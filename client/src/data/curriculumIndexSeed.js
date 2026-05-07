@@ -2426,7 +2426,7 @@ const curriculumIndexSeed = [
     commonAttacks: ['Hip Escape Retention', 'Turn-To-Knees Escape', 'Shoulder Walk Escape'],
     commonTransitions: ['Bottom Side Control', 'Turtle', 'Supine Guard'],
     commonFollowUps: ['North-South Escape To Turtle', 'Re-Guarding', 'Turn-To-Knees Escape'],
-    commonDefenses: ['North-South Choke Escape', 'Hip Escape Retention', 'Shoulder Walk Escape']
+    commonDefenses: ['North-South Choke Shoulder-Relief Defense', 'Hip Escape Retention', 'Shoulder Walk Escape']
   },
   {
     id: 'positions-bottom-knee-on-belly',
@@ -2636,7 +2636,7 @@ const curriculumIndexSeed = [
     commonAttacks: ['Straight Armbar From Guard', 'Belly-Down Armbar', 'Straight Armbar From Mount'],
     commonTransitions: ['Spiderweb Position', 'Triangle Position', 'Omoplata Position'],
     commonFollowUps: ['Belly-Down Armbar', 'Omoplata Position', 'Back Control'],
-    commonDefenses: ['Armbar Hitchhiker', 'Two-On-One Grip Fight', 'Armbar Stacking Defense']
+    commonDefenses: ['Armbar Hitchhiker Defense', 'Two-On-One Grip Fight', 'Armbar Stacking Defense']
   },
   {
     id: 'positions-spiderweb-position',
@@ -2651,7 +2651,7 @@ const curriculumIndexSeed = [
     commonAttacks: ['Straight Armbar From Mount', 'Triangle Choke', 'Omoplata'],
     commonTransitions: ['Armbar Position', 'Mounted Triangle', 'Back Control'],
     commonFollowUps: ['Straight Armbar From Mount', 'Mounted Triangle', 'Technical Mount To Back'],
-    commonDefenses: ['Armbar Stacking Defense', 'Armbar Hitchhiker', 'Turn-To-Knees Escape']
+    commonDefenses: ['Armbar Stacking Defense', 'Armbar Hitchhiker Defense', 'Turn-To-Knees Escape']
   },
   {
     id: 'positions-triangle-position',
@@ -2666,7 +2666,7 @@ const curriculumIndexSeed = [
     commonAttacks: ['Triangle Choke', 'Straight Armbar From Guard', 'Omoplata'],
     commonTransitions: ['Mounted Triangle', 'Armbar Position', 'Closed Guard'],
     commonFollowUps: ['Triangle Choke', 'Armbar Position', 'Mounted Triangle'],
-    commonDefenses: ['Triangle Posture Defense', 'Armbar Stacking Defense', 'Triangle Escape With Hand Fighting/Angles']
+    commonDefenses: ['Triangle Posture Defense', 'Armbar Stacking Defense', 'Triangle Hand-Fight / Angle-Kill Defense']
   },
   {
     id: 'positions-omoplata-position',
@@ -2841,7 +2841,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['takedown', 'wrestling', 'single leg'],
     description: 'A single-leg finish that circles the leg across the body and forces the opponent to hop onto a weaker base.',
-    relatedPositions: ['Standing']
+    relatedPositions: ['Standing', 'Single Leg', 'Top Half Guard', 'Pressure Passing'],
+    entriesIntoPosition: ['Single Leg', 'Double Leg', 'Standing', 'Collar Tie'],
+    commonAttacks: ['Running The Pipe', 'Tree-Top Finish', 'Crackdown Finish', 'Shelf Finish'],
+    commonTransitions: ['Single Leg', 'Running The Pipe', 'Tree-Top Finish', 'Crackdown Finish'],
+    commonFollowUps: ['Top Half Guard', 'Mat Return', 'Pressure Passing', 'Side Control'],
+    commonDefenses: ['Overhook', 'Standing', 'Sprawl', 'Crossface and Underhook Control']
   },
   {
     id: 'takedowns-ankle-pick',
@@ -2876,82 +2881,122 @@ const curriculumIndexSeed = [
   {
     id: 'takedowns-o-soto-gari',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'O Soto Gari',
     skillLevel: 'Intermediate',
     tags: ['takedown', 'judo', 'reap'],
     description: 'A classic outside reaping throw that depends on posture breaking, angle, and timing.',
-    relatedPositions: ['Standing', 'Clinch']
+    relatedPositions: ['Standing', 'Clinch', 'Side Control', 'Top Half Guard'],
+    entriesIntoPosition: ['Clinch', 'Overhook', 'Underhook', 'Body Lock Standing'],
+    commonAttacks: ['Kosoto Gake', 'Tani Otoshi', 'Snap Down'],
+    commonTransitions: ['Kosoto Gake', 'Tani Otoshi', 'Foot Sweep'],
+    commonFollowUps: ['Side Control', 'Top Half Guard', 'Pressure Passing'],
+    commonDefenses: ['Posture', 'Standing', 'Pummeling', 'Base']
   },
   {
     id: 'takedowns-o-uchi-gari',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'O Uchi Gari',
     skillLevel: 'Intermediate',
     tags: ['takedown', 'judo', 'reap'],
     description: 'A deep inside reap that works best when weight is shifted centrally and the upper body is kept upright and guided.',
-    relatedPositions: ['Standing', 'Clinch']
+    relatedPositions: ['Standing', 'Clinch', 'Top Half Guard', 'Pressure Passing'],
+    entriesIntoPosition: ['Standing', 'Clinch', 'Body Lock Standing', 'Over-Under Clinch'],
+    commonAttacks: ['Ko Uchi Gari', 'Inside Trip', 'Uchi Mata', 'Body Lock Takedown'],
+    commonTransitions: ['Ko Uchi Gari', 'Inside Trip', 'Uchi Mata', 'Body Lock Takedown'],
+    commonFollowUps: ['Top Half Guard', 'Side Control', 'Crossface and Underhook Control', 'Pressure Passing'],
+    commonDefenses: ['Base', 'Posture', 'Overhook', 'Standing']
   },
   {
     id: 'takedowns-uchi-mata',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Uchi Mata',
     skillLevel: 'Advanced',
     tags: ['takedown', 'judo', 'throw'],
     description: 'An inside-thigh throw built on strong kuzushi, upright posture, and clean rotational entry.',
-    relatedPositions: ['Standing', 'Clinch']
+    relatedPositions: ['Standing', 'Clinch', 'Top Half Guard', 'Pressure Passing'],
+    entriesIntoPosition: ['Underhook', 'Clinch', 'Standing'],
+    commonAttacks: ['Harai Goshi', 'Sumi Gaeshi', 'Knee Tap'],
+    commonTransitions: ['Harai Goshi', 'Sumi Gaeshi', 'Knee Tap'],
+    commonFollowUps: ['Top Half Guard', 'Side Control', 'Pressure Passing'],
+    commonDefenses: ['Overhook', 'Pressure', 'Base', 'Posture']
   },
   {
     id: 'takedowns-harai-goshi',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Harai Goshi',
     skillLevel: 'Advanced',
     tags: ['takedown', 'judo', 'throw'],
     description: 'A sweeping hip throw that blends hip loading, rotational pull, and timing against forward pressure.',
-    relatedPositions: ['Standing', 'Clinch']
+    relatedPositions: ['Standing', 'Clinch', 'Side Control', 'Crossface and Underhook Control'],
+    entriesIntoPosition: ['Clinch', 'Underhook', 'Overhook'],
+    commonAttacks: ['Uchi Mata', 'Hip Toss', 'O Soto Gari'],
+    commonTransitions: ['Uchi Mata', 'Hip Toss', 'Tai Otoshi'],
+    commonFollowUps: ['Side Control', 'Crossface and Underhook Control', 'Mount'],
+    commonDefenses: ['Posture', 'Posting', 'Overhook', 'Base']
   },
   {
     id: 'takedowns-tai-otoshi',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Tai Otoshi',
     skillLevel: 'Advanced',
     tags: ['takedown', 'judo', 'throw'],
     description: 'A body-drop throw that redirects momentum over a blocking leg while the upper body turns the shoulders offline.',
-    relatedPositions: ['Standing', 'Clinch']
+    relatedPositions: ['Standing', 'Clinch', 'Side Control', 'Pass To Knee On Belly'],
+    entriesIntoPosition: ['Collar Tie', 'Clinch', 'Standing'],
+    commonAttacks: ['Seoi Nage', 'Sasae Tsurikomi Ashi', 'De Ashi Barai'],
+    commonTransitions: ['Seoi Nage', 'Sasae Tsurikomi Ashi', 'De Ashi Barai'],
+    commonFollowUps: ['Side Control', 'Pass To Knee On Belly', 'Pressure Passing'],
+    commonDefenses: ['Posture', 'Standing', 'Posting', 'Base']
   },
   {
     id: 'takedowns-seoi-nage',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Seoi Nage',
     skillLevel: 'Advanced',
     tags: ['takedown', 'judo', 'shoulder throw'],
     description: 'A shoulder throw that requires tight elbow control, strong turn-in mechanics, and balanced rotation under the center of mass.',
-    relatedPositions: ['Standing', 'Clinch']
+    relatedPositions: ['Standing', 'Clinch', 'Side Control', 'Pressure Passing'],
+    entriesIntoPosition: ['Clinch', 'Standing', 'Collar Tie'],
+    commonAttacks: ['Morote Seoi Nage', 'Tai Otoshi', 'Kata Guruma'],
+    commonTransitions: ['Morote Seoi Nage', 'Tai Otoshi', 'Kata Guruma'],
+    commonFollowUps: ['Side Control', 'Pressure Passing', 'Top Half Guard'],
+    commonDefenses: ['Sprawl', 'Overhook', 'Posture', 'Standing']
   },
   {
     id: 'takedowns-sasae-tsurikomi-ashi',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Sasae Tsurikomi Ashi',
     skillLevel: 'Advanced',
     tags: ['takedown', 'judo', 'foot sweep'],
     description: 'A blocking foot throw that lifts and redirects the upper body while stopping the advancing step at the ankle line.',
-    relatedPositions: ['Standing']
+    relatedPositions: ['Standing', 'Foot Sweep', 'Tai Otoshi', 'Side Control'],
+    entriesIntoPosition: ['Standing', 'Collar Tie', 'Hand Fighting'],
+    commonAttacks: ['Hiza Guruma', 'Tai Otoshi', 'De Ashi Barai'],
+    commonTransitions: ['Hiza Guruma', 'Tai Otoshi', 'De Ashi Barai'],
+    commonFollowUps: ['Side Control', 'Pass To Knee On Belly', 'Pressure Passing'],
+    commonDefenses: ['Posture', 'Standing', 'Posting', 'Base']
   },
   {
     id: 'takedowns-de-ashi-barai',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'De Ashi Barai',
     skillLevel: 'Intermediate',
     tags: ['takedown', 'judo', 'foot sweep'],
     description: 'A timing-dependent foot sweep that catches the step while the weight is still light and moving.',
-    relatedPositions: ['Standing']
+    relatedPositions: ['Standing', 'Foot Sweep', 'Pass To Knee On Belly', 'Side Control'],
+    entriesIntoPosition: ['Standing', 'Hand Fighting', 'Collar Tie'],
+    commonAttacks: ['Sasae Tsurikomi Ashi', 'Foot Sweep', 'Ankle Pick'],
+    commonTransitions: ['Sasae Tsurikomi Ashi', 'Foot Sweep', 'Ankle Pick'],
+    commonFollowUps: ['Side Control', 'Pass To Knee On Belly', 'Pressure Passing'],
+    commonDefenses: ['Posture', 'Standing', 'Posting', 'Base']
   },
   {
     id: 'takedowns-snap-down-to-front-headlock',
@@ -2961,7 +3006,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['takedown', 'front headlock', 'wrestling'],
     description: 'A standing attack that uses posture breaks and head control to pull the opponent into a vulnerable front-headlock exchange.',
-    relatedPositions: ['Standing', 'Front Headlock']
+    relatedPositions: ['Standing', 'Front Headlock', 'Go-Behind Position', 'Front Headlock Standing'],
+    entriesIntoPosition: ['Collar Tie', 'Single Collar Tie', 'Standing', 'Snap Down'],
+    commonAttacks: ['Front Headlock Go-Behind', 'Snap Down And Go Behind', 'Single Leg', 'Front Headlock To Spin Behind'],
+    commonTransitions: ['Front Headlock Go-Behind', 'Snap Down And Go Behind', 'Single Leg', 'Front Headlock Standing'],
+    commonFollowUps: ['Front Headlock Standing', 'Go-Behind Position', 'Back Control', 'Mat Return'],
+    commonDefenses: ['Posture', 'Standing', 'Posting', 'Peek Out']
   },
   {
     id: 'takedowns-body-lock-takedown',
@@ -2986,7 +3036,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['takedown', 'wrestling', 'double leg'],
     description: 'A committed double-leg finish that drives through the hips before the opponent can widen the stance or recover frames.',
-    relatedPositions: ['Standing']
+    relatedPositions: ['Standing', 'Double Leg', 'Side Control', 'Top Half Guard'],
+    entriesIntoPosition: ['Standing', 'Double Leg', 'Collar Tie', 'Hand Fighting'],
+    commonAttacks: ['Double Leg', 'High Crotch', 'Body Lock Takedown'],
+    commonTransitions: ['Double Leg', 'High Crotch', 'Body Lock Takedown'],
+    commonFollowUps: ['Side Control', 'Top Half Guard', 'Pressure Passing', 'Crossface and Underhook Control'],
+    commonDefenses: ['Sprawl', 'Crossface and Underhook Control', 'Posting', 'Standing']
   },
   {
     id: 'takedowns-snatch-single',
@@ -2996,7 +3051,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['takedown', 'wrestling', 'single leg'],
     description: 'A quick single-leg entry that snatches the leg from distance without a full penetration step.',
-    relatedPositions: ['Standing']
+    relatedPositions: ['Standing', 'Single Leg', 'Body Lock Standing', 'Pressure Passing'],
+    entriesIntoPosition: ['Standing', 'Russian Tie Standing', 'Collar Tie', 'Hand Fighting'],
+    commonAttacks: ['Single Leg', 'Head-Inside Single', 'Running The Pipe', 'Mat Return'],
+    commonTransitions: ['Single Leg', 'Head-Inside Single', 'Running The Pipe', 'Mat Return'],
+    commonFollowUps: ['Body Lock Standing', 'Mat Return', 'Pressure Passing', 'Top Half Guard'],
+    commonDefenses: ['Overhook', 'Standing', 'Sprawl', 'Posture']
   },
   {
     id: 'takedowns-low-single',
@@ -3006,7 +3066,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['takedown', 'wrestling', 'single leg'],
     description: 'A low-level leg attack that reaches the ankle line directly before the stance can retract or sprawl.',
-    relatedPositions: ['Standing']
+    relatedPositions: ['Standing', 'Single Leg', 'Leg Drag', 'Pressure Passing'],
+    entriesIntoPosition: ['Standing', 'Hand Fighting', 'Collar Tie', 'Ankle Pick'],
+    commonAttacks: ['Single Leg', 'Ankle Pick', 'Double Leg', 'Sweep Single'],
+    commonTransitions: ['Single Leg', 'Ankle Pick', 'Double Leg', 'Sweep Single'],
+    commonFollowUps: ['Leg Drag', 'Pressure Passing', 'Mat Return', 'Top Half Guard'],
+    commonDefenses: ['Sprawl', 'Standing', 'Base', 'Leg Pummeling']
   },
   {
     id: 'takedowns-duck-under',
@@ -3096,82 +3161,122 @@ const curriculumIndexSeed = [
   {
     id: 'takedowns-ko-uchi-gari',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Ko Uchi Gari',
     skillLevel: 'Intermediate',
     tags: ['takedown', 'judo', 'trip'],
     description: 'A timing-based inside reap that works especially well when the opponent shifts weight onto one leg.',
-    relatedPositions: ['Standing', 'Clinch']
+    relatedPositions: ['Standing', 'Clinch', 'Top Half Guard', 'Pressure Passing'],
+    entriesIntoPosition: ['Standing', 'Clinch', 'Body Lock Standing', 'Collar Tie'],
+    commonAttacks: ['O Uchi Gari', 'Uchi Mata', 'Body Lock Takedown', 'Inside Trip'],
+    commonTransitions: ['O Uchi Gari', 'Uchi Mata', 'Body Lock Takedown', 'Inside Trip'],
+    commonFollowUps: ['Top Half Guard', 'Side Control', 'Pressure Passing', 'Crossface and Underhook Control'],
+    commonDefenses: ['Base', 'Posture', 'Overhook', 'Standing']
   },
   {
     id: 'takedowns-kosoto-gake',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Kosoto Gake',
     skillLevel: 'Intermediate',
     tags: ['takedown', 'judo', 'hook'],
     description: 'A smaller outside hooking throw that catches the heel line while the upper body is redirected backward or laterally.',
-    relatedPositions: ['Standing', 'Clinch']
+    relatedPositions: ['Standing', 'Clinch', 'Side Control', 'Pressure Passing'],
+    entriesIntoPosition: ['Standing', 'Clinch', 'Body Lock Standing', 'Overhook'],
+    commonAttacks: ['O Soto Gari', 'Outside Trip', 'Tani Otoshi', 'Valley Drop'],
+    commonTransitions: ['O Soto Gari', 'Outside Trip', 'Tani Otoshi', 'Valley Drop'],
+    commonFollowUps: ['Side Control', 'Top Half Guard', 'Pressure Passing', 'Crossface and Underhook Control'],
+    commonDefenses: ['Base', 'Posture', 'Standing', 'Overhook']
   },
   {
     id: 'takedowns-tomoe-nage',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Tomoe Nage',
     skillLevel: 'Advanced',
     tags: ['takedown', 'judo', 'sacrifice throw'],
     description: 'A sacrifice throw that places the foot centrally and sends the opponent overhead when posture is loaded forward.',
-    relatedPositions: ['Standing', 'Open Guard']
+    relatedPositions: ['Standing', 'Open Guard', 'Mount', 'Ashi Garami'],
+    entriesIntoPosition: ['Standing', 'Open Guard', 'Collar Tie', 'Seated Guard'],
+    commonAttacks: ['Sumi Gaeshi', 'Overhead Sweep', 'Yoko Tomoe Nage'],
+    commonTransitions: ['Sumi Gaeshi', 'Overhead Sweep', 'Yoko Tomoe Nage'],
+    commonFollowUps: ['Mount', 'Pressure Passing', 'Ashi Garami', 'Top Half Guard'],
+    commonDefenses: ['Posture', 'Base', 'Posting', 'Standing']
   },
   {
     id: 'takedowns-sumi-gaeshi',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Sumi Gaeshi',
     skillLevel: 'Advanced',
     tags: ['takedown', 'judo', 'sacrifice throw'],
     description: 'A corner-reversal throw that lifts and rotates the body diagonally when weight is committed over the hips.',
-    relatedPositions: ['Standing', 'Butterfly Guard']
+    relatedPositions: ['Standing', 'Butterfly Guard', 'Mount', 'Front Headlock Standing'],
+    entriesIntoPosition: ['Standing', 'Butterfly Guard', 'Overhook', 'Underhook'],
+    commonAttacks: ['Tomoe Nage', 'Sumi Gaeshi From Seated', 'Basic Butterfly Sweep', 'Wrestle-Up Single Leg Sweep'],
+    commonTransitions: ['Tomoe Nage', 'Sumi Gaeshi From Seated', 'Basic Butterfly Sweep', 'Wrestle-Up Single Leg Sweep'],
+    commonFollowUps: ['Mount', 'Front Headlock Standing', 'Body Lock Standing', 'Top Half Guard'],
+    commonDefenses: ['Base', 'Posting', 'Posture', 'Standing']
   },
   {
     id: 'takedowns-yoko-tomoe-nage',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Yoko Tomoe Nage',
     skillLevel: 'Advanced',
     tags: ['takedown', 'judo', 'sacrifice throw'],
     description: 'A side-angle version of tomoe nage that uses lateral rotation to redirect the opponent over a posted foot.',
-    relatedPositions: ['Standing']
+    relatedPositions: ['Standing', 'Side Control', 'Mount', 'Tomoe Nage'],
+    entriesIntoPosition: ['Standing', 'Open Guard', 'Collar Tie', 'Seated Guard'],
+    commonAttacks: ['Tomoe Nage', 'Yoko Otoshi', 'Sumi Gaeshi'],
+    commonTransitions: ['Tomoe Nage', 'Yoko Otoshi', 'Sumi Gaeshi'],
+    commonFollowUps: ['Side Control', 'Mount', 'Pressure Passing', 'Top Half Guard'],
+    commonDefenses: ['Posture', 'Base', 'Posting', 'Standing']
   },
   {
     id: 'takedowns-tani-otoshi',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Tani Otoshi',
     skillLevel: 'Intermediate',
     tags: ['takedown', 'judo', 'counter throw'],
     description: 'A rear-drop style counter that blocks the base from behind while the upper body is pulled backward into the mat.',
-    relatedPositions: ['Clinch', 'Standing']
+    relatedPositions: ['Clinch', 'Standing', 'Side Control', 'Back Control'],
+    entriesIntoPosition: ['Clinch', 'Body Lock Standing', 'Overhook', 'Standing'],
+    commonAttacks: ['Valley Drop', 'Outside Trip', 'Kosoto Gake', 'Mat Return'],
+    commonTransitions: ['Valley Drop', 'Outside Trip', 'Kosoto Gake', 'Mat Return'],
+    commonFollowUps: ['Side Control', 'Back Control', 'Crossface and Underhook Control', 'Pressure Passing'],
+    commonDefenses: ['Base', 'Posting', 'Standing', 'Posture']
   },
   {
     id: 'takedowns-uki-waza',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Uki Waza',
     skillLevel: 'Advanced',
     tags: ['takedown', 'judo', 'sacrifice throw'],
     description: 'A floating sacrifice throw that uses timing and angle to redirect forward pressure over the hip line.',
-    relatedPositions: ['Standing']
+    relatedPositions: ['Standing', 'Side Control', 'Pressure Passing', 'Yoko Otoshi'],
+    entriesIntoPosition: ['Standing', 'Clinch', 'Collar Tie', 'Overhook'],
+    commonAttacks: ['Yoko Otoshi', 'Sumi Gaeshi', 'Tomoe Nage'],
+    commonTransitions: ['Yoko Otoshi', 'Sumi Gaeshi', 'Tomoe Nage'],
+    commonFollowUps: ['Side Control', 'Pressure Passing', 'Top Half Guard', 'Crossface and Underhook Control'],
+    commonDefenses: ['Posture', 'Base', 'Posting', 'Standing']
   },
   {
     id: 'takedowns-hiza-guruma',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Hiza Guruma',
     skillLevel: 'Intermediate',
     tags: ['takedown', 'judo', 'wheel throw'],
     description: 'A knee-wheel throw that blocks the step at the knee while rotating the upper body around the post.',
-    relatedPositions: ['Standing']
+    relatedPositions: ['Standing', 'Side Control', 'Pass To Knee On Belly', 'Foot Sweep'],
+    entriesIntoPosition: ['Standing', 'Collar Tie', 'Hand Fighting', 'Clinch'],
+    commonAttacks: ['Sasae Tsurikomi Ashi', 'Tai Otoshi', 'De Ashi Barai'],
+    commonTransitions: ['Sasae Tsurikomi Ashi', 'Tai Otoshi', 'De Ashi Barai'],
+    commonFollowUps: ['Side Control', 'Pass To Knee On Belly', 'Pressure Passing', 'Top Half Guard'],
+    commonDefenses: ['Posture', 'Base', 'Posting', 'Standing']
   },
   {
     id: 'takedowns-rear-body-lock-mat-return',
@@ -3196,17 +3301,17 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['takedown', 'clinch', 'body lock'],
     description: 'A torso-control takedown that collapses posture and drives through trips, lifts, or turns once the body is locked tightly.',
-    relatedPositions: ['Clinch', 'Body Lock Standing', 'Standing'],
+    relatedPositions: ['Clinch', 'Body Lock Standing', 'Standing', 'Side Control'],
     entriesIntoPosition: ['Clinch', 'Body Lock Standing', 'Over-Under Clinch'],
-    commonAttacks: ['Body Lock Takedown', 'Inside Trip', 'Outside Trip'],
-      commonTransitions: ['Body Lock Standing', 'Back Control', 'Side Control'],
-      commonFollowUps: ['Body Lock Takedown', 'Mat Return', 'Side Control'],
-      commonDefenses: ['Pummeling', 'Posture', 'Posting']
+    commonAttacks: ['Body Lock Takedown', 'Inside Trip', 'Outside Trip', 'Sag Body Lock'],
+    commonTransitions: ['Mat Return', 'Inside Trip', 'Outside Trip', 'Sag Body Lock'],
+    commonFollowUps: ['Side Control', 'Top Half Guard', 'Mat Return', 'Pressure Passing'],
+    commonDefenses: ['Pummeling', 'Posture', 'Posting', 'Base']
   },
   {
     id: 'takedowns-hip-toss',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Hip Toss',
     skillLevel: 'Beginner',
     tags: ['takedown', 'throw', 'hip'],
@@ -3221,7 +3326,7 @@ const curriculumIndexSeed = [
   {
     id: 'takedowns-foot-sweep',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Foot Sweep',
     skillLevel: 'Beginner',
     tags: ['takedown', 'foot sweep', 'timing'],
@@ -3229,14 +3334,14 @@ const curriculumIndexSeed = [
     relatedPositions: ['Standing', 'Single Collar Tie', 'Clinch'],
     entriesIntoPosition: ['Standing', 'Single Collar Tie', 'Hand Fighting'],
     commonAttacks: ['De Ashi Barai', 'Sasae Tsurikomi Ashi', 'Ankle Pick'],
-      commonTransitions: ['Side Control', 'Standing', 'Front Headlock'],
-      commonFollowUps: ['Ankle Pick', 'Side Control', 'Snap Down To Front Headlock'],
-      commonDefenses: ['Posting', 'Posture', 'Standing']
+    commonTransitions: ['De Ashi Barai', 'Sasae Tsurikomi Ashi', 'Ankle Pick', 'Slide-By'],
+    commonFollowUps: ['Side Control', 'Pass To Knee On Belly', 'Ankle Pick', 'Pressure Passing'],
+    commonDefenses: ['Posting', 'Posture', 'Standing', 'Base']
   },
   {
     id: 'takedowns-morote-seoi-nage',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Morote Seoi Nage',
     skillLevel: 'Advanced',
     tags: ['takedown', 'judo', 'shoulder throw'],
@@ -3251,7 +3356,7 @@ const curriculumIndexSeed = [
   {
     id: 'takedowns-kata-guruma',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Kata Guruma',
     skillLevel: 'Advanced',
     tags: ['takedown', 'judo', 'fireman carry'],
@@ -3266,7 +3371,7 @@ const curriculumIndexSeed = [
   {
     id: 'takedowns-yoko-otoshi',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Yoko Otoshi',
     skillLevel: 'Advanced',
     tags: ['takedown', 'judo', 'sacrifice throw'],
@@ -3281,7 +3386,7 @@ const curriculumIndexSeed = [
   {
     id: 'takedowns-ura-nage',
     category: 'Takedowns',
-    subcategory: 'Judo-Based',
+    subcategory: 'Judo / Throw-Based Takedowns',
     name: 'Ura Nage',
     skillLevel: 'Advanced',
     tags: ['takedown', 'judo', 'rear arch'],
@@ -3303,10 +3408,10 @@ const curriculumIndexSeed = [
     description: 'A grip-based takedown entry that snaps the collar across the center line and exposes the rear angle before posture can recover.',
     relatedPositions: ['Standing', 'Single Collar Tie', 'Back Standing / Rear Standing Control'],
       entriesIntoPosition: ['Grip Fighting', 'Standing', 'Collar-Sleeve Standing'],
-      commonAttacks: ['Go-Behind Position', 'Back Standing / Rear Standing Control', 'Ankle Pick'],
-      commonTransitions: ['Go-Behind Position', 'Back Standing / Rear Standing Control', 'Side Control'],
-      commonFollowUps: ['Snap-Down Go-Behind', 'Back Control', 'Side Control'],
-      commonDefenses: ['Standing', 'Posture', 'Hand Fighting']
+    commonAttacks: ['Ankle Pick', 'Single Leg', 'Back Control', 'Snap Down'],
+    commonTransitions: ['Single Leg', 'Back Standing / Rear Standing Control', 'Front Headlock Standing'],
+    commonFollowUps: ['Back Control', 'Front Headlock Standing', 'Body Lock Standing', 'Top Half Guard'],
+    commonDefenses: ['Posture', 'Posting', 'Standing', 'Hand Fighting']
   },
   {
     id: 'takedowns-slide-by',
@@ -3318,10 +3423,10 @@ const curriculumIndexSeed = [
     description: 'A rear-angle standing entry that redirects the arm and shoulders past the center line before circling behind the hips.',
     relatedPositions: ['Standing', 'Arm Drag Rear Angle', 'Back Standing / Rear Standing Control'],
     entriesIntoPosition: ['Standing', 'Hand Fighting', 'Single Collar Tie'],
-      commonAttacks: ['Go-Behind Position', 'Rear Body Lock Standing', 'Mat Return'],
-      commonTransitions: ['Go-Behind Position', 'Back Standing / Rear Standing Control', 'Rear Body Lock Standing'],
-      commonFollowUps: ['Back Control', 'Mat Return', 'Back Standing / Rear Standing Control'],
-      commonDefenses: ['Standing', 'Pummeling', 'Posting']
+    commonAttacks: ['Rear Body Lock Standing', 'Single Leg', 'Mat Return'],
+    commonTransitions: ['Rear Body Lock Standing', 'Body Lock Standing', 'Mat Return'],
+    commonFollowUps: ['Back Control', 'Mat Return', 'Body Lock Standing', 'Top Half Guard'],
+    commonDefenses: ['Standing', 'Pummeling', 'Posting', 'Posture']
   },
   {
     id: 'takedowns-russian-tie-to-single',
@@ -3333,10 +3438,10 @@ const curriculumIndexSeed = [
     description: 'A standing takedown chain that uses two-on-one arm control to expose the leg and rise into a clean single-leg finish.',
     relatedPositions: ['Russian Tie Standing', 'Standing', 'Single Leg Position'],
     entriesIntoPosition: ['Russian Tie Standing', 'Two-On-One Standing', 'Hand Fighting'],
-      commonAttacks: ['Single Leg', 'Ankle Pick', 'Go-Behind Position'],
-      commonTransitions: ['Single Leg Position', 'Back Standing / Rear Standing Control', 'Mat Return'],
-      commonFollowUps: ['Single Leg', 'Running The Pipe', 'Back Standing / Rear Standing Control'],
-      commonDefenses: ['Hand Fighting', 'Standing', 'Overhook']
+    commonAttacks: ['Single Leg', 'Ankle Pick', 'Slide-By', 'Snap Down'],
+    commonTransitions: ['Single Leg', 'Slide-By', 'Mat Return'],
+    commonFollowUps: ['Single Leg', 'Body Lock Standing', 'Mat Return', 'Top Half Guard'],
+    commonDefenses: ['Hand Fighting', 'Standing', 'Overhook', 'Posture']
   },
   {
     id: 'takedowns-shin-pick',
@@ -3348,10 +3453,10 @@ const curriculumIndexSeed = [
     description: 'A lower-line standing finish that attacks below the knee when posture is already disrupted and the leg is light enough to steal.',
     relatedPositions: ['Standing', 'Single Collar Tie', 'Ankle Pick'],
     entriesIntoPosition: ['Standing', 'Snap Down', 'Single Collar Tie'],
-      commonAttacks: ['Ankle Pick', 'Single Leg', 'Knee Tap'],
-      commonTransitions: ['Side Control', 'Front Headlock', 'Standing'],
-      commonFollowUps: ['Single Leg', 'Front Headlock Standing', 'Snap-Down Go-Behind'],
-      commonDefenses: ['Standing', 'Posture', 'Posting']
+    commonAttacks: ['Ankle Pick', 'Single Leg', 'Knee Tap'],
+    commonTransitions: ['Single Leg', 'Ankle Pick', 'Technical Stand-Up Sweep'],
+    commonFollowUps: ['Top Half Guard', 'Pass To Knee On Belly', 'Single Leg', 'Side Control'],
+    commonDefenses: ['Standing', 'Posture', 'Posting', 'Sprawl']
   },
   {
     id: 'takedowns-head-inside-single',
@@ -3528,10 +3633,10 @@ const curriculumIndexSeed = [
     description: 'A reactive throw-by/trip style takedown that drops the hips while blocking the leg and redirecting upper-body momentum backward.',
     relatedPositions: ['Clinch', 'Overhook', 'Standing'],
       entriesIntoPosition: ['Overhook', 'Body Lock Standing', 'Clinch'],
-    commonAttacks: ['Outside Trip', 'Tani Otoshi', 'Inside Trip'],
-      commonTransitions: ['Side Control', 'Dogfight', 'Mount'],
-      commonFollowUps: ['Body Lock Takedown', 'Side Control', 'Tani Otoshi'],
-      commonDefenses: ['Posture', 'Standing', 'Posting']
+    commonAttacks: ['Tani Otoshi', 'Outside Trip', 'Inside Trip'],
+    commonTransitions: ['Tani Otoshi', 'Outside Trip', 'Body Lock Takedown'],
+    commonFollowUps: ['Side Control', 'Top Half Guard', 'Tani Otoshi', 'Pressure Passing'],
+    commonDefenses: ['Posture', 'Standing', 'Posting', 'Base']
   },
   {
     id: 'takedowns-snap-down-go-behind',
@@ -3541,12 +3646,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['takedown', 'snap down', 'rear angle'],
     description: 'A takedown chain that breaks posture with the snap and immediately circles behind before the hips can square back up.',
-    relatedPositions: ['Snap-Down Front Headlock', 'Go-Behind Position', 'Standing'],
-    entriesIntoPosition: ['Single Collar Tie', 'Double Collar Tie', 'Snap-Down Front Headlock'],
-      commonAttacks: ['Go-Behind Position', 'Front Headlock Go-Behind', 'Spin-Behind Position'],
-      commonTransitions: ['Go-Behind Position', 'Back Standing / Rear Standing Control', 'Side Control'],
-      commonFollowUps: ['Back Control', 'Side Control', 'Front Headlock Go-Behind'],
-      commonDefenses: ['Posture', 'Peek Out', 'Standing']
+    relatedPositions: ['Standing', 'Front Headlock', 'Go-Behind Position', 'Back Control'],
+    entriesIntoPosition: ['Collar Tie', 'Snap Down', 'Front Headlock Standing', 'Standing'],
+    commonAttacks: ['Front Headlock Go-Behind', 'Single Leg', 'Mat Return'],
+    commonTransitions: ['Front Headlock Go-Behind', 'Single Leg', 'Go-Behind Position'],
+    commonFollowUps: ['Back Control', 'Front Headlock Standing', 'Mat Return', 'Top Half Guard'],
+    commonDefenses: ['Posture', 'Peek Out', 'Standing', 'Posting']
   },
   {
     id: 'takedowns-front-headlock-go-behind',
@@ -3556,12 +3661,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['takedown', 'front headlock', 'rear angle'],
     description: 'A fundamental front-headlock finish that circles behind the hips while head-and-arm control keeps posture broken.',
-    relatedPositions: ['Front Headlock', 'Go-Behind Position', 'Spin-Behind Position'],
+    relatedPositions: ['Front Headlock', 'Go-Behind Position', 'Back Control', 'Side Control'],
     entriesIntoPosition: ['Front Headlock', 'Snap-Down Front Headlock', 'Sprawl Front Headlock'],
-      commonAttacks: ['Go-Behind Position', 'Spin-Behind Position', 'Back Control'],
+    commonAttacks: ['Snap Down And Go Behind', 'Spin-Behind Position', 'Back Control'],
     commonTransitions: ['Go-Behind Position', 'Spin-Behind Position', 'Back Standing / Rear Standing Control'],
-      commonFollowUps: ['Back Control', 'Side Control', 'Front Headlock To Spin Behind'],
-      commonDefenses: ['Peek Out', 'Sit-Out', 'Posture']
+    commonFollowUps: ['Back Control', 'Side Control', 'Front Headlock To Spin Behind', 'Mat Return'],
+    commonDefenses: ['Peek Out', 'Sit-Out', 'Posture', 'Build Base And Hand Fight']
   },
   {
     id: 'guard-pulls-basic-guard-pull',
@@ -3850,8 +3955,11 @@ const curriculumIndexSeed = [
     name: 'Shoulder Slide Escape',
     skillLevel: 'Intermediate',
     tags: ['escape', 'back control', 'turning'],
-    description: 'A back escape that uses shoulder positioning and careful rotation to turn into closed guard while escaping the back.',
-    relatedPositions: ['Back Control', 'Closed Guard']
+    description: 'A back escape that uses shoulder positioning and careful rotation to turn into a safer guard or side-recovery angle while escaping the back.',
+    relatedPositions: ['Back Control', 'Closed Guard', 'Open Guard', 'Bottom Side Control'],
+    commonTransitions: ['Shoulder-To-Mat Escape', 'Backslide Escape', 'Hook Stripping Escape', 'Half Guard Recovery'],
+    commonFollowUps: ['Half Guard', 'Bottom Side Control', 'Open Guard', 'Bridge And Turn-In'],
+    commonDefenses: ['Back Control', 'Body Triangle Back Control', 'Hand Fighting', 'Short Choke']
   },
   {
     id: 'escapes-back-to-the-mat-escape',
@@ -4013,9 +4121,9 @@ const curriculumIndexSeed = [
     description: 'A directional armbar escape that turns the thumb line and shoulders toward the safer side.',
     relatedPositions: ['Top Half Guard', 'Combat Base', 'Open Guard'],
     commonAttacks: ['Single Leg'],
-    commonTransitions: ['Top Half Guard', 'Combat Base', 'Open Guard'],
-    commonFollowUps: ['Top Half Guard', 'Combat Base', 'Single Leg', 'Open Guard'],
-    commonDefenses: ['Hand Fighting', 'Posture']
+    commonTransitions: ['Armbar Stacking Escape', 'Shoulder Roll', 'Bridge And Turn-In', 'Combat Base'],
+    commonFollowUps: ['Top Half Guard', 'Combat Base', 'Open Guard', 'Pressure Passing'],
+    commonDefenses: ['Armbar Position', 'Spiderweb Position', 'Belly-Down Armbar', 'Hand Fighting']
   },
   {
     id: 'escapes-armbar-stacking-defense',
@@ -4027,9 +4135,9 @@ const curriculumIndexSeed = [
     description: 'A defense that uses posture and forward pressure to stack the hips before the extension becomes clean.',
     relatedPositions: ['Closed Guard', 'Combat Base', 'Top Half Guard'],
     commonAttacks: ['Double Under Pass'],
-    commonTransitions: ['Combat Base', 'Top Half Guard', 'Open Guard'],
-    commonFollowUps: ['Combat Base', 'Double Under Pass', 'Top Half Guard', 'Open Guard'],
-    commonDefenses: ['Posture', 'Hand Fighting']
+    commonTransitions: ['Armbar Hitchhiker Escape', 'Shoulder Roll', 'Bridge And Turn-In', 'Posture'],
+    commonFollowUps: ['Combat Base', 'Double Under Pass', 'Top Half Guard', 'Pressure Passing'],
+    commonDefenses: ['Armbar Position', 'Triangle Position', 'Spiderweb Position', 'Hand Fighting']
   },
   {
     id: 'escapes-triangle-posture-escape',
@@ -4069,9 +4177,10 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['escape', 'submission', 'kimura'],
     description: 'A kimura defense that follows the roll only long enough to free the elbow line, keep the shoulder safe, and recover posture or mat connection before the grip tightens again.',
-    relatedPositions: ['Posture', 'Top Half Guard', 'Back To The Mat Escape'],
-    commonTransitions: ['Posture', 'Top Half Guard', 'Back To The Mat Escape'],
-    commonFollowUps: ['Posture', 'Top Half Guard', 'Back To The Mat Escape']
+    relatedPositions: ['Kimura Trap', 'Posture', 'Top Half Guard', 'Back To The Mat Escape'],
+    commonTransitions: ['Shoulder Roll', 'Posture', 'Bridge And Turn-In', 'Back To The Mat Escape'],
+    commonFollowUps: ['Posture', 'Top Half Guard', 'Back To The Mat Escape', 'Open Guard'],
+    commonDefenses: ['Kimura Trap', 'Hand Fighting', 'Shoulder Roll', 'Back To The Mat Escape']
   },
   {
     id: 'escapes-guillotine-hand-fight-shoulder-pressure',
@@ -4081,9 +4190,10 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['escape', 'submission', 'guillotine'],
     description: 'A guillotine defense that clears the choking wrist, rebuilds posture, and drives the shoulder into safer alignment before the squeeze line can close.',
-    relatedPositions: ['Headlock Escape', 'Shoulder Slide Escape', 'Top Half Guard'],
-    commonTransitions: ['Headlock Escape', 'Shoulder Slide Escape', 'Top Half Guard', 'Sit-Out'],
-    commonFollowUps: ['Headlock Escape', 'Shoulder Slide Escape', 'Top Half Guard', 'Sit-Out']
+    relatedPositions: ['Guillotine Position', 'Headlock Escape', 'Shoulder Slide Escape', 'Top Half Guard'],
+    commonTransitions: ['Hand Fighting', 'Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out'],
+    commonFollowUps: ['Headlock Escape', 'Top Half Guard', 'Side Control', 'Standing'],
+    commonDefenses: ['Guillotine Position', 'High Elbow Guillotine', 'Closed Guard', 'Hand Fighting']
   },
   {
     id: 'escapes-rear-naked-choke-hand-peel',
@@ -4093,7 +4203,10 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['escape', 'submission', 'rear naked choke'],
     description: 'A rear naked choke defense that first exposes the secondary hand, peels it away to weaken the lock around the neck, and then turns or strips the choking arm once the squeeze opens.',
-    relatedPositions: ['Back Control']
+    relatedPositions: ['Back Control', 'Back Mount', 'Body Triangle Back Control'],
+    commonTransitions: ['Two-On-One Grip Fight', 'Hook Stripping Escape', 'Shoulder-To-Mat Escape', 'Backslide Escape'],
+    commonFollowUps: ['Half Guard', 'Back To The Mat Escape', 'Open Guard', 'Top Half Guard'],
+    commonDefenses: ['Back Control', 'Short Choke', 'Body Triangle Back Control', 'Hand Fighting']
   },
   {
     id: 'escapes-americana-defense',
@@ -4103,7 +4216,10 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['escape', 'submission', 'americana'],
     description: 'A shoulder-lock defense that wins the elbow back to safety, rebuilds frames, and denies the angle before the shoulder gets dragged flat.',
-    relatedPositions: ['Side Control', 'Mount']
+    relatedPositions: ['Americana', 'Side Control', 'Mount', 'Top Half Guard'],
+    commonTransitions: ['Hand Fighting', 'Bridge And Turn-In', 'Recovery To Butterfly', 'Half Guard Recovery'],
+    commonFollowUps: ['Frame And Shrimp', 'Recovery To Butterfly', 'Half Guard', 'Open Guard'],
+    commonDefenses: ['Americana', 'Mount', 'Straight Armbar From Mount', 'Pressure']
   },
   {
     id: 'escapes-straight-ankle-lock-boot-defense',
@@ -4113,7 +4229,10 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['escape', 'submission', 'ankle lock'],
     description: 'A defensive response that uses foot posture and alignment to reduce finishing pressure while creating room to move.',
-    relatedPositions: ['Ashi Garami', 'Single-Leg X']
+    relatedPositions: ['Straight Ankle Lock', 'Ashi Garami', 'Single-Leg X'],
+    commonTransitions: ['Hand Fighting', 'Heel Hook Line Escape', 'Stand-Up From Turtle', 'Aoki Lock Escape'],
+    commonFollowUps: ['Standing', 'Open Guard', 'Pressure Passing', 'Single-Leg X'],
+    commonDefenses: ['Straight Ankle Lock', 'Belly-Down Ankle Lock', 'Toe Hold', 'Aoki Lock']
   },
   {
     id: 'escapes-heel-hook-line-escape',
@@ -4123,7 +4242,10 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['escape', 'submission', 'heel hook'],
     description: 'A leg-lock defense focused on clearing the knee line and turning the hips before the rotational finish is set.',
-    relatedPositions: ['Saddle', '50/50', 'Cross Ashi']
+    relatedPositions: ['Inside Heel Hook', 'Outside Heel Hook', 'Saddle', '50/50', 'Cross Ashi'],
+    commonTransitions: ['Straight Ankle Lock Boot Escape', 'Toe Hold Escape', 'Aoki Lock Escape', 'Standing'],
+    commonFollowUps: ['Standing', 'Open Guard', 'Pressure Passing', 'Single-Leg X'],
+    commonDefenses: ['Inside Heel Hook', 'Outside Heel Hook', 'Saddle', 'Cross Ashi']
   },
   {
     id: 'escapes-kneebar-turn-defense',
@@ -4133,7 +4255,10 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['escape', 'submission', 'kneebar'],
     description: 'A kneebar defense that turns the line of the knee before the hips are fully pinned in extension.',
-    relatedPositions: ['Saddle', 'Top Half Guard']
+    relatedPositions: ['Kneebar', 'Saddle', 'Top Half Guard'],
+    commonTransitions: ['Hand Fighting', 'Straight Ankle Lock Boot Escape', 'Heel Hook Line Escape', 'Standing'],
+    commonFollowUps: ['Standing', 'Top Half Guard', 'Open Guard', 'Pressure Passing'],
+    commonDefenses: ['Kneebar', 'Saddle', 'Toe Hold', 'Pressure']
   },
   {
     id: 'escapes-omoplata-forward-roll-escape',
@@ -4143,7 +4268,10 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['escape', 'submission', 'omoplata'],
     description: 'A shoulder-lock defense that follows the pressure line into a safer forward roll before the upper body gets pinned.',
-    relatedPositions: ['Closed Guard', 'Open Guard']
+    relatedPositions: ['Omoplata Position', 'Closed Guard', 'Open Guard', 'Combat Base'],
+    commonTransitions: ['Posture', 'Shoulder Roll', 'Combat Base', 'Bridge And Turn-In'],
+    commonFollowUps: ['Combat Base', 'Top Half Guard', 'Open Guard', 'Pressure Passing'],
+    commonDefenses: ['Omoplata Position', 'Triangle Position', 'Armbar Position', 'Shoulder Roll']
   },
   {
     id: 'escapes-bow-and-arrow-hand-fight-defense',
@@ -4153,7 +4281,10 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['escape', 'submission', 'bow and arrow choke'],
     description: 'A gi back-choke defense that fights the collar-side control first, squares the shoulders, and gets back toward the mat before the stretching angle becomes clean.',
-    relatedPositions: ['Back Control']
+    relatedPositions: ['Bow And Arrow Choke', 'Back Control', 'Back Mount', 'Body Triangle Back Control'],
+    commonTransitions: ['Hand Fighting', 'Shoulder-To-Mat Escape', 'Backslide Escape', 'Back To The Mat Escape'],
+    commonFollowUps: ['Half Guard', 'Back To The Mat Escape', 'Open Guard', 'Top Half Guard'],
+    commonDefenses: ['Bow And Arrow Choke', 'Short Choke', 'Back Control', 'Hand Fighting']
   },
   {
     id: 'escapes-ezekiel-posture-defense',
@@ -4163,19 +4294,23 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['escape', 'submission', 'ezekiel'],
     description: 'A choke defense that rebuilds posture, turns the chin into safer alignment, and strips the feeding arm before the pressure cinches shut.',
-    relatedPositions: ['Mount', 'Closed Guard']
+    relatedPositions: ['Ezekiel Choke', 'Mount', 'Closed Guard', 'Top Half Guard'],
+    commonTransitions: ['Hand Fighting', 'Bridge And Turn-In', 'Knee-Elbow To Half Guard', 'Posture'],
+    commonFollowUps: ['Recovery To Butterfly', 'Open Guard', 'Standing', 'Bridge And Turn-In'],
+    commonDefenses: ['Ezekiel Choke', 'Punch Choke', 'Mount', 'Hand Fighting']
   },
   {
     id: 'escapes-upa-escape',
-    category: 'Escapes',
-    subcategory: 'Mount Escapes',
+    category: 'Reversals',
+    subcategory: 'Mount Reversals',
     name: 'Upa Escape (Trap-And-Roll Variant)',
     skillLevel: 'Beginner',
-    tags: ['escape', 'mount', 'bridge', 'variant', 'also_reversal'],
-    description: 'A common-name variant of the trap-and-roll mount escape, kept as an alias pathway for users who search for upa specifically.',
+    tags: ['reversal', 'mount', 'bridge', 'variant'],
+    description: 'A common-name variant of the trap-and-roll / bridge-and-roll reversal, kept as an alias pathway for users who search for upa specifically.',
     relatedPositions: ['Trap And Roll', 'Bottom Mount', 'Bridge-And-Roll Reversal'],
     commonTransitions: ['Trap And Roll', 'Bridge-And-Roll Reversal', 'Top Half Guard'],
-    commonFollowUps: ['Top Half Guard', 'Closed Guard', 'Combat Base']
+    commonFollowUps: ['Top Half Guard', 'Closed Guard', 'Combat Base'],
+    commonDefenses: ['Pressure', 'Posting', 'High Mount']
   },
   {
     id: 'escapes-shoulder-walk-escape',
@@ -4215,7 +4350,10 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['escape', 'knee on belly', 'frames'],
     description: 'A knee-on-belly escape that uses the hands and hip movement together to redirect the knee line and recover guard.',
-    relatedPositions: ['Knee On Belly', 'Bottom Knee-On-Belly', 'Open Guard']
+    relatedPositions: ['Knee On Belly', 'Bottom Knee-On-Belly', 'Open Guard', 'Butterfly Guard'],
+    commonTransitions: ['Frame And Shrimp', 'Reguard With Knee Inside', 'Recovery To Butterfly', 'Recover Seated Guard'],
+    commonFollowUps: ['Half Guard', 'Closed Guard', 'Butterfly Guard', 'Seated Guard'],
+    commonDefenses: ['Knee On Belly', 'Hip Switch Pass', 'Crossface and Underhook Control', 'Pressure']
   },
   {
     id: 'escapes-hook-stripping-escape',
@@ -4227,9 +4365,9 @@ const curriculumIndexSeed = [
     description: 'A back escape that removes the lower hook or trapping leg before turning the shoulders back to the mat.',
     relatedPositions: ['Back Control', 'Body Triangle Back Control', 'Shoulder-To-Mat Escape'],
     commonAttacks: ['Escape To Top Half'],
-    commonTransitions: ['Shoulder-To-Mat Escape', 'Backslide Escape', 'Back To The Mat Escape'],
-    commonFollowUps: ['Half Guard', 'Bottom Side Control', 'Escape To Top Half', 'Top Half Guard'],
-    commonDefenses: ['Back Control', 'Body Triangle Back Control', 'Hand Fighting']
+    commonTransitions: ['Shoulder-To-Mat Escape', 'Backslide Escape', 'Shoulder Slide Escape', 'Back To The Mat Escape'],
+    commonFollowUps: ['Half Guard', 'Bottom Side Control', 'Back To The Mat Escape', 'Open Guard'],
+    commonDefenses: ['Back Control', 'Body Triangle Back Control', 'Short Choke', 'Hand Fighting']
   },
   {
     id: 'escapes-hip-walk-escape',
@@ -4269,7 +4407,10 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['escape', 'submission', 'calf slicer'],
     description: 'A compression-lock defense that relieves the wedge and straightens the leg before the knee and calf line are fully trapped.',
-    relatedPositions: ['Backside 50/50', 'Top Half Guard', 'Calf Slicer']
+    relatedPositions: ['Backside 50/50', 'Top Half Guard', 'Calf Slicer', 'Kneebar'],
+    commonTransitions: ['Straight Ankle Lock Boot Escape', 'Heel Hook Line Escape', 'Standing', 'Open Guard'],
+    commonFollowUps: ['Standing', 'Open Guard', 'Pressure Passing', 'Top Half Guard'],
+    commonDefenses: ['Calf Slicer', 'Kneebar', 'Toe Hold', 'Pressure']
   },
   {
     id: 'escapes-twister-escape',
@@ -4279,7 +4420,10 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['escape', 'submission', 'twister'],
     description: 'A spinal-lock defense that straightens the trapped line and flattens the shoulder relationship before the twist is fully connected.',
-    relatedPositions: ['Backside 50/50', 'Body Triangle Back Control', 'Back Control']
+    relatedPositions: ['Backside 50/50', 'Body Triangle Back Control', 'Back Control', 'Turtle'],
+    commonTransitions: ['Hook Stripping Escape', 'Shoulder-To-Mat Escape', 'Recover Seated Guard', 'Turn-To-Knees Escape'],
+    commonFollowUps: ['Turtle', 'Seated Guard', 'Open Guard', 'Top Half Guard'],
+    commonDefenses: ['Twister', 'Back Control', 'Body Triangle Back Control', 'Pressure']
   },
   {
     id: 'escapes-backslide-escape',
@@ -4289,7 +4433,10 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['escape', 'back control', 'hip movement'],
     description: 'A back escape that slides the hips over the lower hook line so the shoulders can return to the mat before the choke tightens.',
-    relatedPositions: ['Back Control', 'Back Mount', 'Body Triangle Back Control']
+    relatedPositions: ['Back Control', 'Back Mount', 'Body Triangle Back Control', 'Open Guard'],
+    commonTransitions: ['Hook Stripping Escape', 'Shoulder-To-Mat Escape', 'Shoulder Slide Escape', 'Scoop Escape'],
+    commonFollowUps: ['Half Guard', 'Bottom Side Control', 'Open Guard', 'Top Half Guard'],
+    commonDefenses: ['Back Control', 'Body Triangle Back Control', 'Short Choke', 'Pressure']
   },
   {
     id: 'escapes-shoulder-to-mat-escape',
@@ -4301,162 +4448,191 @@ const curriculumIndexSeed = [
     description: 'A core back escape idea that wins the shoulder line back to the mat before turning into safer guard or top-recovery routes.',
     relatedPositions: ['Back Control', 'Back Mount', 'Body Triangle Back Control', 'Open Guard'],
     commonAttacks: ['Escape To Top Half'],
-    commonTransitions: ['Open Guard', 'Backslide Escape', 'Escape To Top Half'],
-    commonFollowUps: ['Open Guard', 'Backslide Escape', 'Escape To Top Half', 'Re-Guarding'],
-    commonDefenses: ['Hand Fighting']
+    commonTransitions: ['Hook Stripping Escape', 'Backslide Escape', 'Back To The Mat Escape', 'Half Guard Recovery'],
+    commonFollowUps: ['Half Guard', 'Bottom Side Control', 'Open Guard', 'Escape To Top Half'],
+    commonDefenses: ['Back Control', 'Body Triangle Back Control', 'Hand Fighting', 'Short Choke']
   },
   {
     id: 'submission-defense-armbar-defense-family',
     category: 'Submission Defense',
     subcategory: 'Armbar Defense',
-    name: 'Armbar Escape Choices',
+    name: 'Armbar Defense',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'armbar', 'family'],
-    description: 'A set of armbar escape choices built around keeping the thumb line safe, choosing the correct turn, and exiting before the extension becomes clean.',
+    description: 'A family of late-stage armbar defenses built around protecting the thumb line, relieving the elbow line, and escaping before extension or belly-down follow-ups become clean.',
     relatedPositions: ['Armbar Position', 'Spiderweb Position', 'Top Half Guard'],
     commonTransitions: ['Spiderweb Position', 'Triangle Position', 'Omoplata Position'],
     commonFollowUps: ['Top Half Guard', 'Combat Base', 'Open Guard'],
-    commonDefenses: ['Armbar Hitchhiker', 'Armbar Stacking Defense', 'Shoulder Roll']
+    commonDefenses: ['Armbar Hitchhiker Defense', 'Armbar Stacking Defense', 'Shoulder Roll']
   },
   {
     id: 'submission-defense-triangle-escape-family',
     category: 'Submission Defense',
     subcategory: 'Triangle Defense',
-    name: 'Triangle Escape Choices',
+    name: 'Triangle Defense',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'triangle', 'family'],
-    description: 'A set of triangle escape choices built around rebuilding posture, killing the angle, and clearing the trapped shoulder before the lock settles.',
+    description: 'A family of triangle defenses built around recovering posture, killing the finishing angle, and clearing the trapped shoulder before the lock settles.',
     relatedPositions: ['Triangle Position', 'Closed Guard', 'Combat Base'],
     commonTransitions: ['Omoplata Position', 'Armbar Position', 'Triangle Position'],
     commonFollowUps: ['Combat Base', 'Top Half Guard', 'Open Guard'],
-    commonDefenses: ['Triangle Posture Defense', 'Triangle Escape With Hand Fighting/Angles']
+    commonDefenses: ['Triangle Posture Defense', 'Triangle Hand-Fight / Angle-Kill Defense']
   },
   {
     id: 'submission-defense-kimura-defense-family',
     category: 'Submission Defense',
-    subcategory: 'Shoulder Lock Defense',
-    name: 'Kimura Escape Choices',
+    subcategory: 'Kimura / Americana Defense',
+    name: 'Kimura / Americana Defense',
     skillLevel: 'Beginner',
-    tags: ['submission defense', 'kimura', 'family'],
-    description: 'A set of kimura escape choices built around recovering the elbow line early, turning the shoulder safely, and getting back to posture or the mat before the grip traps the arm behind the back.',
+    tags: ['submission defense', 'kimura', 'americana', 'family'],
+    description: 'A family of shoulder-lock defenses built around recovering the elbow line, relieving shoulder pressure, and getting back to posture, frames, or safer mat alignment before the finish settles.',
     relatedPositions: ['Half Guard', 'North-South', 'Top Half Guard'],
     commonTransitions: ['Kimura Trap', 'Tarikoplata', 'North-South'],
-    commonFollowUps: ['Posture', 'Top Half Guard', 'Back To The Mat Escape'],
-    commonDefenses: ['Kimura Roll Defense', 'Shoulder Roll', 'Posture', 'Back To The Mat Escape']
+    commonFollowUps: ['Posture', 'Top Half Guard', 'Back To The Mat Escape', 'Shoulder Roll'],
+    commonDefenses: ['Kimura Roll Defense', 'Americana Elbow Recovery Defense', 'Shoulder Roll', 'Posture']
   },
   {
     id: 'submission-defense-guillotine-defense-family',
     category: 'Submission Defense',
-    subcategory: 'Guillotine Defense',
-    name: 'Guillotine Escape Choices',
+    subcategory: 'Guillotine / Front Headlock Choke Defense',
+    name: 'Guillotine / Front Headlock Choke Defense',
     skillLevel: 'Beginner',
-    tags: ['submission defense', 'guillotine', 'family'],
-    description: 'A set of guillotine escape choices built around clearing the hand fight, rebuilding posture, and using shoulder pressure or exit movement before the choke line tightens.',
+    tags: ['submission defense', 'guillotine', 'front headlock', 'family'],
+    description: 'A family of guillotine and front-headlock choke defenses built around hand fighting, shoulder pressure, posture recovery, and finding daylight before the choke line tightens.',
     relatedPositions: ['Front Headlock', 'Standing', 'Half Guard'],
     commonTransitions: ['Guillotine Position', 'Anaconda Choke', 'Japanese Necktie'],
     commonFollowUps: ['Top Half Guard', 'Headlock Escape', 'Sit-Out'],
-    commonDefenses: ['Guillotine Hand Fight And Shoulder Pressure Defense', 'Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out']
+    commonDefenses: ['Guillotine Hand-Fight And Shoulder-Pressure Defense', 'Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out']
   },
   {
     id: 'submission-defense-rear-naked-choke-escape-family',
     category: 'Submission Defense',
-    subcategory: 'Back Control Defense',
-    name: 'Rear Naked Choke Escape Choices',
+    subcategory: 'Back Choke Defense',
+    name: 'Back Choke Defense',
     skillLevel: 'Beginner',
-    tags: ['submission defense', 'rear naked choke', 'family'],
-    description: 'A set of rear naked choke escape choices centered on exposing the secondary hand first, peeling it away to weaken the choke, and then turning or stripping the primary arm before the lock settles too deeply.',
+    tags: ['submission defense', 'rear naked choke', 'bow and arrow', 'back choke', 'family'],
+    description: 'A family of back-choke defenses centered on exposing the secondary hand first, peeling collar or choking control, and getting back toward the mat before the finishing stretch settles too deeply.',
     relatedPositions: ['Back Control', 'Back Mount', 'Body Triangle Back Control'],
     commonTransitions: ['Rear Naked Choke', 'Short Choke', 'Bow And Arrow Choke'],
     commonFollowUps: ['Shoulder-To-Mat Escape', 'Back To The Mat Escape', 'Escape To Top Half'],
-    commonDefenses: ['Rear Naked Choke Hand Peel Defense', 'Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Hook Stripping Escape']
+    commonDefenses: ['Rear Naked Choke Hand Peel Defense', 'Bow And Arrow Hand-Fight Defense', 'Two-On-One Grip Fight', 'Shoulder-To-Mat Escape']
   },
   {
     id: 'submission-defense-bow-and-arrow-defense-family',
     category: 'Submission Defense',
-    subcategory: 'Back Control Defense',
-    name: 'Bow And Arrow Escape Choices',
+    subcategory: 'Omoplata Defense',
+    name: 'Omoplata Defense',
     skillLevel: 'Intermediate',
-    tags: ['submission defense', 'bow and arrow', 'family', 'gi choke'],
-    description: 'A set of bow-and-arrow escape choices built around stripping collar control, relieving the shoulder line, and getting back toward the mat before the stretching angle fully settles.',
-    relatedPositions: ['Back Control', 'Back Mount', 'Body Triangle Back Control'],
-    commonTransitions: ['Bow And Arrow Choke', 'Short Choke', 'Rear Naked Choke'],
-    commonFollowUps: ['Back To The Mat Escape', 'Open Guard', 'Escape To Top Half'],
-    commonDefenses: ['Bow And Arrow Choke Hand Fight Defense', 'Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Back To The Mat Escape']
+    tags: ['submission defense', 'omoplata', 'family', 'shoulder lock'],
+    description: 'A family of omoplata defenses built around forward-roll relief, posture recovery, and stepping over or sitting up before the shoulder line becomes fully trapped.',
+    relatedPositions: ['Omoplata Position', 'Closed Guard', 'Open Guard'],
+    commonTransitions: ['Triangle Position', 'Armbar Position', 'Shoulder Roll'],
+    commonFollowUps: ['Open Guard', 'Combat Base', 'Top Half Guard'],
+    commonDefenses: ['Omoplata Forward Roll Defense', 'Posture', 'Shoulder Roll']
   },
   {
     id: 'submission-defense-collar-choke-escape-family',
     category: 'Submission Defense',
-    subcategory: 'Choke Defense',
-    name: 'Collar Choke Grip-Stripping Escapes',
+    subcategory: 'Collar Choke Defense',
+    name: 'Collar Choke Defense',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'collar choke', 'family'],
-    description: 'A set of collar-choke escape choices built around stripping the key grip early, rebuilding posture, and turning the chin and shoulders back into safer alignment.',
+    description: 'A family of collar-choke defenses built around stripping the key grip early, rebuilding posture, and turning the chin and shoulders back into safer alignment.',
     relatedPositions: ['Mount', 'Closed Guard', 'Side Control'],
     commonTransitions: ['Cross Collar Choke', 'Loop Choke', 'Ezekiel Choke'],
     commonFollowUps: ['Combat Base', 'Standing', 'Open Guard'],
-    commonDefenses: ['Ezekiel Posture Defense', 'Loop Choke Escape', 'Two-On-One Grip Fight', 'Posture', 'Hand Fighting']
+    commonDefenses: ['Loop Choke Escape', 'Ezekiel Posture Defense', 'Posture', 'Hand Fighting']
   },
   {
     id: 'submission-defense-americana-defense-family',
     category: 'Submission Defense',
-    subcategory: 'Shoulder Lock Defense',
-    name: 'Americana Elbow Recovery Escapes',
+    subcategory: 'Ezekiel / Forearm Choke Defense',
+    name: 'Ezekiel / Forearm Choke Defense',
     skillLevel: 'Beginner',
-    tags: ['submission defense', 'americana', 'family'],
-    description: 'A set of americana escape choices built around recovering elbow position, rebuilding frames, and turning back toward safer guard or side-control recovery angles.',
-    relatedPositions: ['Side Control', 'Mount', 'Kesa Gatame'],
-    commonTransitions: ['Straight Armbar From Mount', 'Arm Triangle', 'Mount'],
-    commonFollowUps: ['Frame And Shrimp', 'Bridge And Turn-In', 'Hip Escape Retention'],
-    commonDefenses: ['Americana Elbow Recovery Defense', 'Frame And Shrimp', 'Bridge And Turn-In']
+    tags: ['submission defense', 'ezekiel', 'forearm choke', 'family'],
+    description: 'A family of sleeve-fed and forearm-choke defenses built around posture recovery, grip stripping, and disrupting head pressure before the choking arm settles.',
+    relatedPositions: ['Mount', 'Closed Guard', 'Top Half Guard'],
+    commonTransitions: ['Ezekiel Choke', 'Punch Choke', 'Cross Collar Choke'],
+    commonFollowUps: ['Recovery To Butterfly', 'Bridge And Turn-In', 'Open Guard'],
+    commonDefenses: ['Ezekiel Posture Defense', 'Hand Fighting', 'Bridge And Turn-In']
   },
   {
     id: 'submission-defense-arm-triangle-defense-family',
     category: 'Submission Defense',
-    subcategory: 'Choke Defense',
-    name: 'Arm Triangle Shoulder-Relief Escapes',
+    subcategory: 'Head-And-Arm Choke Defense',
+    name: 'Head-And-Arm Choke Defense',
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'arm triangle', 'family'],
-    description: 'A set of arm-triangle escape choices built around relieving shoulder pressure, making neck space, and recovering toward half guard or safer bottom structure.',
+    description: 'A family of head-and-arm choke defenses built around relieving shoulder pressure, making neck space, and recovering toward half guard or safer bottom structure.',
     relatedPositions: ['Side Control', 'Mount', 'Top Half Guard'],
     commonTransitions: ['Mount', 'Side Control', 'North-South'],
     commonFollowUps: ['Half Guard', 'Hip Escape Retention', 'Bridge And Turn-In'],
-    commonDefenses: ['Arm Triangle Escape', 'Hip Escape Retention', 'Bridge And Turn-In']
+    commonDefenses: ['Arm Triangle Shoulder-Relief Defense', 'Hip Escape Retention', 'Bridge And Turn-In']
   },
   {
     id: 'submission-defense-north-south-choke-defense-family',
     category: 'Submission Defense',
-    subcategory: 'Choke Defense',
-    name: 'North-South Choke Shoulder-Relief Escapes',
+    subcategory: 'North-South Choke Defense',
+    name: 'North-South Choke Defense',
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'north-south choke', 'family'],
-    description: 'A set of north-south choke escape choices built around creating shoulder relief, making hip angle, and turning toward turtle or safer guard recovery before the neck line seals.',
+    description: 'A family of north-south choke defenses built around creating shoulder relief, making hip angle, and turning toward turtle or safer guard recovery before the neck line seals.',
     relatedPositions: ['North-South', 'Bottom North-South', 'Turtle'],
     commonTransitions: ['North-South', 'Kimura', 'Back Control'],
     commonFollowUps: ['Turn-To-Knees Escape', 'Bottom North-South', 'Turtle'],
-    commonDefenses: ['North-South Choke Escape', 'Shoulder Walk Escape', 'Turn-To-Knees Escape']
+    commonDefenses: ['North-South Choke Shoulder-Relief Defense', 'Shoulder Walk Escape', 'Turn-To-Knees Escape']
   },
   {
     id: 'submission-defense-front-headlock-choke-family',
     category: 'Submission Defense',
-    subcategory: 'Choke Defense',
-    name: 'Front Headlock Choke Daylight Escapes',
+    subcategory: 'Front Headlock Strangle Defense',
+    name: 'Front Headlock Strangle Defense',
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'front headlock', 'family'],
     description: 'A defense family for D’Arce- and anaconda-style front headlock chokes built around hand fighting, shoulder-line control, and turning toward daylight before the lock closes.',
     relatedPositions: ['Front Headlock', 'Seated Front Headlock', 'Turtle'],
     commonTransitions: ["D'Arce Choke", 'Anaconda Choke', 'Japanese Necktie'],
     commonFollowUps: ['Headlock Escape', 'Sit-Out', 'Single Leg'],
-    commonDefenses: ["D'Arce Escape", 'Anaconda Escape', 'Headlock Escape', 'Sit-Out']
+    commonDefenses: ['Headlock Escape', "D'Arce Escape", 'Anaconda Escape', 'Sit-Out']
+  },
+  {
+    id: 'submission-defense-darce-defense-family',
+    category: 'Submission Defense',
+    subcategory: "D'Arce Defense",
+    name: "D'Arce Defense",
+    skillLevel: 'Advanced',
+    tags: ['submission defense', "d'arce", 'family'],
+    description: 'A family of D’Arce defenses built around shoulder-line relief, turning toward daylight, and beating the choke angle before the lock closes too tightly.',
+    relatedPositions: ['Front Headlock', 'Seated Front Headlock', 'Turtle'],
+    commonTransitions: ['Headlock Escape', 'Turn-To-Knees Escape', 'Sit-Out', 'Single Leg'],
+    commonFollowUps: ['Turtle', 'Headlock Escape', 'Single Leg', 'Open Guard'],
+    commonDefenses: ["D'Arce Escape", 'Headlock Escape', 'Sit-Out', 'Turn-To-Knees Escape']
+  },
+  {
+    id: 'submission-defense-anaconda-defense-family',
+    category: 'Submission Defense',
+    subcategory: 'Anaconda Defense',
+    name: 'Anaconda Defense',
+    skillLevel: 'Advanced',
+    tags: ['submission defense', 'anaconda', 'family'],
+    description: 'A family of anaconda defenses built around roll-through relief, shoulder-turn space, and daylight escapes before the chest angle settles too deeply.',
+    relatedPositions: ['Front Headlock', 'Seated Front Headlock', 'Turtle'],
+    commonTransitions: ['Headlock Escape', 'Turn-To-Knees Escape', 'Sit-Out'],
+    commonFollowUps: ['Turtle', 'Headlock Escape', 'Single Leg', 'Open Guard'],
+    commonDefenses: ['Anaconda Escape', 'Headlock Escape', 'Sit-Out', 'Turn-To-Knees Escape']
   },
   {
     id: 'submission-defense-heel-hook-escape-family',
     category: 'Submission Defense',
     subcategory: 'Leg Lock Defense',
-    name: 'Heel Hook Escape Family',
+    name: 'Leg Lock Defense',
     skillLevel: 'Advanced',
-    tags: ['submission defense', 'heel hook', 'family'],
-    description: 'A leg-lock defense family focused on hiding the heel, freeing the secondary leg, and clearing the knee line before the rotation finishes.',
-    relatedPositions: ['Saddle', '50/50', 'Cross Ashi']
+    tags: ['submission defense', 'leg lock', 'family'],
+    description: 'A family of leg-lock defenses focused on booting, heel hiding, clearing the knee line, and disengaging before the entanglement tightens into a finish.',
+    relatedPositions: ['Ashi Garami', 'Saddle', '50/50', 'Cross Ashi'],
+    commonTransitions: ['Straight Ankle Lock Boot Defense', 'Heel Hook Line Defense', 'Kneebar Turn Defense', 'Toe Hold Escape', 'Aoki Lock Escape'],
+    commonFollowUps: ['Standing', 'Open Guard', 'Single-Leg X', 'Ashi Garami'],
+    commonDefenses: ['Straight Ankle Lock Boot Defense', 'Heel Hook Line Defense', 'Kneebar Turn Defense', 'Toe Hold Escape', 'Aoki Lock Escape']
   },
   {
     id: 'guard-retention-hip-escape-retention',
@@ -4466,7 +4642,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['guard retention', 'frame', 'movement'],
     description: 'Using angle and hip movement to rebuild frames and recover a safer guard structure.',
-    relatedPositions: ['Open Guard', 'Half Guard']
+    relatedPositions: ['Open Guard', 'Half Guard'],
+    entriesIntoPosition: ['Open Guard', 'Half Guard', 'Supine Guard', 'Bottom Side Control'],
+    commonTransitions: ['Knee-Elbow Recovery', 'Shin Insert Recovery', 'Foot-To-Hip Recovery', 'Seated Guard Recovery'],
+    commonFollowUps: ['Half Guard', 'Open Guard', 'Seated Guard', 'Recovery To Butterfly'],
+    commonDefenses: ['Pressure', 'Body Lock Pass', 'Knee Staple Pass', 'Leg Drag']
   },
   {
     id: 'guard-retention-leg-pummeling',
@@ -4476,7 +4656,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'hooks', 'recovery'],
     description: 'A retention skill that uses active leg exchanges to recover inside position and rebuild guard structure.',
-    relatedPositions: ['Open Guard', 'De La Riva', 'Half Guard']
+    relatedPositions: ['Open Guard', 'De La Riva', 'Half Guard'],
+    entriesIntoPosition: ['Open Guard', 'De La Riva', 'Half Guard', 'Supine Guard'],
+    commonTransitions: ['High Pummel Recovery', 'Low Pummel Recovery', 'Shin-To-Shin Recovery', 'Butterfly Hook Recovery'],
+    commonFollowUps: ['Open Guard', 'Seated Guard', 'Single-Leg X', 'Half Guard'],
+    commonDefenses: ['Backstep Pass', 'Knee Staple Pass', 'Smash Pass', 'Body Lock Pass']
   },
   {
     id: 'guard-retention-knee-elbow-recovery',
@@ -4486,7 +4670,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['guard retention', 'frames', 'recovery'],
     description: 'Reconnecting the knees and elbows to rebuild defensive structure before the pass fully settles.',
-    relatedPositions: ['Bottom Side Control', 'Bottom Mount']
+    relatedPositions: ['Bottom Side Control', 'Bottom Mount'],
+    entriesIntoPosition: ['Bottom Side Control', 'Bottom Mount', 'Half Guard', 'Supine Guard'],
+    commonTransitions: ['Frame Replacement', 'Shin Insert Recovery', 'Half Guard Recovery', 'Butterfly Hook Recovery'],
+    commonFollowUps: ['Half Guard', 'Butterfly Guard', 'Open Guard', 'Supine Square-Up Recovery'],
+    commonDefenses: ['Pressure', 'Knee Staple Pass', 'Smash Pass', 'Body Lock Pass']
   },
   {
     id: 'guard-retention-retaining-against-leg-drag',
@@ -4496,7 +4684,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'passing defense', 'leg drag'],
     description: 'Recovering angle and inside position before a leg-drag style pass turns into settled control.',
-    relatedPositions: ['Open Guard', 'De La Riva', 'Bottom Side Control']
+    relatedPositions: ['Open Guard', 'De La Riva', 'Bottom Side Control'],
+    entriesIntoPosition: ['Open Guard', 'De La Riva', 'Leg Drag Position', 'Supine Guard'],
+    commonTransitions: ['Anti-Leg-Drag Square-Up', 'Invert-To-Reguard', 'Shoulder Walk Recovery', 'Split-Leg Retention Recovery'],
+    commonFollowUps: ['Open Guard', 'Seated Guard', 'Supine Square-Up Recovery', 'Turtle'],
+    commonDefenses: ['Pressure', 'Backstep Pass', 'Body Lock Pass', 'Leg Drag']
   },
   {
     id: 'guard-retention-retaining-against-body-lock',
@@ -4506,7 +4698,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'passing defense', 'body lock'],
     description: 'Using frames, hip angle, and leg recovery to stop a tight body-lock style pass from collapsing the guard.',
-    relatedPositions: ['Open Guard', 'Half Guard']
+    relatedPositions: ['Open Guard', 'Half Guard'],
+    entriesIntoPosition: ['Open Guard', 'Half Guard', 'Supine Guard', 'Seated Guard'],
+    commonTransitions: ['Hip Escape Retention', 'Frame Replacement', 'Hip Pummel Escape', 'Running-Man Style Recovery To Guard'],
+    commonFollowUps: ['Half Guard', 'Butterfly Guard', 'Seated Guard', 'Turtle'],
+    commonDefenses: ['Body Lock Pass', 'Pressure', 'Backstep Pass', 'Smash Pass']
   },
   {
     id: 'guard-retention-high-leg-recovery',
@@ -4516,7 +4712,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'legs', 'recovery'],
     description: 'Lifting the legs high and re-pummeling to recover hooks, distance, or stronger guard structure.',
-    relatedPositions: ['Open Guard', 'De La Riva']
+    relatedPositions: ['Open Guard', 'De La Riva'],
+    entriesIntoPosition: ['Open Guard', 'De La Riva', 'Supine Guard', 'Inversion Position'],
+    commonTransitions: ['Shoulder Invert Recovery', 'Split-Leg Retention Recovery', 'K-Guard Entry For Retention', 'Invert-To-Reguard'],
+    commonFollowUps: ['Open Guard', 'K-Guard', 'Inversion Position', 'Supine Square-Up Recovery'],
+    commonDefenses: ['Pressure', 'Backstep Pass', 'Leg Drag', 'Body Lock Pass']
   },
   {
     id: 'guard-retention-frame-replacement',
@@ -4526,7 +4726,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['guard retention', 'frames', 'recovery'],
     description: 'Replacing failed frames with fresh barriers before the passer can settle chest-to-chest or clear the hip line.',
-    relatedPositions: ['Open Guard', 'Supine Guard', 'Bottom Side Control']
+    relatedPositions: ['Open Guard', 'Supine Guard', 'Bottom Side Control'],
+    entriesIntoPosition: ['Open Guard', 'Supine Guard', 'Bottom Side Control', 'Half Guard'],
+    commonTransitions: ['Knee-Elbow Recovery', 'Shin Insert Recovery', 'Foot-To-Hip Recovery', 'Shoulder Post And Square-Up'],
+    commonFollowUps: ['Open Guard Recomposition', 'Half Guard', 'Open Guard', 'Seated Guard'],
+    commonDefenses: ['Pressure', 'Body Lock Pass', 'Smash Pass', 'Hand Fighting']
   },
   {
     id: 'guard-retention-shin-insert-recovery',
@@ -4536,7 +4740,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['guard retention', 'shin frame', 'recovery'],
     description: 'Reinserting the shin as a barrier to stop forward pressure and rebuild a stronger open or half-guard structure.',
-    relatedPositions: ['Open Guard', 'Half Guard', 'Knee Shield Half Guard']
+    relatedPositions: ['Open Guard', 'Half Guard', 'Knee Shield Half Guard'],
+    entriesIntoPosition: ['Open Guard', 'Half Guard', 'Knee Shield Half Guard', 'Supine Guard'],
+    commonTransitions: ['Knee-Elbow Recovery', 'Shin-To-Shin Recovery', 'Double Shin Recovery', 'Foot-To-Hip Recovery'],
+    commonFollowUps: ['Open Guard', 'Shin-To-Shin', 'Butterfly Guard', 'Seated Guard'],
+    commonDefenses: ['Knee Staple Pass', 'Pressure', 'Smash Pass', 'Body Lock Pass']
   },
   {
     id: 'guard-retention-foot-to-hip-recovery',
@@ -4546,7 +4754,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['guard retention', 'frame', 'distance'],
     description: 'Using a foot on the hip to rebuild distance, recover angle, and keep the passer from settling into tight pressure.',
-    relatedPositions: ['Open Guard', 'Supine Guard', 'Seated Guard']
+    relatedPositions: ['Open Guard', 'Supine Guard', 'Seated Guard'],
+    entriesIntoPosition: ['Open Guard', 'Supine Guard', 'Seated Guard', 'Spider Guard'],
+    commonTransitions: ['Two-Feet-On-Hips Recovery', 'Open Guard Recomposition', 'Shin-To-Shin Recovery', 'Lasso Recovery'],
+    commonFollowUps: ['Open Guard', 'Collar-Sleeve Guard', 'Spider Guard', 'Seated Guard'],
+    commonDefenses: ['Pressure', 'Backstep Pass', 'Hand Fighting', 'Body Lock Pass']
   },
   {
     id: 'guard-retention-butterfly-hook-recovery',
@@ -4556,7 +4768,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'butterfly guard', 'hooks'],
     description: 'Recovering butterfly hooks underneath the hips before pressure can flatten the torso and kill seated mobility.',
-    relatedPositions: ['Butterfly Guard', 'Butterfly Half', 'Seated Guard']
+    relatedPositions: ['Butterfly Guard', 'Butterfly Half', 'Seated Guard'],
+    entriesIntoPosition: ['Butterfly Guard', 'Butterfly Half', 'Seated Guard', 'Open Guard'],
+    commonTransitions: ['Leg Pummeling', 'Half Guard Recovery', 'Pummel-To-Seated Guard', 'Shoulder Post And Square-Up'],
+    commonFollowUps: ['Butterfly Guard', 'Butterfly Half', 'Wrestle-Up Single Leg Sweep', 'Recovery To Butterfly'],
+    commonDefenses: ['Pressure', 'Backstep Pass', 'Smash Pass', 'Body Lock Pass']
   },
   {
     id: 'guard-retention-half-guard-recovery',
@@ -4566,7 +4782,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['guard retention', 'half guard', 'recovery'],
     description: 'Rebuilding a trapped-leg connection before full passing control settles, using frames and hip movement to stop the pass.',
-    relatedPositions: ['Half Guard', 'Bottom Side Control', 'Mount']
+    relatedPositions: ['Half Guard', 'Bottom Side Control', 'Mount'],
+    entriesIntoPosition: ['Half Guard', 'Bottom Side Control', 'Bottom Mount', 'Top Half Guard'],
+    commonTransitions: ['Knee-Elbow Recovery', 'Hip Escape Retention', 'Underhook Half Guard', 'Shin Insert Recovery'],
+    commonFollowUps: ['Half Guard', 'Knee Shield Half Guard', 'Dogfight', 'Butterfly Half'],
+    commonDefenses: ['Pressure', 'Backstep Pass', 'Smash Pass', 'Body Lock Pass']
   },
   {
     id: 'guard-retention-open-guard-recomposition',
@@ -4576,7 +4796,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'open guard', 'recovery'],
     description: 'Recomposing an open guard by layering hooks, frames, and angle until the passer is back in front of the hips again.',
-    relatedPositions: ['Open Guard', 'Supine Guard', 'Seated Guard']
+    relatedPositions: ['Open Guard', 'Supine Guard', 'Seated Guard'],
+    entriesIntoPosition: ['Open Guard', 'Supine Guard', 'Seated Guard', 'Leg Drag Position'],
+    commonTransitions: ['Foot-To-Hip Recovery', 'Double Shin Recovery', 'Supine Square-Up Recovery', 'Seated Guard Recovery'],
+    commonFollowUps: ['Open Guard', 'Shin-To-Shin', 'Butterfly Guard', 'Collar-Sleeve Guard'],
+    commonDefenses: ['Pressure', 'Body Lock Pass', 'Leg Drag', 'Backstep Pass']
   },
   {
     id: 'guard-retention-seated-guard-recovery',
@@ -4586,7 +4810,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'seated guard', 'recovery'],
     description: 'Recovering upright seated guard posture when the passer has not fully pinned the hips or cleared the upper-body frames.',
-    relatedPositions: ['Seated Guard', 'Open Guard', 'Butterfly Guard']
+    relatedPositions: ['Seated Guard', 'Open Guard', 'Butterfly Guard'],
+    entriesIntoPosition: ['Seated Guard', 'Open Guard', 'Butterfly Guard', 'Turtle'],
+    commonTransitions: ['Pummel-To-Seated Guard', 'Turtle-To-Seated Recovery', 'Shin-To-Shin Recovery', 'Wrestle-Up Single Leg Sweep'],
+    commonFollowUps: ['Seated Guard', 'Shin-To-Shin', 'Single Leg', 'Arm Drag To Back'],
+    commonDefenses: ['Front Headlock', 'Body Lock Standing', 'Pressure', 'Snap Down And Go Behind']
   },
   {
     id: 'guard-retention-supine-square-up-recovery',
@@ -4596,7 +4824,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'supine guard', 'angle'],
     description: 'Squaring the hips and shoulders back in front of the passer before the angle becomes too deep to recover safely.',
-    relatedPositions: ['Supine Guard', 'Open Guard', 'Inversion Position']
+    relatedPositions: ['Supine Guard', 'Open Guard', 'Inversion Position'],
+    entriesIntoPosition: ['Supine Guard', 'Open Guard', 'Inversion Position', 'Leg Drag Position'],
+    commonTransitions: ['Open Guard Recomposition', 'Double Shin Recovery', 'Foot-To-Hip Recovery', 'Invert-To-Reguard'],
+    commonFollowUps: ['Supine Guard', 'Double Shin Recovery', 'Shin-To-Shin', 'K-Guard'],
+    commonDefenses: ['Pressure', 'Leg Drag', 'Body Lock Pass', 'Knee Staple Pass']
   },
   {
     id: 'guard-retention-double-shin-recovery',
@@ -4606,7 +4838,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'double shin', 'recovery'],
     description: 'Recovering a double-shin barrier to keep the passer centered and prevent clean chest-to-chest access.',
-    relatedPositions: ['Seated Guard', 'Open Guard', 'Supine Guard']
+    relatedPositions: ['Seated Guard', 'Open Guard', 'Supine Guard'],
+    entriesIntoPosition: ['Seated Guard', 'Open Guard', 'Supine Guard', 'Butterfly Guard'],
+    commonTransitions: ['Shin-To-Shin Recovery', 'Foot-To-Hip Recovery', 'Seated Guard Recovery', 'Open Guard Recomposition'],
+    commonFollowUps: ['Open Guard', 'Seated Guard', 'Shin-To-Shin', 'Wrestle-Up Single Leg Sweep'],
+    commonDefenses: ['Pressure', 'Body Lock Pass', 'Knee Staple Pass', 'Backstep Pass']
   },
   {
     id: 'guard-retention-shin-to-shin-recovery',
@@ -4616,7 +4852,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'shin to shin', 'recovery'],
     description: 'Rebuilding shin-to-shin connection to stop forward pressure and reopen wrestle-up or single-leg X options.',
-    relatedPositions: ['Shin-To-Shin', 'Seated Guard', 'Single-Leg X']
+    relatedPositions: ['Shin-To-Shin', 'Seated Guard', 'Single-Leg X'],
+    entriesIntoPosition: ['Shin-To-Shin', 'Seated Guard', 'Single-Leg X', 'Open Guard'],
+    commonTransitions: ['Pummel-To-Seated Guard', 'Single-Leg X Stand-Up Sweep', 'Wrestle-Up Single Leg Sweep', 'Technical Stand-Up Sweep'],
+    commonFollowUps: ['Shin-To-Shin', 'Single-Leg X', 'Seated Guard', 'Single Leg'],
+    commonDefenses: ['Pressure', 'Backstep Pass', 'Standing', 'Front Headlock']
   },
   {
     id: 'guard-retention-lasso-recovery',
@@ -4626,7 +4866,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['guard retention', 'lasso guard', 'recovery'],
     description: 'Re-threading the lasso to slow the passing lane and rebuild control of posture, angle, and arm posting.',
-    relatedPositions: ['Lasso Guard', 'Spider Guard', 'Collar-Sleeve Guard']
+    relatedPositions: ['Lasso Guard', 'Spider Guard', 'Collar-Sleeve Guard'],
+    entriesIntoPosition: ['Lasso Guard', 'Spider Guard', 'Collar-Sleeve Guard', 'Open Guard'],
+    commonTransitions: ['Spider Guard Recovery', 'Collar Sleeve Recovery', 'Foot-To-Hip Recovery', 'Open Guard Recomposition'],
+    commonFollowUps: ['Lasso Guard', 'Spider Guard', 'Omoplata', 'Basic Lasso Sweep'],
+    commonDefenses: ['Pressure', 'Hand Fighting', 'Backstep Pass', 'Posting']
   },
   {
     id: 'guard-retention-spider-guard-recovery',
@@ -4636,7 +4880,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['guard retention', 'spider guard', 'recovery'],
     description: 'Recovering spider-style hook and sleeve control before the passer can collapse the leg frames and clear the hips.',
-    relatedPositions: ['Spider Guard', 'Open Guard', 'Lasso Guard']
+    relatedPositions: ['Spider Guard', 'Open Guard', 'Lasso Guard'],
+    entriesIntoPosition: ['Spider Guard', 'Open Guard', 'Lasso Guard', 'Supine Guard'],
+    commonTransitions: ['Collar Sleeve Recovery', 'Foot-To-Hip Recovery', 'Lasso Recovery', 'Open Guard Recomposition'],
+    commonFollowUps: ['Spider Guard', 'Balloon Sweep', 'Lasso Guard', 'Open Guard'],
+    commonDefenses: ['Pressure', 'Hand Fighting', 'Backstep Pass', 'Posting']
   },
   {
     id: 'guard-retention-collar-sleeve-recovery',
@@ -4646,7 +4894,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'collar sleeve', 'recovery'],
     description: 'Rebuilding collar-and-sleeve structure to keep posture broken and angle available before the pass settles.',
-    relatedPositions: ['Collar-Sleeve Guard', 'Open Guard', 'Spider Guard']
+    relatedPositions: ['Collar-Sleeve Guard', 'Open Guard', 'Spider Guard'],
+    entriesIntoPosition: ['Collar-Sleeve Guard', 'Open Guard', 'Spider Guard', 'Seated Guard'],
+    commonTransitions: ['Spider Guard Recovery', 'Lasso Recovery', 'Foot-To-Hip Recovery', 'Open Guard Recomposition'],
+    commonFollowUps: ['Collar-Sleeve Guard', 'Omoplata', 'Tripod Sweep', 'Open Guard'],
+    commonDefenses: ['Pressure', 'Hand Fighting', 'Backstep Pass', 'Posting']
   },
   {
     id: 'guard-retention-k-guard-entry-for-retention',
@@ -4656,7 +4908,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['guard retention', 'k-guard', 'transition'],
     description: 'Using K-guard as a retention entry when the passer gets around the legs but the hips can still rotate underneath to recover angle.',
-    relatedPositions: ['K-Guard', 'Inversion Position', 'Open Guard']
+    relatedPositions: ['K-Guard', 'Inversion Position', 'Open Guard'],
+    entriesIntoPosition: ['K-Guard', 'Inversion Position', 'Open Guard', 'Supine Guard'],
+    commonTransitions: ['High Leg Recovery', 'Invert-To-Reguard', 'Single-Leg X', 'Shoulder Invert Recovery'],
+    commonFollowUps: ['K-Guard', 'Single-Leg X', 'Backside 50/50', 'Open Guard'],
+    commonDefenses: ['Pressure', 'Backstep Pass', 'Leg Drag', 'Posting']
   },
   {
     id: 'guard-retention-invert-to-reguard',
@@ -4666,7 +4922,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['guard retention', 'inversion', 'recovery'],
     description: 'Rotating underneath pressure so the hips and legs can face the passer again before control becomes settled.',
-    relatedPositions: ['Inversion Position', 'Open Guard', 'Supine Guard']
+    relatedPositions: ['Inversion Position', 'Open Guard', 'Supine Guard'],
+    entriesIntoPosition: ['Inversion Position', 'Open Guard', 'Supine Guard', 'Leg Drag Position'],
+    commonTransitions: ['Shoulder Invert Recovery', 'Shoulder Walk Recovery', 'K-Guard Entry For Retention', 'Anti-Leg-Drag Square-Up'],
+    commonFollowUps: ['Open Guard', 'Backside 50/50', 'Seated Guard', 'Turtle'],
+    commonDefenses: ['Pressure', 'Backstep Pass', 'Leg Drag', 'Body Lock Pass']
   },
   {
     id: 'guard-retention-anti-leg-drag-square-up',
@@ -4676,7 +4936,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'leg drag', 'angle recovery'],
     description: 'A leg-drag retention response that squares the hips back in front before the drag turns into side control or back exposure.',
-    relatedPositions: ['Leg Drag Position', 'Open Guard', 'Retaining Against Leg Drag']
+    relatedPositions: ['Leg Drag Position', 'Open Guard', 'Retaining Against Leg Drag'],
+    entriesIntoPosition: ['Leg Drag Position', 'Open Guard', 'Supine Guard', 'De La Riva'],
+    commonTransitions: ['Shoulder Post And Square-Up', 'Invert-To-Reguard', 'Split-Leg Retention Recovery', 'Foot-To-Hip Recovery'],
+    commonFollowUps: ['Open Guard', 'Seated Guard', 'Supine Square-Up Recovery', 'Turtle'],
+    commonDefenses: ['Pressure', 'Backstep Pass', 'Body Lock Pass', 'Leg Drag']
   },
   {
     id: 'guard-retention-shoulder-walk-recovery',
@@ -4686,7 +4950,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'shoulder mobility', 'recovery'],
     description: 'Using shoulder walking to create angle and space when the hips are pinned but full chest-to-chest control has not settled yet.',
-    relatedPositions: ['Supine Guard', 'Bottom North-South', 'Open Guard']
+    relatedPositions: ['Supine Guard', 'Bottom North-South', 'Open Guard'],
+    entriesIntoPosition: ['Supine Guard', 'Bottom North-South', 'Open Guard', 'Bottom Side Control'],
+    commonTransitions: ['Hip Escape Retention', 'Shoulder Invert Recovery', 'Invert-To-Reguard', 'Hip Swivel Recovery'],
+    commonFollowUps: ['Open Guard', 'Turtle', 'Seated Guard', 'Shin Insert Recovery'],
+    commonDefenses: ['Pressure', 'Posting', 'Backstep Pass', 'Hand Fighting']
   },
   {
     id: 'guard-retention-hand-pummel-recovery',
@@ -4696,7 +4964,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'hand fighting', 'recovery'],
     description: 'Using hand pummeling to reclaim inside position and rebuild the frames needed to stop the passing lane.',
-    relatedPositions: ['Open Guard', 'Seated Guard', 'Butterfly Guard']
+    relatedPositions: ['Open Guard', 'Seated Guard', 'Butterfly Guard'],
+    entriesIntoPosition: ['Open Guard', 'Seated Guard', 'Butterfly Guard', 'Supine Guard'],
+    commonTransitions: ['Frame Replacement', 'Shoulder Post And Square-Up', 'Elbow Frame Recovery', 'Seated Guard Recovery'],
+    commonFollowUps: ['Open Guard Recomposition', 'Shin Insert Recovery', 'Recovery To Seated Guard', 'Seated Guard'],
+    commonDefenses: ['Pressure', 'Hand Fighting', 'Body Lock Pass', 'Leg Drag']
   },
   {
     id: 'guard-retention-high-pummel-recovery',
@@ -4706,7 +4978,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['guard retention', 'leg pummel', 'recovery'],
     description: 'A higher-line leg pummel used when the passer has beaten the lower frames and the hips must recover over the top of the pressure.',
-    relatedPositions: ['Open Guard', 'De La Riva', 'Inversion Position']
+    relatedPositions: ['Open Guard', 'De La Riva', 'Inversion Position'],
+    entriesIntoPosition: ['Open Guard', 'De La Riva', 'Inversion Position', 'Supine Guard'],
+    commonTransitions: ['High Leg Recovery', 'K-Guard Entry For Retention', 'Shoulder Invert Recovery', 'Invert-To-Reguard'],
+    commonFollowUps: ['Open Guard', 'K-Guard', 'Inversion Position', 'Supine Square-Up Recovery'],
+    commonDefenses: ['Pressure', 'Backstep Pass', 'Leg Drag', 'Body Lock Pass']
   },
   {
     id: 'guard-retention-low-pummel-recovery',
@@ -4716,7 +4992,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'leg pummel', 'recovery'],
     description: 'A lower-line leg pummel used to reinsert the legs before the passer wins the inside lane to the hips.',
-    relatedPositions: ['Open Guard', 'Half Guard', 'Single-Leg X']
+    relatedPositions: ['Open Guard', 'Half Guard', 'Single-Leg X'],
+    entriesIntoPosition: ['Open Guard', 'Half Guard', 'Single-Leg X', 'Supine Guard'],
+    commonTransitions: ['Leg Pummeling', 'Shin Insert Recovery', 'Foot-To-Hip Recovery', 'Butterfly Hook Recovery'],
+    commonFollowUps: ['Half Guard', 'Butterfly Guard', 'Open Guard', 'Shin-To-Shin'],
+    commonDefenses: ['Pressure', 'Knee Staple Pass', 'Body Lock Pass', 'Smash Pass']
   },
   {
     id: 'guard-retention-shoulder-post-and-square-up',
@@ -4726,7 +5006,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'posting', 'angle recovery'],
     description: 'Posting on the shoulder line to create enough space to square the hips back in front of the passer before control settles.',
-    relatedPositions: ['Supine Guard', 'Open Guard', 'Inversion Position']
+    relatedPositions: ['Supine Guard', 'Open Guard', 'Inversion Position'],
+    entriesIntoPosition: ['Supine Guard', 'Open Guard', 'Inversion Position', 'Leg Drag Position'],
+    commonTransitions: ['Supine Square-Up Recovery', 'Seated Guard Recovery', 'Anti-Leg-Drag Square-Up', 'Open Guard Recomposition'],
+    commonFollowUps: ['Seated Guard', 'Supine Guard', 'Open Guard', 'Shin-To-Shin'],
+    commonDefenses: ['Pressure', 'Body Lock Pass', 'Leg Drag', 'Posting']
   },
   {
     id: 'guard-retention-two-feet-on-hips-recovery',
@@ -4736,7 +5020,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'distance', 'recovery'],
     description: 'Recovering double foot-on-hip structure to rebuild distance, slow forward pressure, and reopen stronger guard options.',
-    relatedPositions: ['Open Guard', 'Supine Guard', 'Seated Guard']
+    relatedPositions: ['Open Guard', 'Supine Guard', 'Seated Guard'],
+    entriesIntoPosition: ['Open Guard', 'Supine Guard', 'Seated Guard', 'Spider Guard'],
+    commonTransitions: ['Open Guard Recomposition', 'Spider Guard Recovery', 'Collar Sleeve Recovery', 'Seated Guard Recovery'],
+    commonFollowUps: ['Open Guard', 'Spider Guard', 'Collar-Sleeve Guard', 'Seated Guard'],
+    commonDefenses: ['Pressure', 'Posting', 'Backstep Pass', 'Hand Fighting']
   },
   {
     id: 'guard-retention-pummel-to-seated-guard',
@@ -4746,7 +5034,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'seated guard', 'recovery'],
     description: 'A reset that uses pummeling and angle recovery to return to seated guard before the passer can flatten the torso.',
-    relatedPositions: ['Seated Guard', 'Open Guard', 'Butterfly Guard']
+    relatedPositions: ['Seated Guard', 'Open Guard', 'Butterfly Guard'],
+    entriesIntoPosition: ['Seated Guard', 'Open Guard', 'Butterfly Guard', 'Supine Guard'],
+    commonTransitions: ['Seated Guard Recovery', 'Shin-To-Shin Recovery', 'Wrestle-Up Single Leg Sweep', 'Arm Drag To Back'],
+    commonFollowUps: ['Seated Guard', 'Shin-To-Shin', 'Single Leg', 'Collar Drag'],
+    commonDefenses: ['Front Headlock', 'Body Lock Standing', 'Pressure', 'Snap Down And Go Behind']
   },
   {
     id: 'guard-retention-frame-to-turtle-to-reguard',
@@ -4756,7 +5048,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['guard retention', 'turtle', 'emergency recovery'],
     description: 'An emergency retention sequence that uses frames to enter turtle safely and then re-guards before the ride becomes stable.',
-    relatedPositions: ['Turtle', 'Bottom Side Control', 'Open Guard']
+    relatedPositions: ['Turtle', 'Bottom Side Control', 'Open Guard'],
+    entriesIntoPosition: ['Turtle', 'Bottom Side Control', 'Open Guard', 'Bottom North-South'],
+    commonTransitions: ['Turtle-To-Seated Recovery', 'Recover Half Guard From Turtle', 'Granby Roll', 'Stand-Up From Turtle'],
+    commonFollowUps: ['Turtle', 'Seated Guard', 'Half Guard', 'Recovery To Seated Guard'],
+    commonDefenses: ['Front Headlock', 'Pressure', 'Back Control', 'Body Lock Standing']
   },
   {
     id: 'guard-retention-turtle-to-seated-recovery',
@@ -4766,7 +5062,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'turtle', 'seated guard'],
     description: 'A recovery route that turns turtle into a more proactive seated guard before the opponent can settle behind the hips.',
-    relatedPositions: ['Turtle', 'Seated Guard', 'Butterfly Guard']
+    relatedPositions: ['Turtle', 'Seated Guard', 'Butterfly Guard'],
+    entriesIntoPosition: ['Turtle', 'Seated Guard', 'Butterfly Guard', 'Bottom Side Control'],
+    commonTransitions: ['Recover Seated Guard', 'Shin-To-Shin Recovery', 'Pummel-To-Seated Guard', 'Stand-Up From Turtle'],
+    commonFollowUps: ['Seated Guard', 'Shin-To-Shin', 'Wrestle-Up Single Leg Sweep', 'Standing'],
+    commonDefenses: ['Front Headlock', 'Pressure', 'Back Control', 'Body Lock Standing']
   },
   {
     id: 'guard-retention-running-man-style-recovery-to-guard',
@@ -4776,7 +5076,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['guard retention', 'running man', 'emergency recovery'],
     description: 'A running-man style defensive reset that uses angled mobility to turn heavy side pressure back into guard recovery.',
-    relatedPositions: ['Running Man', 'Bottom Side Control', 'Open Guard']
+    relatedPositions: ['Running Man', 'Bottom Side Control', 'Open Guard'],
+    entriesIntoPosition: ['Running Man', 'Bottom Side Control', 'Open Guard', 'Bottom North-South'],
+    commonTransitions: ['Frame-To-Turtle-To-Reguard', 'Hip Pummel Escape', 'Shoulder Walk Recovery', 'Seated Guard Recovery'],
+    commonFollowUps: ['Turtle', 'Open Guard', 'Seated Guard', 'Half Guard'],
+    commonDefenses: ['Pressure', 'Back Control', 'Body Lock Standing', 'Posting']
   },
   {
     id: 'guard-retention-hip-swivel-recovery',
@@ -4786,7 +5090,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['guard retention', 'hips', 'angle recovery'],
     description: 'A rotating hip recovery that changes the alignment of the legs and torso before the passer can settle into a stronger lane.',
-    relatedPositions: ['Open Guard', 'Supine Guard', 'Inversion Position']
+    relatedPositions: ['Open Guard', 'Supine Guard', 'Inversion Position'],
+    entriesIntoPosition: ['Open Guard', 'Supine Guard', 'Inversion Position', 'Half Guard'],
+    commonTransitions: ['Shoulder Walk Recovery', 'Hip Escape Retention', 'Split-Leg Retention Recovery', 'Invert-To-Reguard'],
+    commonFollowUps: ['Open Guard', 'Supine Square-Up Recovery', 'Shin Insert Recovery', 'Seated Guard'],
+    commonDefenses: ['Pressure', 'Backstep Pass', 'Body Lock Pass', 'Leg Drag']
   },
   {
     id: 'guard-retention-shoulder-invert-recovery',
@@ -4796,7 +5104,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['guard retention', 'inversion', 'recovery'],
     description: 'An inversion-based shoulder recovery that uses rotation to put the hips back in front when the outside frames have already been beaten.',
-    relatedPositions: ['Inversion Position', 'Open Guard', 'K-Guard']
+    relatedPositions: ['Inversion Position', 'Open Guard', 'K-Guard'],
+    entriesIntoPosition: ['Inversion Position', 'Open Guard', 'K-Guard', 'Supine Guard'],
+    commonTransitions: ['Invert-To-Reguard', 'High Leg Recovery', 'K-Guard Entry For Retention', 'Shoulder Walk Recovery'],
+    commonFollowUps: ['Open Guard', 'Inversion Position', 'Backside 50/50', 'Recovery To Seated Guard'],
+    commonDefenses: ['Pressure', 'Backstep Pass', 'Leg Drag', 'Posting']
   },
   {
     id: 'guard-retention-split-leg-retention-recovery',
@@ -4806,7 +5118,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['guard retention', 'legs', 'recovery'],
     description: 'A retention response that uses split-leg structure to keep layered barriers active while re-squaring the hips and shoulders.',
-    relatedPositions: ['Open Guard', 'Supine Guard', 'De La Riva']
+    relatedPositions: ['Open Guard', 'Supine Guard', 'De La Riva'],
+    entriesIntoPosition: ['Open Guard', 'Supine Guard', 'De La Riva', 'Leg Drag Position'],
+    commonTransitions: ['Anti-Leg-Drag Square-Up', 'High Leg Recovery', 'Shin Insert Recovery', 'Invert-To-Reguard'],
+    commonFollowUps: ['Open Guard', 'Supine Square-Up Recovery', 'Seated Guard', 'K-Guard'],
+    commonDefenses: ['Pressure', 'Leg Drag', 'Backstep Pass', 'Knee Staple Pass']
   },
   {
     id: 'guard-retention-recovery-to-seated-guard',
@@ -4816,7 +5132,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'seated guard', 'reset'],
     description: 'A general reset pathway that returns the defender to seated guard before pressure can flatten the hips and shoulders.',
-    relatedPositions: ['Seated Guard', 'Open Guard', 'Butterfly Guard']
+    relatedPositions: ['Seated Guard', 'Open Guard', 'Butterfly Guard'],
+    entriesIntoPosition: ['Seated Guard', 'Open Guard', 'Butterfly Guard', 'Supine Guard'],
+    commonTransitions: ['Pummel-To-Seated Guard', 'Turtle-To-Seated Recovery', 'Shin-To-Shin Recovery', 'Arm Drag To Back'],
+    commonFollowUps: ['Seated Guard', 'Shin-To-Shin', 'Wrestle-Up Single Leg Sweep', 'Open Guard'],
+    commonDefenses: ['Front Headlock', 'Body Lock Standing', 'Pressure', 'Snap Down And Go Behind']
   },
   {
     id: 'guard-retention-recovery-to-supine-guard',
@@ -4826,7 +5146,11 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'supine guard', 'reset'],
     description: 'A general recovery that returns the defender to a safer supine frame-and-hook structure before the pass can settle.',
-    relatedPositions: ['Supine Guard', 'Open Guard', 'Seated Guard']
+    relatedPositions: ['Supine Guard', 'Open Guard', 'Seated Guard'],
+    entriesIntoPosition: ['Supine Guard', 'Open Guard', 'Seated Guard', 'Bottom Side Control'],
+    commonTransitions: ['Supine Square-Up Recovery', 'Two-Feet-On-Hips Recovery', 'Double Shin Recovery', 'Open Guard Recomposition'],
+    commonFollowUps: ['Supine Guard', 'Open Guard', 'Spider Guard', 'K-Guard'],
+    commonDefenses: ['Pressure', 'Leg Drag', 'Body Lock Pass', 'Knee Staple Pass']
   },
   {
     id: 'sweeps-scissor-sweep',
@@ -4836,7 +5160,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['guard', 'sweep', 'fundamental'],
     description: 'A basic sweep from closed guard using angle, sleeve or collar control, and shin pressure.',
-    relatedPositions: ['Closed Guard']
+    relatedPositions: ['Closed Guard', 'Mount', 'Top Half Guard', 'Pressure Passing'],
+    entriesIntoPosition: ['Closed Guard', 'Collar-Sleeve Guard', 'Breaking Posture'],
+    commonAttacks: ['Hip Bump Sweep', 'Pendulum Sweep', 'Flower Sweep', 'Triangle Choke'],
+    commonTransitions: ['Hip Bump Sweep', 'Pendulum Sweep', 'Flower Sweep', 'Triangle Choke'],
+    commonFollowUps: ['Mount', 'Top Half Guard', 'Pressure Passing', 'Crossface and Underhook Control'],
+    commonDefenses: ['Posting', 'Base', 'Posture', 'Knee Shield Half Guard']
   },
   {
     id: 'sweeps-hip-bump-sweep',
@@ -5490,7 +5819,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['sweep', 'de la riva', 'back take'],
     description: 'An inversion-based attack that turns de la riva style control into a back take through hip exposure.',
-    relatedPositions: ['De La Riva', 'Back Control']
+    relatedPositions: ['De La Riva', 'Reverse De La Riva', 'Back Control', 'Crab Ride'],
+    entriesIntoPosition: ['De La Riva', 'Reverse De La Riva', 'Inversion Position'],
+    commonAttacks: ['Baby Bolo', 'Kiss Of The Dragon', 'Crab Ride To Back', 'Leg Drag'],
+    commonTransitions: ['Baby Bolo', 'Kiss Of The Dragon', 'Crab Ride To Back', 'Leg Drag'],
+    commonFollowUps: ['Seatbelt', 'Back Mount', 'Body Triangle Back Control', 'Top Half Guard'],
+    commonDefenses: ['Posting', 'Backstep Pass', 'Granby Reversal', 'Leg Pummeling']
   },
   {
     id: 'sweeps-de-la-riva-tripod-variation',
@@ -5515,7 +5849,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['sweep', 'de la riva', 'inversion'],
     description: 'A lighter inversion route that uses hip exposure and timing to climb toward the back or top position.',
-    relatedPositions: ['De La Riva', 'Reverse De La Riva']
+    relatedPositions: ['De La Riva', 'Reverse De La Riva', 'Back Control', 'Crab Ride'],
+    entriesIntoPosition: ['De La Riva', 'Reverse De La Riva', 'Inversion Position'],
+    commonAttacks: ['Berimbolo Back Take', 'Kiss Of The Dragon', 'Crab Ride To Back', 'Leg Drag'],
+    commonTransitions: ['Berimbolo Back Take', 'Kiss Of The Dragon', 'Crab Ride To Back', 'Leg Drag'],
+    commonFollowUps: ['Back Control', 'Crab Ride', 'Leg Drag', 'Top Half Guard'],
+    commonDefenses: ['Backstep Pass', 'Posting', 'Base', 'Leg Pummeling']
   },
   {
     id: 'sweeps-kiss-of-the-dragon',
@@ -5525,7 +5864,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['sweep', 'reverse de la riva', 'back take'],
     description: 'A spin-under attack that creates hip exposure and strong pathways to the back from reverse de la riva.',
-    relatedPositions: ['Reverse De La Riva', 'Back Control']
+    relatedPositions: ['Reverse De La Riva', 'Back Control', 'Leg Drag', 'Single Leg'],
+    entriesIntoPosition: ['Reverse De La Riva', 'Inversion Position', 'Standing'],
+    commonAttacks: ['Baby Bolo', 'Berimbolo Back Take', 'Single Leg', 'Ashi Garami'],
+    commonTransitions: ['Baby Bolo', 'Berimbolo Back Take', 'Single Leg', 'Ashi Garami'],
+    commonFollowUps: ['Back Control', 'Top Half Guard', 'Leg Drag', 'Ashi Garami'],
+    commonDefenses: ['Backstep Pass', 'Posting', 'Base', 'Leg Pummeling']
   },
   {
     id: 'sweeps-reverse-de-la-riva-waiter-sweep',
@@ -5580,7 +5924,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['guard', 'sweep', 'closed guard'],
     description: 'A classic closed-guard sweep that swings the leg like a pendulum to pull the opponent over a broken shoulder line.',
-    relatedPositions: ['Closed Guard']
+    relatedPositions: ['Closed Guard', 'Mount', 'Top Half Guard', 'Triangle Choke'],
+    entriesIntoPosition: ['Closed Guard', 'Breaking Posture', 'Angle Creation'],
+    commonAttacks: ['Flower Sweep', 'Straight Armbar From Guard', 'Triangle Choke', 'Omoplata'],
+    commonTransitions: ['Flower Sweep', 'Straight Armbar From Guard', 'Triangle Choke', 'Omoplata'],
+    commonFollowUps: ['Mount', 'Top Half Guard', 'Straight Armbar From Guard', 'Omoplata'],
+    commonDefenses: ['Posture', 'Posting', 'Base', 'Hand Fighting']
   },
   {
     id: 'sweeps-tomoe-nage-sweep',
@@ -5695,7 +6044,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['sweep', '50/50', 'off-balance'],
     description: 'A base 50/50 sweep that uses upper-body direction and entanglement control to disrupt balance and come up on top.',
-    relatedPositions: ['50/50']
+    relatedPositions: ['50/50', 'Single-Leg X', 'Leg Drag', 'Straight Ankle Lock'],
+    entriesIntoPosition: ['50/50', 'Single-Leg X', 'Standing'],
+    commonAttacks: ['Single-Leg X Stand-Up Sweep', 'Straight Ankle Lock', 'Toe Hold', 'Leg Drag'],
+    commonTransitions: ['Single-Leg X Stand-Up Sweep', 'Straight Ankle Lock', 'Toe Hold', 'Ashi Garami'],
+    commonFollowUps: ['Top Half Guard', 'Leg Drag', 'Pressure Passing', 'Straight Ankle Lock'],
+    commonDefenses: ['Posting', 'Posture', 'Base', 'Leg Pummeling']
   },
   {
     id: 'sweeps-basic-spider-guard-sweep',
@@ -6155,7 +6509,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['sweep', 'seated guard', 'arm drag'],
     description: 'A seated arm-drag sweep that climbs behind the hips and finishes to top or rear angle before the base recovers.',
-    relatedPositions: ['Seated Guard', 'Back Control', 'Standing']
+    relatedPositions: ['Seated Guard', 'Back Control', 'Standing', 'Rear Body Lock Standing'],
+    entriesIntoPosition: ['Seated Guard', 'Closed Guard', 'Butterfly Guard', 'Arm Drag Rear Angle'],
+    commonAttacks: ['Arm Drag To Back', 'Rear Body Lock Standing', 'Single Leg', 'Wrestle-Up Single Leg Sweep'],
+    commonTransitions: ['Arm Drag To Back', 'Rear Body Lock Standing', 'Single Leg', 'Mat Return'],
+    commonFollowUps: ['Top Half Guard', 'Rear Body Lock Standing', 'Mat Return', 'Back Control'],
+    commonDefenses: ['Hand Fighting', 'Posting', 'Standing', 'Base']
   },
   {
     id: 'guard-passing-pressure-passing',
@@ -6810,7 +7169,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['passing', 'turtle', 'front headlock'],
     description: 'A passing route that converts turtle or front-headlock control into cleaner side control or back exposure.',
-    relatedPositions: ['Turtle', 'Front Headlock', 'Side Control']
+    relatedPositions: ['Turtle', 'Front Headlock', 'Side Control', 'North-South', 'Back Control'],
+    entriesIntoPosition: ['Front Headlock', 'Go-Behind Position', 'Seatbelt Standing', 'Spiral Ride', 'Back Control'],
+    commonAttacks: ['Front Headlock Go-Behind', 'Clock-Style Spin To Back', 'North-South To Back', 'Seatbelt From Turtle To Hooks'],
+    commonTransitions: ['Front Headlock Go-Behind', 'Spiral Ride', 'Hip-To-Hip Turtle Back Take', 'North-South To Back'],
+    commonFollowUps: ['Side Control', 'North-South', 'Back Control', 'Knee On Belly', 'Crucifix'],
+    commonDefenses: ['Sit-Out', 'Granby Reversal', 'Stand-Up From Turtle', 'Recover Seated Guard', 'Peek-Out Reversal']
   },
   {
     id: 'guard-passing-bullfighter-pass',
@@ -7235,7 +7599,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['back take', 'arm drag', 'transition'],
     description: 'An entry that uses arm drag control to move behind the opponent and secure stronger positional advantage.',
-    relatedPositions: ['Seated Guard', 'Standing']
+    relatedPositions: ['Seated Guard', 'Standing', 'Back Control', 'Rear Body Lock Standing'],
+    entriesIntoPosition: ['Seated Guard', 'Closed Guard', 'Butterfly Guard', 'Russian Tie Standing'],
+    commonAttacks: ['Rear Body Lock Standing', 'Mat Return', 'Single Leg', 'Back Control'],
+    commonTransitions: ['Rear Body Lock Standing', 'Mat Return', 'Back Control', 'Single Leg'],
+    commonFollowUps: ['Seatbelt', 'Back Mount', 'Body Triangle Back Control', 'Mat Return'],
+    commonDefenses: ['Hand Fighting', 'Posting', 'Standing', 'Pummeling']
   },
   {
     id: 'back-takes-berimbolo',
@@ -7755,7 +8124,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['submission', 'choke', 'gi'],
     description: 'A classic gi choke that uses deep collar alignment and structure more than speed or squeezing.',
-    relatedPositions: ['Closed Guard', 'Mount']
+    relatedPositions: ['Closed Guard', 'Mount', 'Side Control', 'Back Control'],
+    entriesIntoPosition: ['Closed Guard', 'Mount', 'Side Control', 'Back Control'],
+    commonAttacks: ['Sliding Collar Choke', 'Loop Choke', 'Straight Armbar From Guard'],
+    commonTransitions: ['Sliding Collar Choke', 'Loop Choke', 'Straight Armbar From Guard'],
+    commonFollowUps: ['Mount', 'Closed Guard', 'Straight Armbar From Guard', 'Side Control'],
+    commonDefenses: ['Posture', 'Hand Fighting', 'Ezekiel Posture Defense', 'Posting']
   },
   {
     id: 'submissions-sliding-collar-choke',
@@ -7765,7 +8139,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission', 'choke', 'gi'],
     description: 'A collar finish that sharpens as the forearm and lapel line slide into the neck while posture is pinned in place.',
-    relatedPositions: ['Back Control', 'Mount', 'Closed Guard']
+    relatedPositions: ['Back Control', 'Mount', 'Closed Guard', 'Side Control'],
+    entriesIntoPosition: ['Back Control', 'Mount', 'Closed Guard', 'Side Control'],
+    commonAttacks: ['Bow And Arrow Choke', 'Cross Collar Choke', 'Back Control'],
+    commonTransitions: ['Bow And Arrow Choke', 'Cross Collar Choke', 'Back Control'],
+    commonFollowUps: ['Back Control', 'Mount', 'Side Control', 'Closed Guard'],
+    commonDefenses: ['Hand Fighting', 'Posting', 'Shoulder-To-Mat Escape', 'Posture']
   },
   {
     id: 'submissions-loop-choke',
@@ -7775,7 +8154,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission', 'choke', 'front headlock'],
     description: 'A gi choke that punishes forward posture and exposes the neck during standing or seated exchanges.',
-    relatedPositions: ['Standing', 'Open Guard', 'Front Headlock']
+    relatedPositions: ['Standing', 'Open Guard', 'Front Headlock', 'Closed Guard'],
+    entriesIntoPosition: ['Standing', 'Seated Guard', 'Open Guard', 'Collar Tie'],
+    commonAttacks: ['Collar Drag', 'High Elbow Guillotine', 'Front Headlock Go-Behind'],
+    commonTransitions: ['Collar Drag', 'Front Headlock Standing', 'High Elbow Guillotine'],
+    commonFollowUps: ['Front Headlock Standing', 'Top Half Guard', 'Standing', 'High Elbow Guillotine'],
+    commonDefenses: ['Posture', 'Hand Fighting', 'Loop Choke Escape', 'Shoulder Roll']
   },
   {
     id: 'submissions-baseball-bat-choke',
@@ -7785,7 +8169,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission', 'choke', 'gi'],
     description: 'A rotational collar choke that often becomes visible from side control or guard when the grips are set early.',
-    relatedPositions: ['Side Control', 'Open Guard']
+    relatedPositions: ['Side Control', 'Open Guard', 'Knee On Belly', 'North-South'],
+    entriesIntoPosition: ['Knee On Belly', 'Side Control', 'Open Guard', 'North-South'],
+    commonAttacks: ['Cross Collar Choke', 'Sliding Collar Choke', 'North-South Choke'],
+    commonTransitions: ['Cross Collar Choke', 'Sliding Collar Choke', 'North-South'],
+    commonFollowUps: ['Side Control', 'Knee On Belly', 'North-South', 'Mount'],
+    commonDefenses: ['Posture', 'Hand Fighting', 'Hip Escape Retention', 'Bridge And Turn-In']
   },
   {
     id: 'submissions-ezekiel-choke',
@@ -7795,7 +8184,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['submission', 'choke', 'mount'],
     description: 'A choke that uses one sleeve or forearm line across the neck while the other arm completes the frame.',
-    relatedPositions: ['Mount', 'Closed Guard']
+    relatedPositions: ['Mount', 'Closed Guard', 'Side Control', 'Front Headlock'],
+    entriesIntoPosition: ['Mount', 'Closed Guard', 'Side Control', 'Front Headlock'],
+    commonAttacks: ['Punch Choke', 'Cross Collar Choke', 'Arm Triangle'],
+    commonTransitions: ['Punch Choke', 'Cross Collar Choke', 'Arm Triangle'],
+    commonFollowUps: ['Mount', 'Side Control', 'Punch Choke', 'Arm Triangle'],
+    commonDefenses: ['Posture', 'Hand Fighting', 'Ezekiel Posture Defense', 'Bridge And Turn-In']
   },
   {
     id: 'submissions-guillotine',
@@ -7820,7 +8214,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['submission', 'choke', 'guillotine'],
     description: 'A tighter guillotine variation that raises the elbow line to sharpen the finish and limit posture escape.',
-    relatedPositions: ['Front Headlock', 'Closed Guard']
+    relatedPositions: ['Front Headlock', 'Closed Guard', 'Standing', 'Seated Guard'],
+    entriesIntoPosition: ['Front Headlock', 'Standing', 'Closed Guard', 'Seated Guard'],
+    commonAttacks: ['Guillotine', 'Marcelotine', 'Arm-In Guillotine'],
+    commonTransitions: ['Guillotine', 'Marcelotine', 'Arm-In Guillotine'],
+    commonFollowUps: ['Front Headlock Standing', 'Top Half Guard', 'High Elbow Guillotine', 'Side Control'],
+    commonDefenses: ['Hand Fighting', 'Guillotine Shoulder-Pressure Escape', 'Posture', 'Headlock Escape']
   },
   {
     id: 'submissions-arm-in-guillotine',
@@ -7830,7 +8229,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission', 'choke', 'guillotine'],
     description: 'A guillotine variation that traps the arm inside the structure and changes the angle of pressure around the neck.',
-    relatedPositions: ['Front Headlock', 'Half Guard']
+    relatedPositions: ['Front Headlock', 'Half Guard', 'Top Half Guard', 'Closed Guard'],
+    entriesIntoPosition: ['Front Headlock', 'Half Guard', 'Top Half Guard', 'Standing'],
+    commonAttacks: ['High Elbow Guillotine', "D'Arce Choke", 'Front Headlock Standing'],
+    commonTransitions: ['High Elbow Guillotine', "D'Arce Choke", 'Front Headlock Standing'],
+    commonFollowUps: ['Front Headlock Standing', 'Top Half Guard', 'Side Control', 'Closed Guard'],
+    commonDefenses: ['Hand Fighting', 'Guillotine Shoulder-Pressure Escape', 'Headlock Escape', 'Posture']
   },
   {
     id: 'submissions-marcelotine',
@@ -7840,7 +8244,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['submission', 'choke', 'guillotine'],
     description: 'A marcelotine-style guillotine that relies on a high wrist line and fast shoulder connection to shut down posture.',
-    relatedPositions: ['Front Headlock', 'Standing']
+    relatedPositions: ['Front Headlock', 'Standing', 'Seated Guard', 'Closed Guard'],
+    entriesIntoPosition: ['Front Headlock', 'Standing', 'Seated Guard', 'Closed Guard'],
+    commonAttacks: ['High Elbow Guillotine', 'Guillotine', 'Front Headlock To Spin Behind'],
+    commonTransitions: ['High Elbow Guillotine', 'Guillotine', 'Front Headlock Standing'],
+    commonFollowUps: ['Front Headlock Standing', 'Top Half Guard', 'Side Control', 'Closed Guard'],
+    commonDefenses: ['Hand Fighting', 'Guillotine Shoulder-Pressure Escape', 'Posture', 'Headlock Escape']
   },
   {
     id: 'submissions-anaconda-choke',
@@ -7865,7 +8274,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission', 'choke', 'front headlock'],
     description: 'A long-arm head-and-arm choke that appears from front headlock control, half guard, and passing scrambles.',
-    relatedPositions: ['Front Headlock', 'Top Half Guard']
+    relatedPositions: ['Front Headlock', 'Top Half Guard', 'Side Control', 'Half Guard'],
+    entriesIntoPosition: ['Front Headlock', 'Top Half Guard', 'Side Control', 'Half Guard'],
+    commonAttacks: ['Anaconda Choke', 'Guillotine', 'Front Headlock Go-Behind'],
+    commonTransitions: ['Anaconda Choke', 'Guillotine', 'Front Headlock Standing'],
+    commonFollowUps: ['Front Headlock Standing', 'Top Half Guard', 'Side Control', 'Back Control'],
+    commonDefenses: ['Hand Fighting', "D'Arce Escape", 'Headlock Escape', 'Sit-Out']
   },
   {
     id: 'submissions-japanese-necktie',
@@ -7890,7 +8304,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['submission', 'choke', 'front headlock'],
     description: 'A front-headlock finish that uses the leg and shoulder line to stretch the upper body into the choke.',
-    relatedPositions: ['Front Headlock', 'Turtle']
+    relatedPositions: ['Front Headlock', 'Turtle', 'Seated Front Headlock', 'Guillotine Position'],
+    entriesIntoPosition: ['Front Headlock', 'Turtle', 'Seated Front Headlock', 'Guillotine Position'],
+    commonAttacks: ['Guillotine', 'Japanese Necktie', 'Snap Down To Front Headlock'],
+    commonTransitions: ['Guillotine', 'Japanese Necktie', 'Front Headlock Standing'],
+    commonFollowUps: ['Front Headlock Standing', 'Side Control', 'Top Half Guard', 'Back Control'],
+    commonDefenses: ['Hand Fighting', 'Posture', 'Shoulder Roll', 'Headlock Escape']
   },
   {
     id: 'submissions-north-south-choke',
@@ -7935,7 +8354,7 @@ const curriculumIndexSeed = [
     commonAttacks: ['Mounted Triangle', 'Wrist Lock'],
     commonTransitions: ['S-Mount', 'Belly-Down Armbar'],
     commonFollowUps: ['Belly-Down Armbar', 'Mounted Triangle', 'Technical Mount'],
-    commonDefenses: ['Armbar Hitchhiker', 'Armbar Stacking Defense', 'Hand Fighting']
+    commonDefenses: ['Armbar Hitchhiker Defense', 'Armbar Stacking Defense', 'Hand Fighting']
   },
   {
     id: 'submissions-straight-armbar-from-side-control',
@@ -7945,7 +8364,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission', 'armbar', 'side control'],
     description: 'An armbar variation from side control that turns chest-to-chest pinning into a cleaner upper-body isolation.',
-    relatedPositions: ['Side Control']
+    relatedPositions: ['Side Control', 'Mount', 'Armbar Position', 'Americana'],
+    entriesIntoPosition: ['Side Control', 'Americana', 'Kimura', 'Mount'],
+    commonAttacks: ['Belly-Down Armbar', 'Mount', 'Wrist Lock'],
+    commonTransitions: ['Belly-Down Armbar', 'Mount', 'Wrist Lock'],
+    commonFollowUps: ['Side Control', 'Mount', 'Belly-Down Armbar', 'Technical Mount'],
+    commonDefenses: ['Hand Fighting', 'Armbar Hitchhiker Defense', 'Armbar Stacking Defense', 'Bridge And Turn-In']
   },
   {
     id: 'submissions-belly-down-armbar',
@@ -7955,7 +8379,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission', 'armbar', 'rotation'],
     description: 'A stronger finishing angle on the armbar that rotates the torso downward to increase control and extension.',
-    relatedPositions: ['Armbar Position', 'Mount']
+    relatedPositions: ['Armbar Position', 'Mount', 'Side Control', 'Back Control'],
+    entriesIntoPosition: ['Armbar Position', 'Mount', 'Side Control', 'Straight Armbar From Side Control'],
+    commonAttacks: ['Straight Armbar From Mount', 'Kimura', 'Back Control'],
+    commonTransitions: ['Straight Armbar From Mount', 'Kimura', 'Back Control'],
+    commonFollowUps: ['Mount', 'Back Control', 'Side Control', 'Armbar Position'],
+    commonDefenses: ['Armbar Hitchhiker Defense', 'Armbar Stacking Defense', 'Hand Fighting', 'Shoulder Roll']
   },
   {
     id: 'submissions-triangle-choke',
@@ -7980,7 +8409,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission', 'choke', 'guard'],
     description: 'A triangle-style variation that clamps the knees together to tighten the finish when the standard lock is less available.',
-    relatedPositions: ['Closed Guard', 'Open Guard']
+    relatedPositions: ['Closed Guard', 'Open Guard', 'Mounted Triangle', 'Triangle Position'],
+    entriesIntoPosition: ['Closed Guard', 'Mounted Triangle', 'Triangle Position', 'Open Guard'],
+    commonAttacks: ['Triangle Choke', 'Mounted Triangle', 'Straight Armbar From Guard'],
+    commonTransitions: ['Triangle Choke', 'Mounted Triangle', 'Straight Armbar From Guard'],
+    commonFollowUps: ['Mounted Triangle', 'Straight Armbar From Guard', 'Hip Bump Sweep', 'Mount'],
+    commonDefenses: ['Posture', 'Hand Fighting', 'Triangle Posture Defense', 'Triangle Hand-Fight / Angle-Kill Defense']
   },
   {
     id: 'submissions-straight-armbar-from-guard',
@@ -7995,7 +8429,7 @@ const curriculumIndexSeed = [
     commonAttacks: ['Triangle Choke', 'Omoplata'],
     commonTransitions: ['High Guard', 'Belly-Down Armbar'],
     commonFollowUps: ['Belly-Down Armbar', 'Hip Bump Sweep', 'Triangle Choke'],
-    commonDefenses: ['Armbar Hitchhiker', 'Armbar Stacking Defense', 'Posture']
+    commonDefenses: ['Armbar Hitchhiker Defense', 'Armbar Stacking Defense', 'Posture']
   },
   {
     id: 'submissions-americana',
@@ -8005,7 +8439,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['submission', 'shoulder lock', 'top game'],
     description: 'A classic top-position shoulder lock that builds on wrist control, elbow isolation, and heavy pinning.',
-    relatedPositions: ['Side Control', 'Mount']
+    relatedPositions: ['Side Control', 'Mount', 'Kesa Gatame', 'Straight Armbar From Mount'],
+    entriesIntoPosition: ['Side Control', 'Mount', 'Kesa Gatame', 'Gift Wrap'],
+    commonAttacks: ['Straight Armbar From Mount', 'Wrist Lock', 'Mount'],
+    commonTransitions: ['Straight Armbar From Mount', 'Wrist Lock', 'Mount'],
+    commonFollowUps: ['Mount', 'Side Control', 'Straight Armbar From Mount', 'Technical Mount'],
+    commonDefenses: ['Americana Elbow Recovery Defense', 'Hand Fighting', 'Bridge And Turn-In', 'Shoulder Roll']
   },
   {
     id: 'submissions-straight-armlock',
@@ -8015,7 +8454,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission', 'arm lock', 'extension'],
     description: 'A straight-line upper-body submission that extends the arm without requiring a full classic armbar structure.',
-    relatedPositions: ['Side Control', 'Mount']
+    relatedPositions: ['Side Control', 'Mount', 'Closed Guard', 'Straight Armbar From Side Control'],
+    entriesIntoPosition: ['Mount', 'Side Control', 'Kimura', 'Americana'],
+    commonAttacks: ['Straight Armbar From Side Control', 'Belly-Down Armbar', 'Wrist Lock'],
+    commonTransitions: ['Straight Armbar From Side Control', 'Belly-Down Armbar', 'Wrist Lock'],
+    commonFollowUps: ['Mount', 'Side Control', 'Belly-Down Armbar', 'Top Half Guard'],
+    commonDefenses: ['Hand Fighting', 'Armbar Stacking Defense', 'Bridge And Turn-In', 'Posture']
   },
   {
     id: 'submissions-wrist-lock',
@@ -8025,7 +8469,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['submission', 'wrist lock', 'control'],
     description: 'A tight submission that uses small-angle joint pressure when posture, grips, or framing hands are exposed.',
-    relatedPositions: ['Mount', 'Back Control', 'Side Control']
+    relatedPositions: ['Mount', 'Back Control', 'Side Control', 'Closed Guard'],
+    entriesIntoPosition: ['Mount', 'Side Control', 'Back Control', 'Kimura'],
+    commonAttacks: ['Americana', 'Straight Armlock', 'Straight Armbar From Mount'],
+    commonTransitions: ['Americana', 'Straight Armlock', 'Straight Armbar From Mount'],
+    commonFollowUps: ['Mount', 'Side Control', 'Back Control', 'Straight Armlock'],
+    commonDefenses: ['Hand Fighting', 'Posture', 'Shoulder Roll', 'Bridge And Turn-In']
   },
   {
     id: 'submissions-tarikoplata',
@@ -8124,7 +8573,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission', 'choke', 'mount'],
     description: 'A triangle variation from mount that isolates the shoulder and traps the upper body from a dominant top line.',
-    relatedPositions: ['Mount', 'S-Mount']
+    relatedPositions: ['Mount', 'S-Mount', 'Triangle Position', 'Straight Armbar From Mount'],
+    entriesIntoPosition: ['Mount', 'S-Mount', 'Straight Armbar From Mount', 'Gift Wrap'],
+    commonAttacks: ['Teepee Choke', 'Straight Armbar From Mount', 'Arm Triangle'],
+    commonTransitions: ['Teepee Choke', 'Straight Armbar From Mount', 'Arm Triangle'],
+    commonFollowUps: ['Mount', 'Straight Armbar From Mount', 'Technical Mount', 'Arm Triangle'],
+    commonDefenses: ['Posture', 'Hand Fighting', 'Triangle Posture Defense', 'Armbar Stacking Defense']
   },
   {
     id: 'submissions-reverse-triangle',
@@ -8134,7 +8588,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['submission', 'choke', 'leg entanglement'],
     description: 'A triangle variation that turns the locking angle around the far shoulder and neck from less common directions.',
-    relatedPositions: ['Back Control', 'North-South']
+    relatedPositions: ['Back Control', 'North-South', 'Side Control', 'Omoplata Position'],
+    entriesIntoPosition: ['Back Control', 'Side Control', 'North-South', 'Mounted Triangle'],
+    commonAttacks: ['Straight Armbar From Side Control', 'Omoplata', 'Triangle Choke'],
+    commonTransitions: ['Straight Armbar From Side Control', 'Omoplata', 'Back Control'],
+    commonFollowUps: ['Back Control', 'Side Control', 'North-South', 'Omoplata'],
+    commonDefenses: ['Posture', 'Hand Fighting', 'Shoulder Roll', 'Triangle Hand-Fight / Angle-Kill Defense']
   },
   {
     id: 'submissions-gogoplata',
@@ -8144,7 +8603,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['submission', 'choke', 'guard'],
     description: 'A shin-based choke from guard that depends on posture control, angle, and keeping the opponent folded into the frame.',
-    relatedPositions: ['Closed Guard', 'Rubber Guard']
+    relatedPositions: ['Closed Guard', 'Rubber Guard', 'Omoplata Position', 'Triangle Position'],
+    entriesIntoPosition: ['Rubber Guard', 'Closed Guard', 'Omoplata Position', 'Triangle Position'],
+    commonAttacks: ['Omoplata', 'Triangle Choke', 'Straight Armbar From Guard'],
+    commonTransitions: ['Omoplata', 'Triangle Choke', 'Straight Armbar From Guard'],
+    commonFollowUps: ['Hip Bump Sweep', 'Straight Armbar From Guard', 'Triangle Choke', 'Mount'],
+    commonDefenses: ['Posture', 'Hand Fighting', 'Armbar Stacking Defense', 'Shoulder Roll']
   },
   {
     id: 'submissions-von-flue-choke',
@@ -8154,7 +8618,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission', 'choke', 'side control'],
     description: 'A top-position counter choke that punishes lingering guillotine grips by driving shoulder pressure into the neck.',
-    relatedPositions: ['Side Control']
+    relatedPositions: ['Side Control', 'Top Half Guard', 'Mount', 'Guillotine Position'],
+    entriesIntoPosition: ['Side Control', 'Top Half Guard', 'Guillotine Position', 'Mount'],
+    commonAttacks: ['North-South Choke', 'Punch Choke', 'Mount'],
+    commonTransitions: ['Side Control', 'Mount', 'North-South'],
+    commonFollowUps: ['Side Control', 'Mount', 'North-South', 'Top Half Guard'],
+    commonDefenses: ['Hand Fighting', 'Guillotine Shoulder-Pressure Escape', 'Hip Escape Retention', 'Bridge And Turn-In']
   },
   {
     id: 'submissions-no-gi-ezekiel',
@@ -8164,7 +8633,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission', 'choke', 'mount'],
     description: 'A no-gi adaptation of the Ezekiel that uses forearm structure and tight shoulder alignment instead of sleeve control.',
-    relatedPositions: ['Mount', 'Closed Guard']
+    relatedPositions: ['Mount', 'Closed Guard', 'Side Control', 'Front Headlock'],
+    entriesIntoPosition: ['Mount', 'Side Control', 'Front Headlock', 'Closed Guard'],
+    commonAttacks: ['Punch Choke', 'Ezekiel Choke', 'Arm Triangle'],
+    commonTransitions: ['Punch Choke', 'Ezekiel Choke', 'Arm Triangle'],
+    commonFollowUps: ['Mount', 'Side Control', 'Arm Triangle', 'Technical Mount'],
+    commonDefenses: ['Posture', 'Hand Fighting', 'Ezekiel Posture Defense', 'Bridge And Turn-In']
   },
   {
     id: 'submissions-punch-choke',
@@ -8174,7 +8648,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission', 'choke', 'mount'],
     description: 'A compact top-position choke that drives the knuckles or forearm line into the neck while the upper body stays pinned.',
-    relatedPositions: ['Mount']
+    relatedPositions: ['Mount', 'Arm Triangle', 'Technical Mount', 'High Mount'],
+    entriesIntoPosition: ['Mount', 'Technical Mount', 'High Mount', 'Arm Triangle'],
+    commonAttacks: ['Ezekiel Choke', 'No-Gi Ezekiel', 'Arm Triangle'],
+    commonTransitions: ['Ezekiel Choke', 'No-Gi Ezekiel', 'Arm Triangle'],
+    commonFollowUps: ['Mount', 'High Mount', 'Arm Triangle', 'Technical Mount'],
+    commonDefenses: ['Posture', 'Hand Fighting', 'Bridge And Turn-In', 'Knee-Elbow To Half Guard']
   },
   {
     id: 'submissions-straight-ankle-lock',
@@ -8229,7 +8708,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission', 'leg lock', 'rotation'],
     description: 'A rotational foot lock that often appears during transitions when the heel line is exposed.',
-    relatedPositions: ['50/50', 'Ashi Garami', 'Saddle']
+    relatedPositions: ['50/50', 'Ashi Garami', 'Saddle'],
+    entriesIntoPosition: ['50/50', 'Top Half Guard', 'Ashi Garami', 'Saddle'],
+    commonAttacks: ['Kneebar', 'Aoki Lock', 'Outside Heel Hook'],
+    commonTransitions: ['Kneebar', 'Aoki Lock', 'Calf Slicer', 'Outside Heel Hook'],
+    commonFollowUps: ['Kneebar', 'Top Half Guard', 'Leg Drag', 'Side Control'],
+    commonDefenses: ['Toe Hold Escape', 'Hand Fighting', 'Posting', 'Kneebar Turn Escape']
   },
   {
     id: 'submissions-kneebar',
@@ -8239,7 +8723,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission', 'leg lock', 'extension'],
     description: 'A straight-line lower-body attack that extends the knee when the hips and knee line are tightly controlled.',
-    relatedPositions: ['Saddle', 'Top Half Guard']
+    relatedPositions: ['Saddle', 'Top Half Guard'],
+    entriesIntoPosition: ['Top Half Guard', 'Single-Leg X', 'Cross Ashi', 'Saddle'],
+    commonAttacks: ['Toe Hold', 'Calf Slicer', 'Inside Heel Hook'],
+    commonTransitions: ['Toe Hold', 'Calf Slicer', 'Backstep Pass', 'Outside Heel Hook'],
+    commonFollowUps: ['Top Half Guard', 'Leg Drag', 'Side Control', 'Backstep Pass'],
+    commonDefenses: ['Kneebar Turn Escape', 'Hand Fighting', 'Posting', 'Heel Hook Line Escape']
   },
   {
     id: 'submissions-aoki-lock',
@@ -8664,15 +9153,14 @@ const curriculumIndexSeed = [
     id: 'submission-defense-armbar-hitchhiker',
     category: 'Submission Defense',
     subcategory: 'Armbar Defense',
-    name: 'Armbar Hitchhiker',
+    name: 'Armbar Hitchhiker Defense',
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'armbar', 'escape'],
-    description: 'A directional armbar escape that depends on turning the thumb line and moving to the safe side.',
-    relatedPositions: ['Top Half Guard', 'Combat Base', 'Open Guard'],
-    commonAttacks: ['Single Leg'],
-    commonTransitions: ['Top Half Guard', 'Combat Base', 'Open Guard'],
-    commonFollowUps: ['Top Half Guard', 'Combat Base', 'Single Leg', 'Open Guard'],
-    commonDefenses: ['Hand Fighting', 'Posture']
+    description: 'A late-stage armbar defense that depends on turning the thumb line, running to the safe side, and slipping free before the attacker can re-angle or go belly down.',
+    relatedPositions: ['Armbar Position', 'Top Half Guard', 'Combat Base', 'Open Guard'],
+    commonTransitions: ['Armbar Stacking Defense', 'Shoulder Roll', 'Bridge And Turn-In'],
+    commonFollowUps: ['Top Half Guard', 'Combat Base', 'Open Guard'],
+    commonDefenses: ['Hand Fighting', 'Posture', 'Shoulder Roll']
   },
   {
     id: 'submission-defense-armbar-stacking-defense',
@@ -8681,12 +9169,11 @@ const curriculumIndexSeed = [
     name: 'Armbar Stacking Defense',
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'armbar', 'stacking'],
-    description: 'A defensive response that uses posture, shoulder pressure, and angle denial to relieve the breaking line before separating the legs.',
-    relatedPositions: ['Closed Guard', 'Combat Base', 'Top Half Guard'],
-    commonAttacks: ['Double Under Pass'],
-    commonTransitions: ['Combat Base', 'Top Half Guard', 'Open Guard'],
-    commonFollowUps: ['Combat Base', 'Double Under Pass', 'Top Half Guard', 'Open Guard'],
-    commonDefenses: ['Posture', 'Hand Fighting']
+    description: 'A stacking defense that uses posture, shoulder pressure, and forward drive to keep the elbow line from fully extending before the attacker can angle out or belly down.',
+    relatedPositions: ['Armbar Position', 'Closed Guard', 'Combat Base', 'Top Half Guard'],
+    commonTransitions: ['Armbar Hitchhiker Defense', 'Shoulder Roll', 'Bridge And Turn-In'],
+    commonFollowUps: ['Combat Base', 'Top Half Guard', 'Double Under Pass', 'Open Guard'],
+    commonDefenses: ['Posture', 'Hand Fighting', 'Shoulder Roll']
   },
   {
     id: 'submission-defense-triangle-posture-escape',
@@ -8695,76 +9182,89 @@ const curriculumIndexSeed = [
     name: 'Triangle Posture Defense',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'triangle', 'posture'],
-    description: 'A triangle escape focused on rebuilding posture and breaking the legs apart.',
-    relatedPositions: ['Combat Base', 'Top Half Guard', 'Open Guard']
+    description: 'A triangle defense focused on rebuilding posture before the shoulder line is fully broken and using that posture to open safer exit routes.',
+    relatedPositions: ['Triangle Position', 'Combat Base', 'Top Half Guard', 'Open Guard'],
+    commonTransitions: ['Triangle Hand-Fight / Angle-Kill Defense', 'Armbar Stacking Defense', 'Posture'],
+    commonFollowUps: ['Combat Base', 'Top Half Guard', 'Open Guard'],
+    commonDefenses: ['Posture', 'Hand Fighting', 'Shoulder Roll']
   },
   {
     id: 'submission-defense-triangle-hand-fight-angle-kill',
     category: 'Submission Defense',
     subcategory: 'Triangle Defense',
-    name: 'Triangle Escape With Hand Fighting/Angles',
+    name: 'Triangle Hand-Fight / Angle-Kill Defense',
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'triangle', 'hand fighting'],
-    description: 'A triangle defense that hand fights the setup picking a side with your elbow to cut an angle to separate the legs and make the triangle harder to lock.',
-    relatedPositions: ['Combat Base', 'Top Half Guard', 'Open Guard']
+    description: 'A triangle defense that hand fights the control line, wins the shoulder back inside, and kills the attacker’s angle before the lock fully settles.',
+    relatedPositions: ['Triangle Position', 'Combat Base', 'Top Half Guard', 'Open Guard'],
+    commonTransitions: ['Triangle Posture Defense', 'Armbar Stacking Defense', 'Posture'],
+    commonFollowUps: ['Combat Base', 'Top Half Guard', 'Open Guard'],
+    commonDefenses: ['Hand Fighting', 'Posture', 'Shoulder Roll']
   },
   {
     id: 'submission-defense-kimura-roll-defense',
     category: 'Submission Defense',
-    subcategory: 'Shoulder Lock Defense',
+    subcategory: 'Kimura / Americana Defense',
     name: 'Kimura Roll Defense',
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'kimura', 'shoulder lock'],
-    description: 'A defense that addresses the kimura grip before the rolling finish develops by reclaiming posture and clearing the elbow line.',
-    relatedPositions: ['Posture', 'Top Half Guard', 'Back To The Mat Escape']
+    description: 'A kimura defense that uses the roll path to relieve shoulder pressure, reclaim posture, and recover the elbow line before the attacker can follow to a stronger finish.',
+    relatedPositions: ['Kimura Trap', 'Posture', 'Top Half Guard', 'Back To The Mat Escape'],
+    commonTransitions: ['Posture', 'Shoulder Roll', 'Back To The Mat Escape'],
+    commonFollowUps: ['Top Half Guard', 'Back To The Mat Escape', 'Shoulder Roll'],
+    commonDefenses: ['Hand Fighting', 'Posture', 'Shoulder Roll']
   },
   {
     id: 'submission-defense-guillotine-hand-fight',
     category: 'Submission Defense',
-    subcategory: 'Guillotine Defense',
-    name: 'Guillotine Hand Fight And Shoulder Pressure Defense',
+    subcategory: 'Guillotine / Front Headlock Choke Defense',
+    name: 'Guillotine Hand-Fight And Shoulder-Pressure Defense',
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'guillotine', 'front headlock'],
-    description: 'A layered defense that combines early hand fighting, posture correction, and smart shoulder pressure.',
-    relatedPositions: ['Headlock Escape', 'Shoulder Slide Escape', 'Top Half Guard', 'Sit-Out']
+    description: 'A layered guillotine defense that combines early hand fighting, posture correction, and correct-side shoulder pressure before the choke line fully seals.',
+    relatedPositions: ['Guillotine Position', 'Headlock Escape', 'Top Half Guard', 'Sit-Out'],
+    commonTransitions: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out'],
+    commonFollowUps: ['Headlock Escape', 'Top Half Guard', 'Sit-Out'],
+    commonDefenses: ['Hand Fighting', 'Posture', 'Shoulder Slide Escape']
   },
   {
     id: 'submission-defense-rear-naked-choke-hand-peel',
     category: 'Submission Defense',
-    subcategory: 'Back Control Defense',
+    subcategory: 'Back Choke Defense',
     name: 'Rear Naked Choke Hand Peel Defense',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'back control', 'hand fighting'],
-    description: 'An early back-defense priority that focuses on peeling the finishing hand before the choke fully locks.',
-    relatedPositions: ['Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Hook Stripping Escape'],
+    description: 'A back-choke defense that prioritizes exposing and peeling the choking hand before the rear naked choke fully locks.',
+    relatedPositions: ['Back Control', 'Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Hook Stripping Escape'],
     commonTransitions: ['Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Hook Stripping Escape'],
-    commonFollowUps: ['Shoulder-To-Mat Escape', 'Hook Stripping Escape', 'Escape To Top Half'],
-    commonDefenses: ['Two-On-One Grip Fight', 'Hand Fighting']
+    commonFollowUps: ['Shoulder-To-Mat Escape', 'Back To The Mat Escape', 'Hook Stripping Escape'],
+    commonDefenses: ['Two-On-One Grip Fight', 'Hand Fighting', 'Shoulder-To-Mat Escape']
   },
   {
     id: 'submission-defense-bow-and-arrow-hand-fight',
     category: 'Submission Defense',
-    subcategory: 'Back Control Defense',
-    name: 'Bow And Arrow Choke Hand Fight Defense',
+    subcategory: 'Back Choke Defense',
+    name: 'Bow And Arrow Hand-Fight Defense',
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'back control', 'gi choke'],
-    description: 'A defensive sequence that focuses on hand fighting, collar relief, and hip alignment before the stretching angle becomes too strong.',
-    relatedPositions: ['Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Back To The Mat Escape'],
+    description: 'A back-choke defense that hand fights the collar control, relieves the stretching line, and turns back toward the mat before the bow-and-arrow angle fully settles.',
+    relatedPositions: ['Back Control', 'Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Back To The Mat Escape'],
     commonTransitions: ['Two-On-One Grip Fight', 'Shoulder-To-Mat Escape', 'Back To The Mat Escape'],
     commonFollowUps: ['Shoulder-To-Mat Escape', 'Back To The Mat Escape', 'Escape To Top Half'],
-    commonDefenses: ['Two-On-One Grip Fight', 'Hand Fighting']
+    commonDefenses: ['Hand Fighting', 'Posture', 'Back To The Mat Escape']
   },
   {
     id: 'submission-defense-americana-defense',
     category: 'Submission Defense',
-    subcategory: 'Shoulder Lock Defense',
+    subcategory: 'Kimura / Americana Defense',
     name: 'Americana Elbow Recovery Defense',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'shoulder lock', 'frames'],
-    description: 'A defense that prioritizes elbow positioning, frame recovery, and denying the angle needed to finish.',
-    relatedPositions: ['Frame And Shrimp', 'Bridge And Turn-In', 'Hip Escape Retention'],
-    commonTransitions: ['Frame And Shrimp', 'Bridge And Turn-In', 'Hip Escape Retention'],
-    commonFollowUps: ['Frame And Shrimp', 'Bridge And Turn-In', 'Hip Escape Retention']
+    description: 'An americana defense that prioritizes recovering the elbow toward the ribs, rebuilding frames, and turning out before the shoulder line becomes fully pinned.',
+    relatedPositions: ['Americana', 'Frame And Shrimp', 'Bridge And Turn-In', 'Hip Escape Retention'],
+    commonTransitions: ['Frame And Shrimp', 'Bridge And Turn-In', 'Shoulder Roll'],
+    commonFollowUps: ['Frame And Shrimp', 'Bridge And Turn-In', 'Hip Escape Retention'],
+    commonDefenses: ['Hand Fighting', 'Posture', 'Shoulder Roll']
   },
   {
     id: 'submission-defense-straight-ankle-lock-boot-defense',
@@ -8773,8 +9273,11 @@ const curriculumIndexSeed = [
     name: 'Straight Ankle Lock Boot Defense',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'straight ankle lock', 'leg lock'],
-    description: 'A foundational defense that stiffens the foot line, manages hip distance, and helps buy time to clear the knee line.',
-    relatedPositions: ['Ashi Garami', 'Single-Leg X']
+    description: 'A foundational straight ankle lock defense that boots the foot, manages hip distance, and buys time to clear the knee line before the bite deepens.',
+    relatedPositions: ['Ashi Garami', 'Single-Leg X'],
+    commonTransitions: ['Heel Hook Line Defense', 'Toe Hold Escape', 'Aoki Lock Escape'],
+    commonFollowUps: ['Standing', 'Open Guard', 'Single-Leg X'],
+    commonDefenses: ['Hand Fighting', 'Posture', 'Standing']
   },
   {
     id: 'submission-defense-heel-hook-line-escape',
@@ -8783,8 +9286,11 @@ const curriculumIndexSeed = [
     name: 'Heel Hook Line Defense',
     skillLevel: 'Advanced',
     tags: ['submission defense', 'heel hook', 'leg lock'],
-    description: 'A defensive response that clears the knee line and turns the hips before the rotational finish is fully connected.',
-    relatedPositions: ['Saddle', '50/50', 'Cross Ashi']
+    description: 'A heel-hook defense that hides the heel and clears the knee line before the rotational finish is fully connected.',
+    relatedPositions: ['Saddle', '50/50', 'Cross Ashi'],
+    commonTransitions: ['Straight Ankle Lock Boot Defense', 'Toe Hold Escape', 'Aoki Lock Escape'],
+    commonFollowUps: ['Standing', 'Open Guard', 'Single-Leg X'],
+    commonDefenses: ['Hand Fighting', 'Posture', 'Standing']
   },
   {
     id: 'submission-defense-kneebar-turn-defense',
@@ -8794,85 +9300,101 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'kneebar', 'leg lock'],
     description: 'A kneebar defense that turns the hips and knee line into a safer angle before the extension is fully locked in.',
-    relatedPositions: ['Saddle', 'Top Half Guard']
+    relatedPositions: ['Kneebar', 'Saddle', 'Top Half Guard'],
+    commonTransitions: ['Straight Ankle Lock Boot Defense', 'Heel Hook Line Defense', 'Toe Hold Escape'],
+    commonFollowUps: ['Standing', 'Open Guard', 'Top Half Guard'],
+    commonDefenses: ['Hand Fighting', 'Posture', 'Standing']
   },
   {
     id: 'submission-defense-omoplata-forward-roll-escape',
     category: 'Submission Defense',
-    subcategory: 'Shoulder Lock Defense',
+    subcategory: 'Omoplata Defense',
     name: 'Omoplata Forward Roll Defense',
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'omoplata', 'shoulder lock'],
-    description: 'A response to the omoplata that uses a forward roll or angle change to relieve shoulder pressure and recover base.',
-    relatedPositions: ['Closed Guard', 'Open Guard']
+    description: 'An omoplata defense that uses a forward roll or angle change to relieve shoulder pressure and recover base before the shoulder line is fully trapped.',
+    relatedPositions: ['Omoplata Position', 'Closed Guard', 'Open Guard'],
+    commonTransitions: ['Posture', 'Shoulder Roll', 'Combat Base'],
+    commonFollowUps: ['Open Guard', 'Combat Base', 'Top Half Guard'],
+    commonDefenses: ['Hand Fighting', 'Posture', 'Shoulder Roll']
   },
   {
     id: 'submission-defense-ezekiel-posture-defense',
     category: 'Submission Defense',
-    subcategory: 'Choke Defense',
+    subcategory: 'Ezekiel / Forearm Choke Defense',
     name: 'Ezekiel Posture Defense',
     skillLevel: 'Beginner',
     tags: ['submission defense', 'ezekiel', 'choke'],
-    description: 'A defense that restores posture, protects the neck line, and addresses the choking arm before the frame tightens.',
-    relatedPositions: ['Mount', 'Closed Guard']
+    description: 'A sleeve-fed and forearm-choke defense that restores posture, protects the neck line, and addresses the choking arm before the frame tightens.',
+    relatedPositions: ['Ezekiel Choke', 'Mount', 'Closed Guard'],
+    commonTransitions: ['Hand Fighting', 'Bridge And Turn-In', 'Knee-Elbow To Half Guard'],
+    commonFollowUps: ['Bridge And Turn-In', 'Recovery To Butterfly', 'Open Guard'],
+    commonDefenses: ['Posture', 'Hand Fighting', 'Bridge And Turn-In']
   },
   {
     id: 'submission-defense-arm-triangle-escape',
     category: 'Submission Defense',
-    subcategory: 'Choke Defense',
-    name: 'Arm Triangle Escape',
+    subcategory: 'Head-And-Arm Choke Defense',
+    name: 'Arm Triangle Shoulder-Relief Defense',
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'arm triangle', 'choke'],
     description: 'A head-and-arm choke defense that relieves shoulder pressure, keeps the neck line open, and works back toward half guard or safer frames.',
-    relatedPositions: ['Half Guard', 'Hip Escape Retention', 'Bridge And Turn-In'],
+    relatedPositions: ['Arm Triangle', 'Half Guard', 'Hip Escape Retention', 'Bridge And Turn-In'],
     commonTransitions: ['Half Guard', 'Hip Escape Retention', 'Bridge And Turn-In'],
-    commonFollowUps: ['Half Guard', 'Hip Escape Retention', 'Bridge And Turn-In']
+    commonFollowUps: ['Half Guard', 'Hip Escape Retention', 'Bridge And Turn-In'],
+    commonDefenses: ['Shoulder Walk Escape', 'Hip Escape Retention', 'Bridge And Turn-In']
   },
   {
     id: 'submission-defense-north-south-choke-escape',
     category: 'Submission Defense',
-    subcategory: 'Choke Defense',
-    name: 'North-South Choke Escape',
+    subcategory: 'North-South Choke Defense',
+    name: 'North-South Choke Shoulder-Relief Defense',
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'north-south choke', 'choke'],
-    description: 'A defense that creates hip angle and shoulder relief before the chest and armpit pressure fully seals the neck line.',
-    relatedPositions: ['Shoulder Walk Escape', 'Turn-To-Knees Escape', 'Bottom North-South'],
-    commonTransitions: ['Shoulder Walk Escape', 'Turn-To-Knees Escape', 'Bottom North-South'],
-    commonFollowUps: ['Shoulder Walk Escape', 'Turn-To-Knees Escape', 'Bottom North-South']
+    description: 'A north-south choke defense that creates shoulder relief and hip angle before the chest and armpit pressure fully seals the neck line.',
+    relatedPositions: ['North-South', 'Shoulder Walk Escape', 'Turn-To-Knees Escape', 'Bottom North-South'],
+    commonTransitions: ['Shoulder Walk Escape', 'Hip Walk Escape', 'Turn-To-Knees Escape'],
+    commonFollowUps: ['Bottom North-South', 'Turtle', 'Open Guard'],
+    commonDefenses: ['Shoulder Walk Escape', 'Hip Walk Escape', 'Turn-To-Knees Escape']
   },
   {
     id: 'submission-defense-darce-escape',
     category: 'Submission Defense',
-    subcategory: 'Choke Defense',
+    subcategory: "D'Arce Defense",
     name: "D'Arce Escape",
     skillLevel: 'Advanced',
     tags: ['submission defense', "d'arce", 'front headlock'],
-    description: 'A front-headlock defense that blocks the locking angle, turns toward daylight, and hand fights before the choke structure closes.',
-    relatedPositions: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out'],
-    commonTransitions: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out'],
-    commonFollowUps: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out']
+    description: 'A D’Arce defense that blocks the locking angle, turns toward daylight, and hand fights before the choke structure fully closes.',
+    relatedPositions: ['Front Headlock', 'Headlock Escape', 'Sit-Out'],
+    commonTransitions: ['Headlock Escape', 'Sit-Out', 'Single Leg'],
+    commonFollowUps: ['Headlock Escape', 'Sit-Out', 'Single Leg'],
+    commonDefenses: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out']
   },
   {
     id: 'submission-defense-anaconda-escape',
     category: 'Submission Defense',
-    subcategory: 'Choke Defense',
+    subcategory: 'Anaconda Defense',
     name: 'Anaconda Escape',
     skillLevel: 'Advanced',
     tags: ['submission defense', 'anaconda', 'front headlock'],
-    description: 'A defense that addresses the locking arm early, manages shoulder angle, and prevents the roll-through finish from tightening cleanly.',
-    relatedPositions: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out'],
+    description: 'An anaconda defense that addresses the locking arm early, manages shoulder angle, and prevents the roll-through finish from tightening cleanly.',
+    relatedPositions: ['Front Headlock', 'Headlock Escape', 'Sit-Out'],
     commonTransitions: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out'],
-    commonFollowUps: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out']
+    commonFollowUps: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out'],
+    commonDefenses: ['Headlock Escape', 'Shoulder Slide Escape', 'Sit-Out']
   },
   {
     id: 'submission-defense-loop-choke-escape',
     category: 'Submission Defense',
-    subcategory: 'Choke Defense',
+    subcategory: 'Collar Choke Defense',
     name: 'Loop Choke Escape',
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'loop choke', 'gi choke'],
-    description: 'A gi-choke defense that restores posture, keeps the head line safe, and strips the grip before the loop angle breaks structure.',
-    relatedPositions: ['Standing', 'Closed Guard', 'Loop Choke']
+    description: 'A loop-choke defense that restores posture, keeps the head line safe, and strips the grip before the loop angle breaks structure.',
+    relatedPositions: ['Loop Choke', 'Standing', 'Closed Guard'],
+    commonTransitions: ['Posture', 'Hand Fighting', 'Shoulder Roll'],
+    commonFollowUps: ['Standing', 'Combat Base', 'Open Guard'],
+    commonDefenses: ['Hand Fighting', 'Posture', 'Shoulder Roll']
   },
   {
     id: 'submission-defense-toe-hold-escape',
@@ -8881,8 +9403,11 @@ const curriculumIndexSeed = [
     name: 'Toe Hold Escape',
     skillLevel: 'Intermediate',
     tags: ['submission defense', 'toe hold', 'leg lock'],
-    description: 'A rotational foot-lock defense that peels the grip, hides the foot line, and clears the knee before the twist transfers up the leg.',
-    relatedPositions: ['50/50', 'Outside Ashi', 'Toe Hold']
+    description: 'A toe-hold defense that peels the grip, hides the foot line, and clears the knee before the twist transfers up the leg.',
+    relatedPositions: ['50/50', 'Outside Ashi', 'Toe Hold'],
+    commonTransitions: ['Straight Ankle Lock Boot Defense', 'Heel Hook Line Defense', 'Kneebar Turn Defense'],
+    commonFollowUps: ['Standing', 'Open Guard', 'Single-Leg X'],
+    commonDefenses: ['Hand Fighting', 'Posture', 'Standing']
   },
   {
     id: 'submission-defense-aoki-lock-escape',
@@ -8891,8 +9416,11 @@ const curriculumIndexSeed = [
     name: 'Aoki Lock Escape',
     skillLevel: 'Advanced',
     tags: ['submission defense', 'aoki lock', 'leg lock'],
-    description: 'A rotational ankle-lock defense that protects the foot line, relieves the wrist figure-four, and works the knee line free before torque builds.',
-    relatedPositions: ['Single-Leg X', 'Ashi Garami', 'Aoki Lock']
+    description: 'An Aoki lock defense that protects the foot line, relieves the wrist figure-four, and works the knee line free before torque builds.',
+    relatedPositions: ['Single-Leg X', 'Ashi Garami', 'Aoki Lock'],
+    commonTransitions: ['Straight Ankle Lock Boot Defense', 'Heel Hook Line Defense', 'Toe Hold Escape'],
+    commonFollowUps: ['Standing', 'Open Guard', 'Single-Leg X'],
+    commonDefenses: ['Hand Fighting', 'Posture', 'Standing']
   },
   {
     id: 'leg-locks-straight-ankle-lock',
@@ -8902,7 +9430,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['leg lock', 'submission', 'ashi'],
     description: 'A foundational leg lock that teaches alignment, control, and finishing mechanics from standard ashi positions.',
-    relatedPositions: ['Ashi Garami', 'Single-Leg X']
+    relatedPositions: ['Ashi Garami', 'Single-Leg X'],
+    entriesIntoPosition: ['Single-Leg X', 'Ashi Garami', 'Outside Ashi', '50/50'],
+    commonAttacks: ['Belly-Down Ankle Lock', 'Aoki Lock', 'Estima Lock'],
+    commonTransitions: ['Belly-Down Ankle Lock', 'Aoki Lock', 'Estima Lock', 'Single-Leg X Stand-Up Sweep'],
+    commonFollowUps: ['Leg Drag', 'Pass To Knee On Belly', 'Top Half Guard', 'Single-Leg X Stand-Up Sweep'],
+    commonDefenses: ['Straight Ankle Lock Boot Defense', 'Hand Fighting', 'Heel Hook Line Escape', 'Posting']
   },
   {
     id: 'leg-locks-belly-down-ankle-lock',
@@ -8912,7 +9445,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['leg lock', 'submission', 'ankle lock'],
     description: 'A finishing variation of the straight ankle lock that turns belly-down to add hip extension, pressure, and urgency to the breaking line.',
-    relatedPositions: ['Ashi Garami', 'Outside Ashi', 'Straight Ankle Lock']
+    relatedPositions: ['Ashi Garami', 'Outside Ashi', 'Straight Ankle Lock'],
+    entriesIntoPosition: ['Straight Ankle Lock', 'Ashi Garami', 'Outside Ashi', '50/50'],
+    commonAttacks: ['Straight Ankle Lock', 'Estima Lock', 'Aoki Lock'],
+    commonTransitions: ['Straight Ankle Lock', 'Estima Lock', 'Leg Drag', 'Side Control'],
+    commonFollowUps: ['Side Control', 'Leg Drag', 'Pass To Knee On Belly', 'Top Half Guard'],
+    commonDefenses: ['Straight Ankle Lock Boot Escape', 'Hand Fighting', 'Posting', 'Heel Hook Line Escape']
   },
   {
     id: 'leg-locks-inside-heel-hook',
@@ -8922,7 +9460,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['leg lock', 'submission', 'heel hook'],
     description: 'A heel-hook finish where inside rotational exposure transfers pressure through the heel into the knee line.',
-    relatedPositions: ['Saddle', 'Inside Sankaku', 'Cross Ashi']
+    relatedPositions: ['Saddle', 'Inside Sankaku', 'Cross Ashi'],
+    entriesIntoPosition: ['Saddle', 'Inside Sankaku', 'Cross Ashi', '50/50'],
+    commonAttacks: ['Outside Heel Hook', 'Kneebar', 'Toe Hold'],
+    commonTransitions: ['Outside Heel Hook', 'Kneebar', 'Toe Hold', 'Backside 50/50'],
+    commonFollowUps: ['Side Control', 'Leg Drag', 'Backside 50/50', 'Pass To Knee On Belly'],
+    commonDefenses: ['Heel Hook Line Escape', 'Hand Fighting', 'Posting', 'Kneebar Turn Escape']
   },
   {
     id: 'leg-locks-outside-heel-hook',
@@ -8932,7 +9475,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['leg lock', 'submission', 'heel hook'],
     description: 'A heel-hook finish where outside rotational exposure punishes a trapped knee line from outside ashi, cross ashi, or related entanglements.',
-    relatedPositions: ['Outside Ashi', 'Cross Ashi', '50/50']
+    relatedPositions: ['Outside Ashi', 'Cross Ashi', '50/50'],
+    entriesIntoPosition: ['Outside Ashi', 'Cross Ashi', '50/50', 'Backside 50/50'],
+    commonAttacks: ['Inside Heel Hook', 'Aoki Lock', 'Toe Hold'],
+    commonTransitions: ['Inside Heel Hook', 'Aoki Lock', 'Toe Hold', 'Backside 50/50'],
+    commonFollowUps: ['Side Control', 'Leg Drag', 'Backstep Pass', 'Pass To Knee On Belly'],
+    commonDefenses: ['Heel Hook Line Escape', 'Hand Fighting', 'Posting', 'Straight Ankle Lock Boot Escape']
   },
   {
     id: 'leg-locks-lachy-lock',
@@ -8942,7 +9490,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['leg lock', 'submission', 'heel hook'],
     description: 'A named heel-hook variation that uses rotational control, bridging pressure, and knee-line isolation to threaten the knee while the foot can also be compromised.',
-    relatedPositions: ['Inside Sankaku', 'Saddle', 'Cross Ashi']
+    relatedPositions: ['Inside Sankaku', 'Saddle', 'Cross Ashi'],
+    entriesIntoPosition: ['Inside Sankaku', 'Saddle', 'Cross Ashi', 'Backside 50/50'],
+    commonAttacks: ['Inside Heel Hook', 'Outside Heel Hook', 'Aoki Lock'],
+    commonTransitions: ['Inside Heel Hook', 'Outside Heel Hook', 'Kneebar', 'Toe Hold'],
+    commonFollowUps: ['Side Control', 'Backside 50/50', 'Leg Drag', 'Pass To Knee On Belly'],
+    commonDefenses: ['Heel Hook Line Escape', 'Hand Fighting', 'Posting', 'Kneebar Turn Escape']
   },
   {
     id: 'leg-locks-mikey-lock',
@@ -8952,7 +9505,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['leg lock', 'submission', 'heel hook'],
     description: 'A modern heel-hook variation that emphasizes trapping the leg, rotating through the heel line, and bridging pressure into the knee structure.',
-    relatedPositions: ['50/50', 'Outside Ashi', 'Cross Ashi']
+    relatedPositions: ['50/50', 'Outside Ashi', 'Cross Ashi'],
+    entriesIntoPosition: ['50/50', 'Outside Ashi', 'Cross Ashi', 'Ashi Garami'],
+    commonAttacks: ['Aoki Lock', 'Outside Heel Hook', 'Straight Ankle Lock'],
+    commonTransitions: ['Aoki Lock', 'Outside Heel Hook', 'Toe Hold', 'Kneebar'],
+    commonFollowUps: ['Side Control', 'Leg Drag', 'Pass To Knee On Belly', 'Backstep Pass'],
+    commonDefenses: ['Straight Ankle Lock Boot Escape', 'Heel Hook Line Escape', 'Hand Fighting', 'Posting']
   },
   {
     id: 'leg-locks-junny-lock',
@@ -8962,7 +9520,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['leg lock', 'submission', 'heel hook'],
     description: 'A heel-hook family variation that attacks exposed heel rotation with strong hip extension and bridge mechanics while the knee line stays controlled.',
-    relatedPositions: ['Saddle', 'Inside Sankaku', 'Backside 50/50']
+    relatedPositions: ['Saddle', 'Inside Sankaku', 'Backside 50/50'],
+    entriesIntoPosition: ['Saddle', 'Inside Sankaku', 'Backside 50/50', '50/50'],
+    commonAttacks: ['Inside Heel Hook', 'Outside Heel Hook', 'Toe Hold'],
+    commonTransitions: ['Inside Heel Hook', 'Outside Heel Hook', 'Kneebar', 'Backside 50/50'],
+    commonFollowUps: ['Side Control', 'Leg Drag', 'Backstep Pass', 'Pass To Knee On Belly'],
+    commonDefenses: ['Heel Hook Line Escape', 'Hand Fighting', 'Posting', 'Kneebar Turn Escape']
   },
   {
     id: 'leg-locks-abe-lock',
@@ -8972,7 +9535,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['leg lock', 'submission', 'heel hook'],
     description: 'A named rotational heel-hook variation that uses bridging force and heel exposure to direct pressure primarily into the knee, with possible foot-line damage.',
-    relatedPositions: ['Reverse Closed Guard']
+    relatedPositions: ['Reverse Closed Guard'],
+    entriesIntoPosition: ['Reverse Closed Guard', 'Outside Ashi', 'Cross Ashi', '50/50'],
+    commonAttacks: ['Outside Heel Hook', 'Inside Heel Hook', 'Aoki Lock'],
+    commonTransitions: ['Outside Heel Hook', 'Toe Hold', 'Kneebar', 'Leg Drag'],
+    commonFollowUps: ['Side Control', 'Leg Drag', 'Backstep Pass', 'Pass To Knee On Belly'],
+    commonDefenses: ['Heel Hook Line Escape', 'Hand Fighting', 'Posting', 'Straight Ankle Lock Boot Escape']
   },
   {
     id: 'leg-locks-aoki-lock',
@@ -8982,7 +9550,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['leg lock', 'submission', 'ankle lock'],
     description: 'A rotational variation off the straight ankle lock family that punishes turning and loose foot position.',
-    relatedPositions: ['Single-Leg X', 'Ashi Garami']
+    relatedPositions: ['Single-Leg X', 'Ashi Garami'],
+    entriesIntoPosition: ['Single-Leg X', 'Ashi Garami', 'Cross Ashi', '50/50'],
+    commonAttacks: ['Straight Ankle Lock', 'Outside Heel Hook', 'Toe Hold'],
+    commonTransitions: ['Straight Ankle Lock', 'Outside Heel Hook', 'Toe Hold', 'Inside Heel Hook'],
+    commonFollowUps: ['Side Control', 'Leg Drag', 'Pass To Knee On Belly', 'Backstep Pass'],
+    commonDefenses: ['Straight Ankle Lock Boot Escape', 'Heel Hook Line Escape', 'Hand Fighting', 'Posting']
   },
   {
     id: 'leg-locks-toe-hold',
@@ -8992,7 +9565,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['leg lock', 'submission', 'rotation'],
     description: 'A rotational foot lock that often appears during transitions when the knee line and heel are already exposed.',
-    relatedPositions: ['50/50', 'Ashi Garami', 'Saddle']
+    relatedPositions: ['50/50', 'Ashi Garami', 'Saddle'],
+    entriesIntoPosition: ['50/50', 'Top Half Guard', 'Ashi Garami', 'Saddle'],
+    commonAttacks: ['Kneebar', 'Aoki Lock', 'Outside Heel Hook'],
+    commonTransitions: ['Kneebar', 'Aoki Lock', 'Calf Slicer', 'Outside Heel Hook'],
+    commonFollowUps: ['Side Control', 'Leg Drag', 'Top Half Guard', 'Backstep Pass'],
+    commonDefenses: ['Toe Hold Escape', 'Kneebar Turn Escape', 'Hand Fighting', 'Posting']
   },
   {
     id: 'leg-locks-kneebar',
@@ -9002,7 +9580,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['leg lock', 'submission', 'extension'],
     description: 'A straight-line leg attack that depends on knee-line control, hip placement, and tight finishing alignment.',
-    relatedPositions: ['Saddle', 'Cross Ashi', 'Top Half Guard']
+    relatedPositions: ['Saddle', 'Cross Ashi', 'Top Half Guard'],
+    entriesIntoPosition: ['Top Half Guard', 'Single-Leg X', 'Cross Ashi', 'Saddle'],
+    commonAttacks: ['Toe Hold', 'Calf Slicer', 'Inside Heel Hook'],
+    commonTransitions: ['Toe Hold', 'Calf Slicer', 'Backstep Pass', 'Outside Heel Hook'],
+    commonFollowUps: ['Side Control', 'Leg Drag', 'Top Half Guard', 'Backstep Pass'],
+    commonDefenses: ['Kneebar Turn Escape', 'Heel Hook Line Escape', 'Hand Fighting', 'Posting']
   },
   {
     id: 'leg-locks-estima-lock',
@@ -9012,7 +9595,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['leg lock', 'submission', 'ankle'],
     description: 'A lower-body attack that punishes specific rotational reactions and exposed foot lines during transitions.',
-    relatedPositions: ['Straight Ankle Lock', 'Ashi Garami']
+    relatedPositions: ['Straight Ankle Lock', 'Ashi Garami'],
+    entriesIntoPosition: ['Straight Ankle Lock', 'Ashi Garami', 'Outside Ashi', '50/50'],
+    commonAttacks: ['Straight Ankle Lock', 'Aoki Lock', 'Belly-Down Ankle Lock'],
+    commonTransitions: ['Straight Ankle Lock', 'Aoki Lock', 'Belly-Down Ankle Lock', 'Leg Drag'],
+    commonFollowUps: ['Side Control', 'Leg Drag', 'Pass To Knee On Belly', 'Backstep Pass'],
+    commonDefenses: ['Straight Ankle Lock Boot Escape', 'Hand Fighting', 'Posting', 'Heel Hook Line Escape']
   },
   {
     id: 'leg-locks-calf-slicer',
@@ -9022,7 +9610,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['leg lock', 'submission', 'compression'],
     description: 'A compression lock that folds the leg over a wedge and attacks the calf line while also threatening the knee structure.',
-    relatedPositions: ['Backside 50/50', 'Top Half Guard', 'Ashi Garami']
+    relatedPositions: ['Backside 50/50', 'Top Half Guard', 'Ashi Garami'],
+    entriesIntoPosition: ['Top Half Guard', 'Backside 50/50', 'Ashi Garami', 'Back Control'],
+    commonAttacks: ['Kneebar', 'Toe Hold', 'Twister'],
+    commonTransitions: ['Kneebar', 'Toe Hold', 'Twister', 'Backstep Pass'],
+    commonFollowUps: ['Side Control', 'Leg Drag', 'Top Half Guard', 'Back Control'],
+    commonDefenses: ['Calf Slicer Escape', 'Kneebar Turn Escape', 'Hand Fighting', 'Posting']
   },
   {
     id: 'leg-locks-hamstring-slicer',
@@ -9032,7 +9625,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['leg lock', 'submission', 'compression'],
     description: 'A higher-line compression attack that folds the leg behind the knee and compresses the hamstring and knee line.',
-    relatedPositions: ['Backside 50/50', 'Backpack Position', 'Top Half Guard']
+    relatedPositions: ['Backside 50/50', 'Backpack Position', 'Top Half Guard'],
+    entriesIntoPosition: ['Backside 50/50', 'Top Half Guard', 'Back Control', 'Backpack Position'],
+    commonAttacks: ['Calf Slicer', 'Kneebar', 'Banana Split'],
+    commonTransitions: ['Calf Slicer', 'Kneebar', 'Banana Split', 'Texas Cloverleaf'],
+    commonFollowUps: ['Side Control', 'Leg Drag', 'Top Half Guard', 'Back Control'],
+    commonDefenses: ['Calf Slicer Escape', 'Kneebar Turn Escape', 'Hand Fighting', 'Posting']
   },
   {
     id: 'leg-locks-texas-cloverleaf',
@@ -9042,7 +9640,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['leg lock', 'submission', 'compression'],
     description: 'A figure-four leg entanglement that compresses and twists the lower body through a strong control grip.',
-    relatedPositions: ['Backside 50/50', 'Ashi Garami', 'Back Control']
+    relatedPositions: ['Backside 50/50', 'Ashi Garami', 'Back Control'],
+    entriesIntoPosition: ['Backside 50/50', 'Ashi Garami', 'Back Control', 'Top Half Guard'],
+    commonAttacks: ['Banana Split', 'Hamstring Slicer', 'Calf Slicer'],
+    commonTransitions: ['Banana Split', 'Hamstring Slicer', 'Calf Slicer', 'Side Control'],
+    commonFollowUps: ['Side Control', 'Back Control', 'Leg Drag', 'Top Half Guard'],
+    commonDefenses: ['Calf Slicer Escape', 'Hand Fighting', 'Posting', 'Twister Escape']
   },
   {
     id: 'leg-locks-banana-split',
@@ -9052,7 +9655,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['leg lock', 'submission', 'split'],
     description: 'A split-style submission that separates the legs and attacks the groin and hip line through controlled abduction.',
-    relatedPositions: ['Backside 50/50', 'Ashi Garami', 'Backpack Position']
+    relatedPositions: ['Backside 50/50', 'Ashi Garami', 'Backpack Position'],
+    entriesIntoPosition: ['Backside 50/50', 'Back Control', 'Ashi Garami', 'Backpack Position'],
+    commonAttacks: ['Electric Chair', 'Calf Slicer', 'Texas Cloverleaf'],
+    commonTransitions: ['Electric Chair', 'Calf Slicer', 'Back Control', 'Side Control'],
+    commonFollowUps: ['Back Control', 'Side Control', 'Leg Drag', 'Top Half Guard'],
+    commonDefenses: ['Twister Escape', 'Calf Slicer Escape', 'Hand Fighting', 'Posting']
   },
   {
     id: 'leg-locks-electric-chair',
@@ -9062,7 +9670,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Advanced',
     tags: ['leg lock', 'submission', 'lockdown'],
     description: 'A lockdown-based submission and sweep family that stretches the groin line while controlling the trapped leg.',
-    relatedPositions: ['Lockdown', 'Half Guard', 'Dogfight']
+    relatedPositions: ['Lockdown', 'Half Guard', 'Dogfight'],
+    entriesIntoPosition: ['Lockdown', 'Half Guard', 'Dogfight', 'Top Half Guard'],
+    commonAttacks: ['Banana Split', 'Old School Sweep', 'Calf Slicer'],
+    commonTransitions: ['Banana Split', 'Old School Sweep', 'Dogfight Reversal', 'Top Half Guard'],
+    commonFollowUps: ['Top Half Guard', 'Side Control', 'Leg Drag', 'Smash Pass'],
+    commonDefenses: ['Twister Escape', 'Calf Slicer Escape', 'Hand Fighting', 'Posting']
   },
   {
     id: 'turtle-scrambles-building-base',
