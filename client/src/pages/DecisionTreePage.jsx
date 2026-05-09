@@ -56,6 +56,7 @@ const coachingScenarios = [
       },
       {
         question: 'What passing style fits you best right now?',
+        expandableLabel: 'Need more passing styles?',
         options: [
           {
             label: 'Pressure passing',
@@ -80,6 +81,34 @@ const coachingScenarios = [
             description: 'Best for players who like folding the hips and lifting the legs.',
             focusName: 'Stack Pass',
             filters: { preferredStyle: 'pressure', bodyType: 'compact', riskTolerance: 'low' }
+          },
+          {
+            label: 'Inside passing',
+            description: 'Best for players who like knee-cut, split-squat, and inside-lane pressure.',
+            focusName: 'Knee Slice Pass',
+            filters: { preferredStyle: 'pressure', topBottom: 'top', riskTolerance: 'medium' },
+            isExtended: true
+          },
+          {
+            label: 'Outside / direction-change passing',
+            description: 'Best for players who like long-step, backstep, and angle-change routes.',
+            focusName: 'Long Step',
+            filters: { preferredStyle: 'scrambles', topBottom: 'top', riskTolerance: 'medium' },
+            isExtended: true
+          },
+          {
+            label: 'Floating / movement passing',
+            description: 'Best for players who like staying light and converting failed pressure into motion.',
+            focusName: 'Float Pass',
+            filters: { preferredStyle: 'scrambles', topBottom: 'top', riskTolerance: 'medium' },
+            isExtended: true
+          },
+          {
+            label: 'Half-guard passing chains',
+            description: 'Best if the real issue is passing when the guard is already half-won but sticky.',
+            focusName: 'Half Guard Passing',
+            filters: { preferredStyle: 'pressure', topBottom: 'top', weakArea: 'guardPassing' },
+            isExtended: true
           }
         ]
       }
@@ -186,6 +215,7 @@ const coachingScenarios = [
     guidedPrompts: [
       {
         question: 'How are they usually escaping your mount?',
+        expandableLabel: 'Need more mount-control fixes?',
         options: [
           {
             label: 'Big bridge and roll',
@@ -204,6 +234,27 @@ const coachingScenarios = [
             description: 'You likely need a cleaner route into technical mount and back control.',
             focusName: 'Technical Mount',
             filters: { preferredStyle: 'backTakes', topBottom: 'top', riskTolerance: 'medium' }
+          },
+          {
+            label: 'I lose chest-to-chest pressure',
+            description: 'You likely need a more stable upper-body trap before the attacks even start.',
+            focusName: 'Gift Wrap',
+            filters: { preferredStyle: 'pressure', topBottom: 'top', riskTolerance: 'low' },
+            isExtended: true
+          },
+          {
+            label: 'They recover half guard late',
+            description: 'You likely need a cleaner follow-up when mount begins to slip downward.',
+            focusName: 'Top Half Guard',
+            filters: { preferredStyle: 'pressure', topBottom: 'top', riskTolerance: 'low' },
+            isExtended: true
+          },
+          {
+            label: 'I need better attack control from mount',
+            description: 'You likely need the transition that lets offense and control support each other better.',
+            focusName: 'Technical Mount',
+            filters: { preferredStyle: 'submissions', topBottom: 'top', riskTolerance: 'medium' },
+            isExtended: true
           }
         ]
       }
@@ -276,6 +327,7 @@ const coachingScenarios = [
     guidedPrompts: [
       {
         question: 'What part of side control are you losing most often?',
+        expandableLabel: 'Need more side-control fixes?',
         options: [
           {
             label: 'They keep finding the underhook',
@@ -294,6 +346,27 @@ const coachingScenarios = [
             description: 'You likely need cleaner back-taking and ride-style follow-ups.',
             focusName: 'Side Control To Back',
             filters: { preferredStyle: 'backTakes', topBottom: 'top', riskTolerance: 'medium' }
+          },
+          {
+            label: 'They frame and create too much space',
+            description: 'You likely need a more mobile transition before they fully recover guard.',
+            focusName: 'Knee On Belly',
+            filters: { preferredStyle: 'pressure', topBottom: 'top', riskTolerance: 'medium' },
+            isExtended: true
+          },
+          {
+            label: 'I lose the chest angle entirely',
+            description: 'You likely need a cleaner secondary control hub once the first pin starts failing.',
+            focusName: 'North-South',
+            filters: { preferredStyle: 'pressure', topBottom: 'top', riskTolerance: 'low' },
+            isExtended: true
+          },
+          {
+            label: 'I need better submission-linked control',
+            description: 'You likely need a top-control branch that attacks without giving away the position.',
+            focusName: 'Kimura',
+            filters: { preferredStyle: 'submissions', topBottom: 'top', riskTolerance: 'medium' },
+            isExtended: true
           }
         ]
       }
@@ -711,11 +784,15 @@ const coachingScenarioGuidedPromptMap = {
   [normalizeValue('I am stuck under pressure')]: [
     {
       question: 'Where are you getting pinned most often?',
+      expandableLabel: 'Need more survival branches?',
       options: [
         { label: 'Bottom side control', description: 'Frame building, underhook timing, and reguarding usually decide the escape.', focusName: 'Bottom Side Control' },
         { label: 'Bottom mount', description: 'Bridge timing, elbow-knee recovery, and top-leg traps usually matter most.', focusName: 'Bottom Mount' },
         { label: 'Bottom north-south', description: 'Shoulder turns, hip movement, and turtle/recovery timing usually matter here.', focusName: 'Bottom North-South' },
-        { label: 'Bottom knee-on-belly', description: 'Distance management and catching the posting leg usually become the issue.', focusName: 'Bottom Knee-On-Belly' }
+        { label: 'Bottom knee-on-belly', description: 'Distance management and catching the posting leg usually become the issue.', focusName: 'Bottom Knee-On-Belly' },
+        { label: 'Back-control pressure', description: 'Best if hand-fighting and hook-removal are the real pressure problem.', focusName: 'Back Control', isExtended: true },
+        { label: 'Half-guard flattening pressure', description: 'Best if you are not fully passed but still getting pinned and denied frames.', focusName: 'Half Guard', isExtended: true },
+        { label: 'Front headlock / turtle pressure', description: 'Best if the pressure trap starts while you are trying to build up or recover.', focusName: 'Front Headlock', isExtended: true }
       ]
     }
   ],
@@ -826,22 +903,31 @@ const coachingScenarioGuidedPromptMap = {
   [normalizeValue('I play half guard')]: [
     {
       question: 'Which half-guard lane feels most like your game?',
+      expandableLabel: 'Need more half-guard lanes?',
       options: [
         { label: 'Underhook half guard', description: 'Best if you like coming up, dogfights, and wrestling-style pressure.', focusName: 'Underhook Half Guard' },
         { label: 'Butterfly half', description: "Best if you like elevating, framing, and changing the opponent's base.", focusName: 'Butterfly Half' },
         { label: 'Knee shield half guard', description: 'Best if you need more space, angle changes, and safer retention.', focusName: 'Knee Shield Half Guard' },
-        { label: 'Deep half / waiter routes', description: 'Best if you like getting underneath and turning the base.', focusName: 'Deep Half Guard' }
+        { label: 'Deep half / waiter routes', description: 'Best if you like getting underneath and turning the base.', focusName: 'Deep Half Guard' },
+        { label: 'Dogfight finishes', description: 'Best if you already win the underhook and need better top finishes from the rise.', focusName: 'Dogfight', isExtended: true },
+        { label: 'Recovery-first half guard', description: 'Best if you want to stop getting flattened before chasing the sweep.', focusName: 'Half Guard Recovery', isExtended: true },
+        { label: 'Passing from top half guard', description: 'Best if you often come on top and want the next passing branch immediately.', focusName: 'Top Half Guard', isExtended: true }
       ]
     }
   ],
   [normalizeValue('Improve guard retention')]: [
     {
       question: 'Where is your guard usually falling apart first?',
+      expandableLabel: 'Need more retention branches?',
       options: [
         { label: 'Open guard distance', description: 'Feet, frames, and re-squaring usually need to win earlier here.', focusName: 'Open Guard' },
         { label: 'Knee shield getting smashed', description: 'Hip line protection and replacing frames usually matter more here.', focusName: 'Knee Shield Half Guard' },
         { label: 'Butterfly hooks getting cleared', description: 'Timing, elevation threats, and re-pummeling usually become the issue.', focusName: 'Butterfly Guard' },
-        { label: 'Seated guard getting run around', description: 'Distance, front-headlock awareness, and wrestle-up timing usually shape the recovery.', focusName: 'Seated Guard' }
+        { label: 'Seated guard getting run around', description: 'Distance, front-headlock awareness, and wrestle-up timing usually shape the recovery.', focusName: 'Seated Guard' },
+        { label: 'Leg-drag pressure', description: 'Best if you need to square your hips back up before the pass settles.', focusName: 'Retaining Against Leg Drag', isExtended: true },
+        { label: 'Body-lock passing pressure', description: 'Best if chest-to-hip compression is what is actually breaking your guard.', focusName: 'Retaining Against Body Lock', isExtended: true },
+        { label: 'I just need guard recomposition', description: 'Best if you want the reset branch back to safer guards after the first break.', focusName: 'Open Guard Recomposition', isExtended: true },
+        { label: 'Supine to seated recovery', description: 'Best if you are surviving the first wave but not converting back to offense.', focusName: 'Recovery To Seated Guard', isExtended: true }
       ]
     }
   ],
@@ -899,22 +985,30 @@ const coachingScenarioGuidedPromptMap = {
   [normalizeValue('Gi guard development')]: [
     {
       question: 'Which gi guard are you trying to build right now?',
+      expandableLabel: 'Need more gi guards?',
       options: [
         { label: 'Spider guard', description: 'Best if you want sleeve control, off-balancing, and direct triangle/omoplata links.', focusName: 'Spider Guard' },
         { label: 'Lasso guard', description: 'Best if you want stronger control and slower-breaking attack chains.', focusName: 'Lasso Guard' },
         { label: 'Collar-sleeve guard', description: 'Best if you want a versatile grip-based hub with sweep and submission options.', focusName: 'Collar-Sleeve Guard' },
-        { label: 'Worm / lapel guard', description: 'Best if you want sticky control and off-balancing through lapel entanglement.', focusName: 'Worm Guard' }
+        { label: 'Worm / lapel guard', description: 'Best if you want sticky control and off-balancing through lapel entanglement.', focusName: 'Worm Guard' },
+        { label: 'Closed guard with collars', description: 'Best if you want a simpler gi hub with strong posture-breaking and choke routes.', focusName: 'Closed Guard', isExtended: true },
+        { label: 'De La Riva', description: 'Best if you want outside hooks, sleeve control, and off-balancing into sweeps or back takes.', focusName: 'De La Riva', isExtended: true },
+        { label: 'Open guard recomposition', description: 'Best if the real issue is rebuilding your gi guard before the pass settles.', focusName: 'Open Guard Recomposition', isExtended: true }
       ]
     }
   ],
   [normalizeValue('Learn X-guard routes')]: [
     {
       question: 'Which X-guard lane do you want to understand better?',
+      expandableLabel: 'Need more X-guard routes?',
       options: [
         { label: 'Classic X-guard sweeps', description: 'Best if you want technical stand-up, overhead, and base-breaking routes.', focusName: 'X-Guard' },
         { label: 'Single-Leg X connections', description: 'Best if you want a tighter bridge between off-balancing and leg entries.', focusName: 'Single-Leg X' },
         { label: 'Backside / leg-entanglement transitions', description: 'Best if you want to understand when X-guard opens the lower-body chain.', focusName: 'Backside 50/50' },
-        { label: 'Waiter-style underneath routes', description: 'Best if you like elevating and tipping the base from underneath.', focusName: 'Waiter Guard' }
+        { label: 'Waiter-style underneath routes', description: 'Best if you like elevating and tipping the base from underneath.', focusName: 'Waiter Guard' },
+        { label: 'Stand-up sweep finishes', description: 'Best if you want the wrestle-up and ankle-pick style endings from underneath.', focusName: 'Basic X-Guard Sweep', isExtended: true },
+        { label: 'Leg-entry conversions', description: 'Best if you want X-guard to open directly into safer lower-body chains.', focusName: 'Ashi Garami', isExtended: true },
+        { label: 'Retaining the route before the sweep', description: 'Best if you lose the entry before the actual X-guard offense begins.', focusName: 'K-Guard Entry For Retention', isExtended: true }
       ]
     }
   ],
@@ -930,52 +1024,71 @@ const coachingScenarioGuidedPromptMap = {
         { label: 'Spider guard', description: 'Grip breaks and posture disruption usually become the first issue.', focusName: 'Spider Guard' },
         { label: 'Seated guard', description: 'Distance, front-headlock awareness, and re-squaring usually matter most.', focusName: 'Seated Guard', isExtended: true },
         { label: 'Collar-sleeve', description: 'Grip retention and angle recovery usually become the issue here.', focusName: 'Collar-Sleeve Guard', isExtended: true },
-        { label: 'De La Riva', description: 'Leg-pinning and backside exposure usually change the defensive problem.', focusName: 'De La Riva', isExtended: true }
+        { label: 'De La Riva', description: 'Leg-pinning and backside exposure usually change the defensive problem.', focusName: 'De La Riva', isExtended: true },
+        { label: 'Leg-drag pressure', description: 'Best if the pass is starting from hip misalignment more than total guard failure.', focusName: 'Retaining Against Leg Drag', isExtended: true },
+        { label: 'Body-lock pressure', description: 'Best if chest-to-hip compression is what is breaking the retention sequence.', focusName: 'Retaining Against Body Lock', isExtended: true },
+        { label: 'I need the reset branch', description: 'Best if you survive the first pass attempt but cannot rebuild a real guard after.', focusName: 'Open Guard Recomposition', isExtended: true }
       ]
     }
   ],
   [normalizeValue('I get stuck in closed guard')]: [
     {
       question: 'What usually stops your closed-guard pass first?',
+      expandableLabel: 'Need more closed-guard top fixes?',
       options: [
         { label: 'Posture keeps breaking', description: 'You likely need stronger posture discipline before the pass even starts.', focusName: 'Posture' },
         { label: 'I cannot get the guard open', description: 'You likely need a clearer opening sequence and base position.', focusName: 'Combat Base' },
         { label: 'They keep climbing attacks', description: 'You likely need safer top positioning before forcing the pass.', focusName: 'Posture' },
-        { label: 'They force me forward into sweeps', description: 'You likely need better angle control and pressure direction first.', focusName: 'Double Under Pass' }
+        { label: 'They force me forward into sweeps', description: 'You likely need better angle control and pressure direction first.', focusName: 'Double Under Pass' },
+        { label: 'I need the first passing lane after the guard opens', description: 'Best if you open the guard but stall immediately on the next decision.', focusName: 'Bullfighter Pass', isExtended: true },
+        { label: 'I need safer pressure from the top', description: 'Best if you want to stay heavy and deny attacks before chasing speed.', focusName: 'Body Lock Pass', isExtended: true },
+        { label: 'I lose inside hand position first', description: 'Best if the issue starts before the pass with posture and arm-frame discipline.', focusName: 'Posture', isExtended: true }
       ]
     }
   ],
   [normalizeValue("I can't finish from the back")]: [
     {
       question: 'What part of the back finish is usually failing?',
+      expandableLabel: 'Need more back-finish branches?',
       options: [
         { label: 'Hand fighting / grip wins', description: 'You likely need cleaner control before the choke becomes available.', focusName: 'Seatbelt' },
         { label: 'I lose the control position', description: 'You likely need stronger hook or body-triangle management first.', focusName: 'Body Triangle Back Control' },
         { label: 'They turn and escape the line', description: 'You likely need better transitions when the choke does not finish.', focusName: 'Technical Mount' },
-        { label: 'The choke mechanics stall out', description: 'You likely need a tighter finishing family to branch from.', focusName: 'Short Choke' }
+        { label: 'The choke mechanics stall out', description: 'You likely need a tighter finishing family to branch from.', focusName: 'Short Choke' },
+        { label: 'I need the classic choke branch', description: 'Best if you want the high-percentage rear choke route itself.', focusName: 'Rear Naked Choke', isExtended: true },
+        { label: 'I need more control before the choke', description: 'Best if you are losing the hooks or chest connection before mechanics matter.', focusName: 'Back Control', isExtended: true },
+        { label: 'I want the mount bailout when the back slips', description: 'Best if you need a safer top finish branch when the back is not sticking.', focusName: 'Technical Mount', isExtended: true }
       ]
     }
   ],
   [normalizeValue('I keep getting submitted')]: [
     {
       question: 'Where are you getting submitted most often?',
+      expandableLabel: 'Need more danger zones?',
       options: [
         { label: 'Closed guard', description: 'Posture, hand fighting, and angle denial usually matter first.', focusName: 'Closed Guard' },
         { label: 'Bottom side control', description: 'Frame priority and escape timing usually need to sharpen here.', focusName: 'Bottom Side Control' },
         { label: 'Bottom mount', description: 'Bridge, elbow-knee recovery, and panic control usually matter most.', focusName: 'Bottom Mount' },
         { label: 'Back control', description: 'Hand fighting and hook-removal sequencing usually become the issue.', focusName: 'Back Control' },
-        { label: 'Leg entanglements', description: 'Knee-line awareness and earlier defensive choices usually matter here.', focusName: 'Ashi Garami' }
+        { label: 'Leg entanglements', description: 'Knee-line awareness and earlier defensive choices usually matter here.', focusName: 'Ashi Garami' },
+        { label: 'Turtle / front-headlock scrambles', description: 'Best if the submission danger shows up while trying to stand or recover.', focusName: 'Front Headlock', isExtended: true },
+        { label: 'I need the actual defense family', description: 'Best if the problem is broader than one position and you want to branch straight into the submission-defense families.', focusName: 'Armbar Defense', isExtended: true },
+        { label: 'Passing into guillotines', description: 'Best if you keep getting caught while pressuring forward from top.', focusName: 'Guillotine / Front Headlock Choke Defense', isExtended: true }
       ]
     }
   ],
   [normalizeValue('I need better back escapes')]: [
     {
       question: 'What part of the back escape is usually failing first?',
+      expandableLabel: 'Need more back-escape branches?',
       options: [
         { label: 'I lose the hand-fight immediately', description: 'Start with controlling the choking arm before worrying about the hook line.', focusName: 'Two-On-One Grip Fight' },
         { label: 'I cannot get my shoulders back to the mat', description: 'The shoulder line usually has to win first before the rest of the escape opens.', focusName: 'Shoulder-To-Mat Escape' },
         { label: 'The hooks or body triangle keep me stuck', description: 'Hook stripping and lower-body clearing usually become the priority first.', focusName: 'Hook Stripping Escape' },
-        { label: 'I escape but do not know what to do after', description: 'Build the route that turns the back escape into a top or safer recovery.', focusName: 'Escape To Top Half' }
+        { label: 'I escape but do not know what to do after', description: 'Build the route that turns the back escape into a top or safer recovery.', focusName: 'Escape To Top Half' },
+        { label: 'I slide but cannot finish the turn', description: 'Best if you are winning space but not converting it into a full escape.', focusName: 'Shoulder Slide Escape', isExtended: true },
+        { label: 'I need the scoop / lower-body route', description: 'Best if the lower body is what keeps you trapped after the hand fight.', focusName: 'Scoop Escape', isExtended: true },
+        { label: 'Rear naked choke threats keep freezing me', description: 'Best if the immediate choke line is the real bottleneck.', focusName: 'Rear Naked Choke Hand-Peel Escape', isExtended: true }
       ]
     }
   ],
@@ -994,7 +1107,10 @@ const coachingScenarioGuidedPromptMap = {
         { label: 'Americana', description: 'Start from the shoulder-lock problem itself, then choose the frame or turning answer that fits.', focusName: 'Americana Elbow Recovery Defense', isExtended: true },
         { label: 'Arm triangle', description: 'Start from the head-and-arm choke problem itself, then choose the escape toward space or half guard.', focusName: 'Head-And-Arm Choke Defense', isExtended: true },
         { label: 'North-south choke', description: 'Start from the north-south choke problem itself, then choose the shoulder-relief or turn-out answer that fits.', focusName: 'North-South Choke Defense', isExtended: true },
-        { label: "D'Arce / anaconda", description: 'Start from the front-headlock choke problem itself, then choose the daylight-turning answer that fits.', focusName: "D'Arce Defense", isExtended: true }
+        { label: "D'Arce / anaconda", description: 'Start from the front-headlock choke problem itself, then choose the daylight-turning answer that fits.', focusName: "D'Arce Defense", isExtended: true },
+        { label: 'Omoplata', description: 'Start from the shoulder-isolation problem itself, then choose the posture or roll-through answer that fits.', focusName: 'Omoplata Defense', isExtended: true },
+        { label: 'Leg locks', description: 'Start from the lower-body danger itself, then choose the knee-line and foot-line defense branch that fits.', focusName: 'Leg Lock Defense', isExtended: true },
+        { label: 'Ezekiel / forearm choke', description: 'Start from the short-pressure choke problem itself, then choose the posture and hand-fight answer that fits.', focusName: 'Ezekiel / Forearm Choke Defense', isExtended: true }
       ]
     }
   ],
@@ -1551,10 +1667,99 @@ const getOptionReasons = ({ entry, groupKey, filters }) => {
   return reasons.slice(0, 2);
 };
 
-const scoreOption = ({ entry, groupKey, filters }) => {
+const relationshipPriorityBonus = {
+  entriesIntoPosition: 1,
+  commonAttacks: 8,
+  commonTransitions: 11,
+  commonFollowUps: 10,
+  commonDefenses: 6,
+  relatedPositions: 0
+};
+
+const broadPositionNames = new Set([
+  'closed guard',
+  'open guard',
+  'half guard',
+  'seated guard',
+  'butterfly guard',
+  'x guard',
+  'single leg x',
+  'mount',
+  'side control',
+  'north south',
+  'turtle',
+  'standing',
+  'front headlock'
+]);
+
+const getFocusContinuationBonus = ({ focusEntry, entry, groupKey }) => {
+  if (!focusEntry || !entry) return 0;
+
+  let bonus = 0;
+  const normalizedFocusName = normalizeValue(focusEntry.name);
+  const normalizedEntryName = normalizeValue(entry.name);
+
+  if (focusEntry.category === entry.category) {
+    bonus += ['commonAttacks', 'commonTransitions', 'commonFollowUps', 'commonDefenses'].includes(groupKey) ? 5 : 2;
+  }
+
+  if (
+    focusEntry.subcategory
+    && entry.subcategory
+    && normalizeValue(focusEntry.subcategory) === normalizeValue(entry.subcategory)
+  ) {
+    bonus += 3;
+  }
+
+  if ((entry.relatedPositions || []).some((value) => normalizeValue(value) === normalizedFocusName)) {
+    bonus += 3;
+  }
+
+  if ((entry.commonTransitions || []).some((value) => normalizeValue(value) === normalizedFocusName)) {
+    bonus += 2;
+  }
+
+  if ((entry.commonFollowUps || []).some((value) => normalizeValue(value) === normalizedFocusName)) {
+    bonus += 2;
+  }
+
+  if (normalizedEntryName === normalizedFocusName) {
+    bonus -= 8;
+  }
+
+  return bonus;
+};
+
+const getActionabilityBonus = ({ entry, groupKey }) => {
+  if (!entry) return 0;
+
+  const isPosition = entry.category === 'Positions';
+  const normalizedName = normalizeValue(entry.name);
+  const isBroadPosition = isPosition && broadPositionNames.has(normalizedName);
+
+  if (['commonAttacks', 'commonTransitions', 'commonFollowUps'].includes(groupKey)) {
+    if (!isPosition) return 3;
+    if (isBroadPosition) return -3;
+    return -1;
+  }
+
+  if (groupKey === 'commonDefenses') {
+    return isPosition ? -1 : 2;
+  }
+
+  if (['entriesIntoPosition', 'relatedPositions'].includes(groupKey)) {
+    return isPosition ? 2 : 0;
+  }
+
+  return 0;
+};
+
+const scoreOption = ({ entry, groupKey, filters, focusEntry = null }) => {
   let score = 0;
   const styleHints = getSelectedStyleHints(filters);
   const entryText = getEntryText(entry);
+
+  score += relationshipPriorityBonus[groupKey] || 0;
 
   styleHints.forEach((style) => {
     if (optionMatchesStyles(entry, [style])) score += 2;
@@ -1582,6 +1787,8 @@ const scoreOption = ({ entry, groupKey, filters }) => {
   if (groupKey === 'commonDefenses' && filters.weakArea === 'escapes') score += 4;
   if (groupKey === 'entriesIntoPosition' && filters.preferredStyle === 'wrestling') score += 2;
   if (entryText.includes('beginner') && filters.experience === 'Beginner') score += 1;
+  score += getFocusContinuationBonus({ focusEntry, entry, groupKey });
+  score += getActionabilityBonus({ entry, groupKey });
 
   getFitProfileMatches(entry, filters).forEach((fit) => {
     if (fit.isMatch) score += 2;
@@ -1608,7 +1815,7 @@ const getFilteredBranches = ({ focusEntry, entriesByNameMap, filters, excludedEn
         return {
           name,
           entry,
-          score: scoreOption({ entry: entry || { name }, groupKey: group.key, filters }),
+          score: scoreOption({ entry: entry || { name }, groupKey: group.key, filters, focusEntry }),
           reasons: getOptionReasons({ entry: entry || { name }, groupKey: group.key, filters }),
           fitProfiles: getFitProfileMatches(entry || { name }, filters)
         };
@@ -1660,7 +1867,7 @@ const getReactionBranchOptions = ({
         return;
       }
 
-      let score = scoreOption({ entry, groupKey: 'commonTransitions', filters });
+      let score = scoreOption({ entry, groupKey: 'commonTransitions', filters, focusEntry });
       score += Math.max(0, 8 - reactionIndex);
       score += Math.max(0, 3 - branchIndex);
 
@@ -1742,7 +1949,7 @@ const getEscapeContinuationOptions = ({
       }
 
       const text = getEntryText(entry);
-      let score = scoreOption({ entry, groupKey: 'commonFollowUps', filters });
+      let score = scoreOption({ entry, groupKey: 'commonFollowUps', filters, focusEntry });
 
       if (index < seededNames.length) score += 8;
       if (

@@ -1281,6 +1281,40 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['position', 'guard', 'underhook'],
     description: 'A half guard structure built around winning the underhook first so sweeps, dogfight rises, and back exposure become available.',
+    decisionTreeModel: {
+      mechanics: [
+        'Win the underhook and head position before trying to come up.',
+        'Use the passer\'s whizzer, crossface, and hip position to decide whether to rise, sweep, or re-square.',
+        'Treat the position as a branching hub between dogfight, wrestle-ups, and back exposure.'
+      ],
+      commonGoals: [
+        'Come up into dogfight with better hip height.',
+        'Turn the underhook into a single leg or back-take route when they overreact.',
+        'Recover a safer half-guard angle if the flattening pressure wins first.'
+      ],
+      commonReactions: [
+        {
+          reaction: 'They whizzer hard and try to shut down the rise',
+          cue: 'A strong whizzer usually means you need to keep climbing into dogfight or switch to a sweep that uses their overcommitment.',
+          branches: ['Dogfight', 'Dogfight Sweep', 'Plan B Sweep']
+        },
+        {
+          reaction: 'They crossface and flatten you back down',
+          cue: 'Heavy flattening usually means rebuilding the half-guard shape is safer than forcing the come-up.',
+          branches: ['Knee Shield Half Guard', 'Butterfly Half', 'Half Guard Recovery']
+        },
+        {
+          reaction: 'They posture up or free the hips to square away',
+          cue: 'As the hips get lighter or they start backing out, the route often shifts to singles and wrestle-up finishes.',
+          branches: ['Single Leg', 'Wrestle-Up Single Leg Sweep', 'Dogfight']
+        },
+        {
+          reaction: 'They turn and expose the far side while defending the underhook',
+          cue: 'Defensive turning often opens the back-take line faster than a clean sweep.',
+          branches: ['Underhook Half Guard To Dogfight To Back', 'Back Control', 'Dogfight']
+        }
+      ]
+    },
     relatedPositions: ['Half Guard', 'Dogfight', 'Coyote Guard', 'Octopus Guard'],
     entriesIntoPosition: ['Half Guard', 'Knee Shield Half Guard'],
     commonAttacks: ['Dogfight Sweep', 'Underhook Half Guard To Dogfight To Back', 'Wrestle-Up Single Leg Sweep'],
@@ -4684,6 +4718,40 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'passing defense', 'leg drag'],
     description: 'Recovering angle and inside position before a leg-drag style pass turns into settled control.',
+    decisionTreeModel: {
+      mechanics: [
+        'Square the hips back toward the passer before the chest connection settles.',
+        'Use shoulder movement, inversion, or leg recovery based on how pinned the top leg is.',
+        'If the drag is too deep, bail into a safer emergency recovery instead of forcing a clean square-up.'
+      ],
+      commonGoals: [
+        'Re-face the passer before side control fully settles.',
+        'Recover an open-guard barrier or seated recovery line.',
+        'Use turtle or inversion only as a controlled emergency layer, not a panic exit.'
+      ],
+      commonReactions: [
+        {
+          reaction: 'They settle chest pressure and keep the drag tight',
+          cue: 'Heavy chest pressure usually means the first job is emergency angle recovery, not an immediate full open-guard rebuild.',
+          branches: ['Anti-Leg-Drag Square-Up', 'Shoulder Walk Recovery', 'Turtle']
+        },
+        {
+          reaction: 'They backstep or change direction to beat the square-up',
+          cue: 'Direction changes usually make inversion and split-leg recovery more realistic than forcing the same square-up twice.',
+          branches: ['Invert-To-Reguard', 'Split-Leg Retention Recovery', 'Open Guard Recomposition']
+        },
+        {
+          reaction: 'They lose the chest line and the drag becomes looser',
+          cue: 'Once the upper-body pressure loosens, the route often opens back into guard recomposition or seated recovery.',
+          branches: ['Open Guard Recomposition', 'Recovery To Seated Guard', 'Supine Square-Up Recovery']
+        },
+        {
+          reaction: 'They keep chasing the hips as you turn out',
+          cue: 'When the passer follows the turn aggressively, a turtle-based emergency recovery can be safer than accepting the pin.',
+          branches: ['Frame-To-Turtle-To-Reguard', 'Turtle-To-Seated Recovery', 'Recover Half Guard From Turtle']
+        }
+      ]
+    },
     relatedPositions: ['Open Guard', 'De La Riva', 'Bottom Side Control'],
     entriesIntoPosition: ['Open Guard', 'De La Riva', 'Leg Drag Position', 'Supine Guard'],
     commonTransitions: ['Anti-Leg-Drag Square-Up', 'Invert-To-Reguard', 'Shoulder Walk Recovery', 'Split-Leg Retention Recovery'],
@@ -4796,6 +4864,40 @@ const curriculumIndexSeed = [
     skillLevel: 'Intermediate',
     tags: ['guard retention', 'open guard', 'recovery'],
     description: 'Recomposing an open guard by layering hooks, frames, and angle until the passer is back in front of the hips again.',
+    decisionTreeModel: {
+      mechanics: [
+        'Rebuild the nearest barrier first instead of trying to recover every guard layer at once.',
+        'Use the passer\'s posture and pressure direction to decide between supine recovery, seated recovery, or a more specific guard rebuild.',
+        'Treat recomposition as a hub that can return to offense once the hips are back in front.'
+      ],
+      commonGoals: [
+        'Get the passer back in front of the knees and hips.',
+        'Recover a usable open guard, seated guard, or shin-based connection.',
+        'Turn the recovery into a wrestle-up or off-balancing threat when posture gets too light.'
+      ],
+      commonReactions: [
+        {
+          reaction: 'They stay low and keep trying to staple the hips',
+          cue: 'Heavy forward pressure usually means supine square-up and feet-to-hip barriers come before a full upright recovery.',
+          branches: ['Supine Square-Up Recovery', 'Foot-To-Hip Recovery', 'Double Shin Recovery']
+        },
+        {
+          reaction: 'They back out or posture up to avoid re-entanglement',
+          cue: 'As the pressure backs away, the route often opens into seated guard or shin-to-shin rather than staying flat underneath.',
+          branches: ['Seated Guard Recovery', 'Recovery To Seated Guard', 'Shin-To-Shin Recovery']
+        },
+        {
+          reaction: 'They try to re-enter leg drag or body-lock pressure immediately',
+          cue: 'Recurring close-pass entries usually mean the next branch should reinforce the specific anti-pass layer, not generic open guard.',
+          branches: ['Retaining Against Leg Drag', 'Retaining Against Body Lock', 'Frame Replacement']
+        },
+        {
+          reaction: 'They leave a leg or hip line exposed during the rebuild',
+          cue: 'When the passer gets too light or reaches too far, the recomposition can shift directly into a more offensive seated branch.',
+          branches: ['Shin-To-Shin', 'Butterfly Guard', 'Single-Leg X']
+        }
+      ]
+    },
     relatedPositions: ['Open Guard', 'Supine Guard', 'Seated Guard'],
     entriesIntoPosition: ['Open Guard', 'Supine Guard', 'Seated Guard', 'Leg Drag Position'],
     commonTransitions: ['Foot-To-Hip Recovery', 'Double Shin Recovery', 'Supine Square-Up Recovery', 'Seated Guard Recovery'],
@@ -6704,6 +6806,40 @@ const curriculumIndexSeed = [
       skillLevel: 'Intermediate',
       tags: ['passing', 'pressure', 'body lock'],
       description: 'A connected passing option that closes distance, removes mobility, and advances through layered pinning.',
+      decisionTreeModel: {
+        mechanics: [
+          'Close the chest-to-hip distance before trying to run around the legs.',
+          'Use shoulder pressure and hip positioning to kill inside knee recovery before advancing.',
+          'Read whether the defender is framing, pummeling, or trying to invert so the pass lane stays connected.'
+        ],
+        commonGoals: [
+          'Collapse the knees and hips into a weaker recovery line.',
+          'Advance through top half guard into side control or mount.',
+          'Keep the pass pressure-heavy instead of backing out into loose mobility exchanges.'
+        ],
+        commonReactions: [
+          {
+            reaction: 'They frame inside and try to make space at the chest',
+            cue: 'Strong inside frames usually mean you need to flatten the hips and keep the knees compromised before chasing the finish.',
+            branches: ['Top Half Guard', 'Body Lock Passing', 'Side Control']
+          },
+          {
+            reaction: 'They pummel a knee or butterfly hook back inside',
+            cue: 'As the knee line reappears, the route often shifts into half-guard pressure before the pass is fully won again.',
+            branches: ['Top Half Guard', 'Knee Slice Pass', 'Mount']
+          },
+          {
+            reaction: 'They hip escape and try to turn out toward seated or turtle',
+            cue: 'Turning reactions often create cleaner passing or back-exposure routes if the upper-body connection stays tight.',
+            branches: ['Pass From Turtle', 'Mount', 'Side Control']
+          },
+          {
+            reaction: 'They go light and try to invert out of the compression',
+            cue: 'When the defender gets floaty instead of square, keeping angle and chest connection usually matters more than rushing around the legs.',
+            branches: ['Leg Pin Pass', 'Side Control', 'Mount']
+          }
+        ]
+      },
       relatedPositions: ['Open Guard', 'Top Half Guard'],
       entriesIntoPosition: ['Open Guard', 'Seated Guard'],
       commonAttacks: ['Body Lock Passing', 'Leg Pin Pass'],
@@ -7199,6 +7335,40 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['passing', 'knee slice', 'fundamental'],
     description: 'A common naming variant of the knee-cut style pass that slices the knee through the guard while upper-body control flattens the hips.',
+    decisionTreeModel: {
+      mechanics: [
+        'Win the upper-body line so the knee slice is not just a loose step-through.',
+        'Keep the knee line active and ready to change angle if the defender rebuilds the shield or underhook.',
+        'Use the defender\'s frames to decide whether the finish is chest-to-chest, mount, or a direction change.'
+      ],
+      commonGoals: [
+        'Cut through the guard before the hips can fully square back in.',
+        'Climb to mount when the bottom player turns or overcommits to defending the slice.',
+        'Change direction smoothly if the first slice lane gets crowded.'
+      ],
+      commonReactions: [
+        {
+          reaction: 'They rebuild the knee shield or shin line',
+          cue: 'A returning shield often means you need to reinforce pressure or change the passing angle before forcing the slice again.',
+          branches: ['Smash Pass', 'Long Step', 'Knee Shield Half Guard']
+        },
+        {
+          reaction: 'They win the underhook battle underneath',
+          cue: 'A strong underhook usually means the pass has to settle into pressure and head control before the finish opens again.',
+          branches: ['Crossface and Underhook Control', 'Top Half Guard', 'Backstep Pass']
+        },
+        {
+          reaction: 'They turn away hard to stop chest-to-chest control',
+          cue: 'Turning reactions often open the mount or direction-change finish faster than forcing side control.',
+          branches: ['Mount Off Knee Cut', 'Long Step', 'Mount']
+        },
+        {
+          reaction: 'They hip escape and try to recover space',
+          cue: 'As the hips slide away, the pass often becomes a race between re-slicing and switching directions cleanly.',
+          branches: ['Backstep Pass', 'Long Step', 'Side Control']
+        }
+      ]
+    },
     relatedPositions: ['Headquarters', 'Top Half Guard', 'Knee Cut'],
     entriesIntoPosition: ['Headquarters', 'Top Half Guard', 'Knee Shield Half Guard'],
     commonAttacks: ['Mount Off Knee Cut', 'Long Step', 'Backstep Pass'],
@@ -7464,6 +7634,40 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['control', 'back control', 'connection'],
     description: 'The standard back-control connection that manages rotation and creates access to the choking side.',
+    decisionTreeModel: {
+      mechanics: [
+        'Keep the chest glued to the shoulder line before chasing the finish.',
+        'Use the seatbelt to manage rotation first, then choose between hook control, body triangle, or the choke line.',
+        'Read the hand-fight and shoulder-line reaction before overcommitting to one finish.'
+      ],
+      commonGoals: [
+        'Keep the opponent from turning into escape momentum.',
+        'Upgrade to stronger back-control structure when the hooks are unstable.',
+        'Open the choke family once the hand-fight starts getting behind.'
+      ],
+      commonReactions: [
+        {
+          reaction: 'They hand fight hard and keep both shoulders hidden',
+          cue: 'Strong hand-fighting usually means you need a control upgrade before the clean choke opens.',
+          branches: ['Body Triangle Back Control', 'Straightjacket Control', 'Back Control']
+        },
+        {
+          reaction: 'They start sliding a shoulder to the mat',
+          cue: 'As the shoulder wins back to the floor, the branch often shifts from finishing to re-controlling the line before the full escape starts.',
+          branches: ['Short Choke', 'Rear Naked Choke', 'Body Triangle Back Control']
+        },
+        {
+          reaction: 'They expose the neck while stripping hooks or fighting hands',
+          cue: 'When the neck line clears during the hand fight, the choke family becomes stronger than another control upgrade.',
+          branches: ['Rear Naked Choke', 'Short Choke', 'Bow And Arrow Choke']
+        },
+        {
+          reaction: 'They turn too far or lose the far hip line',
+          cue: 'Big turning reactions can open technical mount or stronger top control instead of a stubborn back chase.',
+          branches: ['Technical Mount', 'Back Control', 'Rear Naked Choke']
+        }
+      ]
+    },
     relatedPositions: ['Back Control'],
     entriesIntoPosition: ['Back Control', 'Chair Sit Back Take', 'Front Headlock To Spin Behind'],
     commonAttacks: ['Rear Naked Choke', 'Short Choke'],
@@ -8079,6 +8283,40 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['submission', 'choke', 'back control'],
     description: 'A core finishing attack from the back built on clean alignment, hand fighting, and shoulder control.',
+    decisionTreeModel: {
+      mechanics: [
+        'Win the shoulder line and hand-fight before squeezing early.',
+        'Treat the choke as part of the control chain, not separate from it.',
+        'If the clean finish is not there, move to the next choke or control route without losing the back.'
+      ],
+      commonGoals: [
+        'Finish when the neck line clears cleanly.',
+        'Keep the back when the defender survives the first hand-fight exchange.',
+        'Use the failed choke to open another high-percentage finish or a top bailout.'
+      ],
+      commonReactions: [
+        {
+          reaction: 'They hand fight early and hide the choking side',
+          cue: 'Early hand-fighting usually means the cleaner route is a control upgrade or a shorter choke, not muscling the finish.',
+          branches: ['Short Choke', 'Straightjacket Control', 'Seatbelt']
+        },
+        {
+          reaction: 'They tuck the chin but leave the shoulder line exposed',
+          cue: 'A defended neck with exposed shoulders often means the short choke or gi-style finish becomes more available than the classic RNC.',
+          branches: ['Short Choke', 'Bow And Arrow Choke', 'Body Triangle Back Control']
+        },
+        {
+          reaction: 'They turn and start to lose the back line',
+          cue: 'If the finishing line slips, it is often better to consolidate the position or bail to top than to force the choke late.',
+          branches: ['Technical Mount', 'Seatbelt', 'Armbar Position']
+        },
+        {
+          reaction: 'They panic and overcommit trying to peel the hands',
+          cue: 'Over-defending the hand fight can reopen the neck or expose the arm for a cleaner secondary attack.',
+          branches: ['Rear Naked Choke', 'Short Choke', 'Armbar Position']
+        }
+      ]
+    },
     relatedPositions: ['Back Control'],
     entriesIntoPosition: ['Back Control', 'Body Triangle', 'Straightjacket Control'],
     commonAttacks: ['Short Choke', 'Bow And Arrow Choke'],
@@ -8334,6 +8572,40 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['submission', 'shoulder lock', 'control'],
     description: 'A powerful upper-body attack that also serves as a control system for sweeps, back takes, and transitions.',
+    decisionTreeModel: {
+      mechanics: [
+        'Control the shoulder line before trying to rip the finish.',
+        'Use the opponent\'s posture and defensive grip choice to decide whether the kimura stays a finish, a sweep, or a back-take route.',
+        'Treat the kimura as a hub that creates movement even when the submission itself is not there.'
+      ],
+      commonGoals: [
+        'Finish the shoulder lock if posture stays broken.',
+        'Use the grip to sweep or come on top when they posture out of the finish.',
+        'Take the back when they turn hard to relieve the shoulder line.'
+      ],
+      commonReactions: [
+        {
+          reaction: 'They posture up and connect their hands to defend',
+          cue: 'Strong defensive posture usually means the next win comes from sweeping or re-breaking posture, not forcing the finish.',
+          branches: ['Hip Bump Sweep', 'Kimura Trap', 'Tarikoplata']
+        },
+        {
+          reaction: 'They turn hard to free the shoulder',
+          cue: 'Defensive turning often exposes the back-control branch faster than a cleaner lock finish.',
+          branches: ['Arm Drag To Back', 'Back Control', 'Kimura Trap']
+        },
+        {
+          reaction: 'They stay low and try to crush forward into you',
+          cue: 'Forward pressure often makes the upper-body control sequence stronger than the pure submission finish.',
+          branches: ['Kimura Trap', 'Hip Bump Sweep', 'Tarikoplata']
+        },
+        {
+          reaction: 'They slip the elbow line but leave the arm isolated',
+          cue: 'A loosened shoulder line often reopens straight-arm and triangle-style follow-ups instead of ending the exchange.',
+          branches: ['Tarikoplata', 'Straight Armbar From Guard', 'Triangle Choke']
+        }
+      ]
+    },
     relatedPositions: ['Closed Guard', 'Side Control', 'Half Guard'],
     entriesIntoPosition: ['Closed Guard', 'Half Guard', 'Side Control'],
       commonAttacks: ['Kimura Trap', 'Hip Bump Sweep', 'Tarikoplata', 'Arm Drag To Back'],
@@ -8394,6 +8666,40 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['submission', 'choke', 'guard'],
     description: 'A classic lower-body choke built on angle, posture control, and isolating the correct shoulder line.',
+    decisionTreeModel: {
+      mechanics: [
+        'Break posture and win the angle before trying to close the finishing line.',
+        'Use the trapped arm and shoulder position to decide whether to choke, switch to the arm, or sweep on top.',
+        'If the angle is weak, improve the structure before squeezing harder.'
+      ],
+      commonGoals: [
+        'Finish the choke when posture stays broken.',
+        'Shift into arm or shoulder attacks when the defender overcommits to posture or hand fighting.',
+        'Use the defense to sweep or improve top position if the lock stops being clean.'
+      ],
+      commonReactions: [
+        {
+          reaction: 'They posture up and start stacking',
+          cue: 'Strong posture usually means the branch has to improve angle or switch attacks before the choke becomes clean again.',
+          branches: ['Omoplata', 'Straight Armbar From Guard', 'Mounted Triangle']
+        },
+        {
+          reaction: 'They hand fight and keep the shoulder from crossing cleanly',
+          cue: 'Active hand-fighting often makes the armbar or omoplata line more available than forcing the triangle.',
+          branches: ['Straight Armbar From Guard', 'Omoplata', 'Clamp Guard']
+        },
+        {
+          reaction: 'They drive forward but leave their base light',
+          cue: 'Forward pressure can make the sweep and top-control branch more realistic than chasing a weak finish from bottom.',
+          branches: ['Hip Bump Sweep', 'Mounted Triangle', 'Mount']
+        },
+        {
+          reaction: 'They stay low but the angle is still broken',
+          cue: 'When the posture stays broken, tightening the finishing family or climbing to the mounted variation often wins the exchange.',
+          branches: ['Triangle Choke', 'Teepee Choke', 'Mounted Triangle']
+        }
+      ]
+    },
     relatedPositions: ['Closed Guard', 'Open Guard', 'Mount'],
     entriesIntoPosition: ['Closed Guard', 'Open Guard', 'Mounted Triangle'],
     commonAttacks: ['Straight Armbar From Guard', 'Omoplata', 'Mounted Triangle'],
@@ -9430,6 +9736,40 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['leg lock', 'submission', 'ashi'],
     description: 'A foundational leg lock that teaches alignment, control, and finishing mechanics from standard ashi positions.',
+    decisionTreeModel: {
+      mechanics: [
+        'Control the knee line and foot line before chasing the finish.',
+        'Read whether the defender is booting, turning, or trying to stand so you can change the follow-up early.',
+        'Be willing to come on top if the clean finish is gone.'
+      ],
+      commonGoals: [
+        'Finish the ankle lock when the alignment is clean.',
+        'Climb into a stronger finishing angle if the standard bite gets defended.',
+        'Use the defensive reaction to sweep, stand up, or pass on top.'
+      ],
+      commonReactions: [
+        {
+          reaction: 'They boot the foot and hand fight hard',
+          cue: 'A strong boot defense usually means you need a finishing variation or angle change rather than forcing the same bite.',
+          branches: ['Belly-Down Ankle Lock', 'Aoki Lock', 'Estima Lock']
+        },
+        {
+          reaction: 'They turn and try to clear the knee line',
+          cue: 'Defensive turning often shifts the exchange toward coming on top instead of chasing the finish from underneath.',
+          branches: ['Single-Leg X Stand-Up Sweep', 'Top Half Guard', 'Leg Drag']
+        },
+        {
+          reaction: 'They posture up and start standing out of the entanglement',
+          cue: 'As they stand and pull away, wrestle-up or stand-up sweep branches usually become more realistic than hanging on low.',
+          branches: ['Single-Leg X Stand-Up Sweep', 'Wrestle-Up Single Leg Sweep', 'Ashi Garami']
+        },
+        {
+          reaction: 'They stay stuck in the entanglement but hide the clean foot line',
+          cue: 'If the leg line stays trapped but the bite gets messy, the route often changes to another foot lock instead of abandoning control.',
+          branches: ['Aoki Lock', 'Belly-Down Ankle Lock', 'Estima Lock']
+        }
+      ]
+    },
     relatedPositions: ['Ashi Garami', 'Single-Leg X'],
     entriesIntoPosition: ['Single-Leg X', 'Ashi Garami', 'Outside Ashi', '50/50'],
     commonAttacks: ['Belly-Down Ankle Lock', 'Aoki Lock', 'Estima Lock'],
