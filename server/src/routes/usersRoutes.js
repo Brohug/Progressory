@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   createUser,
   createMemberAccessInvite,
+  createStaffAccessInvite,
   getUsers,
   getUserById,
   updateUser,
@@ -16,6 +17,7 @@ const { protect, requireOwner } = require('../middleware/authMiddleware');
 router.use(protect, requireOwner);
 
 router.post('/member-access', createMemberAccessInvite);
+router.post('/staff-access', createStaffAccessInvite);
 router.post('/', createUser);
 router.get('/', getUsers);
 router.get('/:id', getUserById);

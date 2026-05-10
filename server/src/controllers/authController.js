@@ -202,6 +202,27 @@ const findInviteByRawToken = async (rawToken) => {
   return rows[0];
 };
 
+const findStaffInviteByRawToken = async (rawToken) => {
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+  const [rows] = await pool.query(
+    `SELECT sai.id, sai.gym_id, sai.user_id, sai.invite_type, sai.expires_at, sai.used_at,
+            u.first_name, u.last_name, u.email, u.role, u.is_active,
+            g.name AS gym_name, g.slug
+     FROM staff_access_invites sai
+     JOIN users u ON sai.user_id = u.id AND sai.gym_id = u.gym_id
+     JOIN gyms g ON sai.gym_id = g.id
+     WHERE sai.token_hash = ?`,
+    [tokenHash]
+  );
+
+  if (rows.length === 0) {
+    return null;
+  }
+
+  return rows[0];
+};
+
 const getMemberAccessInvite = async (req, res) => {
   try {
     const { token } = req.params;
@@ -333,6 +354,147 @@ const setMemberAccessPassword = async (req, res) => {
   }
 };
 
+const getStaffAccessInvite = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const invite = await findStaffInviteByRawToken(token);
+
+    if (!invite) {
+      return res.status(404).json({
+        message: 'Invite not found'
+      });
+    }
+
+    if (invite.used_at) {
+      return res.status(410).json({
+        message: 'This link has already been used'
+      });
+    }
+
+    if (new Date(invite.expires_at).getTime() < Date.now()) {
+      return res.status(410).json({
+        message: 'This link has expired'
+      });
+    }
+
+    return res.status(200).json({
+      invite: {
+        user_id: invite.user_id,
+        type: invite.invite_type,
+        email: invite.email,
+        first_name: invite.first_name,
+        last_name: invite.last_name,
+        role: invite.role,
+        gym_name: invite.gym_name,
+        expires_at: invite.expires_at
+      }
+    });
+  } catch (error) {
+    console.error('Get staff access invite error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+const setStaffAccessPassword = async (req, res) => {
+  const connection = await pool.getConnection();
+
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 8) {
+      return res.status(400).json({
+        message: 'Password must be at least 8 characters'
+      });
+    }
+
+    const invite = await findStaffInviteByRawToken(token);
+
+    if (!invite) {
+      return res.status(404).json({
+        message: 'Invite not found'
+      });
+    }
+
+    if (invite.used_at) {
+      return res.status(410).json({
+        message: 'This link has already been used'
+      });
+    }
+
+    if (new Date(invite.expires_at).getTime() < Date.now()) {
+      return res.status(410).json({
+        message: 'This link has expired'
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    await connection.beginTransaction();
+
+    await connection.query(
+      `UPDATE users
+       SET password_hash = ?, is_active = TRUE
+       WHERE id = ? AND gym_id = ?`,
+      [passwordHash, invite.user_id, invite.gym_id]
+    );
+
+    await connection.query(
+      `UPDATE staff_access_invites
+       SET used_at = NOW()
+       WHERE token_hash = ? AND gym_id = ?`,
+      [tokenHash, invite.gym_id]
+    );
+
+    await connection.commit();
+
+    const [userRows] = await pool.query(
+      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
+              m.id AS member_id,
+              g.name AS gym_name, g.slug
+       FROM users u
+       JOIN gyms g ON u.gym_id = g.id
+       LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
+       WHERE u.id = ? AND u.gym_id = ?`,
+      [invite.user_id, invite.gym_id]
+    );
+
+    const user = userRows[0];
+    const authToken = generateToken(user);
+
+    return res.status(200).json({
+      message: 'Password set successfully',
+      token: authToken,
+      user: {
+        id: user.id,
+        gym_id: user.gym_id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        role: user.role,
+        member_id: user.member_id || null,
+        gym_name: user.gym_name,
+        slug: user.slug
+      }
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Set staff access password error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  } finally {
+    connection.release();
+  }
+};
+
 const getMe = async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -368,5 +530,7 @@ module.exports = {
   login,
   getMe,
   getMemberAccessInvite,
-  setMemberAccessPassword
+  setMemberAccessPassword,
+  getStaffAccessInvite,
+  setStaffAccessPassword
 };

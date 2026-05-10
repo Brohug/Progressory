@@ -5,15 +5,22 @@ const pool = require('../config/db');
 const allowedCreateRoles = ['admin', 'coach', 'member'];
 const allowedUpdateRoles = ['admin', 'coach', 'member'];
 const MEMBER_INVITE_EXPIRY_HOURS = 72;
+const STAFF_INVITE_EXPIRY_HOURS = 72;
+const staffInviteRoles = ['admin', 'coach'];
 
-const buildInviteUrl = (token) => {
+const buildMemberInviteUrl = (token) => {
   const configuredBaseUrl = process.env.CLIENT_URL || process.env.APP_URL || 'http://localhost:5173';
   return `${configuredBaseUrl.replace(/\/$/, '')}/member-access/${token}`;
 };
 
+const buildStaffInviteUrl = (token) => {
+  const configuredBaseUrl = process.env.CLIENT_URL || process.env.APP_URL || 'http://localhost:5173';
+  return `${configuredBaseUrl.replace(/\/$/, '')}/staff-access/${token}`;
+};
+
 const generateRandomPassword = () => crypto.randomBytes(24).toString('base64url');
 
-const createInviteTokenRecord = async (connection, {
+const createMemberInviteTokenRecord = async (connection, {
   gymId,
   userId,
   memberId,
@@ -39,7 +46,37 @@ const createInviteTokenRecord = async (connection, {
   );
 
   return {
-    inviteUrl: buildInviteUrl(rawToken),
+    inviteUrl: buildMemberInviteUrl(rawToken),
+    expiresAt
+  };
+};
+
+const createStaffInviteTokenRecord = async (connection, {
+  gymId,
+  userId,
+  createdByUserId,
+  inviteType
+}) => {
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+  const expiresAt = new Date(Date.now() + STAFF_INVITE_EXPIRY_HOURS * 60 * 60 * 1000);
+
+  await connection.query(
+    `UPDATE staff_access_invites
+     SET used_at = COALESCE(used_at, NOW())
+     WHERE user_id = ? AND gym_id = ? AND used_at IS NULL`,
+    [userId, gymId]
+  );
+
+  await connection.query(
+    `INSERT INTO staff_access_invites
+     (gym_id, user_id, created_by_user_id, invite_type, token_hash, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [gymId, userId, createdByUserId, inviteType, tokenHash, expiresAt]
+  );
+
+  return {
+    inviteUrl: buildStaffInviteUrl(rawToken),
     expiresAt
   };
 };
@@ -301,7 +338,7 @@ const createMemberAccessInvite = async (req, res) => {
       );
     }
 
-    const inviteRecord = await createInviteTokenRecord(connection, {
+    const inviteRecord = await createMemberInviteTokenRecord(connection, {
       gymId,
       userId: targetUserId,
       memberId: Number(member_id),
@@ -348,6 +385,189 @@ const createMemberAccessInvite = async (req, res) => {
   }
 };
 
+const createStaffAccessInvite = async (req, res) => {
+  const connection = await pool.getConnection();
+
+  try {
+    if (!requireOwner(req, res)) return;
+
+    const gymId = req.user.gym_id;
+    const createdByUserId = req.user.id;
+    const {
+      user_id,
+      first_name,
+      last_name,
+      email,
+      role
+    } = req.body;
+
+    const normalizedRole = (role || '').trim().toLowerCase();
+
+    if (!staffInviteRoles.includes(normalizedRole)) {
+      return res.status(400).json({
+        message: 'Role must be admin or coach'
+      });
+    }
+
+    await connection.beginTransaction();
+
+    let targetUserId = user_id ? Number(user_id) : null;
+    let inviteType = 'activation';
+    let targetUser = null;
+
+    if (targetUserId) {
+      const [existingRows] = await connection.query(
+        `SELECT id, gym_id, first_name, last_name, email, role, is_active
+         FROM users
+         WHERE id = ? AND gym_id = ?`,
+        [targetUserId, gymId]
+      );
+
+      if (existingRows.length === 0) {
+        await connection.rollback();
+        return res.status(404).json({
+          message: 'Staff user not found'
+        });
+      }
+
+      targetUser = existingRows[0];
+
+      if (targetUser.role === 'owner') {
+        await connection.rollback();
+        return res.status(400).json({
+          message: 'Owner accounts do not use staff setup invites'
+        });
+      }
+
+      if (targetUser.role === 'member') {
+        await connection.rollback();
+        return res.status(400).json({
+          message: 'Member accounts use member access links, not staff setup links'
+        });
+      }
+
+      const updatedFirstName = (first_name || targetUser.first_name || '').trim();
+      const updatedLastName = (last_name || targetUser.last_name || '').trim();
+      const updatedEmail = (email || targetUser.email || '').trim().toLowerCase();
+
+      if (!updatedFirstName || !updatedLastName) {
+        await connection.rollback();
+        return res.status(400).json({
+          message: 'First name and last name are required'
+        });
+      }
+
+      if (!updatedEmail) {
+        await connection.rollback();
+        return res.status(400).json({
+          message: 'Email is required'
+        });
+      }
+
+      const [duplicateRows] = await connection.query(
+        'SELECT id FROM users WHERE email = ? AND id <> ?',
+        [updatedEmail, targetUserId]
+      );
+
+      if (duplicateRows.length > 0) {
+        await connection.rollback();
+        return res.status(400).json({
+          message: 'Another user already uses that email'
+        });
+      }
+
+      await connection.query(
+        `UPDATE users
+         SET first_name = ?, last_name = ?, email = ?, role = ?
+         WHERE id = ? AND gym_id = ?`,
+        [updatedFirstName, updatedLastName, updatedEmail, normalizedRole, targetUserId, gymId]
+      );
+
+      inviteType = targetUser.is_active ? 'reset_password' : 'activation';
+    } else {
+      const newFirstName = (first_name || '').trim();
+      const newLastName = (last_name || '').trim();
+      const normalizedEmail = (email || '').trim().toLowerCase();
+
+      if (!newFirstName || !newLastName) {
+        await connection.rollback();
+        return res.status(400).json({
+          message: 'First name and last name are required'
+        });
+      }
+
+      if (!normalizedEmail) {
+        await connection.rollback();
+        return res.status(400).json({
+          message: 'Email is required'
+        });
+      }
+
+      const [existingUserRows] = await connection.query(
+        'SELECT id FROM users WHERE email = ?',
+        [normalizedEmail]
+      );
+
+      if (existingUserRows.length > 0) {
+        await connection.rollback();
+        return res.status(400).json({
+          message: 'A user with that email already exists'
+        });
+      }
+
+      const passwordHash = await bcrypt.hash(generateRandomPassword(), 10);
+
+      const [newUserResult] = await connection.query(
+        `INSERT INTO users
+         (gym_id, first_name, last_name, email, password_hash, role, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, FALSE)`,
+        [gymId, newFirstName, newLastName, normalizedEmail, passwordHash, normalizedRole]
+      );
+
+      targetUserId = newUserResult.insertId;
+      inviteType = 'activation';
+    }
+
+    const inviteRecord = await createStaffInviteTokenRecord(connection, {
+      gymId,
+      userId: targetUserId,
+      createdByUserId,
+      inviteType
+    });
+
+    await connection.commit();
+
+    const [userRows] = await pool.query(
+      `SELECT id, gym_id, first_name, last_name, email, role, is_active, created_at, updated_at
+       FROM users
+       WHERE id = ? AND gym_id = ?`,
+      [targetUserId, gymId]
+    );
+
+    return res.status(201).json({
+      message: inviteType === 'activation'
+        ? 'Staff setup link created successfully'
+        : 'Staff reset-password link created successfully',
+      invite: {
+        type: inviteType,
+        url: inviteRecord.inviteUrl,
+        expires_at: inviteRecord.expiresAt
+      },
+      user: userRows[0]
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Create staff access invite error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  } finally {
+    connection.release();
+  }
+};
+
 const getUsers = async (req, res) => {
   try {
     if (!requireOwner(req, res)) return;
@@ -357,7 +577,7 @@ const getUsers = async (req, res) => {
     const [rows] = await pool.query(
       `SELECT id, gym_id, first_name, last_name, email, role, is_active, created_at, updated_at
        FROM users
-       WHERE gym_id = ?
+       WHERE gym_id = ? AND role IN ('owner', 'admin', 'coach')
        ORDER BY created_at DESC`,
       [gymId]
     );
@@ -684,6 +904,7 @@ const activateUser = async (req, res) => {
 module.exports = {
   createUser,
   createMemberAccessInvite,
+  createStaffAccessInvite,
   getUsers,
   getUserById,
   updateUser,

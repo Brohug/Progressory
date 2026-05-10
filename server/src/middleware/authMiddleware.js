@@ -2,8 +2,10 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
 const STAFF_ROLES = ['owner', 'admin', 'coach'];
+const MANAGEMENT_ROLES = ['owner', 'admin'];
 
 const isStaffRole = (role) => STAFF_ROLES.includes(role);
+const isManagementRole = (role) => MANAGEMENT_ROLES.includes(role);
 
 const protect = async (req, res, next) => {
   try {
@@ -60,6 +62,7 @@ const protect = async (req, res, next) => {
 module.exports = {
   protect,
   isStaffRole,
+  isManagementRole,
   requireRoles: (...allowedRoles) => (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
@@ -85,6 +88,21 @@ module.exports = {
     if (!isStaffRole(req.user.role)) {
       return res.status(403).json({
         message: 'Only staff accounts can access this resource'
+      });
+    }
+
+    return next();
+  },
+  requireManagement: (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        message: 'Not authorized'
+      });
+    }
+
+    if (!isManagementRole(req.user.role)) {
+      return res.status(403).json({
+        message: 'Only owner or admin accounts can access this resource'
       });
     }
 

@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const MemberAccessPage = lazy(() => import('./pages/MemberAccessPage'));
+const StaffAccessPage = lazy(() => import('./pages/StaffAccessPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ProgramsPage = lazy(() => import('./pages/ProgramsPage'));
 const TopicsPage = lazy(() => import('./pages/TopicsPage'));
@@ -20,6 +21,7 @@ const DecisionTreePage = lazy(() => import('./pages/DecisionTreePage'));
 const MyProgressPage = lazy(() => import('./pages/MyProgressPage'));
 
 const STAFF_ROLES = ['owner', 'admin', 'coach'];
+const MANAGEMENT_ROLES = ['owner', 'admin'];
 
 function RouteFallback() {
   return (
@@ -37,6 +39,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<LoginPage />} />
             <Route path="/member-access/:token" element={<MemberAccessPage />} />
+            <Route path="/staff-access/:token" element={<StaffAccessPage />} />
             <Route
               path="/dashboard"
               element={
@@ -48,7 +51,7 @@ export default function App() {
             <Route
               path="/programs"
               element={
-                <ProtectedRoute allowedRoles={STAFF_ROLES}>
+                <ProtectedRoute allowedRoles={MANAGEMENT_ROLES}>
                   <ProgramsPage />
                 </ProtectedRoute>
               }
@@ -56,7 +59,7 @@ export default function App() {
             <Route
               path="/topics"
               element={
-                <ProtectedRoute allowedRoles={STAFF_ROLES}>
+                <ProtectedRoute allowedRoles={MANAGEMENT_ROLES}>
                   <TopicsPage />
                 </ProtectedRoute>
               }
@@ -96,7 +99,7 @@ export default function App() {
             <Route
               path="/training-scenarios"
               element={
-                <ProtectedRoute allowedRoles={STAFF_ROLES}>
+                <ProtectedRoute allowedRoles={MANAGEMENT_ROLES}>
                   <TrainingScenariosPage />
                 </ProtectedRoute>
               }

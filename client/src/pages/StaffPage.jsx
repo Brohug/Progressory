@@ -3,19 +3,22 @@ import api from '../api/axios';
 import Layout from '../components/Layout';
 import { useAuth } from '../hooks/useAuth';
 
+const initialFormState = {
+  first_name: '',
+  last_name: '',
+  email: '',
+  role: 'coach'
+};
+
 export default function StaffPage() {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    password: '',
-    role: 'coach'
-  });
+  const [formData, setFormData] = useState(initialFormState);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [inviteNotice, setInviteNotice] = useState(null);
+  const [actionUserId, setActionUserId] = useState(null);
 
   const isOwner = user?.role === 'owner';
 
@@ -52,36 +55,65 @@ export default function StaffPage() {
     }));
   };
 
+  const handleCopyInvite = async (url) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setInviteNotice((prev) => prev ? { ...prev, copied: true } : prev);
+    } catch {
+      setError('Could not copy the setup link automatically. You can still copy it manually.');
+    }
+  };
+
+  const createStaffInvite = async (payload) => {
+    const response = await api.post('/users/staff-access', payload);
+    setInviteNotice({
+      ...response.data.invite,
+      user: response.data.user,
+      copied: false
+    });
+    await fetchUsers();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setError('');
+    setInviteNotice(null);
 
     try {
-      const payload = {
+      await createStaffInvite({
         first_name: formData.first_name,
         last_name: formData.last_name,
         email: formData.email,
-        password: formData.password,
         role: formData.role
-      };
-
-      await api.post('/users', payload);
-
-      setFormData({
-        first_name: '',
-        last_name: '',
-        email: '',
-        password: '',
-        role: 'coach'
       });
 
-      await fetchUsers();
+      setFormData(initialFormState);
     } catch (err) {
-      console.error('Create staff user error:', err);
-      setError(err.response?.data?.message || 'Failed to create staff user');
+      console.error('Create staff invite error:', err);
+      setError(err.response?.data?.message || 'Failed to create staff setup link');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleSendReset = async (staffUser) => {
+    try {
+      setActionUserId(staffUser.id);
+      setError('');
+      setInviteNotice(null);
+      await createStaffInvite({
+        user_id: staffUser.id,
+        first_name: staffUser.first_name,
+        last_name: staffUser.last_name,
+        email: staffUser.email,
+        role: staffUser.role
+      });
+    } catch (err) {
+      console.error('Create staff reset invite error:', err);
+      setError(err.response?.data?.message || 'Failed to create staff setup link');
+    } finally {
+      setActionUserId(null);
     }
   };
 
@@ -93,12 +125,29 @@ export default function StaffPage() {
     if (!confirmed) return;
 
     try {
+      setActionUserId(userId);
       setError('');
       await api.patch(`/users/${userId}/deactivate`);
       await fetchUsers();
     } catch (err) {
       console.error('Deactivate staff user error:', err);
       setError(err.response?.data?.message || 'Failed to deactivate staff user');
+    } finally {
+      setActionUserId(null);
+    }
+  };
+
+  const handleActivate = async (userId) => {
+    try {
+      setActionUserId(userId);
+      setError('');
+      await api.patch(`/users/${userId}/activate`);
+      await fetchUsers();
+    } catch (err) {
+      console.error('Activate staff user error:', err);
+      setError(err.response?.data?.message || 'Failed to activate staff user');
+    } finally {
+      setActionUserId(null);
     }
   };
 
@@ -112,8 +161,12 @@ export default function StaffPage() {
         </section>
       ) : (
         <>
-          <section className="page-section" style={{ maxWidth: '760px' }}>
-            <h3>Create Staff Account</h3>
+          <section className="page-section" style={{ maxWidth: '860px' }}>
+            <h3>Create Staff Setup Link</h3>
+            <p className="section-note">
+              Add the staff member, pick the role, and give them a one-time setup link so they
+              can create their own password the first time they enter the app.
+            </p>
 
             <form className="form-grid" onSubmit={handleSubmit}>
               <div>
@@ -147,16 +200,6 @@ export default function StaffPage() {
               </div>
 
               <div>
-                <label>Password</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div>
                 <label>Role</label>
                 <select
                   name="role"
@@ -170,11 +213,30 @@ export default function StaffPage() {
 
               <div>
                 <button type="submit" disabled={submitting}>
-                  {submitting ? 'Creating...' : 'Create Staff Account'}
+                  {submitting ? 'Creating link...' : 'Create Staff Setup Link'}
                 </button>
               </div>
             </form>
           </section>
+
+          {inviteNotice ? (
+            <section className="page-section" style={{ maxWidth: '860px' }}>
+              <h3>{inviteNotice.type === 'reset_password' ? 'Reset Link Ready' : 'Setup Link Ready'}</h3>
+              <div className="detail-block">
+                <div className="meta-text">
+                  For: {inviteNotice.user?.first_name} {inviteNotice.user?.last_name} ({inviteNotice.user?.role})
+                </div>
+                <div className="meta-text">Expires: {new Date(inviteNotice.expires_at).toLocaleString()}</div>
+              </div>
+              <label>Staff access link</label>
+              <input type="text" value={inviteNotice.url} readOnly />
+              <div className="inline-actions" style={{ marginTop: '0.75rem' }}>
+                <button type="button" onClick={() => handleCopyInvite(inviteNotice.url)}>
+                  {inviteNotice.copied ? 'Copied' : 'Copy Link'}
+                </button>
+              </div>
+            </section>
+          ) : null}
 
           {error && <p className="error-text">{error}</p>}
 
@@ -204,14 +266,31 @@ export default function StaffPage() {
                       </div>
                     </div>
 
-                    {staffUser.role !== 'owner' && staffUser.is_active ? (
+                    {staffUser.role !== 'owner' ? (
                       <div className="inline-actions">
                         <button
-                          className="danger-button"
-                          onClick={() => handleDeactivate(staffUser.id)}
+                          onClick={() => handleSendReset(staffUser)}
+                          disabled={actionUserId === staffUser.id}
                         >
-                          Deactivate Staff Account
+                          {actionUserId === staffUser.id ? 'Preparing...' : staffUser.is_active ? 'Create Reset Link' : 'Create Setup Link'}
                         </button>
+
+                        {staffUser.is_active ? (
+                          <button
+                            className="danger-button"
+                            onClick={() => handleDeactivate(staffUser.id)}
+                            disabled={actionUserId === staffUser.id}
+                          >
+                            Deactivate Staff Account
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleActivate(staffUser.id)}
+                            disabled={actionUserId === staffUser.id}
+                          >
+                            Activate Staff Account
+                          </button>
+                        )}
                       </div>
                     ) : null}
                   </li>
