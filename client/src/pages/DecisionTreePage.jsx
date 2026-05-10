@@ -61,45 +61,45 @@ const coachingScenarios = [
           {
             label: 'Pressure passing',
             description: 'Best for compact or heavier players who like chest-to-chest control.',
-            focusName: 'Body Lock Pass',
+            focusName: 'Pressure Passing',
             filters: { preferredStyle: 'pressure', bodyType: 'larger', riskTolerance: 'low' }
           },
           {
             label: 'Mobility passing',
             description: 'Best for faster players who like circling, redirecting, and staying light.',
-            focusName: 'Bullfighter Pass',
+            focusName: 'Standing Passing',
             filters: { preferredStyle: 'scrambles', bodyType: 'smaller', riskTolerance: 'medium' }
           },
           {
             label: 'Leg pin passing',
             description: 'Best for players who like stapling legs and winning angles before control.',
-            focusName: 'Leg Drag',
+            focusName: 'Leg Weave / Leg Pin Passing',
             filters: { preferredStyle: 'pressure', riskTolerance: 'medium' }
           },
           {
             label: 'Under / stack passing',
             description: 'Best for players who like folding the hips and lifting the legs.',
-            focusName: 'Stack Pass',
+            focusName: 'Stack / Under Passing',
             filters: { preferredStyle: 'pressure', bodyType: 'compact', riskTolerance: 'low' }
           },
           {
             label: 'Inside passing',
             description: 'Best for players who like knee-cut, split-squat, and inside-lane pressure.',
-            focusName: 'Knee Slice Pass',
+            focusName: 'Inside Passing',
             filters: { preferredStyle: 'pressure', topBottom: 'top', riskTolerance: 'medium' },
             isExtended: true
           },
           {
             label: 'Outside / direction-change passing',
             description: 'Best for players who like long-step, backstep, and angle-change routes.',
-            focusName: 'Long Step',
+            focusName: 'Outside Passing',
             filters: { preferredStyle: 'scrambles', topBottom: 'top', riskTolerance: 'medium' },
             isExtended: true
           },
           {
             label: 'Floating / movement passing',
             description: 'Best for players who like staying light and converting failed pressure into motion.',
-            focusName: 'Float Pass',
+            focusName: 'Floating / Direction Change Passing',
             filters: { preferredStyle: 'scrambles', topBottom: 'top', riskTolerance: 'medium' },
             isExtended: true
           },
@@ -956,9 +956,9 @@ const coachingScenarioGuidedPromptMap = {
       options: [
         { label: 'Triangle family', description: 'Good if you want angles, posture reactions, and armbar/omoplata links.', focusName: 'Triangle Choke' },
         { label: 'Kimura family', description: 'Good if you want control-first attacks that often connect to top or back exposure.', focusName: 'Kimura' },
-        { label: 'Front headlock chokes', description: "Good if you want guillotines, anaconda, and D'Arce-style chains.", focusName: 'Guillotine' },
-        { label: 'Back choke chains', description: 'Good if you want high-percentage finishing routes after back control is won.', focusName: 'Rear Naked Choke' },
-        { label: 'Armbar family', description: 'Good if you want direct arm-isolation chains from guard or top control.', focusName: 'Straight Armbar From Guard', isExtended: true },
+        { label: 'Front headlock chokes', description: "Good if you want guillotines, anaconda, and D'Arce-style chains.", focusName: 'Front Headlock' },
+        { label: 'Back choke chains', description: 'Good if you want high-percentage finishing routes after back control is won.', focusName: 'Back Control' },
+        { label: 'Armbar family', description: 'Good if you want direct arm-isolation chains from guard or top control.', focusName: 'Straight Armlock', isExtended: true },
         { label: 'Omoplata family', description: 'Good if you want shoulder-control chains that connect to sweeps, triangles, and armbars.', focusName: 'Omoplata', isExtended: true },
         { label: 'Collar choke chains', description: 'Good if you want gi-based posture breaking and layered collar-finishing routes.', focusName: 'Cross Collar Choke', isExtended: true },
         { label: 'Head-and-arm chokes', description: 'Good if you want pressure-based finishing routes from stable top control.', focusName: 'Arm Triangle', isExtended: true },
@@ -1039,9 +1039,9 @@ const coachingScenarioGuidedPromptMap = {
         { label: 'Posture keeps breaking', description: 'You likely need stronger posture discipline before the pass even starts.', focusName: 'Posture' },
         { label: 'I cannot get the guard open', description: 'You likely need a clearer opening sequence and base position.', focusName: 'Combat Base' },
         { label: 'They keep climbing attacks', description: 'You likely need safer top positioning before forcing the pass.', focusName: 'Posture' },
-        { label: 'They force me forward into sweeps', description: 'You likely need better angle control and pressure direction first.', focusName: 'Double Under Pass' },
-        { label: 'I need the first passing lane after the guard opens', description: 'Best if you open the guard but stall immediately on the next decision.', focusName: 'Bullfighter Pass', isExtended: true },
-        { label: 'I need safer pressure from the top', description: 'Best if you want to stay heavy and deny attacks before chasing speed.', focusName: 'Body Lock Pass', isExtended: true },
+        { label: 'They force me forward into sweeps', description: 'You likely need better angle control and pressure direction first.', focusName: 'Stack / Under Passing' },
+        { label: 'I need the first passing lane after the guard opens', description: 'Best if you open the guard but stall immediately on the next decision.', focusName: 'Standing Passing', isExtended: true },
+        { label: 'I need safer pressure from the top', description: 'Best if you want to stay heavy and deny attacks before chasing speed.', focusName: 'Pressure Passing', isExtended: true },
         { label: 'I lose inside hand position first', description: 'Best if the issue starts before the pass with posture and arm-frame discipline.', focusName: 'Posture', isExtended: true }
       ]
     }
@@ -1138,11 +1138,11 @@ const coachingScenarioGuidedPromptMap = {
       options: [
         { label: 'Kimura family', description: 'Good if you want a submission that often leads to control, back takes, or top position.', focusName: 'Kimura' },
         { label: 'Arm triangle family', description: 'Good if you prefer pressure-based finishes from stable top control.', focusName: 'Arm Triangle' },
-        { label: 'Back choke family', description: 'Good if you want high-percentage finishes after control is already won.', focusName: 'Rear Naked Choke' },
+        { label: 'Back choke family', description: 'Good if you want high-percentage finishes after control is already won.', focusName: 'Back Control' },
         { label: 'Straight ankle family', description: 'Good if you want a simpler lower-body attack before deeper rotational entries.', focusName: 'Straight Ankle Lock' },
         { label: 'Americana family', description: 'Good if you want a top-control attack that often keeps you in a stable pin.', focusName: 'Americana', isExtended: true },
         { label: 'Cross-collar chains', description: 'Good if you want slower, control-first gi attacks that build off posture and grips.', focusName: 'Cross Collar Choke', isExtended: true },
-        { label: 'Straight armbar family', description: 'Good if you want direct arm isolation that still links back into top control.', focusName: 'Straight Armbar From Guard', isExtended: true },
+        { label: 'Straight armbar family', description: 'Good if you want direct arm isolation that still links back into top control.', focusName: 'Straight Armlock', isExtended: true },
         { label: 'Triangle family', description: 'Good if you want layered reactions into sweeps and arm attacks once posture is broken.', focusName: 'Triangle Choke', isExtended: true }
       ]
     }
@@ -1626,7 +1626,50 @@ const getFitProfileMatches = (entry, filters) => {
     }));
 };
 
-const getOptionReasons = ({ entry, groupKey, filters }) => {
+const getGroupConnectionReason = ({ groupKey, focusEntry }) => {
+  const focusName = focusEntry?.name || 'current focus';
+
+  switch (groupKey) {
+    case 'entriesIntoPosition':
+      return `Common entry into ${focusName}`;
+    case 'commonAttacks':
+      return `Common attack from ${focusName}`;
+    case 'commonTransitions':
+      return `Common transition from ${focusName}`;
+    case 'commonFollowUps':
+      return `Common follow-up from ${focusName}`;
+    case 'commonDefenses':
+      return `Common reaction branch from ${focusName}`;
+    case 'relatedPositions':
+      return `Closely related to ${focusName}`;
+    default:
+      return `Connected to ${focusName}`;
+  }
+};
+
+const getGroupConnectionSummary = ({ groupKey, focusEntry, entry }) => {
+  const focusName = focusEntry?.name || 'the current focus';
+  const entryName = entry?.name || 'this option';
+
+  switch (groupKey) {
+    case 'entriesIntoPosition':
+      return `${entryName} is a common entry that helps you arrive at ${focusName} more cleanly.`;
+    case 'commonAttacks':
+      return `${entryName} is one of the cleaner attacks once ${focusName} is established.`;
+    case 'commonTransitions':
+      return `${entryName} is a natural transition when ${focusName} starts to shift.`;
+    case 'commonFollowUps':
+      return `${entryName} is a strong follow-up if ${focusName} starts opening the exchange.`;
+    case 'commonDefenses':
+      return `${entryName} is a common answer when the opponent's reaction changes the line from ${focusName}.`;
+    case 'relatedPositions':
+      return `${entryName} keeps you close to ${focusName} without losing the path entirely.`;
+    default:
+      return `${entryName} stays connected to ${focusName}.`;
+  }
+};
+
+const getOptionReasons = ({ entry, groupKey, filters, focusEntry = null }) => {
   const reasons = [];
   const styleHints = getSelectedStyleHints(filters);
   const fitMatches = getFitProfileMatches(entry || {}, filters);
@@ -1661,10 +1704,62 @@ const getOptionReasons = ({ entry, groupKey, filters }) => {
   }
 
   if (!reasons.length) {
-    reasons.push(entry ? 'Connected from current focus' : 'Referenced by this focus');
+    reasons.push(
+      entry
+        ? getGroupConnectionReason({ groupKey, focusEntry, entry })
+        : 'Referenced by this focus'
+    );
   }
 
   return reasons.slice(0, 2);
+};
+
+const getEntrySummarySentence = (entry) => {
+  const description = String(entry?.description || '').trim();
+
+  if (!description) return '';
+
+  const firstSentenceMatch = description.match(/[^.!?]+[.!?]?/);
+  return (firstSentenceMatch?.[0] || description).trim();
+};
+
+const joinSummaryParts = (...parts) => parts.filter(Boolean).join(' ');
+
+const buildBranchSummary = ({ entry, groupKey, focusEntry }) => joinSummaryParts(
+  getGroupConnectionSummary({ groupKey, focusEntry, entry }),
+  getEntrySummarySentence(entry)
+);
+
+const buildReactionSummary = ({ entry, reaction, cue }) => (
+  cue || joinSummaryParts(
+    `${entry.name} is often the cleaner branch when ${reaction.toLowerCase()}.`,
+    getEntrySummarySentence(entry)
+  )
+);
+
+const buildEscapeContinuationSummary = ({ entry, focusEntry, seeded = false }) => joinSummaryParts(
+  seeded
+    ? `${entry.name} is one of the most common ways to capitalize once ${focusEntry.name} works.`
+    : `${entry.name} keeps the momentum after ${focusEntry.name} succeeds.`,
+  getEntrySummarySentence(entry)
+);
+
+const buildRecommendationSummary = ({ option, focusEntry }) => {
+  if (option.summary) {
+    return option.summary;
+  }
+
+  const reactionReason = option.reasons.find((reason) => reason.startsWith('Common reaction: '));
+
+  if (reactionReason && option.cue) {
+    return option.cue;
+  }
+
+  return buildBranchSummary({
+    entry: option.entry,
+    groupKey: option.sourceKey,
+    focusEntry,
+  });
 };
 
 const relationshipPriorityBonus = {
@@ -1806,22 +1901,50 @@ const getFilteredBranches = ({ focusEntry, entriesByNameMap, filters, excludedEn
   const weakAreaStyles = filterConfig.weakArea[filters.weakArea] || [];
   const shouldShrink = Boolean(filters.weakArea);
   const excludedIds = new Set(excludedEntryIds.filter(Boolean));
+  const allowDefensiveBranches = isDefensiveRecommendationContext({ focusEntry, filters });
 
-  return relationshipGroups.map((group) => {
+  return relationshipGroups
+    .filter((group) => allowDefensiveBranches || group.key !== 'commonDefenses')
+    .map((group) => {
     const values = uniqueValues(focusEntry[group.key] || []);
-    const rankedOptions = values
+    const clusteredOptions = new Map();
+
+    values
       .map((name) => {
         const entry = findEntryByName(entriesByNameMap, name, normalizeValue(name));
         return {
           name,
           entry,
           score: scoreOption({ entry: entry || { name }, groupKey: group.key, filters, focusEntry }),
-          reasons: getOptionReasons({ entry: entry || { name }, groupKey: group.key, filters }),
+          reasons: getOptionReasons({ entry: entry || { name }, groupKey: group.key, filters, focusEntry }),
+          summary: entry ? buildBranchSummary({ entry, groupKey: group.key, focusEntry }) : '',
           fitProfiles: getFitProfileMatches(entry || { name }, filters)
         };
       })
       .filter((option) => normalizeValue(option.name) !== normalizeValue(focusEntry.name))
       .filter((option) => !option.entry || !excludedIds.has(option.entry.id))
+      .filter((option) => allowDefensiveBranches || !option.entry || !isDefensiveDecisionTreeEntry(option.entry))
+      .filter((option) => !option.entry || !shouldHideRegressiveFamilyOption({
+        focusEntry,
+        entry: option.entry,
+        groupKey: group.key
+      }))
+      .forEach((option) => {
+        const clusterKey = option.entry ? getRecommendationClusterKey(option.entry) : option.name;
+        const existingOption = clusteredOptions.get(clusterKey);
+
+        if (!existingOption || option.score > existingOption.score) {
+          clusteredOptions.set(clusterKey, option);
+          return;
+        }
+
+        clusteredOptions.set(clusterKey, {
+          ...existingOption,
+          reasons: uniqueValues([...existingOption.reasons, ...option.reasons]).slice(0, 3)
+        });
+      });
+
+    const rankedOptions = Array.from(clusteredOptions.values())
       .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
 
     const filteredOptions = rankedOptions
@@ -1837,14 +1960,20 @@ const getFilteredBranches = ({ focusEntry, entriesByNameMap, filters, excludedEn
       ? filteredOptions
       : rankedOptions.slice(0, shouldShrink ? 4 : 10).map((option) => ({
           ...option,
-          reasons: ['Connected from current focus', 'Showing fallback path']
+          reasons: [
+            getGroupConnectionReason({ groupKey: group.key, focusEntry }),
+            'Showing fallback path'
+          ],
+          summary: option.entry
+            ? buildBranchSummary({ entry: option.entry, groupKey: group.key, focusEntry })
+            : option.summary
         }));
 
     return {
       ...group,
       options
     };
-  });
+    });
 };
 
 const getReactionBranchOptions = ({
@@ -1857,6 +1986,7 @@ const getReactionBranchOptions = ({
   if (!focusEntry || !decisionTreeModel?.commonReactions?.length) return [];
 
   const excludedIds = new Set(excludedEntryIds.filter(Boolean));
+  const allowDefensiveBranches = isDefensiveRecommendationContext({ focusEntry, filters });
   const optionsById = new Map();
 
   decisionTreeModel.commonReactions.forEach((reaction, reactionIndex) => {
@@ -1864,6 +1994,10 @@ const getReactionBranchOptions = ({
       const entry = findEntryByName(entriesByNameMap, name, normalizeValue(name));
 
       if (!entry || entry.id === focusEntry.id || excludedIds.has(entry.id)) {
+        return;
+      }
+
+      if (!allowDefensiveBranches && isDefensiveDecisionTreeEntry(entry)) {
         return;
       }
 
@@ -1881,8 +2015,9 @@ const getReactionBranchOptions = ({
         score,
         reasons: uniqueValues([
           `Common reaction: ${reaction.reaction}`,
-          ...getOptionReasons({ entry, groupKey: 'commonTransitions', filters })
+          ...getOptionReasons({ entry, groupKey: 'commonTransitions', filters, focusEntry })
         ]).slice(0, 3),
+        summary: buildReactionSummary({ entry, reaction: reaction.reaction, cue: reaction.cue }),
         fitProfiles: getFitProfileMatches(entry, filters),
         sourceLabel: `Reaction: ${reaction.reaction}`,
         cue: reaction.cue
@@ -1918,6 +2053,54 @@ const isEscapeContinuationContext = ({ focusEntry, filters }) => {
     'escapes',
     'guardRetention'
   ].includes(filters.weakArea);
+};
+
+const isDefensiveRecommendationContext = ({ focusEntry, filters }) => (
+  isEscapeContinuationContext({ focusEntry, filters })
+  || filters.preferredStyle === 'defense'
+  || ['Escapes', 'Submission Defense', 'Guard Retention'].includes(focusEntry?.category)
+);
+
+const defensiveDecisionTreeCategories = new Set([
+  'Escapes',
+  'Submission Defense',
+  'Guard Retention',
+  'Reversals'
+]);
+
+const isDefensiveDecisionTreeEntry = (entry) => (
+  defensiveDecisionTreeCategories.has(entry?.category)
+);
+
+const getRecommendationClusterKey = (entry) => {
+  const normalizedName = normalizeValue(entry?.name);
+
+  if (normalizedName === 'body triangle' || normalizedName === 'body triangle back control') {
+    return 'body-triangle-back-control-family';
+  }
+
+  return entry?.id || normalizedName;
+};
+
+const backControlFamilyRank = new Map([
+  ['back control', 1],
+  ['back mount', 2],
+  ['seatbelt', 2],
+  ['body triangle', 3],
+  ['body triangle back control', 3],
+  ['straightjacket control', 4]
+]);
+
+const shouldHideRegressiveFamilyOption = ({ focusEntry, entry, groupKey }) => {
+  const normalizedFocusName = normalizeValue(focusEntry?.name);
+  const normalizedEntryName = normalizeValue(entry?.name);
+  const focusRank = backControlFamilyRank.get(normalizedFocusName);
+  const entryRank = backControlFamilyRank.get(normalizedEntryName);
+
+  if (!focusRank || !entryRank) return false;
+  if (!['entriesIntoPosition', 'commonTransitions', 'relatedPositions'].includes(groupKey)) return false;
+
+  return entryRank < focusRank;
 };
 
 const getEscapeContinuationOptions = ({
@@ -1975,8 +2158,15 @@ const getEscapeContinuationOptions = ({
         score,
         reasons: [
           'Built from the successful escape',
-          seededNames.includes(name) ? 'Common continuation from this reaction' : 'Connected next step'
+          seededNames.includes(name)
+            ? `Common continuation after ${focusEntry.name}`
+            : `Keeps the path moving after ${focusEntry.name}`
         ],
+        summary: buildEscapeContinuationSummary({
+          entry,
+          focusEntry,
+          seeded: seededNames.includes(name)
+        }),
         fitProfiles: getFitProfileMatches(entry, filters)
       };
     })
@@ -2168,16 +2358,18 @@ export default function DecisionTreePage() {
   const focusDecisionTreeModel = focusEntry?.decisionTreeModel || null;
   const focusReactionGroups = useMemo(() => {
     if (!focusDecisionTreeModel?.commonReactions?.length) return [];
+    const allowDefensiveBranches = isDefensiveRecommendationContext({ focusEntry, filters });
 
     return focusDecisionTreeModel.commonReactions
       .map((reaction) => ({
         ...reaction,
         options: (reaction.branches || [])
           .map((name) => findEntryByName(entriesByNameMap, name, normalizeValue(name)))
+          .filter((entry) => allowDefensiveBranches || !isDefensiveDecisionTreeEntry(entry))
           .filter(Boolean)
       }))
       .filter((reaction) => reaction.options.length > 0);
-  }, [entriesByNameMap, focusDecisionTreeModel]);
+  }, [entriesByNameMap, filters, focusDecisionTreeModel, focusEntry]);
 
   const reactionBranchOptions = useMemo(() => (
     getReactionBranchOptions({
@@ -2192,6 +2384,7 @@ export default function DecisionTreePage() {
   const topRecommendations = useMemo(() => {
     const priorPathIds = new Set(decisionPath.slice(0, -1));
     const mergedOptions = new Map();
+    const allowDefensiveBranches = isDefensiveRecommendationContext({ focusEntry, filters });
 
     [
       ...reactionBranchOptions,
@@ -2205,31 +2398,35 @@ export default function DecisionTreePage() {
       ))
     ].forEach((option, index) => {
       if (!option.entry || priorPathIds.has(option.entry.id)) return;
+      if (!allowDefensiveBranches && option.sourceKey === 'commonDefenses') return;
 
-      const existingOption = mergedOptions.get(option.entry.id);
+      const clusterKey = getRecommendationClusterKey(option.entry);
+      const existingOption = mergedOptions.get(clusterKey);
       const mergedReasons = existingOption
         ? uniqueValues([...existingOption.reasons, ...option.reasons]).slice(0, 3)
         : option.reasons;
 
       if (!existingOption || option.score > existingOption.score) {
-        mergedOptions.set(option.entry.id, {
+        mergedOptions.set(clusterKey, {
           ...option,
           reasons: mergedReasons,
+          summary: option.summary || buildRecommendationSummary({ option, focusEntry }),
           sortIndex: index
         });
         return;
       }
 
-      mergedOptions.set(option.entry.id, {
+      mergedOptions.set(clusterKey, {
         ...existingOption,
-        reasons: mergedReasons
+        reasons: mergedReasons,
+        summary: existingOption.summary || option.summary || buildRecommendationSummary({ option, focusEntry })
       });
     });
 
     return Array.from(mergedOptions.values())
       .sort((a, b) => b.score - a.score || a.sortIndex - b.sortIndex || a.name.localeCompare(b.name))
       .slice(0, 6);
-  }, [branchGroups, decisionPath, reactionBranchOptions]);
+  }, [branchGroups, decisionPath, filters, focusEntry, reactionBranchOptions]);
 
   const escapeContinuationOptions = useMemo(() => (
     getEscapeContinuationOptions({
@@ -2773,13 +2970,23 @@ export default function DecisionTreePage() {
                 Most users will work here first after choosing a coaching problem, then fine-tune with filters only if they need to narrow the path further.
               </p>
             </div>
-            {activeStyleHints.length > 0 && (
-              <div className="decision-tree-chip-row">
-                {activeStyleHints.map((hint) => (
-                  <span className="curriculum-index-tag" key={hint}>{styleHintLabels[hint] || hint}</span>
-                ))}
-              </div>
-            )}
+            <div className="decision-tree-header-actions">
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={goBack}
+                disabled={!history.length}
+              >
+                Back 1 step
+              </button>
+              {activeStyleHints.length > 0 && (
+                <div className="decision-tree-chip-row">
+                  {activeStyleHints.map((hint) => (
+                    <span className="curriculum-index-tag" key={hint}>{styleHintLabels[hint] || hint}</span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {focusReactionGroups.length > 0 ? (
@@ -2847,6 +3054,10 @@ export default function DecisionTreePage() {
                         {option.entry.category}
                       </span>
                     </div>
+
+                    <p className="decision-tree-recommendation-summary">
+                      {buildRecommendationSummary({ option, focusEntry })}
+                    </p>
 
                     <p className="meta-text">
                       {option.reasons.join(' | ')}
@@ -2952,7 +3163,7 @@ export default function DecisionTreePage() {
                   >
                     <strong>{option.entry.name}</strong>
                     <span>
-                      {option.entry.description}
+                      {option.summary || option.entry.description}
                     </span>
                     <span className="decision-tree-reason-row">
                       {option.reasons.join(' | ')}
@@ -2989,6 +3200,11 @@ export default function DecisionTreePage() {
                               ? `${option.entry.category}${option.entry.skillLevel ? ` | ${option.entry.skillLevel}` : ''}`
                               : 'Not a full Index node yet'}
                           </span>
+                          {option.summary ? (
+                            <span className="decision-tree-summary-row">
+                              {option.summary}
+                            </span>
+                          ) : null}
                           <span className="decision-tree-reason-row">
                             {option.reasons.join(' | ')}
                           </span>

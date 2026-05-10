@@ -1,19 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export default function ExpandableSection({
   title,
   note = '',
   summary = '',
   defaultOpen = false,
+  isOpen: controlledIsOpen,
   className = '',
   children,
-  actions = null
+  actions = null,
+  onToggle = null
 }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
+  const isControlled = typeof controlledIsOpen === 'boolean';
+  const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
 
-  useEffect(() => {
-    setIsOpen(defaultOpen);
-  }, [defaultOpen]);
+  const handleToggle = () => {
+    if (isControlled) {
+      onToggle?.(!isOpen);
+      return;
+    }
+
+    setInternalIsOpen((value) => !value);
+  };
 
   return (
     <section className={`page-section compact-form-shell expandable-section${isOpen ? ' is-open' : ''}${className ? ` ${className}` : ''}`}>
@@ -24,7 +33,7 @@ export default function ExpandableSection({
         </div>
         <div className="expandable-section-actions">
           {actions}
-          <button className="secondary-button" type="button" onClick={() => setIsOpen((value) => !value)}>
+          <button className="secondary-button" type="button" onClick={handleToggle}>
             {isOpen ? 'Hide section' : 'Expand section'}
           </button>
         </div>

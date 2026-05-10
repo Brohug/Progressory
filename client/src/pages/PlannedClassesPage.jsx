@@ -10,6 +10,7 @@ import { formatLabel } from '../utils/formatLabel';
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const READY_FOR_ATTENDANCE_KEY = 'progressory-ready-for-attendance';
+const PLANNED_CLASSES_LIST_LIMIT = 24;
 
 const normalizeValue = (value) => (
   String(value || '')
@@ -117,6 +118,71 @@ const storeReadyForAttendanceIds = (classIds) => {
   window.sessionStorage.setItem(READY_FOR_ATTENDANCE_KEY, JSON.stringify(mergedIds));
 };
 
+const formatTimeCompact = (timeValue) => {
+  if (!timeValue) return 'TBD';
+
+  const match = String(timeValue).match(/^(\d{2}):?(\d{2})/);
+
+  if (!match) {
+    return String(timeValue);
+  }
+
+  return `${match[1]}${match[2]}`;
+};
+
+const getPlannedClassTimestamp = (plannedClass) => {
+  const classDateKey = formatDateKey(plannedClass.class_date);
+
+  if (!classDateKey) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  return new Date(`${classDateKey}T${plannedClass.start_time || '00:00:00'}`).getTime();
+};
+
+const sortPlannedClassesForPlanner = (plannedClasses, todayKey) => {
+  const upcomingPlanned = [];
+  const recentHistory = [];
+
+  plannedClasses.forEach((plannedClass) => {
+    const classDateKey = formatDateKey(plannedClass.class_date);
+    const isUpcomingPlanned = plannedClass.status === 'planned' && classDateKey && classDateKey >= todayKey;
+
+    if (isUpcomingPlanned) {
+      upcomingPlanned.push(plannedClass);
+      return;
+    }
+
+    recentHistory.push(plannedClass);
+  });
+
+  upcomingPlanned.sort((left, right) => {
+    const leftTime = getPlannedClassTimestamp(left);
+    const rightTime = getPlannedClassTimestamp(right);
+
+    if (leftTime !== rightTime) {
+      return leftTime - rightTime;
+    }
+
+    return left.id - right.id;
+  });
+
+  recentHistory.sort((left, right) => {
+    const leftTime = getPlannedClassTimestamp(left);
+    const rightTime = getPlannedClassTimestamp(right);
+
+    if (leftTime !== rightTime) {
+      return rightTime - leftTime;
+    }
+
+    return right.id - left.id;
+  });
+
+  const remainingSlots = Math.max(0, PLANNED_CLASSES_LIST_LIMIT - upcomingPlanned.length);
+
+  return [...upcomingPlanned, ...recentHistory.slice(0, remainingSlots)];
+};
+
 export default function PlannedClassesPage() {
   const { user } = useAuth();
   const isMember = user?.role === 'member';
@@ -143,6 +209,7 @@ export default function PlannedClassesPage() {
   const [showPlanForm, setShowPlanForm] = useState(true);
   const [expandedPlannedClassDetailsMap, setExpandedPlannedClassDetailsMap] = useState({});
   const [activeView, setActiveView] = useState('list');
+  const [isPlansSectionOpen, setIsPlansSectionOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(getMonthStart(new Date()));
   const [selectedTopicId, setSelectedTopicId] = useState('');
   const [selectedTopicIds, setSelectedTopicIds] = useState([]);
@@ -384,46 +451,24 @@ export default function PlannedClassesPage() {
   }, [isMember, topics, searchParams, setSearchParams]);
 
   const groupedPlannedClasses = useMemo(() => {
-    const todayKey = formatDateForInput(new Date());
-    const sortWeight = (plannedClass) => {
-      const classDateKey = formatDateForInput(plannedClass.class_date);
-
-      if (plannedClass.status === 'planned') {
-        if (!classDateKey || classDateKey < todayKey) {
-          return 2;
-        }
-
-        return 0;
-      }
-
-      return 1;
-    };
-
-    const sorted = [...plannedClasses].sort((left, right) => {
-      const weightDifference = sortWeight(left) - sortWeight(right);
-
-      if (weightDifference !== 0) {
-        return weightDifference;
-      }
-
-      const leftTime = new Date(`${left.class_date}T${left.start_time || '00:00:00'}`).getTime();
-      const rightTime = new Date(`${right.class_date}T${right.start_time || '00:00:00'}`).getTime();
-
-      if (leftTime !== rightTime) {
-        return leftTime - rightTime;
-      }
-
-      return left.id - right.id;
-    });
+    const todayKey = formatDateKey(new Date());
+    const sorted = sortPlannedClassesForPlanner(plannedClasses, todayKey);
 
     return sorted.reduce((acc, plannedClass) => {
-      if (!acc[plannedClass.class_date]) {
-        acc[plannedClass.class_date] = [];
+      const normalizedDateKey = formatDateKey(plannedClass.class_date) || plannedClass.class_date;
+      const lastGroup = acc[acc.length - 1];
+
+      if (!lastGroup || lastGroup.date !== normalizedDateKey) {
+        acc.push({
+          date: normalizedDateKey,
+          classes: [plannedClass]
+        });
+        return acc;
       }
 
-      acc[plannedClass.class_date].push(plannedClass);
+      lastGroup.classes.push(plannedClass);
       return acc;
-    }, {});
+    }, []);
   }, [plannedClasses]);
 
   const calendarDays = useMemo(
@@ -510,7 +555,11 @@ export default function PlannedClassesPage() {
   });
 
   if (isMember) {
-    const memberVisiblePlannedClasses = plannedClasses.filter((plannedClass) => plannedClass.status === 'planned');
+    const todayKey = formatDateKey(new Date());
+    const memberVisiblePlannedClasses = sortPlannedClassesForPlanner(
+      plannedClasses.filter((plannedClass) => plannedClass.status === 'planned'),
+      todayKey
+    );
     const memberProgramOptions = [...new Set(memberVisiblePlannedClasses.map((item) => item.program_name).filter(Boolean))].sort();
     const filteredMemberPlannedClasses = memberVisiblePlannedClasses.filter((plannedClass) => {
       const normalizedSearch = memberSearch.trim().toLowerCase();
@@ -527,11 +576,13 @@ export default function PlannedClassesPage() {
       return matchesSearch && matchesProgram;
     });
     const groupedMemberPlannedClasses = filteredMemberPlannedClasses.reduce((acc, plannedClass) => {
-      if (!acc[plannedClass.class_date]) {
-        acc[plannedClass.class_date] = [];
+      const normalizedDateKey = formatDateKey(plannedClass.class_date) || plannedClass.class_date;
+
+      if (!acc[normalizedDateKey]) {
+        acc[normalizedDateKey] = [];
       }
 
-      acc[plannedClass.class_date].push(plannedClass);
+      acc[normalizedDateKey].push(plannedClass);
       return acc;
     }, {});
     const nextMemberPlannedClass = filteredMemberPlannedClasses[0] || memberVisiblePlannedClasses[0] || null;
@@ -1040,10 +1091,8 @@ export default function PlannedClassesPage() {
 
   const handleViewChange = (nextView) => {
     setActiveView(nextView);
-
-    if (nextView === 'calendar') {
-      scrollToPlansSection();
-    }
+    setIsPlansSectionOpen(true);
+    scrollToPlansSection();
   };
 
   const handleSelectCalendarDay = (dateValue) => {
@@ -1433,22 +1482,14 @@ export default function PlannedClassesPage() {
           title="Upcoming planned classes"
           note="Review what is coming up, make quick edits, or complete a plan once class is finished."
           summary={`${plannedClasses.length} planned class${plannedClasses.length === 1 ? '' : 'es'} currently loaded.`}
+          isOpen={isPlansSectionOpen}
+          onToggle={setIsPlansSectionOpen}
           className="planned-classes-results-section"
         >
           <section ref={plansSectionRef} className="page-section" style={{ padding: 0, marginBottom: 0, border: 'none', boxShadow: 'none', background: 'transparent' }}>
-          <div className="section-header">
-            <div>
-              <h3>Upcoming planned classes</h3>
-              <p className="section-note">
-                Review what is coming up, make quick edits, or complete a plan once class is
-                finished.
-              </p>
-            </div>
-          </div>
-
           {loading ? <p>Loading planned classes...</p> : null}
 
-          {!loading && Object.keys(groupedPlannedClasses).length === 0 ? (
+          {!loading && groupedPlannedClasses.length === 0 ? (
             <p className="empty-state">No planned classes have been added yet.</p>
           ) : null}
 
@@ -1529,8 +1570,14 @@ export default function PlannedClassesPage() {
                                     : navigate(`/classes?openClassId=${plannedClass.completed_class_id}`)
                                 )}
                               >
-                                <strong>{formatTimeForDisplay(plannedClass.start_time)}</strong>
-                                <span>{plannedClass.program_name}</span>
+                                <strong>
+                                  {formatTimeCompact(plannedClass.start_time)} - {plannedClass.title || plannedClass.program_name}
+                                </strong>
+                                {plannedClass.end_time ? (
+                                  <span className="meta-text">
+                                    Until {formatTimeCompact(plannedClass.end_time)}
+                                  </span>
+                                ) : null}
                                 {primaryTopic ? <span className="meta-text">{primaryTopic}</span> : null}
                                 <span className="planned-classes-calendar-status">
                                   {plannedClass.status === 'completed' ? 'Completed' : 'Planned'}
@@ -1548,7 +1595,7 @@ export default function PlannedClassesPage() {
           ) : null}
 
           {!loading && activeView === 'list' ? (
-            Object.entries(groupedPlannedClasses).map(([date, classesForDate]) => (
+            groupedPlannedClasses.map(({ date, classes: classesForDate }) => (
               <div key={date} className="detail-block">
                 <h4>{formatDateForDisplay(date)}</h4>
 
