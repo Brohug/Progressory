@@ -1369,6 +1369,8 @@ a.secondary-button:focus-visible {
 .planned-classes-calendar-day.is-selected {
   border-color: rgba(56, 189, 248, 0.8);
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.18);
+  background: rgba(14, 36, 63, 0.92);
+  min-height: 260px;
 }
 
 .planned-classes-calendar-day-header {
@@ -1443,6 +1445,59 @@ a.secondary-button:focus-visible {
 .planned-classes-calendar-item.is-completed {
   border-color: rgba(148, 163, 184, 0.22);
   background: rgba(15, 23, 42, 0.82);
+}
+
+.planned-classes-calendar-day-actions {
+  display: grid;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(56, 189, 248, 0.14);
+}
+
+.planned-classes-calendar-selected-list,
+.planned-classes-calendar-focus-list {
+  display: grid;
+  gap: 8px;
+}
+
+.planned-classes-calendar-selected-action {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.14);
+  background: rgba(30, 41, 59, 0.74);
+  color: var(--text);
+}
+
+.planned-classes-calendar-selected-action:hover {
+  border-color: rgba(56, 189, 248, 0.28);
+}
+
+.planned-classes-calendar-focus-panel {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.72);
+  display: grid;
+  gap: 14px;
+}
+
+.planned-classes-calendar-focus-panel h5 {
+  margin-bottom: 4px;
+}
+
+.planned-classes-calendar-focus-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.14);
+  background: rgba(30, 41, 59, 0.78);
+  flex-wrap: wrap;
 }
 
 .dashboard-report-link-text {

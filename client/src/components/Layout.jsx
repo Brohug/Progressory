@@ -107,7 +107,7 @@ export default function Layout({ children }) {
         title: 'Build the class first, then finish it later in Completed Classes.',
         description: 'Planning is the setup step. After class happens, use Classes to clean up attendance, topics, and training entries.',
         primary: { label: 'Finished a class?', to: '/classes?workflow=today-completed' },
-        secondary: { label: 'Add scenarios', to: '/training-scenarios' }
+        secondary: { label: 'Add scenarios', to: '/training-scenarios?action=create&source=planned-classes' }
       };
     }
 

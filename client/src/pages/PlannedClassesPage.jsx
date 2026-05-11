@@ -1106,7 +1106,26 @@ export default function PlannedClassesPage() {
       ...prev,
       class_date: normalizedDate
     }));
+    setShowPlanForm(true);
     setMessage(`Planning date set to ${formatDateForDisplay(normalizedDate)}.`);
+    setError('');
+  };
+
+  const handleCreatePlanForDate = (dateValue) => {
+    const normalizedDate = formatDateForInput(dateValue);
+
+    if (!normalizedDate) {
+      return;
+    }
+
+    resetForm();
+    setShowPlanForm(true);
+    setFormData((prev) => ({
+      ...prev,
+      class_date: normalizedDate,
+      head_coach_user_id: user?.id || ''
+    }));
+    setMessage(`Create a class plan for ${formatDateForDisplay(normalizedDate)} below.`);
     setError('');
 
     window.requestAnimationFrame(() => {
@@ -1116,6 +1135,10 @@ export default function PlannedClassesPage() {
       }
     });
   };
+
+  const selectedCalendarDay = activeView === 'calendar'
+    ? calendarDays.find((day) => day.dateKey === formData.class_date)
+    : null;
 
   return (
     <Layout>
@@ -1587,10 +1610,100 @@ export default function PlannedClassesPage() {
                           })
                         )}
                       </div>
+
+                      {isSelected && day.isCurrentMonth ? (
+                        <div className="planned-classes-calendar-day-actions">
+                          <button
+                            type="button"
+                            className="secondary-button"
+                            onClick={() => handleCreatePlanForDate(day.date)}
+                          >
+                            Create planned class
+                          </button>
+
+                          {day.plans.length > 0 ? (
+                            <div className="planned-classes-calendar-selected-list">
+                              {day.plans.map((plannedClass) => (
+                                <button
+                                  key={`manage-${plannedClass.id}`}
+                                  type="button"
+                                  className="planned-classes-calendar-selected-action"
+                                  onClick={() => (
+                                    plannedClass.status === 'planned'
+                                      ? handleEdit(plannedClass)
+                                      : navigate(`/classes?openClassId=${plannedClass.completed_class_id}`)
+                                  )}
+                                >
+                                  {plannedClass.status === 'planned'
+                                    ? `Edit ${plannedClass.title || plannedClass.program_name}`
+                                    : `Manage ${plannedClass.title || plannedClass.program_name}`}
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}
               </div>
+
+              {selectedCalendarDay ? (
+                <div className="planned-classes-calendar-focus-panel">
+                  <div>
+                    <h5>{formatDateForDisplay(selectedCalendarDay.dateKey)}</h5>
+                    <p className="section-note">
+                      {selectedCalendarDay.plans.length > 0
+                        ? 'Manage the planned classes on this date or create another class on the same day.'
+                        : 'No classes are planned on this date yet. Start a new plan directly from here.'}
+                    </p>
+                  </div>
+
+                  <div className="inline-actions">
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => handleCreatePlanForDate(selectedCalendarDay.date)}
+                    >
+                      Create planned class
+                    </button>
+                  </div>
+
+                  {selectedCalendarDay.plans.length > 0 ? (
+                    <div className="planned-classes-calendar-focus-list">
+                      {selectedCalendarDay.plans.map((plannedClass) => (
+                        <div
+                          key={`focus-${plannedClass.id}`}
+                          className="planned-classes-calendar-focus-item"
+                        >
+                          <div>
+                            <strong>
+                              {formatTimeCompact(plannedClass.start_time)} - {plannedClass.title || plannedClass.program_name}
+                            </strong>
+                            <div className="meta-text">
+                              {plannedClass.status === 'completed' ? 'Completed class' : 'Planned class'}
+                            </div>
+                          </div>
+
+                          <div className="inline-actions">
+                            <button
+                              type="button"
+                              className="secondary-button"
+                              onClick={() => (
+                                plannedClass.status === 'planned'
+                                  ? handleEdit(plannedClass)
+                                  : navigate(`/classes?openClassId=${plannedClass.completed_class_id}`)
+                              )}
+                            >
+                              {plannedClass.status === 'planned' ? 'Edit plan' : 'Manage class'}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
 

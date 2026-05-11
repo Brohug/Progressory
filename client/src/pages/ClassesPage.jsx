@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
@@ -38,6 +38,7 @@ const storeReadyForAttendanceIds = (classIds) => {
 export default function ClassesPage() {
   const { user } = useAuth();
   const location = useLocation();
+  const classListSectionRef = useRef(null);
 
   const [classes, setClasses] = useState([]);
   const [programs, setPrograms] = useState([]);
@@ -74,6 +75,7 @@ export default function ClassesPage() {
   const [error, setError] = useState('');
   const [guidedAttendanceClassId, setGuidedAttendanceClassId] = useState(null);
   const [readyForAttendanceClassIds, setReadyForAttendanceClassIds] = useState([]);
+  const [isClassListSectionOpen, setIsClassListSectionOpen] = useState(false);
 
   const workflowParams = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -164,6 +166,17 @@ export default function ClassesPage() {
       setError(err.response?.data?.message || 'Couldn\'t load members right now.');
     }
   };
+
+  const scrollToClassListTop = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      if (!classListSectionRef.current) {
+        return;
+      }
+
+      const targetTop = classListSectionRef.current.getBoundingClientRect().top + window.scrollY - 24;
+      window.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' });
+    });
+  }, []);
 
   const processDuePlannedClasses = async () => {
     try {
@@ -316,11 +329,34 @@ export default function ClassesPage() {
     workflowParams.workflow
   ]);
 
-  const visibleClasses = classSearch.trim() || workflowParams.workflow === 'today-completed' || workflowParams.workflow === 'attendance-ready'
-    ? workflowFilteredClasses
-    : showAllClasses
-      ? sortedClasses
-      : sortedClasses.slice(0, 20);
+  const visibleClasses = useMemo(() => {
+    const baseClasses = classSearch.trim() || workflowParams.workflow === 'today-completed' || workflowParams.workflow === 'attendance-ready'
+      ? workflowFilteredClasses
+      : showAllClasses
+        ? sortedClasses
+        : sortedClasses.slice(0, 20);
+
+    if (!workflowParams.openClassId) {
+      return baseClasses;
+    }
+
+    const targetId = String(workflowParams.openClassId);
+    const targetClass = sortedClasses.find((classItem) => String(classItem.id) === targetId);
+
+    if (!targetClass) {
+      return baseClasses;
+    }
+
+    const withoutTarget = baseClasses.filter((classItem) => String(classItem.id) !== targetId);
+    return [targetClass, ...withoutTarget];
+  }, [
+    classSearch,
+    showAllClasses,
+    sortedClasses,
+    workflowFilteredClasses,
+    workflowParams.openClassId,
+    workflowParams.workflow
+  ]);
 
   useEffect(() => {
     const missingClassIds = visibleClasses
@@ -444,6 +480,7 @@ export default function ClassesPage() {
     }
 
     const openPlannedClass = async () => {
+      setIsClassListSectionOpen(true);
       setExpandedClasses((prev) => ({
         ...prev,
         [openClassId]: true
@@ -463,14 +500,18 @@ export default function ClassesPage() {
         setReadyForAttendanceClassIds(readReadyForAttendanceIds());
       }
 
-      const scrollTargetId = shouldGuideAttendance
-        ? `class-attendance-${openClassId}`
-        : `class-card-${openClassId}`;
-
       const scrollToClass = window.setTimeout(() => {
-        const element = document.getElementById(scrollTargetId);
+        if (shouldGuideAttendance) {
+          scrollToClassListTop();
+          return;
+        }
+
+        const element = document.getElementById(`class-card-${openClassId}`);
+
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          scrollToClassListTop();
         }
       }, 160);
 
@@ -496,7 +537,7 @@ export default function ClassesPage() {
         cleanup();
       }
     };
-  }, [classes, workflowParams]);
+  }, [classes, scrollToClassListTop, workflowParams]);
 
   useEffect(() => {
     if (!workflowParams.workflow) {
@@ -513,6 +554,7 @@ export default function ClassesPage() {
     if (workflowParams.workflow === 'today-completed' && workflowParams.classDate) {
       setShowCreateClassForm(false);
       setShowAllClasses(false);
+      setIsClassListSectionOpen(true);
       setClassMessage('Showing only classes from this day so you can finish notes, topics, training entries, and attendance without extra clutter.');
       return;
     }
@@ -520,9 +562,16 @@ export default function ClassesPage() {
     if (workflowParams.workflow === 'attendance-ready') {
       setShowCreateClassForm(false);
       setShowAllClasses(false);
+      setIsClassListSectionOpen(true);
       setClassMessage('Showing classes that still need attendance or final class details.');
     }
   }, [workflowParams]);
+
+  useEffect(() => {
+    if (workflowParams.openClassId) {
+      setIsClassListSectionOpen(true);
+    }
+  }, [workflowParams.openClassId]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -1016,9 +1065,10 @@ export default function ClassesPage() {
         note="Expand this when you are ready to review completed classes, open workflow items, or search older class logs."
         summary={`${visibleClasses.length} class${visibleClasses.length === 1 ? '' : 'es'} in the current view.`}
         className="classes-list-section"
-        defaultOpen={isAttendanceReadyWorkflow}
+        isOpen={isClassListSectionOpen}
+        onToggle={setIsClassListSectionOpen}
       >
-      <section className="page-section" style={{ padding: 0, marginBottom: 0, border: 'none', boxShadow: 'none', background: 'transparent' }}>
+      <section ref={classListSectionRef} className="page-section" style={{ padding: 0, marginBottom: 0, border: 'none', boxShadow: 'none', background: 'transparent' }}>
         <div
           style={{
             display: 'flex',
@@ -1365,7 +1415,10 @@ export default function ClassesPage() {
                         classId={classItem.id}
                         members={getMembersForClass(classItem)}
                         recordedMemberIds={(classMembersMap[classItem.id] || []).map((member) => member.member_id)}
-                        onSuccess={() => loadClassDetails(classItem.id)}
+                        onSuccess={async () => {
+                          await loadClassDetails(classItem.id);
+                          scrollToClassListTop();
+                        }}
                       />
                     </div>
 

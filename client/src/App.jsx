@@ -99,7 +99,7 @@ export default function App() {
             <Route
               path="/training-scenarios"
               element={
-                <ProtectedRoute allowedRoles={MANAGEMENT_ROLES}>
+                <ProtectedRoute allowedRoles={STAFF_ROLES}>
                   <TrainingScenariosPage />
                 </ProtectedRoute>
               }

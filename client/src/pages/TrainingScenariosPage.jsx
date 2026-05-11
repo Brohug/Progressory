@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 
 export default function TrainingScenariosPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [programs, setPrograms] = useState([]);
   const [allTopics, setAllTopics] = useState([]);
   const [trainingMethods, setTrainingMethods] = useState([]);
@@ -14,6 +16,7 @@ export default function TrainingScenariosPage() {
   const [scenarioFeedbackMap, setScenarioFeedbackMap] = useState({});
   const [showInactiveScenarios, setShowInactiveScenarios] = useState(false);
   const [showCreateScenarioForm, setShowCreateScenarioForm] = useState(false);
+  const [isCreateSectionOpen, setIsCreateSectionOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [scenarioSubmitting, setScenarioSubmitting] = useState(false);
   const [scenarioError, setScenarioError] = useState('');
@@ -94,6 +97,21 @@ export default function TrainingScenariosPage() {
 
     loadPageData();
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get('action') !== 'create') {
+      return;
+    }
+
+    setIsCreateSectionOpen(true);
+    setShowCreateScenarioForm(true);
+    setScenarioError('');
+    setScenarioMessage('Use the form below to create a reusable training scenario.');
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('action');
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const orderedScenarios = useMemo(() => {
     const active = trainingScenarios.filter((scenario) => scenario.is_active);
@@ -397,6 +415,8 @@ export default function TrainingScenariosPage() {
           note="Build a scenario once, then reuse it later in Planned Classes and Completed Classes."
           summary="Expand this when you are ready to build or edit reusable training scenarios."
           className="scenarios-create-section"
+          isOpen={isCreateSectionOpen}
+          onToggle={setIsCreateSectionOpen}
         >
           <div className="section-header">
             <div>

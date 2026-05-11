@@ -644,11 +644,11 @@ export default function DashboardPage() {
     },
     {
       title: 'Need reusable scenarios?',
-      description: 'Open Training Scenarios to build class templates you can keep pulling into future sessions.',
-      to: '/training-scenarios'
+      description: 'Open Training Scenarios and jump straight into the reusable scenario form so coaches can build class templates faster.',
+      to: '/training-scenarios?action=create&source=dashboard'
     },
     {
-      title: 'Need to organize your topics for your curriculum?',
+      title: 'Need to add topics to organize your curriculum?',
       description: 'Go to Curriculum Index when you need to add topics first so classes, Library, and the Tree stay connected.',
       to: '/index'
     },

@@ -9,13 +9,13 @@ const {
   deleteTrainingScenario
 } = require('../controllers/trainingScenarioController');
 
-const { protect, requireStaff, requireManagement } = require('../middleware/authMiddleware');
+const { protect, requireStaff } = require('../middleware/authMiddleware');
 
 router.get('/', protect, requireStaff, getTrainingScenarios);
 
-router.post('/', protect, requireManagement, createTrainingScenario);
-router.put('/:id', protect, requireManagement, updateTrainingScenario);
-router.patch('/:id/deactivate', protect, requireManagement, deactivateTrainingScenario);
-router.delete('/:id', protect, requireManagement, deleteTrainingScenario);
+router.post('/', protect, requireStaff, createTrainingScenario);
+router.put('/:id', protect, requireStaff, updateTrainingScenario);
+router.patch('/:id/deactivate', protect, requireStaff, deactivateTrainingScenario);
+router.delete('/:id', protect, requireStaff, deleteTrainingScenario);
 
 module.exports = router;
