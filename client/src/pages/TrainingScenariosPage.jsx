@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
+import { useAuth } from '../hooks/useAuth';
 
 export default function TrainingScenariosPage() {
+  const { user } = useAuth();
+  const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const [searchParams, setSearchParams] = useSearchParams();
   const [programs, setPrograms] = useState([]);
   const [allTopics, setAllTopics] = useState([]);
@@ -374,6 +377,23 @@ export default function TrainingScenariosPage() {
           library.
         </p>
 
+        {isManagement ? (
+          <section className="action-grid" style={{ marginBottom: '1.5rem' }}>
+            <Link to="/topics?action=create" className="action-card dashboard-action-card">
+              <strong>Need a starting topic first?</strong>
+              <div className="detail-block">
+                <div className="meta-text">Open Topics and add the position or technique first if the scenario you want to build does not have a clean curriculum anchor yet.</div>
+              </div>
+            </Link>
+            <Link to="/topics" className="action-card dashboard-action-card">
+              <strong>Review scenario-ready topics</strong>
+              <div className="detail-block">
+                <div className="meta-text">Search the topic library when you want the best starting position or teaching focus for the next reusable scenario.</div>
+              </div>
+            </Link>
+          </section>
+        ) : null}
+
         <section className="action-grid">
           <div className="action-card">
             <span className="eyebrow">Build Once</span>
@@ -419,12 +439,22 @@ export default function TrainingScenariosPage() {
           onToggle={setIsCreateSectionOpen}
         >
           <div className="section-header">
-            <div>
-              <h3>Create and reuse scenarios</h3>
-              <p className="section-note">
-                Build a scenario once, then reuse it later in Planned Classes and Completed Classes.
-              </p>
-            </div>
+              <div>
+                <h3>Create and reuse scenarios</h3>
+                <p className="section-note">
+                  Build a scenario once, then reuse it later in Planned Classes and Completed Classes.
+                </p>
+                {isManagement ? (
+                  <div className="inline-actions" style={{ marginTop: '10px' }}>
+                    <Link className="secondary-button" to="/topics?action=create">
+                      Add missing topic
+                    </Link>
+                    <Link className="secondary-button" to="/topics">
+                      Open Topics
+                    </Link>
+                  </div>
+                ) : null}
+              </div>
             <button onClick={() => setShowCreateScenarioForm((prev) => !prev)}>
               {showCreateScenarioForm ? 'Hide New Scenario' : 'New Training Scenario'}
             </button>

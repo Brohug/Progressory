@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
+import { useAuth } from '../hooks/useAuth';
 
 export default function ProgramsPage() {
+  const { user } = useAuth();
+  const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const [programs, setPrograms] = useState([]);
+  const [topics, setTopics] = useState([]);
   const [showCreateProgramForm, setShowCreateProgramForm] = useState(false);
   const [expandedProgramDetails, setExpandedProgramDetails] = useState({});
   const [formData, setFormData] = useState({
@@ -32,9 +37,39 @@ export default function ProgramsPage() {
     }
   };
 
+  const fetchTopics = async () => {
+    try {
+      const response = await api.get('/topics');
+      setTopics(response.data);
+    } catch (err) {
+      console.error('Fetch topics for programs error:', err);
+      setError(err.response?.data?.message || 'Couldn\'t load topics right now.');
+    }
+  };
+
   useEffect(() => {
-    fetchPrograms();
+    const loadPageData = async () => {
+      await Promise.all([fetchPrograms(), fetchTopics()]);
+    };
+
+    loadPageData();
   }, []);
+
+  const topicCountByProgramId = useMemo(() => {
+    const nextMap = new Map();
+
+    topics
+      .filter((topic) => topic.is_active)
+      .forEach((topic) => {
+        if (!topic.program_id) {
+          return;
+        }
+
+        nextMap.set(topic.program_id, (nextMap.get(topic.program_id) || 0) + 1);
+      });
+
+    return nextMap;
+  }, [topics]);
 
   const orderedPrograms = useMemo(() => {
     const active = programs.filter((program) => program.is_active);
@@ -157,6 +192,32 @@ export default function ProgramsPage() {
   return (
     <Layout>
       <h2 className="page-title">Programs</h2>
+      <p className="page-intro">
+        Build the broad training tracks here, then move into topics so those programs become usable in planning, classes, Library, and reports.
+      </p>
+
+      {isManagement ? (
+        <section className="action-grid" style={{ marginBottom: '1.5rem' }}>
+          <Link to="/topics?action=create" className="action-card dashboard-action-card">
+            <strong>Add topic to a program</strong>
+            <div className="detail-block">
+              <div className="meta-text">Use this when the program exists but the actual curriculum topics under it still need to be built.</div>
+            </div>
+          </Link>
+          <Link to="/topics" className="action-card dashboard-action-card">
+            <strong>Review topic library</strong>
+            <div className="detail-block">
+              <div className="meta-text">Open Topics to search, clean up, or expand the real curriculum tied to these programs.</div>
+            </div>
+          </Link>
+          <Link to="/index" className="action-card dashboard-action-card">
+            <strong>Browse curriculum map</strong>
+            <div className="detail-block">
+              <div className="meta-text">Use the Curriculum Index when you want the broader teaching map before deciding which program topics to add next.</div>
+            </div>
+          </Link>
+        </section>
+      ) : null}
 
       <section className="page-section" style={{ maxWidth: '760px' }}>
         <div className="compact-form-shell">
@@ -248,7 +309,7 @@ export default function ProgramsPage() {
                   <div>
                     <strong>{program.name}</strong>
                     <div className="compact-topic-meta meta-text">
-                      {program.is_active ? 'Active' : 'Inactive'} • {program.description ? 'Description added' : 'No description yet'}
+                      {program.is_active ? 'Active' : 'Inactive'} • {topicCountByProgramId.get(program.id) || 0} topic{(topicCountByProgramId.get(program.id) || 0) === 1 ? '' : 's'} linked
                     </div>
                   </div>
                   <button
@@ -266,6 +327,9 @@ export default function ProgramsPage() {
                     <div className="meta-text">
                       Active: {program.is_active ? 'Yes' : 'No'}
                     </div>
+                    <div className="meta-text">
+                      Linked topics: {topicCountByProgramId.get(program.id) || 0}
+                    </div>
                     {program.created_at && (
                       <div className="meta-text">
                         Created: {new Date(program.created_at).toLocaleString()}
@@ -280,6 +344,11 @@ export default function ProgramsPage() {
                 )}
 
                 <div className="inline-actions">
+                  {isManagement ? (
+                    <Link className="secondary-button" to={`/topics?program=${program.id}`}>
+                      View Topics
+                    </Link>
+                  ) : null}
                   <button
                     className="secondary-button"
                     onClick={() => toggleEditProgram(program)}

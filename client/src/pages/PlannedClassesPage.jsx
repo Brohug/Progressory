@@ -186,6 +186,7 @@ const sortPlannedClassesForPlanner = (plannedClasses, todayKey) => {
 export default function PlannedClassesPage() {
   const { user } = useAuth();
   const isMember = user?.role === 'member';
+  const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const formSectionRef = useRef(null);
@@ -407,11 +408,51 @@ export default function PlannedClassesPage() {
     const topicIdFromLibrary = searchParams.get('libraryTopicId');
     const programIdFromLibrary = searchParams.get('libraryProgramId');
     const topicTitleFromLibrary = searchParams.get('libraryTopicTitle') || '';
+    const topicIdFromReports = searchParams.get('reportTopicId');
+    const topicTitleFromReports = searchParams.get('reportTopicTitle') || '';
+    const topicTitleFromTree = searchParams.get('treeTopicTitle') || '';
+    const topicTypeFromTree = searchParams.get('treeEntryType') || '';
     const openFormFromLibrary = searchParams.get('openForm') === '1';
+    const sourceTopicId = topicIdFromLibrary || topicIdFromReports;
+    const sourceProgramId = programIdFromLibrary;
+    const sourceTopicTitle = topicTitleFromLibrary || topicTitleFromReports;
+    const sourceLabel = topicIdFromLibrary ? 'Library' : 'Reports';
 
-    if (!topicIdFromLibrary) return;
+    if (!sourceTopicId && !topicTitleFromTree) return;
 
-    const linkedTopic = topics.find((topic) => String(topic.id) === String(topicIdFromLibrary));
+    if (!sourceTopicId && topicTitleFromTree) {
+      setShowPlanForm(true);
+      setActiveView('list');
+      setLibraryPlanningContext({
+        topicId: '',
+        topicTitle: topicTitleFromTree,
+        programName: ''
+      });
+      setMessage(`Planning around "${topicTitleFromTree}" from Decision Tree. Add the program, date, and any connected gym topics that support this class.`);
+      setFormData((prev) => ({
+        ...prev,
+        title: prev.title || topicTitleFromTree,
+        notes: prev.notes || `Built from Decision Tree support for ${topicTitleFromTree}${topicTypeFromTree ? ` (${formatLabel(topicTypeFromTree)})` : ''}.`
+      }));
+
+      if (openFormFromLibrary) {
+        window.setTimeout(() => {
+          formSectionRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }, 120);
+      }
+
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('treeTopicTitle');
+      nextParams.delete('treeEntryType');
+      nextParams.delete('openForm');
+      setSearchParams(nextParams, { replace: true });
+      return;
+    }
+
+    const linkedTopic = topics.find((topic) => String(topic.id) === String(sourceTopicId));
     if (!linkedTopic) return;
 
     setShowPlanForm(true);
@@ -422,15 +463,15 @@ export default function PlannedClassesPage() {
     ));
     setLibraryPlanningContext({
       topicId: String(linkedTopic.id),
-      topicTitle: linkedTopic.title || topicTitleFromLibrary,
+      topicTitle: linkedTopic.title || sourceTopicTitle,
       programName: linkedTopic.program_name || ''
     });
-    setMessage(`Planning around "${linkedTopic.title}". Add the date, time, and any supporting topics for this class.`);
+    setMessage(`Planning around "${linkedTopic.title}" from ${sourceLabel}. Add the date, time, and any supporting topics for this class.`);
     setFormData((prev) => ({
       ...prev,
-      program_id: prev.program_id || (programIdFromLibrary ? String(programIdFromLibrary) : linkedTopic.program_id ? String(linkedTopic.program_id) : ''),
+      program_id: prev.program_id || (sourceProgramId ? String(sourceProgramId) : linkedTopic.program_id ? String(linkedTopic.program_id) : ''),
       title: prev.title || linkedTopic.title || '',
-      notes: prev.notes || `Built from Library resource support for ${linkedTopic.title}.`
+      notes: prev.notes || `Built from ${sourceLabel} support for ${linkedTopic.title}.`
     }));
 
     if (openFormFromLibrary) {
@@ -446,6 +487,10 @@ export default function PlannedClassesPage() {
     nextParams.delete('libraryTopicId');
     nextParams.delete('libraryProgramId');
     nextParams.delete('libraryTopicTitle');
+    nextParams.delete('reportTopicId');
+    nextParams.delete('reportTopicTitle');
+    nextParams.delete('treeTopicTitle');
+    nextParams.delete('treeEntryType');
     nextParams.delete('openForm');
     setSearchParams(nextParams, { replace: true });
   }, [isMember, topics, searchParams, setSearchParams]);
@@ -1192,14 +1237,24 @@ export default function PlannedClassesPage() {
         </section>
 
         <section ref={formSectionRef} className="page-section planned-classes-form-section">
-          <div className="section-header">
-            <div>
-              <h3>{editingPlannedClassId ? 'Edit planned class' : 'Create planned class'}</h3>
-              <p className="section-note">
-                Choose a program first so the scenario and topic pickers stay focused on the right
-                part of your curriculum.
-              </p>
-            </div>
+            <div className="section-header">
+              <div>
+                <h3>{editingPlannedClassId ? 'Edit planned class' : 'Create planned class'}</h3>
+                <p className="section-note">
+                  Choose a program first so the scenario and topic pickers stay focused on the right
+                  part of your curriculum.
+                </p>
+                {isManagement ? (
+                  <div className="inline-actions" style={{ marginTop: '10px' }}>
+                    <Link className="secondary-button" to="/topics?action=create">
+                      Need to add a topic first?
+                    </Link>
+                    <Link className="secondary-button" to="/topics">
+                      Open Topics
+                    </Link>
+                  </div>
+                ) : null}
+              </div>
             <button
               type="button"
               className="secondary-button"

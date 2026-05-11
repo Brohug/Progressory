@@ -4,6 +4,10 @@ import api from '../api/axios';
 import Layout from '../components/Layout';
 import { formatLabel } from '../utils/formatLabel';
 
+const buildIndexLink = (topicTitle) => `/index?search=${encodeURIComponent(topicTitle)}`;
+const buildLibraryLink = (topicTitle) => `/library?search=${encodeURIComponent(topicTitle)}`;
+const buildDecisionTreeLink = (topicTitle) => `/decision-tree?search=${encodeURIComponent(topicTitle)}`;
+
 export default function MyProgressPage() {
   const [member, setMember] = useState(null);
   const [progress, setProgress] = useState([]);
@@ -141,6 +145,17 @@ export default function MyProgressPage() {
                             </div>
                           ) : null}
                         </div>
+                        <div className="inline-actions">
+                          <Link className="secondary-button" to={buildIndexLink(item.topic_title)}>
+                            View in Index
+                          </Link>
+                          <Link className="secondary-button" to={buildLibraryLink(item.topic_title)}>
+                            Find study resources
+                          </Link>
+                          <Link className="secondary-button" to={buildDecisionTreeLink(item.topic_title)}>
+                            Explore in Decision Tree
+                          </Link>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -178,6 +193,17 @@ export default function MyProgressPage() {
                           </div>
                         ) : null}
                         {item.notes ? <div>{item.notes}</div> : null}
+                      </div>
+                      <div className="inline-actions">
+                        <Link className="secondary-button" to={buildIndexLink(item.topic_title)}>
+                          View in Index
+                        </Link>
+                        <Link className="secondary-button" to={buildLibraryLink(item.topic_title)}>
+                          Find study resources
+                        </Link>
+                        <Link className="secondary-button" to={buildDecisionTreeLink(item.topic_title)}>
+                          Explore in Decision Tree
+                        </Link>
                       </div>
                     </li>
                   ))}

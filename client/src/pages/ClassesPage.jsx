@@ -37,6 +37,7 @@ const storeReadyForAttendanceIds = (classIds) => {
 
 export default function ClassesPage() {
   const { user } = useAuth();
+  const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const location = useLocation();
   const classListSectionRef = useRef(null);
 
@@ -1458,6 +1459,16 @@ export default function ClassesPage() {
                           <p className="section-note">
                             Open this when you want to log a topic taught or reviewed in class.
                           </p>
+                          {isManagement ? (
+                            <div className="inline-actions" style={{ marginTop: '10px' }}>
+                              <Link className="secondary-button" to="/topics?action=create">
+                                Add missing topic
+                              </Link>
+                              <Link className="secondary-button" to="/topics">
+                                Open Topics
+                              </Link>
+                            </div>
+                          ) : null}
                         </div>
                         <button
                           type="button"
@@ -1542,9 +1553,21 @@ export default function ClassesPage() {
                           </li>
                         ))}
                       </ul>
-                    ) : (
-                      <p className="empty-state">No topics have been logged for this class yet.</p>
-                    )}
+                      ) : (
+                      <div className="empty-state">
+                        <p>No topics have been logged for this class yet.</p>
+                        {isManagement ? (
+                          <div className="inline-actions" style={{ justifyContent: 'center' }}>
+                            <Link className="secondary-button" to="/topics?action=create">
+                              Add topic first
+                            </Link>
+                            <Link className="secondary-button" to="/topics">
+                              Open Topics
+                            </Link>
+                          </div>
+                        ) : null}
+                      </div>
+                      )}
 
                     <h4>Training Entries</h4>
                     {classTrainingEntriesMap[classItem.id]?.length ? (

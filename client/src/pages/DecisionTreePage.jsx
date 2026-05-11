@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import curriculumIndexSeed from '../data/curriculumIndexSeed';
+import { useAuth } from '../hooks/useAuth';
 
 const relationshipGroups = [
   { key: 'entriesIntoPosition', label: 'Entries' },
@@ -18,6 +19,18 @@ const excludedDecisionTreeSearchCategories = new Set([
   'Drills',
   'Positional Sparring'
 ]);
+
+const inferTopicTypeFromEntry = (entry) => {
+  const category = String(entry?.category || '').toLowerCase();
+
+  if (category.includes('position') || category.includes('guard')) return 'position';
+  if (category.includes('submission') || category.includes('leg lock')) return 'submission';
+  if (category.includes('escape') || category.includes('defense') || category.includes('retention')) return 'escape';
+  if (category.includes('takedown')) return 'takedown';
+  if (category.includes('concept') || category.includes('fundamental') || category.includes('strategy')) return 'concept';
+
+  return 'technique';
+};
 
 const coachingScenarios = [
   {
@@ -2190,6 +2203,14 @@ const buildLibraryLink = ({ entryName, focusEntry, decisionPathEntries }) => {
   return `/library?${params.toString()}`;
 };
 
+const buildPlannedClassLink = (entry) => (
+  `/planned-classes?openForm=1&treeTopicTitle=${encodeURIComponent(entry.name)}&treeEntryType=${encodeURIComponent(inferTopicTypeFromEntry(entry))}`
+);
+
+const buildAddTopicLink = (entry) => (
+  `/topics?action=create&suggestedTitle=${encodeURIComponent(entry.name)}&suggestedType=${encodeURIComponent(inferTopicTypeFromEntry(entry))}`
+);
+
 const buildCurriculumIndexLink = (entry) => {
   const params = new URLSearchParams();
   params.set('search', entry.name);
@@ -2198,6 +2219,9 @@ const buildCurriculumIndexLink = (entry) => {
 };
 
 export default function DecisionTreePage() {
+  const { user } = useAuth();
+  const isMember = user?.role === 'member';
+  const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const [searchParams] = useSearchParams();
   const querySearch = searchParams.get('search') || '';
   const queryEntryId = searchParams.get('entryId') || '';
@@ -2710,11 +2734,11 @@ export default function DecisionTreePage() {
               {focusEntry?.subcategory && <span className="curriculum-index-tag">{focusEntry.subcategory}</span>}
               {focusEntry?.skillLevel && <span className="curriculum-index-tag">{focusEntry.skillLevel}</span>}
             </div>
-            {focusEntry ? (
-              <div className="decision-tree-focus-links">
-                <Link className="secondary-button" to={buildCurriculumIndexLink(focusEntry)}>
-                  View in Index
-                </Link>
+              {focusEntry ? (
+                <div className="decision-tree-focus-links">
+                  <Link className="secondary-button" to={buildCurriculumIndexLink(focusEntry)}>
+                    View in Index
+                  </Link>
                 <Link
                   className="secondary-button"
                   to={buildLibraryLink({
@@ -2722,11 +2746,21 @@ export default function DecisionTreePage() {
                     focusEntry,
                     decisionPathEntries
                   })}
-                >
-                  Find Library Resources
-                </Link>
-              </div>
-            ) : null}
+                  >
+                    Find Library Resources
+                  </Link>
+                  {!isMember ? (
+                    <Link className="secondary-button" to={buildPlannedClassLink(focusEntry)}>
+                      Plan next class
+                    </Link>
+                  ) : null}
+                  {isManagement ? (
+                    <Link className="secondary-button" to={buildAddTopicLink(focusEntry)}>
+                      Add topic
+                    </Link>
+                  ) : null}
+                </div>
+              ) : null}
           </div>
           <div className="decision-tree-hero-actions">
             <button className="secondary-button" type="button" onClick={goBack} disabled={!history.length}>

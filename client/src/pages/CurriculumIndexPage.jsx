@@ -883,18 +883,18 @@ export default function CurriculumIndexPage() {
           </div>
         </section>
 
-        <ExpandableSection
-          title="Index results"
-          note="Use this as both a curriculum reference layer and the first place to add operational topics when they do not exist yet."
-          summary={`${filteredEntries.length} matching index item${filteredEntries.length === 1 ? '' : 's'} in the current view.`}
-          className="curriculum-index-results-section"
-        >
-          <div className="section-header">
-            <div>
-              <h3>Index results</h3>
-              <p className="section-note">Use this as both a curriculum reference layer and the first place to add operational topics when they do not exist yet.</p>
+          <ExpandableSection
+            title="Index results"
+            note="Use this as both the broader curriculum map and the fastest place to add operational topics when the gym is missing something."
+            summary={`${filteredEntries.length} matching index item${filteredEntries.length === 1 ? '' : 's'} in the current view.`}
+            className="curriculum-index-results-section"
+          >
+            <div className="section-header">
+              <div>
+                <h3>Index results</h3>
+                <p className="section-note">Use this as the broad teaching map, then add the missing topic here when you realize the gym does not have it yet.</p>
+              </div>
             </div>
-          </div>
 
           {loading ? (
             <p className="empty-state">Loading curriculum signals...</p>

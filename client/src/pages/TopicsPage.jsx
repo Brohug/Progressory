@@ -1,11 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import api from '../api/axios';
+import { useSearchParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import ExpandableSection from '../components/ExpandableSection';
 import { formatLabel } from '../utils/formatLabel';
 import TopicSearchSelect from '../components/TopicSearchSelect';
 
 export default function TopicsPage() {
+  const [searchParams] = useSearchParams();
+  const topicListSectionRef = useRef(null);
+  const topicItemRefs = useRef({});
   const [topics, setTopics] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [showInactive, setShowInactive] = useState(false);
@@ -22,6 +26,8 @@ export default function TopicsPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [isCreateTopicOpen, setIsCreateTopicOpen] = useState(false);
+  const [isTopicListOpen, setIsTopicListOpen] = useState(true);
 
   const topicTypes = [
     'position',
@@ -67,6 +73,41 @@ export default function TopicsPage() {
     loadPageData();
   }, []);
 
+  useEffect(() => {
+    const searchValue = searchParams.get('search');
+    const typeValue = searchParams.get('topicType');
+    const programValue = searchParams.get('program');
+    const actionValue = searchParams.get('action');
+    const suggestedTitle = searchParams.get('suggestedTitle');
+    const suggestedType = searchParams.get('suggestedType');
+    const suggestedProgramId = searchParams.get('suggestedProgramId');
+
+    if (searchValue !== null) {
+      setTopicSearch(searchValue);
+    }
+
+    if (typeValue !== null) {
+      setTopicTypeFilter(typeValue);
+    }
+
+    if (programValue !== null) {
+      setProgramFilter(programValue);
+    }
+
+    if (actionValue === 'create') {
+      setIsCreateTopicOpen(true);
+    }
+
+    if (suggestedTitle || suggestedType || suggestedProgramId) {
+      setFormData((prev) => ({
+        ...prev,
+        title: suggestedTitle ?? prev.title,
+        topic_type: suggestedType ?? prev.topic_type,
+        program_id: suggestedProgramId ?? prev.program_id
+      }));
+    }
+  }, [searchParams]);
+
   const orderedTopics = useMemo(() => {
     const active = topics.filter((topic) => topic.is_active);
     const inactive = topics.filter((topic) => !topic.is_active);
@@ -90,6 +131,42 @@ export default function TopicsPage() {
       return matchesSearch && matchesType && matchesProgram;
     });
   }, [orderedTopics, topicSearch, topicTypeFilter, programFilter]);
+
+  useEffect(() => {
+    const topicId = searchParams.get('topicId');
+
+    if (!topicId || topics.length === 0) {
+      return;
+    }
+
+    const targetTopic = topics.find((topic) => String(topic.id) === String(topicId));
+    if (!targetTopic) {
+      return;
+    }
+
+    if (!targetTopic.is_active) {
+      setShowInactive(true);
+    }
+
+    if (!searchParams.get('search')) {
+      setTopicSearch(targetTopic.title || '');
+    }
+
+    if (!searchParams.get('topicType')) {
+      setTopicTypeFilter(targetTopic.topic_type || '');
+    }
+
+    if (!searchParams.get('program') && targetTopic.program_id) {
+      setProgramFilter(String(targetTopic.program_id));
+    }
+
+    setIsTopicListOpen(true);
+
+    window.setTimeout(() => {
+      topicListSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      topicItemRefs.current[targetTopic.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 120);
+  }, [searchParams, topics]);
 
   const availableParentTopics = useMemo(() => {
     const activeTopics = topics.filter((topic) => topic.is_active);
@@ -182,6 +259,8 @@ export default function TopicsPage() {
       <h2 className="page-title">Topics</h2>
 
       <ExpandableSection
+        isOpen={isCreateTopicOpen}
+        onToggle={setIsCreateTopicOpen}
         title="Create Topic"
         note="Add new topics only when you are ready to build out more of the curriculum."
         summary="Keep this collapsed until you want to add a new topic to the curriculum."
@@ -263,6 +342,8 @@ export default function TopicsPage() {
       {error && <p className="error-text">{error}</p>}
 
       <ExpandableSection
+        isOpen={isTopicListOpen}
+        onToggle={setIsTopicListOpen}
         title="Topic List"
         note="Search and filter your curriculum as the topic library grows."
         summary="Expand this when you want to search, filter, or review the current topic library."
@@ -276,6 +357,7 @@ export default function TopicsPage() {
           </button>
         )}
       >
+        <div ref={topicListSectionRef} />
 
         <div className="filter-grid">
           <div>
@@ -328,7 +410,15 @@ export default function TopicsPage() {
         ) : (
           <ul className="card-list">
             {filteredTopics.map((topic) => (
-              <li key={topic.id} className="card-item">
+              <li
+                key={topic.id}
+                className="card-item"
+                ref={(node) => {
+                  if (node) {
+                    topicItemRefs.current[topic.id] = node;
+                  }
+                }}
+              >
                 <strong>{topic.title}</strong>
                 <div className="detail-block">
                   <div className="meta-text">Type: {formatLabel(topic.topic_type)}</div>

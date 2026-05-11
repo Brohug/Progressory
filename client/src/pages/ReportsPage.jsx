@@ -1,14 +1,60 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
+import curriculumIndexSeed from '../data/curriculumIndexSeed';
 import { formatLabel } from '../utils/formatLabel';
+
+const normalizeValue = (value) => (
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+);
+
+const RELATIONSHIP_GROUPS = [
+  { key: 'entriesIntoPosition', label: 'Natural entry after' },
+  { key: 'commonAttacks', label: 'Natural attack after' },
+  { key: 'commonTransitions', label: 'Natural transition after' },
+  { key: 'commonFollowUps', label: 'Natural follow-up after' },
+  { key: 'relatedPositions', label: 'Close positional neighbor to' }
+];
+
+const mapSeedEntryToTopicType = (entry) => {
+  const category = String(entry?.category || '').toLowerCase();
+
+  if (category.includes('position') || category.includes('guard')) {
+    return 'position';
+  }
+
+  if (category.includes('submission')) {
+    return 'submission';
+  }
+
+  if (category.includes('escape') || category.includes('defense') || category.includes('retention')) {
+    return 'escape';
+  }
+
+  if (category.includes('takedown')) {
+    return 'takedown';
+  }
+
+  if (category.includes('concept') || category.includes('fundamental')) {
+    return 'concept';
+  }
+
+  return 'technique';
+};
 
 export default function ReportsPage() {
   const [recentClasses, setRecentClasses] = useState([]);
+  const [recentTopicSignals, setRecentTopicSignals] = useState([]);
   const [topicCoverage, setTopicCoverage] = useState([]);
   const [trainingMethodUsage, setTrainingMethodUsage] = useState([]);
   const [neglectedTopics, setNeglectedTopics] = useState([]);
+  const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -19,20 +65,26 @@ export default function ReportsPage() {
 
       const [
         recentClassesRes,
+        recentTopicSignalsRes,
         topicCoverageRes,
         trainingMethodUsageRes,
-        neglectedTopicsRes
+        neglectedTopicsRes,
+        topicsRes
       ] = await Promise.all([
         api.get('/reports/recent-classes?limit=5'),
+        api.get('/reports/recent-topic-signals?limit=16'),
         api.get('/reports/topic-coverage'),
         api.get('/reports/training-method-usage'),
-        api.get('/reports/neglected-topics?days=30')
+        api.get('/reports/neglected-topics?days=30'),
+        api.get('/topics')
       ]);
 
       setRecentClasses(recentClassesRes.data);
+      setRecentTopicSignals(recentTopicSignalsRes.data);
       setTopicCoverage(topicCoverageRes.data);
       setTrainingMethodUsage(trainingMethodUsageRes.data);
       setNeglectedTopics(neglectedTopicsRes.data);
+      setTopics(topicsRes.data);
     } catch (err) {
       console.error('Load reports error:', err);
       setError(err.response?.data?.message || 'Couldn\'t load reports right now.');
@@ -67,6 +119,204 @@ export default function ReportsPage() {
     .sort((a, b) => Number(b.total_segments) - Number(a.total_segments))
     .slice(0, 6);
 
+  const recentTopicSignalGroups = useMemo(() => {
+    const seenTopicIds = new Set();
+
+    return recentTopicSignals.filter((item) => {
+      const topicId = Number(item.topic_id);
+      if (seenTopicIds.has(topicId)) {
+        return false;
+      }
+
+      seenTopicIds.add(topicId);
+      return true;
+    });
+  }, [recentTopicSignals]);
+
+  const recommendedNextTopics = useMemo(() => {
+    if (topics.length === 0) {
+      return [];
+    }
+
+    const seedByName = new Map(
+      curriculumIndexSeed.map((entry) => [normalizeValue(entry.name), entry])
+    );
+
+    const recentTopicIds = new Set(recentTopicSignals.map((item) => Number(item.topic_id)));
+    const neglectedTopicIds = new Set(neglectedTopics.map((item) => Number(item.topic_id)));
+    const recentPrograms = new Set(recentTopicSignalGroups.map((item) => item.program_id).filter(Boolean));
+    const recentRelationshipDetails = new Map();
+
+    recentTopicSignalGroups.forEach((recentTopic, index) => {
+      const seedEntry = seedByName.get(normalizeValue(recentTopic.topic_title));
+      if (!seedEntry) return;
+
+      RELATIONSHIP_GROUPS.forEach(({ key, label }) => {
+        (seedEntry[key] || []).forEach((relatedName) => {
+          const normalizedName = normalizeValue(relatedName);
+          if (!normalizedName) {
+            return;
+          }
+
+          const existing = recentRelationshipDetails.get(normalizedName) || {
+            recentTopicTitles: new Set(),
+            relationLabels: new Set(),
+            strongestRecencyIndex: Number.POSITIVE_INFINITY
+          };
+
+          existing.recentTopicTitles.add(recentTopic.topic_title);
+          existing.relationLabels.add(label);
+          existing.strongestRecencyIndex = Math.min(existing.strongestRecencyIndex, index);
+          recentRelationshipDetails.set(normalizedName, existing);
+        });
+      });
+    });
+
+    const coverageByTopicId = new Map(
+      topicCoverage.map((item) => [Number(item.topic_id), item])
+    );
+
+    return topics
+      .filter((topic) => topic.is_active && !recentTopicIds.has(Number(topic.id)))
+      .map((topic) => {
+        const coverage = coverageByTopicId.get(Number(topic.id));
+        const scoreReasons = [];
+        let score = 0;
+        const recentRelationshipMatch = recentRelationshipDetails.get(normalizeValue(topic.title));
+
+        if (neglectedTopicIds.has(Number(topic.id))) {
+          score += 5;
+          scoreReasons.push('Not used recently');
+        }
+
+        if (recentRelationshipMatch) {
+          const recencyBonus = recentRelationshipMatch.strongestRecencyIndex <= 1 ? 5 : 4;
+          score += recencyBonus;
+          scoreReasons.push(
+            `${Array.from(recentRelationshipMatch.relationLabels)[0]} ${Array.from(recentRelationshipMatch.recentTopicTitles)[0]}`
+          );
+        }
+
+        if (topic.program_id && recentPrograms.has(topic.program_id)) {
+          score += 2;
+          scoreReasons.push('Matches the active program mix');
+        }
+
+        if (topic.parent_topic_id && recentTopicSignals.some((item) => Number(item.topic_id) === Number(topic.parent_topic_id))) {
+          score += 2;
+          scoreReasons.push('Shares a direct parent with a recent topic');
+        }
+
+        const totalTimesUsed = Number(coverage?.total_times_used || 0);
+        if (totalTimesUsed <= 1) {
+          score += 2;
+          scoreReasons.push(totalTimesUsed === 0 ? 'Never used yet' : 'Only used once so far');
+        }
+
+        return {
+          ...topic,
+          score,
+          scoreReasons: [...new Set(scoreReasons)],
+          totalTimesUsed,
+          recentRelationshipMatch
+        };
+      })
+      .filter((topic) => topic.score > 0)
+      .sort((left, right) => {
+        if (right.score !== left.score) return right.score - left.score;
+        if (left.totalTimesUsed !== right.totalTimesUsed) return left.totalTimesUsed - right.totalTimesUsed;
+        return String(left.title || '').localeCompare(String(right.title || ''));
+      })
+      .slice(0, 8);
+  }, [neglectedTopics, recentTopicSignalGroups, recentTopicSignals, topicCoverage, topics]);
+
+  const suggestedMissingTopics = useMemo(() => {
+    if (topics.length === 0 || recentTopicSignalGroups.length === 0) {
+      return [];
+    }
+
+    const seedByName = new Map(
+      curriculumIndexSeed.map((entry) => [normalizeValue(entry.name), entry])
+    );
+    const existingTopicNames = new Set(topics.map((topic) => normalizeValue(topic.title)));
+    const missingCandidates = [];
+    const seenMissingNames = new Set();
+    recentTopicSignalGroups.forEach((recentTopic, index) => {
+      const seedEntry = seedByName.get(normalizeValue(recentTopic.topic_title));
+      if (!seedEntry) {
+        return;
+      }
+
+      RELATIONSHIP_GROUPS.forEach(({ key, label }) => {
+        (seedEntry[key] || []).forEach((relatedName) => {
+          const normalizedName = normalizeValue(relatedName);
+          const relatedSeedEntry = seedByName.get(normalizedName);
+
+          if (!normalizedName || !relatedSeedEntry || existingTopicNames.has(normalizedName) || seenMissingNames.has(normalizedName)) {
+            return;
+          }
+
+          seenMissingNames.add(normalizedName);
+          missingCandidates.push({
+            name: relatedSeedEntry.name,
+            suggestedType: mapSeedEntryToTopicType(relatedSeedEntry),
+            suggestedProgramId: recentTopic.program_id || '',
+            sourceTopicTitle: recentTopic.topic_title,
+            sourceProgramName: recentTopic.program_name || '',
+            relationLabel: label,
+            score: index <= 1 ? 5 : 4
+          });
+        });
+      });
+    });
+
+    return missingCandidates
+      .sort((left, right) => {
+        if (right.score !== left.score) return right.score - left.score;
+        return left.name.localeCompare(right.name);
+      })
+      .slice(0, 8);
+  }, [recentTopicSignalGroups, topics]);
+
+  const priorityActions = useMemo(() => {
+    const nextNeglectedTopic = neglectedTopics[0] || null;
+    const latestClass = recentClasses[0] || null;
+    const mostUsedTopic = topTopics[0] || null;
+
+    return [
+      nextNeglectedTopic
+        ? {
+            title: 'Plan around an underused topic',
+            body: `${nextNeglectedTopic.topic_title} is a good candidate for the next planned class if you want to rebalance the rotation.`,
+            primaryLabel: 'Plan next class',
+            primaryTo: `/planned-classes?openForm=1&reportTopicId=${nextNeglectedTopic.topic_id}&reportTopicTitle=${encodeURIComponent(nextNeglectedTopic.topic_title)}`,
+            secondaryLabel: 'View topic',
+            secondaryTo: `/topics?topicId=${nextNeglectedTopic.topic_id}`
+          }
+        : null,
+      latestClass
+        ? {
+            title: 'Review the latest class',
+            body: `${latestClass.title || 'Untitled Class'} is the fastest way to connect this report back to what was actually taught most recently.`,
+            primaryLabel: 'Open class',
+            primaryTo: `/classes?openClassId=${latestClass.id}`,
+            secondaryLabel: 'Plan follow-up',
+            secondaryTo: '/planned-classes?openForm=1'
+          }
+        : null,
+      mostUsedTopic
+        ? {
+            title: 'Inspect your most-used topic',
+            body: `${mostUsedTopic.topic_title} is currently dominating the mix, so it is a good place to check whether repetition is intentional or accidental.`,
+            primaryLabel: 'View topic',
+            primaryTo: `/topics?topicId=${mostUsedTopic.topic_id}`,
+            secondaryLabel: 'Plan review class',
+            secondaryTo: `/planned-classes?openForm=1&reportTopicId=${mostUsedTopic.topic_id}&reportTopicTitle=${encodeURIComponent(mostUsedTopic.topic_title)}`
+          }
+        : null
+    ].filter(Boolean);
+  }, [neglectedTopics, recentClasses, topTopics]);
+
   return (
     <Layout>
       <div className="reports-page">
@@ -89,6 +339,101 @@ export default function ReportsPage() {
                 </div>
               ))}
             </section>
+
+            {priorityActions.length > 0 ? (
+              <section className="reports-featured-grid" style={{ marginBottom: '1.5rem' }}>
+                {priorityActions.map((action) => (
+                  <article key={action.title} className="reports-featured-card">
+                    <strong>{action.title}</strong>
+                    <div className="detail-block">
+                      <div>{action.body}</div>
+                    </div>
+                    <div className="inline-actions">
+                      <Link className="secondary-button" to={action.primaryTo}>
+                        {action.primaryLabel}
+                      </Link>
+                      <Link className="secondary-button" to={action.secondaryTo}>
+                        {action.secondaryLabel}
+                      </Link>
+                    </div>
+                  </article>
+                ))}
+              </section>
+            ) : null}
+
+            <ExpandableSection
+              title="Suggested Next Topics"
+              note="These suggestions help a coach keep the next class close to what was just taught while still bringing neglected topics back into the rotation."
+              summary="Expand when you want a short list of next-class ideas that flow naturally from recent teaching instead of feeling random."
+              className="reports-priority-section"
+              defaultOpen
+            >
+              {recommendedNextTopics.length === 0 ? (
+                <p className="empty-state">There is not enough recent teaching signal yet to make a strong recommendation. Log a few more classes or add more topics to improve this list.</p>
+              ) : (
+                <div className="reports-featured-grid">
+                  {recommendedNextTopics.map((topic) => (
+                    <article key={topic.id} className="reports-featured-card">
+                      <strong>{topic.title}</strong>
+                      <div className="detail-block">
+                        <div className="meta-text">Type: {formatLabel(topic.topic_type)}</div>
+                        <div className="meta-text">Program: {topic.program_name || 'None'}</div>
+                        <div className="meta-text">Why this fits next: {topic.scoreReasons.join(' | ')}</div>
+                        {topic.recentRelationshipMatch ? (
+                          <div className="meta-text">
+                            This would flow well after: {Array.from(topic.recentRelationshipMatch.recentTopicTitles).slice(0, 2).join(' | ')}
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="inline-actions">
+                        <Link className="secondary-button" to={`/topics?topicId=${topic.id}`}>
+                          View topic
+                        </Link>
+                        <Link
+                          className="secondary-button"
+                          to={`/planned-classes?openForm=1&reportTopicId=${topic.id}&reportTopicTitle=${encodeURIComponent(topic.title)}`}
+                        >
+                          Plan next class
+                        </Link>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </ExpandableSection>
+
+            <ExpandableSection
+              title="Consider Adding Nearby Topics"
+              note="These are nearby curriculum ideas the gym has not added yet, but they would connect cleanly to what coaches have been teaching lately."
+              summary="Expand when you want help spotting missing topics that would make the curriculum feel more complete and connected."
+              className="reports-priority-section"
+            >
+              {suggestedMissingTopics.length === 0 ? (
+                <p className="empty-state">No clear curriculum gaps stood out from the recent classes. The current topic library is covering those relationship chains well.</p>
+              ) : (
+                <div className="reports-featured-grid">
+                  {suggestedMissingTopics.map((topic) => (
+                    <article key={`${topic.name}-${topic.sourceTopicTitle}`} className="reports-featured-card">
+                      <strong>{topic.name}</strong>
+                      <div className="detail-block">
+                        <div className="meta-text">Suggested type: {formatLabel(topic.suggestedType)}</div>
+                        <div className="meta-text">Closest recent topic: {topic.sourceTopicTitle}</div>
+                        <div className="meta-text">Why it belongs: {topic.relationLabel}</div>
+                        <div className="meta-text">Best program fit: {topic.sourceProgramName || 'Use any relevant program'}</div>
+                      </div>
+                      <div className="inline-actions">
+                        <Link
+                          className="secondary-button"
+                          to={`/topics?action=create&suggestedTitle=${encodeURIComponent(topic.name)}&suggestedType=${encodeURIComponent(topic.suggestedType)}&suggestedProgramId=${encodeURIComponent(String(topic.suggestedProgramId || ''))}`}
+                        >
+                          Add topic
+                        </Link>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </ExpandableSection>
 
             <ExpandableSection
               title="Unused / Underutilized Topics"
@@ -113,6 +458,17 @@ export default function ReportsPage() {
                             ? new Date(item.last_used_date).toLocaleDateString()
                             : 'Not yet used'}
                         </div>
+                      </div>
+                      <div className="inline-actions">
+                        <Link className="secondary-button" to={`/topics?topicId=${item.topic_id}`}>
+                          View topic
+                        </Link>
+                        <Link
+                          className="secondary-button"
+                          to={`/planned-classes?openForm=1&reportTopicId=${item.topic_id}&reportTopicTitle=${encodeURIComponent(item.topic_title)}`}
+                        >
+                          Plan next class
+                        </Link>
                       </div>
                     </article>
                   ))}
@@ -171,6 +527,11 @@ export default function ReportsPage() {
                           <span>{Number(item.total_times_used)} uses</span>
                           <span>{Number(item.focus_count)} focus</span>
                         </div>
+                        <div className="inline-actions">
+                          <Link className="secondary-button" to={`/topics?topicId=${item.topic_id}`}>
+                            View topic
+                          </Link>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -203,6 +564,11 @@ export default function ReportsPage() {
                         </span>
                       </div>
                       <div className="meta-text">{item.notes || 'No notes added yet.'}</div>
+                      <div className="inline-actions">
+                        <Link className="secondary-button" to={`/classes?openClassId=${item.id}`}>
+                          Open class
+                        </Link>
+                      </div>
                     </article>
                   ))}
                 </div>

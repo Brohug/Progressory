@@ -662,11 +662,11 @@ export default function LibraryPage() {
                     <div className="dashboard-setup-helper">
                       {latestMemberEntry.description || 'Open the resource to review what your coaches shared most recently.'}
                     </div>
-                    <div className="inline-actions">
-                      {latestMemberEntry.video_url ? (
-                        <a
-                          href={latestMemberEntry.video_url}
-                          target="_blank"
+                      <div className="inline-actions">
+                        {latestMemberEntry.video_url ? (
+                          <a
+                            href={latestMemberEntry.video_url}
+                            target="_blank"
                           rel="noreferrer"
                           className="secondary-button"
                         >
@@ -682,15 +682,23 @@ export default function LibraryPage() {
                             topicDescription: latestMemberEntry.description,
                             topicType: latestMemberEntry.topic_type
                           })}
-                        >
-                          View topic in Index
-                        </Link>
-                      ) : null}
-                    </div>
-                  </>
-                ) : (
-                  <div className="dashboard-setup-helper">
-                    Your coaches have not shared any member-visible Library entries yet.
+                          >
+                            View topic in Index
+                          </Link>
+                        ) : null}
+                        {latestMemberEntry.topic_title ? (
+                          <Link
+                            className="secondary-button"
+                            to={`/decision-tree?search=${encodeURIComponent(latestMemberEntry.topic_title)}`}
+                          >
+                            Explore in Decision Tree
+                          </Link>
+                        ) : null}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="dashboard-setup-helper">
+                      Your coaches have not shared any member-visible Library entries yet.
                   </div>
                 )}
               </div>
@@ -773,20 +781,33 @@ export default function LibraryPage() {
           ) : null}
         </ExpandableSection>
 
-        <ExpandableSection
-          title="Library Entries"
-          note="Open the resources your gym has shared with members."
-          summary={`${filteredEntries.length} librar${filteredEntries.length === 1 ? 'y entry' : 'y entries'} in the current results.`}
-          className="library-entries-section"
-          defaultOpen
-        >
-          {loading ? (
-            <p className="empty-state">Loading library...</p>
-          ) : filteredEntries.length === 0 ? (
-            <p className="empty-state">No member-visible library entries are available yet.</p>
-          ) : (
-            <ul className="card-list">
-              {filteredEntries.map((entry) => (
+          <ExpandableSection
+            title="Library Entries"
+            note="Open the resources your gym has shared with members."
+            summary={`${filteredEntries.length} librar${filteredEntries.length === 1 ? 'y entry' : 'y entries'} in the current results.`}
+            className="library-entries-section"
+            defaultOpen
+          >
+            {loading ? (
+              <p className="empty-state">Loading library...</p>
+            ) : filteredEntries.length === 0 ? (
+              <div className="empty-state">
+                <p>No member-visible library entries are available yet.</p>
+                <div className="inline-actions" style={{ justifyContent: 'center' }}>
+                  <Link className="secondary-button" to="/my-progress">
+                    Open my progress
+                  </Link>
+                  <Link className="secondary-button" to="/index">
+                    Browse Curriculum Index
+                  </Link>
+                  <Link className="secondary-button" to="/decision-tree">
+                    Try the Decision Tree
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <ul className="card-list">
+                {filteredEntries.map((entry) => (
                 <li key={entry.id} className="card-item compact-topic-card">
                   <div className="compact-topic-header">
                     <div>
@@ -805,11 +826,11 @@ export default function LibraryPage() {
                   <div className="detail-block">
                     <div>{entry.description || 'No description added yet.'}</div>
                   </div>
-                  <div className="inline-actions">
-                    {entry.video_url ? (
-                      <a className="library-resource-link" href={entry.video_url} target="_blank" rel="noreferrer">
-                        Open resource
-                      </a>
+                    <div className="inline-actions">
+                      {entry.video_url ? (
+                        <a className="library-resource-link" href={entry.video_url} target="_blank" rel="noreferrer">
+                          Open resource
+                        </a>
                     ) : null}
                     {entry.topic_title ? (
                       <Link
@@ -820,14 +841,22 @@ export default function LibraryPage() {
                           topicDescription: entry.description,
                           topicType: entry.topic_type
                         })}
-                      >
-                        View topic in Index
-                      </Link>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
-            </ul>
+                        >
+                          View topic in Index
+                        </Link>
+                      ) : null}
+                      {entry.topic_title ? (
+                        <Link
+                          className="secondary-button"
+                          to={`/decision-tree?search=${encodeURIComponent(entry.topic_title)}`}
+                        >
+                          Explore in Decision Tree
+                        </Link>
+                      ) : null}
+                    </div>
+                  </li>
+                ))}
+              </ul>
           )}
         </ExpandableSection>
       </Layout>
@@ -1294,13 +1323,18 @@ export default function LibraryPage() {
                 If you searched for a technique and this is blank, it usually means no video/resource has been saved for that topic yet.
               </p>
             </div>
-            <div className="inline-actions" style={{ justifyContent: 'center' }}>
-              <Link className="secondary-button" to="/index">
-                Add Topic in Curriculum Index
-              </Link>
-              <button
-                type="button"
-                className="secondary-button"
+              <div className="inline-actions" style={{ justifyContent: 'center' }}>
+                <Link className="secondary-button" to="/index">
+                  Add Topic in Curriculum Index
+                </Link>
+                {!isMember ? (
+                  <Link className="secondary-button" to="/topics?action=create">
+                    Add Topic In Topics
+                  </Link>
+                ) : null}
+                <button
+                  type="button"
+                  className="secondary-button"
                 onClick={() => setShowLibraryGuide(true)}
               >
                 Show Library Guide

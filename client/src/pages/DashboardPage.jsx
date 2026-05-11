@@ -17,6 +17,7 @@ const getLocalIsoDate = () => {
 export default function DashboardPage() {
   const { user } = useAuth();
   const isMember = user?.role === 'member';
+  const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const [recentClasses, setRecentClasses] = useState([]);
   const [topicCoverage, setTopicCoverage] = useState([]);
   const [trainingMethodUsage, setTrainingMethodUsage] = useState([]);
@@ -625,10 +626,10 @@ export default function DashboardPage() {
   }
 
   const quickActions = [
-    {
-      title: 'Need to plan a class?',
-      description: 'Go straight to Planned Classes to build the next session before it gets missed.',
-      to: '/planned-classes'
+      {
+        title: 'Need to plan a class?',
+        description: 'Go straight to Planned Classes to build the next session before it gets missed.',
+        to: '/planned-classes'
     },
     {
       title: 'Finished a class?',
@@ -642,26 +643,33 @@ export default function DashboardPage() {
       description: 'Jump into Completed Classes with the New Class form already open for anything that happened off-plan.',
       to: '/classes?workflow=create-class'
     },
-    {
-      title: 'Need reusable scenarios?',
-      description: 'Open Training Scenarios and jump straight into the reusable scenario form so coaches can build class templates faster.',
-      to: '/training-scenarios?action=create&source=dashboard'
-    },
-    {
-      title: 'Need to add topics to organize your curriculum?',
-      description: 'Go to Curriculum Index when you need to add topics first so classes, Library, and the Tree stay connected.',
-      to: '/index'
-    },
-    {
-      title: 'Need a teaching resource?',
-      description: 'Open Library to save coach notes, video links, and topic-linked references for later reuse.',
-      to: '/library'
-    },
-    {
-      title: 'Need to take attendance?',
-      description: 'Open the classes that still need attendance so coaches can finish class admin fast.',
-      to: '/classes?workflow=attendance-ready'
-    }
+      {
+        title: 'Need reusable scenarios?',
+        description: 'Open Training Scenarios and jump straight into the reusable scenario form so coaches can build class templates faster.',
+        to: '/training-scenarios?action=create&source=dashboard'
+      },
+      {
+        title: 'Need to add topics to organize your curriculum?',
+        description: isManagement
+          ? 'Open the Topics create form directly so you can add the next curriculum topic without hunting through the Index first.'
+          : 'Open Curriculum Index when you need to review the topic map that classes, Library, and the Tree are built around.',
+        to: isManagement ? '/topics?action=create' : '/index'
+      },
+      ...(isManagement ? [{
+        title: 'Need to review your topic library?',
+        description: 'Open Topics to search, filter, and clean up the actual curriculum topics your gym is using operationally.',
+        to: '/topics'
+      }] : []),
+      {
+        title: 'Need a teaching resource?',
+        description: 'Open Library to save coach notes, video links, and topic-linked references for later reuse.',
+        to: '/library'
+      },
+      {
+        title: 'Need to take attendance?',
+        description: 'Open the classes that still need attendance so coaches can finish class admin fast.',
+        to: '/classes?workflow=attendance-ready'
+      }
   ];
 
   const coachingQueue = [

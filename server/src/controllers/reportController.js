@@ -135,9 +135,47 @@ const getTrainingMethodUsage = async (req, res) => {
   }
 };
 
+const getRecentTopicSignals = async (req, res) => {
+  try {
+    const gymId = req.user.gym_id;
+    const limit = Number(req.query.limit) || 12;
+
+    const [rows] = await pool.query(
+      `SELECT c.id AS class_id,
+              c.title AS class_title,
+              c.class_date,
+              ct.id AS topic_id,
+              ct.title AS topic_title,
+              ct.topic_type,
+              ct.program_id,
+              p.name AS program_name,
+              class_topic.focus_level,
+              class_topic.coverage_type
+       FROM classes c
+       JOIN class_topics class_topic ON c.id = class_topic.class_id
+       JOIN curriculum_topics ct ON class_topic.curriculum_topic_id = ct.id
+       LEFT JOIN programs p ON ct.program_id = p.id
+       WHERE c.gym_id = ?
+       ORDER BY c.class_date DESC, c.created_at DESC, class_topic.id DESC
+       LIMIT ?`,
+      [gymId, limit]
+    );
+
+    return res.status(200).json(rows);
+  } catch (error) {
+    console.error('Get recent topic signals report error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getRecentClasses,
   getTopicCoverage,
   getNeglectedTopics,
-  getTrainingMethodUsage
+  getTrainingMethodUsage,
+  getRecentTopicSignals
 };

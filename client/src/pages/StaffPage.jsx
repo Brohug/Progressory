@@ -154,6 +154,9 @@ export default function StaffPage() {
   return (
     <Layout>
       <h2 className="page-title">Staff</h2>
+      <p className="page-intro">
+        Manage who can run the gym inside the app, send secure setup links, and keep owner, admin, and coach access clearly separated.
+      </p>
 
       {!isOwner ? (
         <section className="page-section">
@@ -161,6 +164,27 @@ export default function StaffPage() {
         </section>
       ) : (
         <>
+          <section className="action-grid" style={{ marginBottom: '1.5rem' }}>
+            <div className="action-card dashboard-action-card">
+              <strong>Owner</strong>
+              <div className="detail-block">
+                <div className="meta-text">Full control over staff accounts, setup links, and the highest-level gym management decisions.</div>
+              </div>
+            </div>
+            <div className="action-card dashboard-action-card">
+              <strong>Admin</strong>
+              <div className="detail-block">
+                <div className="meta-text">Best for trusted gym managers who need broad operational access without outranking the owner.</div>
+              </div>
+            </div>
+            <div className="action-card dashboard-action-card">
+              <strong>Coach</strong>
+              <div className="detail-block">
+                <div className="meta-text">Best for day-to-day coaching workflows like planning, classes, reports, and progress without staff-management power.</div>
+              </div>
+            </div>
+          </section>
+
           <section className="page-section" style={{ maxWidth: '860px' }}>
             <h3>Create Staff Setup Link</h3>
             <p className="section-note">
@@ -242,6 +266,9 @@ export default function StaffPage() {
 
           <section className="page-section">
             <h3>Staff Accounts</h3>
+            <p className="section-note">
+              Review active staff here, reset access when someone forgets their password, and deactivate accounts when someone should no longer be able to log in.
+            </p>
 
             {loading ? (
               <p className="empty-state">Loading staff users...</p>

@@ -6,6 +6,7 @@ export default function Layout({ children }) {
   const location = useLocation();
 
   const isOwner = user?.role === 'owner';
+  const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const isMember = user?.role === 'member';
   const searchParams = new URLSearchParams(location.search);
   const workflow = searchParams.get('workflow') || '';
@@ -86,8 +87,12 @@ export default function Layout({ children }) {
         eyebrow: 'Best next move',
         title: 'After programs, add the topics that make those tracks usable.',
         description: 'Programs give structure, but topics are what connect planning, classes, Library, and the Decision Tree.',
-        primary: { label: 'Go to Curriculum Index', to: '/index' },
-        secondary: { label: 'Plan classes', to: '/planned-classes' }
+        primary: isManagement
+          ? { label: 'Add topics now', to: '/topics?action=create' }
+          : { label: 'Go to Curriculum Index', to: '/index' },
+        secondary: isManagement
+          ? { label: 'Browse the Index', to: '/index' }
+          : { label: 'Plan classes', to: '/planned-classes' }
       };
     }
 
@@ -96,8 +101,12 @@ export default function Layout({ children }) {
         eyebrow: 'Best next move',
         title: 'After topics are in place, use them in planning or attach resources to them.',
         description: 'The Index becomes most valuable once coaches are actively planning classes or linking resources around the topics they just added.',
-        primary: { label: 'Plan classes', to: '/planned-classes' },
-        secondary: { label: 'Open Library', to: '/library' }
+        primary: isManagement
+          ? { label: 'Open Topics', to: '/topics' }
+          : { label: 'Plan classes', to: '/planned-classes' },
+        secondary: isManagement
+          ? { label: 'Add topic', to: '/topics?action=create' }
+          : { label: 'Open Library', to: '/library' }
       };
     }
 
@@ -146,8 +155,26 @@ export default function Layout({ children }) {
         eyebrow: 'Best next move',
         title: 'Library is strongest when resources stay tied to real curriculum topics.',
         description: 'If a resource feels disconnected, go link or add the topic first so coaches and members can actually find it later.',
-        primary: { label: 'Go to Curriculum Index', to: '/index' },
-        secondary: { label: 'Open Decision Tree', to: '/decision-tree' }
+        primary: isManagement
+          ? { label: 'Open Topics', to: '/topics' }
+          : { label: 'Go to Curriculum Index', to: '/index' },
+        secondary: isManagement
+          ? { label: 'Add topic', to: '/topics?action=create' }
+          : { label: 'Open Decision Tree', to: '/decision-tree' }
+      };
+    }
+
+    if (location.pathname === '/reports') {
+      return {
+        eyebrow: 'Best next move',
+        title: 'Use Reports to spot gaps, then jump straight into Topics or planning while the signal is fresh.',
+        description: 'Reports are strongest when coaches can immediately act on what is missing, underused, or naturally connected to recent classes.',
+        primary: isManagement
+          ? { label: 'Add topic', to: '/topics?action=create' }
+          : { label: 'Plan classes', to: '/planned-classes?openForm=1' },
+        secondary: isManagement
+          ? { label: 'Open Topics', to: '/topics' }
+          : { label: 'Open Curriculum Index', to: '/index' }
       };
     }
 

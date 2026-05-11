@@ -5,7 +5,8 @@ const {
   getRecentClasses,
   getTopicCoverage,
   getNeglectedTopics,
-  getTrainingMethodUsage
+  getTrainingMethodUsage,
+  getRecentTopicSignals
 } = require('../controllers/reportController');
 
 const { protect, requireStaff } = require('../middleware/authMiddleware');
@@ -13,6 +14,7 @@ const { protect, requireStaff } = require('../middleware/authMiddleware');
 router.use(protect, requireStaff);
 
 router.get('/recent-classes', getRecentClasses);
+router.get('/recent-topic-signals', getRecentTopicSignals);
 router.get('/topic-coverage', getTopicCoverage);
 router.get('/neglected-topics', getNeglectedTopics);
 router.get('/training-method-usage', getTrainingMethodUsage);

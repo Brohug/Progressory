@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
@@ -18,6 +18,10 @@ const emptyMemberForm = {
 export default function MembersPage() {
   const { user } = useAuth();
   const isOwner = user?.role === 'owner';
+  const isManagement = user?.role === 'owner' || user?.role === 'admin';
+  const [searchParams] = useSearchParams();
+  const memberListSectionRef = useRef(null);
+  const memberItemRefs = useRef({});
   const [members, setMembers] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [topics, setTopics] = useState([]);
@@ -30,6 +34,8 @@ export default function MembersPage() {
   const [editingMembers, setEditingMembers] = useState({});
   const [editMemberMap, setEditMemberMap] = useState({});
   const [showInactive, setShowInactive] = useState(false);
+  const [memberSearch, setMemberSearch] = useState('');
+  const [memberProgramFilter, setMemberProgramFilter] = useState('');
   const [memberForm, setMemberForm] = useState(emptyMemberForm);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -39,6 +45,7 @@ export default function MembersPage() {
   const [managingMemberAccessId, setManagingMemberAccessId] = useState(null);
   const [memberAccessFormMap, setMemberAccessFormMap] = useState({});
   const [memberInviteMap, setMemberInviteMap] = useState({});
+  const [isMemberListSectionOpen, setIsMemberListSectionOpen] = useState(false);
 
   const fetchMembers = async () => {
     const response = await api.get('/members');
@@ -77,6 +84,45 @@ export default function MembersPage() {
     const inactive = members.filter((member) => !member.is_active);
     return showInactive ? [...active, ...inactive] : active;
   }, [members, showInactive]);
+
+  const memberProgramOptions = useMemo(() => (
+    [...new Set(orderedMembers.map((member) => member.program_name).filter(Boolean))].sort()
+  ), [orderedMembers]);
+
+  const filteredMembers = useMemo(() => {
+    const normalizedSearch = memberSearch.trim().toLowerCase();
+
+    return orderedMembers.filter((member) => {
+      const matchesSearch = !normalizedSearch || [
+        member.first_name,
+        member.last_name,
+        member.email,
+        member.login_email,
+        member.program_name,
+        member.belt_rank
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalizedSearch));
+
+      const matchesProgram = !memberProgramFilter || member.program_name === memberProgramFilter;
+
+      return matchesSearch && matchesProgram;
+    });
+  }, [memberProgramFilter, memberSearch, orderedMembers]);
+
+  const memberSummaryCards = useMemo(() => {
+    const activeMembers = members.filter((member) => member.is_active);
+    const inactiveMembers = members.filter((member) => !member.is_active);
+    const membersWithLogin = members.filter((member) => Boolean(member.user_id));
+    const activePrograms = new Set(activeMembers.map((member) => member.program_name).filter(Boolean));
+
+    return [
+      { label: 'Active Members', value: activeMembers.length },
+      { label: 'Inactive Members', value: inactiveMembers.length },
+      { label: 'Member Logins', value: membersWithLogin.length },
+      { label: 'Programs Represented', value: activePrograms.size }
+    ];
+  }, [members]);
 
   const handleCreateMemberChange = (e) => {
     setMemberForm((prev) => ({
@@ -365,17 +411,107 @@ export default function MembersPage() {
     }
   };
 
+  useEffect(() => {
+    const searchValue = searchParams.get('search');
+    const programValue = searchParams.get('program');
+
+    if (searchValue !== null) {
+      setMemberSearch(searchValue);
+    }
+
+    if (programValue !== null) {
+      setMemberProgramFilter(programValue);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const memberId = searchParams.get('memberId');
+    const view = searchParams.get('view');
+
+    if (!memberId || loading || members.length === 0) {
+      return;
+    }
+
+    const targetMember = members.find((member) => String(member.id) === String(memberId));
+    if (!targetMember) {
+      return;
+    }
+
+    if (!targetMember.is_active) {
+      setShowInactive(true);
+    }
+
+    setIsMemberListSectionOpen(true);
+
+    if (view === 'details') {
+      setExpandedMemberDetails((prev) => ({ ...prev, [targetMember.id]: true }));
+    }
+
+    if (view === 'progress') {
+      setExpandedMembers((prev) => ({ ...prev, [targetMember.id]: true }));
+      setShowMemberProgressFormMap((prev) => ({ ...prev, [targetMember.id]: true }));
+
+      if (!memberProgressMap[targetMember.id]) {
+        loadMemberProgress(targetMember.id);
+      }
+    }
+
+    if (view === 'edit') {
+      setEditMemberMap((prev) => ({
+        ...prev,
+        [targetMember.id]: {
+          program_id: targetMember.program_id ? String(targetMember.program_id) : '',
+          first_name: targetMember.first_name || '',
+          last_name: targetMember.last_name || '',
+          email: targetMember.email || '',
+          belt_rank: targetMember.belt_rank || '',
+          is_active: targetMember.is_active ? 'true' : 'false'
+        }
+      }));
+      setEditingMembers((prev) => ({ ...prev, [targetMember.id]: true }));
+    }
+
+    if (view === 'access' && isOwner) {
+      setMemberAccessFormMap((prev) => ({
+        ...prev,
+        [targetMember.id]: {
+          first_name: targetMember.first_name || '',
+          last_name: targetMember.last_name || '',
+          email: targetMember.login_email || targetMember.email || ''
+        }
+      }));
+      setManagingMemberAccessId(targetMember.id);
+    }
+
+    window.setTimeout(() => {
+      memberListSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      memberItemRefs.current[targetMember.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 120);
+  }, [isOwner, loading, memberProgressMap, members, searchParams]);
+
   return (
     <Layout>
       <h2 className="page-title">Members</h2>
+      <p className="page-intro">
+        Manage the roster, member access, and progress updates from one place without digging through the full class history first.
+      </p>
+
+      <section className="stats-grid">
+        {memberSummaryCards.map((card) => (
+          <div key={card.label} className="stat-card">
+            <div className="stat-label">{card.label}</div>
+            <div className="stat-value">{card.value}</div>
+          </div>
+        ))}
+      </section>
 
       <section className="page-section" style={{ maxWidth: '760px' }}>
         <div className="compact-form-shell">
           <div className="compact-form-header">
             <div>
-              <h3>Create Member</h3>
+              <h3>Add Member To Roster</h3>
               <p className="section-note">
-                Add a new student to the gym roster, then fill in their progress only when needed.
+                Add the student to the roster first, then track progress and access only when you actually need it.
               </p>
             </div>
             <button
@@ -445,9 +581,11 @@ export default function MembersPage() {
       {error ? <p className="error-text">{error}</p> : null}
 
       <ExpandableSection
-        title="Member List"
-        note="Expand this when you are ready to review member details, progress, or member access."
-        summary={`${orderedMembers.length} member${orderedMembers.length === 1 ? '' : 's'} available in the current view.`}
+        isOpen={isMemberListSectionOpen}
+        onToggle={setIsMemberListSectionOpen}
+        title="Roster And Progress"
+        note="Open this when you want to review member details, update progress, or manage login access."
+        summary={`${filteredMembers.length} member${filteredMembers.length === 1 ? '' : 's'} in the current view.`}
         actions={(
           <button
             className="secondary-button"
@@ -457,14 +595,46 @@ export default function MembersPage() {
             {showInactive ? 'Hide Inactive Members' : 'Show Inactive Members'}
           </button>
         )}
+        className="members-list-section"
       >
+        <div ref={memberListSectionRef} />
+
+        <div className="filter-grid">
+          <div>
+            <label>Search Members</label>
+            <input
+              type="text"
+              value={memberSearch}
+              onChange={(e) => setMemberSearch(e.target.value)}
+              placeholder="Search by name, email, program, or belt rank..."
+            />
+          </div>
+
+          <div>
+            <label>Filter By Program</label>
+            <select
+              value={memberProgramFilter}
+              onChange={(e) => setMemberProgramFilter(e.target.value)}
+            >
+              <option value="">All Programs</option>
+              {memberProgramOptions.map((programName) => (
+                <option key={programName} value={programName}>
+                  {programName}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         {loading ? (
           <p className="empty-state">Loading members...</p>
-        ) : orderedMembers.length === 0 ? (
-          <p className="empty-state">No members have been added yet.</p>
+        ) : filteredMembers.length === 0 ? (
+          <p className="empty-state">
+            {members.length === 0 ? 'No members have been added yet.' : 'No members match those filters right now.'}
+          </p>
         ) : (
           <ul className="card-list">
-            {orderedMembers.map((member) => {
+            {filteredMembers.map((member) => {
               const inviteInfo = memberInviteMap[member.id];
               const accessForm = memberAccessFormMap[member.id] || {
                 first_name: member.first_name || '',
@@ -473,7 +643,15 @@ export default function MembersPage() {
               };
 
               return (
-                <li key={member.id} className="card-item">
+                <li
+                  key={member.id}
+                  className="card-item"
+                  ref={(node) => {
+                    if (node) {
+                      memberItemRefs.current[member.id] = node;
+                    }
+                  }}
+                >
                   <div className="compact-topic-header">
                     <div>
                       <strong>{member.first_name} {member.last_name}</strong>
@@ -488,19 +666,19 @@ export default function MembersPage() {
                       {expandedMemberDetails[member.id] ? 'Hide details' : 'Show details'}
                     </button>
                     <button className="secondary-button" onClick={() => toggleMemberProgress(member.id)}>
-                      {expandedMembers[member.id] ? 'Hide Progress' : 'View Progress'}
+                      {expandedMembers[member.id] ? 'Hide progress' : 'Open progress'}
                     </button>
                     <button className="secondary-button" onClick={() => toggleEditMember(member)}>
-                      {editingMembers[member.id] ? 'Hide Edit Member' : 'Edit Member'}
+                      {editingMembers[member.id] ? 'Hide roster edit' : 'Edit roster details'}
                     </button>
                     {isOwner ? (
                       <button className="secondary-button" onClick={() => toggleMemberAccessForm(member)}>
-                        {managingMemberAccessId === member.id ? 'Hide Member Access' : 'Manage Member Access'}
+                        {managingMemberAccessId === member.id ? 'Hide login access' : 'Manage login access'}
                       </button>
                     ) : null}
                     {member.is_active ? (
                       <button className="danger-button" onClick={() => handleDeactivateMember(member)}>
-                        Deactivate Member
+                        Remove from active roster
                       </button>
                     ) : null}
                   </div>
@@ -510,8 +688,8 @@ export default function MembersPage() {
                       <div className="meta-text">Program: {member.program_name || 'None'}</div>
                       <div className="meta-text">Email: {member.email || 'Not added yet'}</div>
                       <div className="meta-text">Belt Rank: {member.belt_rank || 'Not added yet'}</div>
-                      <div className="meta-text">Active roster member: {member.is_active ? 'Yes' : 'No'}</div>
-                      <div className="meta-text">Member login: {member.user_id ? 'Connected' : 'Not set up yet'}</div>
+                      <div className="meta-text">Active on roster: {member.is_active ? 'Yes' : 'No'}</div>
+                      <div className="meta-text">Login access: {member.user_id ? 'Connected' : 'Not set up yet'}</div>
                       {member.user_id ? (
                         <>
                           <div className="meta-text">Login email: {member.login_email || 'No login email'}</div>
@@ -526,9 +704,9 @@ export default function MembersPage() {
                       <section className="compact-form-shell">
                         <div className="compact-form-header">
                           <div>
-                            <h4>Edit Member Details</h4>
+                            <h4>Edit Roster Details</h4>
                             <p className="section-note">
-                              Update roster details here without opening up the whole card all the time.
+                              Update the member's roster details here without leaving the member card.
                             </p>
                           </div>
                         </div>
@@ -608,7 +786,7 @@ export default function MembersPage() {
                           </div>
 
                           <div className="inline-actions">
-                            <button type="submit">Save Member Details</button>
+                            <button type="submit">Save Roster Details</button>
                           </div>
                         </form>
                       </section>
@@ -620,9 +798,9 @@ export default function MembersPage() {
                       <section className="compact-form-shell">
                         <div className="compact-form-header">
                           <div>
-                            <h4>{member.user_id ? 'Reset Member Access' : 'Create Member Access'}</h4>
+                            <h4>{member.user_id ? 'Reset Member Login Access' : 'Create Member Login Access'}</h4>
                             <p className="section-note">
-                              Generate a secure link so the member can set or reset their own password instead of you typing one for them.
+                              Generate a secure link so the member can set or reset their own password without you typing one for them.
                             </p>
                           </div>
                         </div>
@@ -669,8 +847,8 @@ export default function MembersPage() {
                               {submitting
                                 ? 'Creating link...'
                                 : member.user_id
-                                  ? 'Generate Set-Password Link'
-                                  : 'Create Member Invite'}
+                                  ? 'Generate reset-password link'
+                                  : 'Create member setup link'}
                             </button>
                             {member.user_id ? (
                               <button
@@ -716,8 +894,18 @@ export default function MembersPage() {
                           <div>
                             <h4>Member Progress</h4>
                             <p className="section-note">
-                              Review progress records and only open the update form when you need to log something new.
+                              Review progress records here and only open the update form when you need to log something new.
                             </p>
+                            {isManagement ? (
+                              <div className="inline-actions" style={{ marginTop: '10px' }}>
+                                <Link className="secondary-button" to="/topics?action=create">
+                                  Add missing topic
+                                </Link>
+                                <Link className="secondary-button" to="/topics">
+                                  Open Topics
+                                </Link>
+                              </div>
+                            ) : null}
                           </div>
                           <button
                             type="button"
@@ -780,7 +968,16 @@ export default function MembersPage() {
                           ))}
                         </ul>
                       ) : (
-                        <p className="empty-state">No progress updates have been logged yet.</p>
+                        <div className="empty-state">
+                          <p>No progress has been logged for this member yet.</p>
+                          {isManagement ? (
+                            <div className="inline-actions" style={{ justifyContent: 'center' }}>
+                              <Link className="secondary-button" to="/topics">
+                                Review Topics
+                              </Link>
+                            </div>
+                          ) : null}
+                        </div>
                       )}
                     </div>
                   ) : null}
