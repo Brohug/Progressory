@@ -1255,13 +1255,13 @@ export default function PlannedClassesPage() {
                   </div>
                 ) : null}
               </div>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => setShowPlanForm((prev) => !prev)}
-            >
-              {showPlanForm ? 'Hide form' : 'Show form'}
-            </button>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setShowPlanForm((prev) => !prev)}
+              >
+                {showPlanForm ? 'Close planning form' : 'Open planning form'}
+              </button>
           </div>
 
           <div className="planned-classes-readiness-grid">
@@ -1868,7 +1868,7 @@ export default function PlannedClassesPage() {
                           className="secondary-button"
                           onClick={() => togglePlannedClassDetails(plannedClass.id)}
                         >
-                          {expandedPlannedClassDetailsMap[plannedClass.id] ? 'Hide details' : 'Show details'}
+                          {expandedPlannedClassDetailsMap[plannedClass.id] ? 'Hide plan details' : 'View plan details'}
                         </button>
                         {plannedClass.status === 'planned' ? (
                           <>
@@ -1877,10 +1877,10 @@ export default function PlannedClassesPage() {
                               className="secondary-button"
                               onClick={() => handleEdit(plannedClass)}
                             >
-                              Edit plan
+                              Open plan editor
                             </button>
                             <button type="button" onClick={() => handleComplete(plannedClass.id)}>
-                              Complete class
+                              Mark class complete
                             </button>
                             <button
                               type="button"

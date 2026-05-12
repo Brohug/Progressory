@@ -951,7 +951,7 @@ export default function ClassesPage() {
           >
             <h3 style={{ marginBottom: 0 }}>Completed Classes</h3>
             <button onClick={() => setShowCreateClassForm((prev) => !prev)}>
-              {showCreateClassForm ? 'Hide New Class' : 'New Class'}
+              {showCreateClassForm ? 'Close New Class Form' : 'Open New Class Form'}
             </button>
           </div>
         </section>
@@ -1105,7 +1105,7 @@ export default function ClassesPage() {
               onClick={() => setShowAllClasses((prev) => !prev)}
               disabled={isTodayCompletedWorkflow || isAttendanceReadyWorkflow}
             >
-              {showAllClasses ? 'Show Recent 20 Classes' : 'Show Older Classes'}
+              {showAllClasses ? 'Show Recent 20 Classes' : 'Load Older Class Logs'}
             </button>
           </div>
         </div>
@@ -1244,14 +1244,14 @@ export default function ClassesPage() {
                       className="secondary-button"
                       onClick={() => handleGoToNextStep(classItem, nextActionTarget)}
                     >
-                      Go To Next Step
+                      Open Next Class Step
                     </button>
                   ) : null}
                   <button
                     className="secondary-button"
                     onClick={() => toggleClassDetails(classItem)}
                   >
-                    {expandedClasses[classItem.id] ? 'Hide Details' : 'Manage Class'}
+                    {expandedClasses[classItem.id] ? 'Close Class Manager' : 'Open Class Manager'}
                   </button>
                 </div>
 
@@ -1270,7 +1270,7 @@ export default function ClassesPage() {
                           className="secondary-button"
                           onClick={() => toggleClassFormSection(classItem.id, 'editDetails')}
                         >
-                          {expandedClassFormSectionsMap[classItem.id]?.editDetails ? 'Hide form' : 'Show form'}
+                          {expandedClassFormSectionsMap[classItem.id]?.editDetails ? 'Close class edit form' : 'Open class edit form'}
                         </button>
                       </div>
 
@@ -1475,7 +1475,7 @@ export default function ClassesPage() {
                           className="secondary-button"
                           onClick={() => toggleClassFormSection(classItem.id, 'topics')}
                         >
-                          {expandedClassFormSectionsMap[classItem.id]?.topics ? 'Hide form' : 'Show form'}
+                          {expandedClassFormSectionsMap[classItem.id]?.topics ? 'Close topic form' : 'Open topic form'}
                         </button>
                       </div>
                       {expandedClassFormSectionsMap[classItem.id]?.topics ? (
@@ -1503,7 +1503,7 @@ export default function ClassesPage() {
                           className="secondary-button"
                           onClick={() => toggleClassFormSection(classItem.id, 'trainingEntries')}
                         >
-                          {expandedClassFormSectionsMap[classItem.id]?.trainingEntries ? 'Hide form' : 'Show form'}
+                          {expandedClassFormSectionsMap[classItem.id]?.trainingEntries ? 'Close training-entry form' : 'Open training-entry form'}
                         </button>
                       </div>
                       {expandedClassFormSectionsMap[classItem.id]?.trainingEntries ? (
@@ -1534,7 +1534,7 @@ export default function ClassesPage() {
                                 className="secondary-button"
                                 onClick={() => toggleTopicDetails(topic.id)}
                               >
-                                {expandedTopicDetailsMap[topic.id] ? 'Hide details' : 'Show details'}
+                                {expandedTopicDetailsMap[topic.id] ? 'Hide topic notes' : 'View topic notes'}
                               </button>
                             </div>
                             {expandedTopicDetailsMap[topic.id] ? (
@@ -1586,7 +1586,7 @@ export default function ClassesPage() {
                                 className="secondary-button"
                                 onClick={() => toggleTrainingEntryDetails(entry.id)}
                               >
-                                {expandedTrainingEntryDetailsMap[entry.id] ? 'Hide details' : 'Show details'}
+                                {expandedTrainingEntryDetailsMap[entry.id] ? 'Hide entry details' : 'View entry details'}
                               </button>
                             </div>
                             {expandedTrainingEntryDetailsMap[entry.id] ? (

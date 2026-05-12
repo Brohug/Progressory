@@ -241,7 +241,7 @@ export default function StaffPage() {
 
               <div>
                 <button type="submit" disabled={submitting}>
-                  {submitting ? 'Creating link...' : 'Create Staff Setup Link'}
+                  {submitting ? 'Creating link...' : 'Generate staff setup link'}
                 </button>
               </div>
             </form>
@@ -264,8 +264,8 @@ export default function StaffPage() {
               <label>Staff access link</label>
               <input type="text" value={inviteNotice.url} readOnly />
               <div className="inline-actions" style={{ marginTop: '0.75rem' }}>
-                <button type="button" onClick={() => handleCopyInvite(inviteNotice.url)}>
-                  {inviteNotice.copied ? 'Copied' : 'Copy Link'}
+                <button type="button" className="secondary-button" onClick={() => handleCopyInvite(inviteNotice.url)}>
+                  {inviteNotice.copied ? 'Copied staff link' : 'Copy staff link'}
                 </button>
               </div>
             </section>
@@ -305,10 +305,11 @@ export default function StaffPage() {
                     {staffUser.role !== 'owner' ? (
                       <div className="inline-actions">
                         <button
+                          className="secondary-button"
                           onClick={() => handleSendReset(staffUser)}
                           disabled={actionUserId === staffUser.id}
                         >
-                          {actionUserId === staffUser.id ? 'Preparing...' : staffUser.is_active ? 'Create Reset Link' : 'Create Setup Link'}
+                          {actionUserId === staffUser.id ? 'Preparing...' : staffUser.is_active ? 'Prepare reset link' : 'Prepare setup link'}
                         </button>
 
                         {staffUser.is_active ? (
@@ -321,10 +322,11 @@ export default function StaffPage() {
                           </button>
                         ) : (
                           <button
+                            className="secondary-button"
                             onClick={() => handleActivate(staffUser.id)}
                             disabled={actionUserId === staffUser.id}
                           >
-                            Activate Staff Account
+                            Reactivate staff account
                           </button>
                         )}
                       </div>

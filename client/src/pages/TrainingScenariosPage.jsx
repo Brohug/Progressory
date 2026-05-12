@@ -456,7 +456,7 @@ export default function TrainingScenariosPage() {
                 ) : null}
               </div>
             <button onClick={() => setShowCreateScenarioForm((prev) => !prev)}>
-              {showCreateScenarioForm ? 'Hide New Scenario' : 'New Training Scenario'}
+              {showCreateScenarioForm ? 'Close Scenario Builder' : 'Open Scenario Builder'}
             </button>
           </div>
 
@@ -643,7 +643,7 @@ export default function TrainingScenariosPage() {
                       className="secondary-button"
                       onClick={() => toggleScenarioDetails(scenario.id)}
                     >
-                      {expandedScenarioDetails[scenario.id] ? 'Hide details' : 'Show details'}
+                      {expandedScenarioDetails[scenario.id] ? 'Hide scenario details' : 'View scenario details'}
                     </button>
                   </div>
                   {expandedScenarioDetails[scenario.id] ? (
@@ -669,7 +669,7 @@ export default function TrainingScenariosPage() {
                       className="secondary-button"
                       onClick={() => toggleEditScenario(scenario)}
                     >
-                      {editingScenarios[scenario.id] ? 'Hide Edit Scenario' : 'Edit Scenario'}
+                      {editingScenarios[scenario.id] ? 'Close scenario editor' : 'Open scenario editor'}
                     </button>
 
                   {scenario.is_active ? (

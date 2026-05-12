@@ -533,7 +533,7 @@ export default function MembersPage() {
               className="secondary-button"
               onClick={() => setShowCreateMemberForm((prev) => !prev)}
             >
-              {showCreateMemberForm ? 'Hide form' : 'Show form'}
+              {showCreateMemberForm ? 'Close member form' : 'Open member form'}
             </button>
           </div>
 
@@ -677,17 +677,17 @@ export default function MembersPage() {
 
                   <div className="inline-actions">
                     <button className="secondary-button" onClick={() => toggleMemberDetails(member.id)}>
-                      {expandedMemberDetails[member.id] ? 'Hide details' : 'Show details'}
+                      {expandedMemberDetails[member.id] ? 'Hide roster details' : 'View roster details'}
                     </button>
                     <button className="secondary-button" onClick={() => toggleMemberProgress(member.id)}>
-                      {expandedMembers[member.id] ? 'Hide progress' : 'Open progress'}
+                      {expandedMembers[member.id] ? 'Hide member progress' : 'Open member progress'}
                     </button>
                     <button className="secondary-button" onClick={() => toggleEditMember(member)}>
-                      {editingMembers[member.id] ? 'Hide roster edit' : 'Edit roster details'}
+                      {editingMembers[member.id] ? 'Close roster editor' : 'Edit roster details'}
                     </button>
                     {isOwner ? (
                       <button className="secondary-button" onClick={() => toggleMemberAccessForm(member)}>
-                        {managingMemberAccessId === member.id ? 'Hide login access' : 'Manage login access'}
+                        {managingMemberAccessId === member.id ? 'Close login access' : 'Open login access'}
                       </button>
                     ) : null}
                     {member.is_active ? (
@@ -902,7 +902,7 @@ export default function MembersPage() {
                                 className="secondary-button"
                                 onClick={() => handleCopyInviteLink(member.id)}
                               >
-                                {inviteInfo.copied ? 'Copied' : 'Copy Invite Link'}
+                                {inviteInfo.copied ? 'Copied member link' : 'Copy member link'}
                               </button>
                             </div>
                           </div>
@@ -936,7 +936,7 @@ export default function MembersPage() {
                             className="secondary-button"
                             onClick={() => toggleMemberProgressForm(member.id)}
                           >
-                            {showMemberProgressFormMap[member.id] ? 'Hide form' : 'Show form'}
+                            {showMemberProgressFormMap[member.id] ? 'Close progress form' : 'Open progress form'}
                           </button>
                         </div>
 
@@ -970,7 +970,7 @@ export default function MembersPage() {
                                   className="secondary-button"
                                   onClick={() => toggleProgressDetails(progress.id)}
                                 >
-                                  {expandedProgressDetails[progress.id] ? 'Hide details' : 'Show details'}
+                                  {expandedProgressDetails[progress.id] ? 'Hide update details' : 'View update details'}
                                 </button>
                               </div>
 

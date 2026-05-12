@@ -900,7 +900,7 @@ export default function LibraryPage() {
               className="secondary-button"
               onClick={() => setShowCreateEntryForm((prev) => !prev)}
             >
-              {showCreateEntryForm ? 'Hide form' : 'Show form'}
+              {showCreateEntryForm ? 'Close library form' : 'Open library form'}
             </button>
           </div>
 
@@ -1105,7 +1105,7 @@ export default function LibraryPage() {
               className="secondary-button"
               onClick={() => setShowLibraryGuide((prev) => !prev)}
             >
-              {showLibraryGuide ? 'Hide guide' : 'How Library Works'}
+              {showLibraryGuide ? 'Close library guide' : 'Open library guide'}
             </button>
           </div>
 
@@ -1131,7 +1131,7 @@ export default function LibraryPage() {
                   className="secondary-button library-topic-link-button"
                   onClick={() => setShowCreateEntryForm(true)}
                 >
-                  Create Library Entry
+                  Open library entry form
                 </button>
               </div>
             </div>
@@ -1424,7 +1424,7 @@ export default function LibraryPage() {
                     className="secondary-button"
                     onClick={() => toggleEntryDetails(entry.id)}
                   >
-                    {expandedEntryDetails[entry.id] ? 'Hide details' : 'Show details'}
+                    {expandedEntryDetails[entry.id] ? 'Hide resource details' : 'View resource details'}
                   </button>
                 </div>
 

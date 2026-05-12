@@ -34,14 +34,14 @@ export default function ExpandableSection({
         <div className="expandable-section-actions">
           {actions}
           <button className="secondary-button" type="button" onClick={handleToggle}>
-            {isOpen ? 'Hide section' : 'Expand section'}
+            {isOpen ? `Hide ${title}` : `Open ${title}`}
           </button>
         </div>
       </div>
 
       {!isOpen ? (
         <div className="decision-tree-collapsible-summary">
-          <p className="meta-text">{summary || 'Expand this section when you are ready to work on it.'}</p>
+          <p className="meta-text">{summary || `Open ${title} when you are ready to work on it.`}</p>
         </div>
       ) : children}
     </section>
