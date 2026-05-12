@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '../api/axios';
 import Layout from '../components/Layout';
 import { useAuth } from '../hooks/useAuth';
@@ -19,6 +19,7 @@ export default function StaffPage() {
   const [error, setError] = useState('');
   const [inviteNotice, setInviteNotice] = useState(null);
   const [actionUserId, setActionUserId] = useState(null);
+  const inviteSectionRef = useRef(null);
 
   const isOwner = user?.role === 'owner';
 
@@ -71,6 +72,9 @@ export default function StaffPage() {
       user: response.data.user,
       copied: false
     });
+    window.setTimeout(() => {
+      inviteSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
     await fetchUsers();
   };
 
@@ -244,8 +248,13 @@ export default function StaffPage() {
           </section>
 
           {inviteNotice ? (
-            <section className="page-section" style={{ maxWidth: '860px' }}>
+            <section ref={inviteSectionRef} className="page-section" style={{ maxWidth: '860px' }}>
               <h3>{inviteNotice.type === 'reset_password' ? 'Reset Link Ready' : 'Setup Link Ready'}</h3>
+              <p className="success-text">
+                {inviteNotice.type === 'reset_password'
+                  ? 'The reset link is ready below.'
+                  : 'The setup link is ready below.'}
+              </p>
               <div className="detail-block">
                 <div className="meta-text">
                   For: {inviteNotice.user?.first_name} {inviteNotice.user?.last_name} ({inviteNotice.user?.role})

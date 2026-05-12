@@ -10,12 +10,12 @@ const staffInviteRoles = ['admin', 'coach'];
 
 const buildMemberInviteUrl = (token) => {
   const configuredBaseUrl = process.env.CLIENT_URL || process.env.APP_URL || 'http://localhost:5173';
-  return `${configuredBaseUrl.replace(/\/$/, '')}/member-access/${token}`;
+  return `${configuredBaseUrl.replace(/\/$/, '')}/?memberAccessToken=${encodeURIComponent(token)}`;
 };
 
 const buildStaffInviteUrl = (token) => {
   const configuredBaseUrl = process.env.CLIENT_URL || process.env.APP_URL || 'http://localhost:5173';
-  return `${configuredBaseUrl.replace(/\/$/, '')}/staff-access/${token}`;
+  return `${configuredBaseUrl.replace(/\/$/, '')}/?staffAccessToken=${encodeURIComponent(token)}`;
 };
 
 const generateRandomPassword = () => crypto.randomBytes(24).toString('base64url');

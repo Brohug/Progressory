@@ -22,6 +22,7 @@ export default function MembersPage() {
   const [searchParams] = useSearchParams();
   const memberListSectionRef = useRef(null);
   const memberItemRefs = useRef({});
+  const memberInviteSectionRefs = useRef({});
   const [members, setMembers] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [topics, setTopics] = useState([]);
@@ -360,9 +361,15 @@ export default function MembersPage() {
       setManagingMemberAccessId(member.id);
       setMemberInviteMap((prev) => ({
         ...prev,
-        [member.id]: response.data.invite
+        [member.id]: {
+          ...response.data.invite,
+          copied: false
+        }
       }));
-      setMemberMessage(response.data.message);
+      setMemberMessage(member.user_id ? 'Reset-password link ready below.' : 'Member setup link ready below.');
+      window.setTimeout(() => {
+        memberInviteSectionRefs.current[member.id]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     } catch (err) {
       console.error('Create member invite error:', err);
       setError(err.response?.data?.message || 'Couldn\'t create that member access link right now.');
@@ -403,6 +410,13 @@ export default function MembersPage() {
 
     try {
       await navigator.clipboard.writeText(inviteUrl);
+      setMemberInviteMap((prev) => ({
+        ...prev,
+        [memberId]: {
+          ...prev[memberId],
+          copied: true
+        }
+      }));
       setMemberMessage('Invite link copied to clipboard.');
       setMemberMessageAction(null);
     } catch (err) {
@@ -864,7 +878,17 @@ export default function MembersPage() {
                         </form>
 
                         {inviteInfo ? (
-                          <div className="detail-block">
+                          <div
+                            className="detail-block"
+                            ref={(node) => {
+                              if (node) {
+                                memberInviteSectionRefs.current[member.id] = node;
+                              }
+                            }}
+                          >
+                            <p className="success-text" style={{ marginBottom: '0.5rem' }}>
+                              {member.user_id ? 'Reset-password link ready.' : 'Member setup link ready.'}
+                            </p>
                             <div className="meta-text">
                               Link type: {inviteInfo.type === 'reset_password' ? 'Reset password' : 'Initial activation'}
                             </div>
@@ -878,7 +902,7 @@ export default function MembersPage() {
                                 className="secondary-button"
                                 onClick={() => handleCopyInviteLink(member.id)}
                               >
-                                Copy Invite Link
+                                {inviteInfo.copied ? 'Copied' : 'Copy Invite Link'}
                               </button>
                             </div>
                           </div>

@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../hooks/useAuth';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -12,6 +13,20 @@ export default function LoginPage() {
     password: 'Password123!'
   });
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const memberAccessToken = searchParams.get('memberAccessToken');
+    const staffAccessToken = searchParams.get('staffAccessToken');
+
+    if (memberAccessToken) {
+      navigate(`/member-access/${memberAccessToken}`, { replace: true });
+      return;
+    }
+
+    if (staffAccessToken) {
+      navigate(`/staff-access/${staffAccessToken}`, { replace: true });
+    }
+  }, [navigate, searchParams]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
