@@ -22,6 +22,7 @@ export default function TrainingScenariosPage() {
   const [isCreateSectionOpen, setIsCreateSectionOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [scenarioSubmitting, setScenarioSubmitting] = useState(false);
+  const [activeScenarioId, setActiveScenarioId] = useState(null);
   const [scenarioError, setScenarioError] = useState('');
   const [scenarioMessage, setScenarioMessage] = useState('');
   const [scenarioFormData, setScenarioFormData] = useState({
@@ -274,6 +275,7 @@ export default function TrainingScenariosPage() {
   const handleUpdateScenario = async (scenarioId) => {
     try {
       clearScenarioFeedback(scenarioId);
+      setActiveScenarioId(scenarioId);
 
       const editData = editScenarioMap[scenarioId];
 
@@ -311,6 +313,8 @@ export default function TrainingScenariosPage() {
         message: '',
         error: err.response?.data?.message || 'Failed to update training scenario'
       });
+    } finally {
+      setActiveScenarioId(null);
     }
   };
 
@@ -322,6 +326,7 @@ export default function TrainingScenariosPage() {
 
     try {
       clearScenarioFeedback(scenarioId);
+      setActiveScenarioId(scenarioId);
       await api.patch(`/training-scenarios/${scenarioId}/deactivate`);
       await fetchTrainingScenarios();
       setScenarioFeedback(scenarioId, {
@@ -334,6 +339,8 @@ export default function TrainingScenariosPage() {
         message: '',
         error: err.response?.data?.message || 'Failed to deactivate training scenario'
       });
+    } finally {
+      setActiveScenarioId(null);
     }
   };
 
@@ -346,6 +353,7 @@ export default function TrainingScenariosPage() {
 
     try {
       clearScenarioFeedback(scenarioId);
+      setActiveScenarioId(scenarioId);
       await api.delete(`/training-scenarios/${scenarioId}`);
       await fetchTrainingScenarios();
       setScenarioMessage('Training scenario deleted successfully.');
@@ -357,6 +365,8 @@ export default function TrainingScenariosPage() {
         error:
           err.response?.data?.message || 'Couldn\'t delete that training scenario just now.'
       });
+    } finally {
+      setActiveScenarioId(null);
     }
   };
 
@@ -455,7 +465,7 @@ export default function TrainingScenariosPage() {
                   </div>
                 ) : null}
               </div>
-            <button onClick={() => setShowCreateScenarioForm((prev) => !prev)}>
+            <button type="button" className="secondary-button" onClick={() => setShowCreateScenarioForm((prev) => !prev)}>
               {showCreateScenarioForm ? 'Close Scenario Builder' : 'Open Scenario Builder'}
             </button>
           </div>
@@ -676,15 +686,17 @@ export default function TrainingScenariosPage() {
                     <button
                       className="danger-button"
                       onClick={() => handleDeactivateScenario(scenario.id)}
+                      disabled={activeScenarioId === scenario.id}
                     >
-                      Deactivate Scenario
+                      {activeScenarioId === scenario.id ? 'Updating...' : 'Deactivate Scenario'}
                     </button>
                   ) : null}
                   <button
                     className="danger-button"
                     onClick={() => handleDeleteScenario(scenario.id)}
+                    disabled={activeScenarioId === scenario.id}
                   >
-                    Delete Scenario
+                    {activeScenarioId === scenario.id ? 'Deleting...' : 'Delete Scenario'}
                   </button>
                 </div>
 
@@ -831,7 +843,9 @@ export default function TrainingScenariosPage() {
                           </div>
 
                           <div className="inline-actions">
-                            <button type="submit">Save Scenario</button>
+                            <button type="submit" disabled={activeScenarioId === scenario.id}>
+                              {activeScenarioId === scenario.id ? 'Saving...' : 'Save Scenario'}
+                            </button>
                           </div>
                         </form>
                       </section>

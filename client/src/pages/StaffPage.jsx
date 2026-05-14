@@ -17,6 +17,7 @@ export default function StaffPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [inviteNotice, setInviteNotice] = useState(null);
   const [actionUserId, setActionUserId] = useState(null);
   const inviteSectionRef = useRef(null);
@@ -60,6 +61,8 @@ export default function StaffPage() {
     try {
       await navigator.clipboard.writeText(url);
       setInviteNotice((prev) => prev ? { ...prev, copied: true } : prev);
+      setSuccessMessage('Staff link copied to clipboard.');
+      setError('');
     } catch {
       setError('Could not copy the setup link automatically. You can still copy it manually.');
     }
@@ -82,6 +85,7 @@ export default function StaffPage() {
     e.preventDefault();
     setSubmitting(true);
     setError('');
+    setSuccessMessage('');
     setInviteNotice(null);
 
     try {
@@ -105,6 +109,7 @@ export default function StaffPage() {
     try {
       setActionUserId(staffUser.id);
       setError('');
+      setSuccessMessage('');
       setInviteNotice(null);
       await createStaffInvite({
         user_id: staffUser.id,
@@ -131,8 +136,10 @@ export default function StaffPage() {
     try {
       setActionUserId(userId);
       setError('');
+      setSuccessMessage('');
       await api.patch(`/users/${userId}/deactivate`);
       await fetchUsers();
+      setSuccessMessage('Staff account deactivated successfully.');
     } catch (err) {
       console.error('Deactivate staff user error:', err);
       setError(err.response?.data?.message || 'Failed to deactivate staff user');
@@ -145,8 +152,10 @@ export default function StaffPage() {
     try {
       setActionUserId(userId);
       setError('');
+      setSuccessMessage('');
       await api.patch(`/users/${userId}/activate`);
       await fetchUsers();
+      setSuccessMessage('Staff account reactivated successfully.');
     } catch (err) {
       console.error('Activate staff user error:', err);
       setError(err.response?.data?.message || 'Failed to activate staff user');
@@ -271,6 +280,7 @@ export default function StaffPage() {
             </section>
           ) : null}
 
+          {successMessage && <p className="success-text">{successMessage}</p>}
           {error && <p className="error-text">{error}</p>}
 
           <section className="page-section">
@@ -309,7 +319,7 @@ export default function StaffPage() {
                           onClick={() => handleSendReset(staffUser)}
                           disabled={actionUserId === staffUser.id}
                         >
-                          {actionUserId === staffUser.id ? 'Preparing...' : staffUser.is_active ? 'Prepare reset link' : 'Prepare setup link'}
+                          {actionUserId === staffUser.id ? 'Preparing link...' : staffUser.is_active ? 'Prepare reset link' : 'Prepare setup link'}
                         </button>
 
                         {staffUser.is_active ? (
@@ -318,7 +328,7 @@ export default function StaffPage() {
                             onClick={() => handleDeactivate(staffUser.id)}
                             disabled={actionUserId === staffUser.id}
                           >
-                            Deactivate Staff Account
+                            {actionUserId === staffUser.id ? 'Deactivating...' : 'Deactivate Staff Account'}
                           </button>
                         ) : (
                           <button
@@ -326,7 +336,7 @@ export default function StaffPage() {
                             onClick={() => handleActivate(staffUser.id)}
                             disabled={actionUserId === staffUser.id}
                           >
-                            Reactivate staff account
+                            {actionUserId === staffUser.id ? 'Reactivating...' : 'Reactivate staff account'}
                           </button>
                         )}
                       </div>

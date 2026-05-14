@@ -282,8 +282,9 @@ export default function CurriculumIndexPage() {
   const [entryNoticeMap, setEntryNoticeMap] = useState({});
   const [creatingEntryId, setCreatingEntryId] = useState(null);
   const [editingTopicId, setEditingTopicId] = useState(null);
-  const [isCreatingTopic, setIsCreatingTopic] = useState(false);
-  const [isUpdatingTopic, setIsUpdatingTopic] = useState(false);
+  const [activeCreateEntryId, setActiveCreateEntryId] = useState(null);
+  const [activeEditTopicId, setActiveEditTopicId] = useState(null);
+  const [activeToggleTopicId, setActiveToggleTopicId] = useState(null);
   const [createTopicData, setCreateTopicData] = useState({
     title: '',
     topic_type: 'technique',
@@ -657,7 +658,7 @@ export default function CurriculumIndexPage() {
     }
 
     try {
-      setIsCreatingTopic(true);
+      setActiveCreateEntryId(entry.id);
 
       await api.post('/topics', {
         program_id: createTopicData.program_id ? Number(createTopicData.program_id) : null,
@@ -680,7 +681,7 @@ export default function CurriculumIndexPage() {
         [entry.id]: err.response?.data?.message || 'Couldn\'t create that topic just now.'
       }));
     } finally {
-      setIsCreatingTopic(false);
+      setActiveCreateEntryId(null);
     }
   };
 
@@ -728,7 +729,7 @@ export default function CurriculumIndexPage() {
     }
 
     try {
-      setIsUpdatingTopic(true);
+      setActiveEditTopicId(entry.topic.id);
 
       await api.put(`/topics/${entry.topic.id}`, {
         program_id: editTopicData.program_id ? Number(editTopicData.program_id) : null,
@@ -752,7 +753,7 @@ export default function CurriculumIndexPage() {
         [entry.id]: err.response?.data?.message || 'Couldn\'t update that topic just now.'
       }));
     } finally {
-      setIsUpdatingTopic(false);
+      setActiveEditTopicId(null);
     }
   };
 
@@ -772,6 +773,7 @@ export default function CurriculumIndexPage() {
     }
 
     try {
+      setActiveToggleTopicId(entry.topic.id);
       setEntryNoticeMap((prev) => ({
         ...prev,
         [entry.id]: ''
@@ -799,6 +801,8 @@ export default function CurriculumIndexPage() {
         ...prev,
         [entry.id]: err.response?.data?.message || 'Couldn\'t update that topic right now.'
       }));
+    } finally {
+      setActiveToggleTopicId(null);
     }
   };
 
@@ -1082,6 +1086,7 @@ export default function CurriculumIndexPage() {
                                   type="button"
                                   className="secondary-button"
                                   onClick={() => handleOpenEditTopic(entry)}
+                                  disabled={activeToggleTopicId === entry.topic.id}
                                 >
                                   Edit topic
                                 </button>
@@ -1090,16 +1095,18 @@ export default function CurriculumIndexPage() {
                                     type="button"
                                     className="secondary-button"
                                     onClick={() => handleToggleTopicActive(entry, false)}
+                                    disabled={activeToggleTopicId === entry.topic.id}
                                   >
-                                    Make inactive
+                                    {activeToggleTopicId === entry.topic.id ? 'Updating topic...' : 'Make inactive'}
                                   </button>
                                 ) : (
                                   <button
                                     type="button"
                                     className="secondary-button"
                                     onClick={() => handleToggleTopicActive(entry, true)}
+                                    disabled={activeToggleTopicId === entry.topic.id}
                                   >
-                                    Make active
+                                    {activeToggleTopicId === entry.topic.id ? 'Updating topic...' : 'Make active'}
                                   </button>
                                 )}
                                 {usageCount > 0 ? (
@@ -1189,15 +1196,15 @@ export default function CurriculumIndexPage() {
                                   type="button"
                                   className="secondary-button"
                                   onClick={() => handleCreateTopic(entry)}
-                                  disabled={isCreatingTopic}
+                                  disabled={activeCreateEntryId === entry.id}
                                 >
-                                  {isCreatingTopic ? 'Creating topic...' : 'Create topic'}
+                                  {activeCreateEntryId === entry.id ? 'Creating topic...' : 'Create topic'}
                                 </button>
                                 <button
                                   type="button"
                                   className="secondary-button"
                                   onClick={() => setCreatingEntryId(null)}
-                                  disabled={isCreatingTopic}
+                                  disabled={activeCreateEntryId === entry.id}
                                 >
                                   Cancel
                                 </button>
@@ -1284,15 +1291,15 @@ export default function CurriculumIndexPage() {
                                   type="button"
                                   className="secondary-button"
                                   onClick={() => handleUpdateTopic(entry)}
-                                  disabled={isUpdatingTopic}
+                                  disabled={activeEditTopicId === entry.topic?.id}
                                 >
-                                  {isUpdatingTopic ? 'Saving topic...' : 'Save topic'}
+                                  {activeEditTopicId === entry.topic?.id ? 'Saving topic...' : 'Save topic'}
                                 </button>
                                 <button
                                   type="button"
                                   className="secondary-button"
                                   onClick={() => setEditingTopicId(null)}
-                                  disabled={isUpdatingTopic}
+                                  disabled={activeEditTopicId === entry.topic?.id}
                                 >
                                   Cancel
                                 </button>

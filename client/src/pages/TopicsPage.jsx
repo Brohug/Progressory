@@ -25,7 +25,9 @@ export default function TopicsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [activeTopicId, setActiveTopicId] = useState(null);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isCreateTopicOpen, setIsCreateTopicOpen] = useState(false);
   const [isTopicListOpen, setIsTopicListOpen] = useState(true);
 
@@ -200,6 +202,7 @@ export default function TopicsPage() {
     e.preventDefault();
     setSubmitting(true);
     setError('');
+    setSuccessMessage('');
 
     try {
       const payload = {
@@ -221,6 +224,7 @@ export default function TopicsPage() {
       });
 
       await fetchTopics();
+      setSuccessMessage('Topic saved successfully.');
     } catch (err) {
       console.error('Create topic error:', err);
       setError(err.response?.data?.message || 'Couldn\'t create that topic just now.');
@@ -239,6 +243,8 @@ export default function TopicsPage() {
 
     try {
       setError('');
+      setSuccessMessage('');
+      setActiveTopicId(topic.id);
       await api.put(`/topics/${topic.id}`, {
         program_id: topic.program_id,
         parent_topic_id: topic.parent_topic_id,
@@ -248,9 +254,12 @@ export default function TopicsPage() {
         is_active: nextIsActive
       });
       await fetchTopics();
+      setSuccessMessage(nextIsActive ? 'Topic reactivated successfully.' : 'Topic moved out of the active list.');
     } catch (err) {
       console.error('Update topic active state error:', err);
       setError(err.response?.data?.message || 'Couldn\'t update that topic right now.');
+    } finally {
+      setActiveTopicId(null);
     }
   };
 
@@ -337,6 +346,8 @@ export default function TopicsPage() {
             </button>
           </div>
         </form>
+
+        {successMessage ? <p className="success-text">{successMessage}</p> : null}
       </ExpandableSection>
 
       {error && <p className="error-text">{error}</p>}
@@ -435,15 +446,17 @@ export default function TopicsPage() {
                     <button
                       className="danger-button"
                       onClick={() => handleSetActiveState(topic, false)}
+                      disabled={activeTopicId === topic.id}
                     >
-                      Deactivate Topic
+                      {activeTopicId === topic.id ? 'Updating...' : 'Deactivate Topic'}
                     </button>
                   ) : (
                     <button
                       className="secondary-button"
                       onClick={() => handleSetActiveState(topic, true)}
+                      disabled={activeTopicId === topic.id}
                     >
-                      Make Topic Active Again
+                      {activeTopicId === topic.id ? 'Updating...' : 'Make Topic Active Again'}
                     </button>
                   )}
                 </div>

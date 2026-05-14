@@ -171,6 +171,8 @@ export default function MembersPage() {
 
     try {
       setError('');
+      setMemberMessage('');
+      setMemberMessageAction(null);
       await api.put(`/members/${member.id}`, {
         program_id: member.program_id,
         first_name: member.first_name,
@@ -180,6 +182,8 @@ export default function MembersPage() {
         is_active: false
       });
       await fetchMembers();
+      setMemberMessage('Member removed from the active roster.');
+      setShowInactive(true);
     } catch (err) {
       console.error('Deactivate member error:', err);
       setError(err.response?.data?.message || 'Couldn\'t update that member right now.');
@@ -252,6 +256,8 @@ export default function MembersPage() {
   const handleUpdateMember = async (memberId) => {
     try {
       setError('');
+      setMemberMessage('');
+      setMemberMessageAction(null);
       const editData = editMemberMap[memberId];
 
       await api.put(`/members/${memberId}`, {
@@ -268,6 +274,7 @@ export default function MembersPage() {
         ...prev,
         [memberId]: false
       }));
+      setMemberMessage('Roster details updated successfully.');
     } catch (err) {
       console.error('Update member error:', err);
       setError(err.response?.data?.message || 'Couldn\'t update that member just now.');
@@ -419,6 +426,7 @@ export default function MembersPage() {
       }));
       setMemberMessage('Invite link copied to clipboard.');
       setMemberMessageAction(null);
+      setError('');
     } catch (err) {
       console.error('Copy invite link error:', err);
       setError('Couldn\'t copy the invite link automatically. You can still copy it manually below.');
@@ -676,9 +684,9 @@ export default function MembersPage() {
                   </div>
 
                   <div className="inline-actions">
-                    <button className="secondary-button" onClick={() => toggleMemberDetails(member.id)}>
-                      {expandedMemberDetails[member.id] ? 'Hide roster details' : 'View roster details'}
-                    </button>
+                      <button className="secondary-button" onClick={() => toggleMemberDetails(member.id)}>
+                        {expandedMemberDetails[member.id] ? 'Hide roster details' : 'View roster details'}
+                      </button>
                     <button className="secondary-button" onClick={() => toggleMemberProgress(member.id)}>
                       {expandedMembers[member.id] ? 'Hide member progress' : 'Open member progress'}
                     </button>
@@ -859,7 +867,7 @@ export default function MembersPage() {
                           <div className="inline-actions">
                             <button type="submit" disabled={submitting}>
                               {submitting
-                                ? 'Creating link...'
+                                ? 'Preparing link...'
                                 : member.user_id
                                   ? 'Generate reset-password link'
                                   : 'Create member setup link'}
@@ -871,7 +879,9 @@ export default function MembersPage() {
                                 onClick={() => handleToggleMemberLoginStatus(member)}
                                 disabled={submitting}
                               >
-                                {member.login_is_active ? 'Deactivate Login' : 'Reactivate Login'}
+                                {submitting
+                                  ? (member.login_is_active ? 'Deactivating login...' : 'Reactivating login...')
+                                  : (member.login_is_active ? 'Deactivate Login' : 'Reactivate Login')}
                               </button>
                             ) : null}
                           </div>

@@ -77,6 +77,10 @@ export default function ClassesPage() {
   const [guidedAttendanceClassId, setGuidedAttendanceClassId] = useState(null);
   const [readyForAttendanceClassIds, setReadyForAttendanceClassIds] = useState([]);
   const [isClassListSectionOpen, setIsClassListSectionOpen] = useState(false);
+  const [activeClassAction, setActiveClassAction] = useState({
+    classId: null,
+    action: ''
+  });
 
   const workflowParams = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -107,6 +111,10 @@ export default function ClassesPage() {
       }
     }));
   };
+
+  const isClassActionActive = (classId, action) => (
+    String(activeClassAction.classId) === String(classId) && activeClassAction.action === action
+  );
 
   const fetchClasses = async () => {
     try {
@@ -696,6 +704,10 @@ export default function ClassesPage() {
 
   const handleUpdateClass = async (classItem) => {
     try {
+      setActiveClassAction({
+        classId: classItem.id,
+        action: 'saveDetails'
+      });
       clearClassFeedback(classItem.id);
       setError('');
 
@@ -722,6 +734,11 @@ export default function ClassesPage() {
       setClassFeedback(classItem.id, {
         message: '',
         error: err.response?.data?.message || 'Failed to update class'
+      });
+    } finally {
+      setActiveClassAction({
+        classId: null,
+        action: ''
       });
     }
   };
@@ -779,6 +796,10 @@ export default function ClassesPage() {
     if (!confirmed) return;
 
     try {
+      setActiveClassAction({
+        classId,
+        action: `removeTopic-${topicEntryId}`
+      });
       clearClassFeedback(classId);
       setError('');
       await api.delete(`/classes/${classId}/topics/${topicEntryId}`);
@@ -793,6 +814,11 @@ export default function ClassesPage() {
         message: '',
         error: err.response?.data?.message || 'Failed to delete class topic'
       });
+    } finally {
+      setActiveClassAction({
+        classId: null,
+        action: ''
+      });
     }
   };
 
@@ -801,6 +827,10 @@ export default function ClassesPage() {
     if (!confirmed) return;
 
     try {
+      setActiveClassAction({
+        classId,
+        action: `removeTrainingEntry-${entryId}`
+      });
       clearClassFeedback(classId);
       setError('');
       await api.delete(`/classes/${classId}/training-entries/${entryId}`);
@@ -815,6 +845,11 @@ export default function ClassesPage() {
         message: '',
         error: err.response?.data?.message || 'Failed to delete training entry'
       });
+    } finally {
+      setActiveClassAction({
+        classId: null,
+        action: ''
+      });
     }
   };
 
@@ -823,6 +858,10 @@ export default function ClassesPage() {
     if (!confirmed) return;
 
     try {
+      setActiveClassAction({
+        classId,
+        action: `removeAttendance-${classMemberId}`
+      });
       clearClassFeedback(classId);
       setError('');
       await api.delete(`/classes/${classId}/members/${classMemberId}`);
@@ -837,11 +876,20 @@ export default function ClassesPage() {
         message: '',
         error: err.response?.data?.message || 'Failed to remove class member'
       });
+    } finally {
+      setActiveClassAction({
+        classId: null,
+        action: ''
+      });
     }
   };
 
   const handleApplyClassProgress = async (classItem) => {
     try {
+      setActiveClassAction({
+        classId: classItem.id,
+        action: 'applyProgress'
+      });
       clearClassFeedback(classItem.id);
       setError('');
 
@@ -870,6 +918,11 @@ export default function ClassesPage() {
       setClassFeedback(classItem.id, {
         message: '',
         error: err.response?.data?.message || 'Couldn\'t apply member progress just now.'
+      });
+    } finally {
+      setActiveClassAction({
+        classId: null,
+        action: ''
       });
     }
   };
@@ -1334,7 +1387,12 @@ export default function ClassesPage() {
                             </div>
 
                             <div className="inline-actions">
-                              <button type="submit">Save Class Details</button>
+                              <button
+                                type="submit"
+                                disabled={isClassActionActive(classItem.id, 'saveDetails')}
+                              >
+                                {isClassActionActive(classItem.id, 'saveDetails') ? 'Saving changes...' : 'Save Class Details'}
+                              </button>
                             </div>
                           </form>
 
@@ -1397,8 +1455,9 @@ export default function ClassesPage() {
                               <button
                                 className="danger-button"
                                 onClick={() => handleDeleteClassMember(classItem.id, member.id)}
+                                disabled={isClassActionActive(classItem.id, `removeAttendance-${member.id}`)}
                               >
-                                Remove Attendance
+                                {isClassActionActive(classItem.id, `removeAttendance-${member.id}`) ? 'Removing attendance...' : 'Remove Attendance'}
                               </button>
                             </div>
                           </li>
@@ -1435,8 +1494,9 @@ export default function ClassesPage() {
                             type="button"
                             className="secondary-button"
                             onClick={() => handleApplyClassProgress(classItem)}
+                            disabled={isClassActionActive(classItem.id, 'applyProgress')}
                           >
-                            Apply Progress For Present Members
+                            {isClassActionActive(classItem.id, 'applyProgress') ? 'Applying progress...' : 'Apply Progress For Present Members'}
                           </button>
                         </div>
                         {classFeedbackMap[classItem.id]?.message ? (
@@ -1546,8 +1606,9 @@ export default function ClassesPage() {
                               <button
                                 className="danger-button"
                                 onClick={() => handleDeleteClassTopic(classItem.id, topic.id)}
+                                disabled={isClassActionActive(classItem.id, `removeTopic-${topic.id}`)}
                               >
-                                Remove Topic
+                                {isClassActionActive(classItem.id, `removeTopic-${topic.id}`) ? 'Removing topic...' : 'Remove Topic'}
                               </button>
                             </div>
                           </li>
@@ -1606,8 +1667,9 @@ export default function ClassesPage() {
                               <button
                                 className="danger-button"
                                 onClick={() => handleDeleteTrainingEntry(classItem.id, entry.id)}
+                                disabled={isClassActionActive(classItem.id, `removeTrainingEntry-${entry.id}`)}
                               >
-                                Remove Training Entry
+                                {isClassActionActive(classItem.id, `removeTrainingEntry-${entry.id}`) ? 'Removing entry...' : 'Remove Training Entry'}
                               </button>
                             </div>
                           </li>

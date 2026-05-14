@@ -21,7 +21,9 @@ export default function ProgramsPage() {
   const [showInactive, setShowInactive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [activeProgramId, setActiveProgramId] = useState(null);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const fetchPrograms = async () => {
     try {
@@ -94,6 +96,7 @@ export default function ProgramsPage() {
     e.preventDefault();
     setSubmitting(true);
     setError('');
+    setSuccessMessage('');
 
     try {
       await api.post('/programs', formData);
@@ -104,6 +107,7 @@ export default function ProgramsPage() {
       });
 
       await fetchPrograms();
+      setSuccessMessage('Program saved successfully.');
     } catch (err) {
       console.error('Create program error:', err);
       setError(err.response?.data?.message || 'Couldn\'t create that program just now.');
@@ -145,6 +149,8 @@ export default function ProgramsPage() {
   const handleUpdateProgram = async (programId) => {
     try {
       setError('');
+      setSuccessMessage('');
+      setActiveProgramId(programId);
 
       const editData = editProgramMap[programId];
 
@@ -160,9 +166,12 @@ export default function ProgramsPage() {
         ...prev,
         [programId]: false
       }));
+      setSuccessMessage('Program details updated successfully.');
     } catch (err) {
       console.error('Update program error:', err);
       setError(err.response?.data?.message || 'Couldn\'t update that program just now.');
+    } finally {
+      setActiveProgramId(null);
     }
   };
 
@@ -174,13 +183,35 @@ export default function ProgramsPage() {
 
     try {
       setError('');
+      setSuccessMessage('');
+      setActiveProgramId(programId);
       await api.patch(`/programs/${programId}/deactivate`);
       await fetchPrograms();
+      setSuccessMessage('Program moved out of the active list.');
     } catch (err) {
       console.error('Deactivate program error:', err);
       setError(err.response?.data?.message || 'Couldn\'t update that program right now.');
+    } finally {
+      setActiveProgramId(null);
     }
   };
+
+  const handleReactivateProgram = async (programId) => {
+    try {
+      setError('');
+      setSuccessMessage('');
+      setActiveProgramId(programId);
+      await api.patch(`/programs/${programId}/activate`);
+      await fetchPrograms();
+      setSuccessMessage('Program reactivated successfully.');
+    } catch (err) {
+      console.error('Reactivate program error:', err);
+      setError(err.response?.data?.message || 'Couldn\'t update that program right now.');
+    } finally {
+      setActiveProgramId(null);
+    }
+  };
+  
 
   const toggleProgramDetails = (programId) => {
     setExpandedProgramDetails((prev) => ({
@@ -266,6 +297,8 @@ export default function ProgramsPage() {
               </div>
             </form>
           )}
+
+          {successMessage ? <p className="success-text">{successMessage}</p> : null}
         </div>
       </section>
 
@@ -353,17 +386,26 @@ export default function ProgramsPage() {
                     className="secondary-button"
                     onClick={() => toggleEditProgram(program)}
                   >
-                    {editingPrograms[program.id] ? 'Hide Edit Program' : 'Edit Program'}
+                    {editingPrograms[program.id] ? 'Close program editor' : 'Open program editor'}
                   </button>
 
                   {program.is_active ? (
                     <button
                       className="danger-button"
                       onClick={() => handleDeactivateProgram(program.id)}
+                      disabled={activeProgramId === program.id}
                     >
-                      Deactivate Program
+                      {activeProgramId === program.id ? 'Updating...' : 'Deactivate Program'}
                     </button>
-                  ) : null}
+                  ) : (
+                    <button
+                      className="secondary-button"
+                      onClick={() => handleReactivateProgram(program.id)}
+                      disabled={activeProgramId === program.id}
+                    >
+                      {activeProgramId === program.id ? 'Updating...' : 'Reactivate Program'}
+                    </button>
+                  )}
                 </div>
 
                 {editingPrograms[program.id] && (
@@ -417,7 +459,9 @@ export default function ProgramsPage() {
                         </div>
 
                         <div className="inline-actions">
-                          <button type="submit">Save Program Details</button>
+                          <button type="submit" disabled={activeProgramId === program.id}>
+                            {activeProgramId === program.id ? 'Saving...' : 'Save Program Details'}
+                          </button>
                         </div>
                       </form>
                     </section>

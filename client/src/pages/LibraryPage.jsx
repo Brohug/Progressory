@@ -48,6 +48,7 @@ export default function LibraryPage() {
   const [showLibraryGuide, setShowLibraryGuide] = useState(false);
   const [expandedEntryDetails, setExpandedEntryDetails] = useState({});
   const [editingEntryId, setEditingEntryId] = useState(null);
+  const [activeEntryId, setActiveEntryId] = useState(null);
   const [editFormData, setEditFormData] = useState({
     program_id: '',
     curriculum_topic_id: '',
@@ -520,6 +521,8 @@ export default function LibraryPage() {
 
     try {
       setError('');
+      setSuccessMessage('');
+      setActiveEntryId(entry.id);
       await api.put(`/library/${entry.id}`, {
         program_id: entry.program_id,
         curriculum_topic_id: entry.curriculum_topic_id,
@@ -531,9 +534,12 @@ export default function LibraryPage() {
         is_active: nextIsActive
       });
       await fetchEntries();
+      setSuccessMessage(nextIsActive ? 'Library entry reactivated successfully.' : 'Library entry moved out of the active list.');
     } catch (err) {
       console.error('Update library entry active state error:', err);
       setError(err.response?.data?.message || 'Couldn\'t update that library entry right now.');
+    } finally {
+      setActiveEntryId(null);
     }
   };
 
@@ -1599,15 +1605,17 @@ export default function LibraryPage() {
                     <button
                       className="danger-button"
                       onClick={() => handleSetActiveState(entry, false)}
+                      disabled={activeEntryId === entry.id}
                     >
-                      Deactivate Entry
+                      {activeEntryId === entry.id ? 'Updating...' : 'Deactivate Entry'}
                     </button>
                   ) : (
                     <button
                       className="secondary-button"
                       onClick={() => handleSetActiveState(entry, true)}
+                      disabled={activeEntryId === entry.id}
                     >
-                      Make Entry Active Again
+                      {activeEntryId === entry.id ? 'Updating...' : 'Make Entry Active Again'}
                     </button>
                   )}
                 </div>

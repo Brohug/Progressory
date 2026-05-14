@@ -203,6 +203,10 @@ export default function PlannedClassesPage() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [activePlanAction, setActivePlanAction] = useState({
+    plannedClassId: null,
+    action: ''
+  });
   const [memberSearch, setMemberSearch] = useState('');
   const [memberProgramFilter, setMemberProgramFilter] = useState('');
   const [lastSavedPlannedClassDate, setLastSavedPlannedClassDate] = useState('');
@@ -229,6 +233,10 @@ export default function PlannedClassesPage() {
     title: '',
     topic_type: 'technique'
   });
+
+  const isPlanActionActive = (plannedClassId, action) => (
+    String(activePlanAction.plannedClassId) === String(plannedClassId) && activePlanAction.action === action
+  );
 
   const formatDateForInput = (dateValue) => {
     if (!dateValue) return '';
@@ -1067,6 +1075,10 @@ export default function PlannedClassesPage() {
     if (!confirmed) return;
 
     try {
+      setActivePlanAction({
+        plannedClassId,
+        action: 'remove'
+      });
       setError('');
       setMessage('');
       await api.delete(`/planned-classes/${plannedClassId}`);
@@ -1080,6 +1092,11 @@ export default function PlannedClassesPage() {
     } catch (err) {
       console.error('Delete planned class error:', err);
       setError(err.response?.data?.message || 'Couldn\'t remove that planned class just now.');
+    } finally {
+      setActivePlanAction({
+        plannedClassId: null,
+        action: ''
+      });
     }
   };
 
@@ -1091,6 +1108,10 @@ export default function PlannedClassesPage() {
     if (!confirmed) return;
 
     try {
+      setActivePlanAction({
+        plannedClassId,
+        action: 'complete'
+      });
       setError('');
       setMessage('');
 
@@ -1110,6 +1131,10 @@ export default function PlannedClassesPage() {
           err.message ||
           'Couldn\'t complete that planned class just now.'
       );
+      setActivePlanAction({
+        plannedClassId: null,
+        action: ''
+      });
     }
   };
 
@@ -1879,15 +1904,20 @@ export default function PlannedClassesPage() {
                             >
                               Open plan editor
                             </button>
-                            <button type="button" onClick={() => handleComplete(plannedClass.id)}>
-                              Mark class complete
+                            <button
+                              type="button"
+                              onClick={() => handleComplete(plannedClass.id)}
+                              disabled={isPlanActionActive(plannedClass.id, 'complete')}
+                            >
+                              {isPlanActionActive(plannedClass.id, 'complete') ? 'Completing class...' : 'Mark class complete'}
                             </button>
                             <button
                               type="button"
                               className="danger-button"
                               onClick={() => handleDelete(plannedClass.id)}
+                              disabled={isPlanActionActive(plannedClass.id, 'remove')}
                             >
-                              Remove plan
+                              {isPlanActionActive(plannedClass.id, 'remove') ? 'Removing plan...' : 'Remove plan'}
                             </button>
                           </>
                         ) : (
