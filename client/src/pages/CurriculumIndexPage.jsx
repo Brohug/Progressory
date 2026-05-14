@@ -805,7 +805,7 @@ export default function CurriculumIndexPage() {
   return (
     <Layout>
         <div className="curriculum-index-page">
-          <h2 className="page-title">Curriculum Index</h2>
+          <h2 className="page-title">Curriculum</h2>
           <p className="page-intro">
             {isMember
               ? 'Search the broader curriculum map and use it as a read-only study reference.'

@@ -932,7 +932,7 @@ export default function ClassesPage() {
 
   return (
       <Layout>
-        <h2 className="page-title">Classes</h2>
+        <h2 className="page-title">Class Logs</h2>
 
         <section className="page-section" style={{ maxWidth: '760px' }}>
           <p className="section-note" style={{ marginBottom: '14px' }}>

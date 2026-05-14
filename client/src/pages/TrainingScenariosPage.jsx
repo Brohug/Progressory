@@ -370,7 +370,7 @@ export default function TrainingScenariosPage() {
   return (
     <Layout>
       <div className="training-scenarios-page">
-        <h2 className="page-title">Training Scenarios</h2>
+        <h2 className="page-title">Scenarios</h2>
         <p className="page-intro">
           Create reusable scenarios for your gym here, then pull them into planned classes and
           completed class logs whenever they fit. Think of this page as your reusable class-setup

@@ -635,7 +635,7 @@ export default function PlannedClassesPage() {
     return (
       <Layout>
         <div className="planned-classes-page">
-          <h2 className="page-title">Planned Classes</h2>
+          <h2 className="page-title">Class Planner</h2>
           <p className="page-intro">
             Review the classes your gym has planned next. This member view is read-only on purpose.
           </p>
@@ -1188,7 +1188,7 @@ export default function PlannedClassesPage() {
   return (
     <Layout>
       <div className="planned-classes-page">
-        <h2 className="page-title">Planned Classes</h2>
+        <h2 className="page-title">Class Planner</h2>
         <p className="page-intro">
           Map out upcoming classes, tie them to scenarios and topics, then complete the plan after
           class and finish attendance inside the regular class workflow.

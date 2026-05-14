@@ -2719,7 +2719,7 @@ export default function DecisionTreePage() {
   return (
     <Layout>
       <div className="decision-tree-page">
-        <h2 className="page-title">Decision Tree</h2>
+        <h2 className="page-title">Decision Trees</h2>
         <p className="page-intro">
           Explore one universal grappling tree from the Curriculum Index, then use real-life filters to narrow the next best options for a coach, student, or matchup.
         </p>

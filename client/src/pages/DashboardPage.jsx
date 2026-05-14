@@ -21,7 +21,6 @@ export default function DashboardPage() {
   const [recentClasses, setRecentClasses] = useState([]);
   const [topicCoverage, setTopicCoverage] = useState([]);
   const [trainingMethodUsage, setTrainingMethodUsage] = useState([]);
-  const [programs, setPrograms] = useState([]);
   const [topics, setTopics] = useState([]);
   const [classes, setClasses] = useState([]);
   const [plannedClasses, setPlannedClasses] = useState([]);
@@ -56,7 +55,6 @@ export default function DashboardPage() {
         recentClassesRes,
         topicCoverageRes,
         trainingMethodUsageRes,
-        programsRes,
         topicsRes,
         classesRes,
         plannedClassesRes,
@@ -67,7 +65,6 @@ export default function DashboardPage() {
         api.get('/reports/recent-classes?limit=5'),
         api.get('/reports/topic-coverage'),
         api.get('/reports/training-method-usage'),
-        api.get('/programs'),
         api.get('/topics'),
         api.get('/classes'),
         api.get('/planned-classes'),
@@ -118,7 +115,6 @@ export default function DashboardPage() {
       setRecentClasses(recentClassesRes.data);
       setTopicCoverage(topicCoverageRes.data);
       setTrainingMethodUsage(trainingMethodUsageRes.data);
-      setPrograms(programsRes.data);
       setTopics(topicsRes.data);
       setClasses(allClasses);
       setPlannedClasses(plannedClassesRes.data);
@@ -143,22 +139,9 @@ export default function DashboardPage() {
     }
   }, [isMember, loadDashboardData]);
 
-  const summaryCards = [
-    { label: 'Programs', value: programs.length },
-    { label: 'Topics', value: topics.length },
-    { label: 'Classes', value: classes.length },
-    {
-      label: 'Training Methods Used',
-      value: trainingMethodUsage.filter(
-        (method) => Number(method.total_segments) > 0
-      ).length
-    }
-  ];
-
   const todayIsoDate = getLocalIsoDate();
   const todayClassCount = classes.filter((classItem) => classItem.class_date === todayIsoDate).length;
   const todayPlannedCount = plannedClasses.filter((classItem) => classItem.class_date === todayIsoDate).length;
-  const unlinkedLibraryCount = libraryEntries.filter((entry) => entry.is_active && !entry.curriculum_topic_id).length;
   const activeTrainingScenarioCount = trainingScenarios.filter((scenario) => scenario.is_active).length;
   const activeMemberCount = members.filter((member) => member.is_active).length;
   const activeLibraryVideoCount = libraryEntries.filter((entry) => entry.is_active && entry.video_url).length;
@@ -167,7 +150,7 @@ export default function DashboardPage() {
     {
       key: 'planned',
       title: 'Plan your first class',
-      description: 'Start in Planned Classes so coaches know what is supposed to happen before class starts.',
+      description: 'Start in Class Planner so coaches know what is supposed to happen before class starts.',
       helper: 'This gives the gym a usable day-to-day workflow right away.',
       to: '/planned-classes',
       complete: plannedClasses.length > 0
@@ -175,7 +158,7 @@ export default function DashboardPage() {
     {
       key: 'topics',
       title: 'Add topics for your curriculum',
-      description: 'Build the topic structure first so classes, Library, and the Decision Tree all connect cleanly.',
+      description: 'Build the topic structure first so classes, Library, and Decision Trees all connect cleanly.',
       helper: 'Without topics, the rest of the app feels much more disconnected.',
       to: '/index',
       complete: topics.length > 0
@@ -234,7 +217,7 @@ export default function DashboardPage() {
       },
       {
         key: 'dashboard-coaching-queue',
-        title: 'Today’s Coaching Queue',
+        title: 'Today',
         description: 'Use this to spot the classes or library items that still need follow-through.'
       }
     ];
@@ -428,7 +411,7 @@ export default function DashboardPage() {
         setMemberProgress(myProgressRes.data?.progress || []);
       } catch (err) {
         console.error('Load member dashboard error:', err);
-        setError(err.response?.data?.message || 'Couldn’t load the member dashboard right now.');
+        setError(err.response?.data?.message || 'Couldn\'t load the member dashboard right now.');
       } finally {
         setLoading(false);
       }
@@ -471,27 +454,23 @@ export default function DashboardPage() {
                 <div className="action-grid">
                   <Link to="/planned-classes" className="action-card dashboard-action-card">
                     <strong>See upcoming classes</strong>
-                    <div className="detail-block">
-                      <div className="meta-text">Review the classes your gym has planned next.</div>
-                    </div>
+                    <p className="dashboard-card-copy">Review the classes your gym has planned next.</p>
+                    <span className="dashboard-card-cta">Open classes</span>
                   </Link>
                   <Link to="/my-progress" className="action-card dashboard-action-card">
                     <strong>Open my progress</strong>
-                    <div className="detail-block">
-                      <div className="meta-text">See the topics your coaches have already logged for you.</div>
-                    </div>
+                    <p className="dashboard-card-copy">See the topics your coaches have already logged for you.</p>
+                    <span className="dashboard-card-cta">Open progress</span>
                   </Link>
                   <Link to="/library" className="action-card dashboard-action-card">
                     <strong>Open Library</strong>
-                    <div className="detail-block">
-                      <div className="meta-text">Revisit videos and notes your gym marked as member visible.</div>
-                    </div>
+                    <p className="dashboard-card-copy">Revisit videos and notes your gym marked as member visible.</p>
+                    <span className="dashboard-card-cta">Open Library</span>
                   </Link>
                   <Link to="/decision-tree" className="action-card dashboard-action-card">
-                    <strong>Use the Decision Tree</strong>
-                    <div className="detail-block">
-                      <div className="meta-text">Study routes and options around the positions and topics you are learning.</div>
-                    </div>
+                    <strong>Use Decision Trees</strong>
+                    <p className="dashboard-card-copy">Study routes and options around the positions and topics you are learning.</p>
+                    <span className="dashboard-card-cta">Open Decision Trees</span>
                   </Link>
                 </div>
               </section>
@@ -516,12 +495,12 @@ export default function DashboardPage() {
                             {nextPlannedClass.start_time || 'Time not added'} - {nextPlannedClass.end_time || 'Time not added'}
                           </div>
                           <div className="dashboard-setup-helper">
-                            Open Planned Classes to review the notes and linked topics before class.
+                            Open Classes to review the notes and linked topics before class.
                           </div>
                         </>
                       ) : (
                         <div className="dashboard-setup-helper">
-                          Your gym has not shared an upcoming planned class yet. Library and Decision Tree are still ready to use.
+                          Your gym has not shared an upcoming planned class yet. Library and Decision Trees are still ready to use.
                         </div>
                       )}
                     </div>
@@ -535,12 +514,12 @@ export default function DashboardPage() {
                         <small>{memberProgress.length} topic{memberProgress.length === 1 ? '' : 's'} already logged for you.</small>
                       </Link>
                       <Link to="/decision-tree" className="dashboard-setup-item">
-                        <span>Use the Decision Tree</span>
+                        <span>Use Decision Trees</span>
                         <small>Work through likely branches before class instead of guessing what comes next.</small>
                       </Link>
                       <Link to="/index" className="dashboard-setup-item">
-                        <span>Browse the Curriculum Index</span>
-                        <small>Use the universal map when you want a cleaner overview of positions, sweeps, and submissions.</small>
+                        <span>Browse Curriculum</span>
+                        <small>Use the full map when you want a cleaner overview of positions, sweeps, and submissions.</small>
                       </Link>
                     </div>
                   </div>
@@ -550,7 +529,7 @@ export default function DashboardPage() {
               <section className="page-section dashboard-queue-section">
                 <div className="section-header">
                   <div>
-                    <h3>What to look at next</h3>
+                    <h3>What to open next</h3>
                     <p className="section-note">Keep the member experience simple: class schedule, progress, and study tools.</p>
                   </div>
                 </div>
@@ -626,76 +605,86 @@ export default function DashboardPage() {
   }
 
   const quickActions = [
-      {
-        title: 'Need to plan a class?',
-        description: 'Go straight to Planned Classes to build the next session before it gets missed.',
-        to: '/planned-classes'
+    {
+      title: 'Review Attendance',
+      description: 'Finish attendance and class admin.',
+      cta: 'Open attendance queue',
+      to: '/classes?workflow=attendance-ready',
+      featured: true
     },
     {
-      title: 'Finished a class?',
+      title: 'Plan a Class',
+      description: 'Build the next session.',
+      cta: 'Open Class Planner',
+      to: '/planned-classes'
+    },
+    {
+      title: 'Log Completed Class',
       description: todayClassCount > 0
-        ? `Open only today’s ${todayClassCount} completed class${todayClassCount === 1 ? '' : 'es'} so you can finish topics, notes, and attendance fast.`
-        : 'Open today’s completed-class view so you can log topics, notes, and attendance without digging through older sessions.',
+        ? `Finish ${todayClassCount} class${todayClassCount === 1 ? '' : 'es'} from today.`
+        : 'Open today\'s class-log view.',
+      cta: 'Open Class Logs',
       to: `/classes?workflow=today-completed&classDate=${todayIsoDate}`
     },
     {
-      title: 'Need to log an unplanned class?',
-      description: 'Jump into Completed Classes with the New Class form already open for anything that happened off-plan.',
+      title: 'Log Unplanned Class',
+      description: 'Open a fresh class log.',
+      cta: 'Create Class Log',
       to: '/classes?workflow=create-class'
     },
-      {
-        title: 'Need reusable scenarios?',
-        description: 'Open Training Scenarios and jump straight into the reusable scenario form so coaches can build class templates faster.',
-        to: '/training-scenarios?action=create&source=dashboard'
-      },
-      {
-        title: 'Need to add topics to organize your curriculum?',
-        description: isManagement
-          ? 'Open the Topics create form directly so you can add the next curriculum topic without hunting through the Index first.'
-          : 'Open Curriculum Index when you need to review the topic map that classes, Library, and the Tree are built around.',
-        to: isManagement ? '/topics?action=create' : '/index'
-      },
-      ...(isManagement ? [{
-        title: 'Need to review your topic library?',
-        description: 'Open Topics to search, filter, and clean up the actual curriculum topics your gym is using operationally.',
-        to: '/topics'
-      }] : []),
-      {
-        title: 'Need a teaching resource?',
-        description: 'Open Library to save coach notes, video links, and topic-linked references for later reuse.',
-        to: '/library'
-      },
-      {
-        title: 'Need to take attendance?',
-        description: 'Open the classes that still need attendance so coaches can finish class admin fast.',
-        to: '/classes?workflow=attendance-ready'
-      }
+    {
+      title: 'Create Scenario',
+      description: 'Build reusable class templates.',
+      cta: 'Open Scenarios',
+      to: '/training-scenarios?action=create&source=dashboard'
+    },
+    {
+      title: isManagement ? 'Add Curriculum Topic' : 'Open Curriculum',
+      description: isManagement
+        ? 'Add the next curriculum topic.'
+        : 'Review the curriculum map.',
+      cta: isManagement ? 'Add Topic' : 'Open Curriculum',
+      to: isManagement ? '/topics?action=create' : '/index'
+    },
+    {
+      title: 'Open Library',
+      description: 'Review teaching resources.',
+      cta: 'Open Library',
+      to: '/library'
+    },
+    {
+      title: 'View Members',
+      description: 'Check roster and progress.',
+      cta: 'Open Members',
+      to: '/members'
+    },
+    {
+      title: 'Run Reports',
+      description: 'Review gaps and trends.',
+      cta: 'Open Reports',
+      to: '/reports'
+    }
   ];
 
   const coachingQueue = [
     {
-      title: 'Plan today’s classes',
+      title: 'Classes planned today',
       value: todayPlannedCount,
       description: todayPlannedCount > 0
-        ? `${todayPlannedCount} planned class${todayPlannedCount === 1 ? '' : 'es'} are scheduled for today.`
-        : 'No planned classes are scheduled for today yet.',
-      to: '/planned-classes'
+        ? `${todayPlannedCount} class${todayPlannedCount === 1 ? '' : 'es'} scheduled today.`
+        : 'Nothing planned yet for today.',
+      to: '/planned-classes',
+      cta: 'Open Class Planner'
     },
     {
-      title: 'Finish class attendance',
+      title: 'Attendance to review',
       value: attendanceSnapshot.classesNeedingAttendance,
       description: attendanceSnapshot.classesNeedingAttendance > 0
-        ? `${attendanceSnapshot.classesNeedingAttendance} class${attendanceSnapshot.classesNeedingAttendance === 1 ? '' : 'es'} still need attendance or final class admin attention.`
-        : 'No classes currently need attendance attention.',
-      to: '/classes?workflow=attendance-ready'
-    },
-    {
-      title: 'Library items needing topics',
-      value: unlinkedLibraryCount,
-      description: unlinkedLibraryCount > 0
-        ? `${unlinkedLibraryCount} library entr${unlinkedLibraryCount === 1 ? 'y still needs a topic link.' : 'ies still need topic links.'}`
-        : 'All active library entries are linked to topics right now.',
-      to: '/library?needsTopic=true'
+        ? `${attendanceSnapshot.classesNeedingAttendance} class${attendanceSnapshot.classesNeedingAttendance === 1 ? '' : 'es'} still need attention.`
+        : 'Nothing waiting on attendance right now.',
+      to: '/classes?workflow=attendance-ready',
+      cta: 'Review Attendance',
+      featured: true
     }
   ];
 
@@ -768,7 +757,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="dashboard-guide-step">
                       <strong>3. Add the extras later</strong>
-                      <span>Library, Decision Tree, and progress become much stronger once the gym workflow is already moving.</span>
+                      <span>Library, Decision Trees, and progress become much stronger once the gym workflow is already moving.</span>
                     </div>
                   </div>
                 </div>
@@ -818,7 +807,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="dashboard-guide-step">
                           <strong>3. Add the extras later</strong>
-                          <span>Library, Decision Tree, and progress become much stronger once the gym workflow is already moving.</span>
+                          <span>Library, Decision Trees, and progress become much stronger once the gym workflow is already moving.</span>
                         </div>
                       </div>
                     </div>
@@ -880,11 +869,34 @@ export default function DashboardPage() {
               </div>
             ) : null}
 
+            <section id="dashboard-coaching-queue" className={`page-section dashboard-today-section${getTutorialSectionClass('dashboard-coaching-queue')}`}>
+              <div className="section-header">
+                <div>
+                  <h3>Today</h3>
+                  <p className="section-note">Start here when you need the fastest next action for today.</p>
+                </div>
+              </div>
+              <div className="action-grid">
+                {coachingQueue.map((item) => (
+                  <Link
+                    key={item.title}
+                    to={item.to}
+                    className={`action-card dashboard-action-card dashboard-queue-card${item.featured ? ' is-featured' : ''}`}
+                  >
+                    <strong>{item.title}</strong>
+                    <div className="dashboard-queue-value">{item.value}</div>
+                    <p className="dashboard-card-copy">{item.description}</p>
+                    <span className="dashboard-card-cta">{item.cta}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
             <section id="dashboard-quick-actions" className={`page-section dashboard-hero-section${getTutorialSectionClass('dashboard-quick-actions')}`}>
               <div className="section-header">
                 <div>
                   <h3>Quick Actions</h3>
-                  <p className="section-note">Use these as your next-step guide instead of a second navigation menu.</p>
+                  <p className="section-note">Jump straight into the job you want to handle next.</p>
                 </div>
               </div>
               <div className="action-grid">
@@ -892,12 +904,11 @@ export default function DashboardPage() {
                   <Link
                     key={action.title}
                     to={action.to}
-                    className="action-card dashboard-action-card"
+                    className={`action-card dashboard-action-card${action.featured ? ' is-featured' : ''}`}
                   >
                     <strong>{action.title}</strong>
-                    <div className="detail-block">
-                      <div className="meta-text">{action.description}</div>
-                    </div>
+                    <p className="dashboard-card-copy">{action.description}</p>
+                    <span className="dashboard-card-cta">{action.cta}</span>
                   </Link>
                 ))}
               </div>
@@ -910,22 +921,21 @@ export default function DashboardPage() {
                     <h3>Start Here</h3>
                     <p className="section-note">Use this if you are setting up the gym or onboarding a coach for the first time.</p>
                   </div>
-                  {setupComplete ? (
+                  <div className="inline-actions">
                     <button
                       type="button"
                       className="secondary-button"
                       onClick={handleHideSetupChecklist}
                     >
-                      Hide setup checklist
+                      Hide setup guide
                     </button>
-                  ) : null}
+                  </div>
                 </div>
+
                 <div className="dashboard-setup-progress">
                   <div className="dashboard-setup-progress-header">
                     <strong>Setup progress</strong>
-                    <span className="meta-text">
-                      {completedSetupCount}/{setupTasks.length} core steps complete
-                    </span>
+                    <span className="meta-text">{completedSetupCount} of {setupTasks.length} complete</span>
                   </div>
                   <div className="dashboard-setup-progress-bar" aria-hidden="true">
                     <span style={{ width: `${setupProgressPercent}%` }} />
@@ -942,116 +952,94 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 </div>
-                {setupComplete ? (
-                  <div className="dashboard-setup-card">
-                    <strong>Core setup is in place</strong>
-                    <div className="detail-block">
-                      <div className="meta-text">
-                        You have planned classes, curriculum topics, training scenarios, members, and attendance in motion. The next best extras will help coaches and members get even more out of the app.
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="dashboard-setup-grid">
-                    <Link to={nextSetupTask.to} className="action-card dashboard-action-card dashboard-setup-current">
-                      <strong>Next step: {nextSetupTask.title}</strong>
-                      <div className="detail-block">
-                        <div className="meta-text">{nextSetupTask.description}</div>
-                        <div className="dashboard-setup-helper">{nextSetupTask.helper}</div>
-                      </div>
-                    </Link>
 
-                    <div className="dashboard-setup-upcoming">
-                      <strong>Coming up after that</strong>
-                      <div className="dashboard-setup-list">
-                        {upcomingSetupTasks.map((task) => (
+                <div className="dashboard-setup-grid">
+                  <div className="dashboard-setup-card dashboard-setup-current">
+                    {nextSetupTask ? (
+                      <>
+                        <strong>{nextSetupTask.title}</strong>
+                        <p className="dashboard-card-copy">{nextSetupTask.description}</p>
+                        <div className="dashboard-setup-helper">{nextSetupTask.helper}</div>
+                        <div className="inline-actions">
+                          <Link to={nextSetupTask.to} className="secondary-button">
+                            Open next step
+                          </Link>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <strong>Setup is in a good place</strong>
+                        <p className="dashboard-card-copy">Your core workflow is already active, so you can focus on class planning, attendance, and refinement.</p>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="dashboard-setup-upcoming">
+                    <strong>Coming up after this</strong>
+                    <div className="dashboard-setup-list">
+                      {upcomingSetupTasks.length > 0 ? (
+                        upcomingSetupTasks.map((task) => (
                           <Link key={task.key} to={task.to} className="dashboard-setup-item">
                             <span>{task.title}</span>
                             <small>{task.description}</small>
                           </Link>
-                        ))}
-                      </div>
+                        ))
+                      ) : (
+                        <div className="dashboard-setup-helper">
+                          The core setup is done. Use Helpful Extras when you want to make the app even stronger for coaches and members.
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
-              </section>
-            ) : (
-              <section id="dashboard-start-here" className={`page-section dashboard-onboarding-section dashboard-onboarding-collapsed${getTutorialSectionClass('dashboard-start-here')}`}>
-                <div className="section-header">
-                  <div>
-                    <h3>Setup checklist hidden</h3>
-                    <p className="section-note">
-                      Your core onboarding steps are complete. Bring the checklist back any time if you want the fuller setup view again.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={handleShowSetupChecklist}
-                  >
-                    Show setup checklist
-                  </button>
                 </div>
               </section>
-            )}
+            ) : !setupComplete ? (
+              <section className="page-section dashboard-onboarding-collapsed">
+                <div className="section-header">
+                  <div>
+                    <h3>Setup guide hidden</h3>
+                    <p className="section-note">Bring it back any time if you want the onboarding checklist again.</p>
+                  </div>
+                  <div className="inline-actions">
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={handleShowSetupChecklist}
+                    >
+                      Show setup guide
+                    </button>
+                  </div>
+                </div>
+              </section>
+            ) : null}
 
             {setupComplete ? (
               <section id="dashboard-helpful-extras" className={`page-section dashboard-extras-section${getTutorialSectionClass('dashboard-helpful-extras')}`}>
                 <div className="section-header">
                   <div>
                     <h3>Helpful Extras</h3>
-                    <p className="section-note">These are the next upgrades that make the app more valuable for coaches and members after the core workflow is already working.</p>
+                    <p className="section-note">These upgrades make the app more valuable for coaches and members after the core workflow is already running.</p>
                   </div>
                 </div>
                 <div className="action-grid">
                   {helpfulExtras.map((item) => (
                     <Link key={item.key} to={item.to} className="action-card dashboard-action-card dashboard-extra-card">
                       <strong>{item.title}</strong>
-                      <div className="detail-block">
-                        <div className="meta-text">{item.description}</div>
-                        <div className="dashboard-setup-helper">{item.helper}</div>
-                      </div>
+                      <p className="dashboard-card-copy">{item.description}</p>
+                      <div className="dashboard-setup-helper">{item.helper}</div>
+                      <span className="dashboard-card-cta">Open Library</span>
                     </Link>
                   ))}
                 </div>
               </section>
             ) : null}
 
-            <section className={`stats-grid dashboard-stats-grid${isTutorialActive ? ' dashboard-tutorial-dimmed' : ''}`}>
-              {summaryCards.map((card) => (
-                <div key={card.label} className="stat-card">
-                  <div className="stat-label">{card.label}</div>
-                  <div className="stat-value">{card.value}</div>
-                </div>
-              ))}
-            </section>
-
-            <section id="dashboard-coaching-queue" className={`page-section dashboard-queue-section${getTutorialSectionClass('dashboard-coaching-queue')}`}>
-              <div className="section-header">
-                <div>
-                  <h3>Today’s Coaching Queue</h3>
-                  <p className="section-note">These are the fastest next-step actions for keeping the gym day clean and current.</p>
-                </div>
-              </div>
-              <div className="action-grid">
-                {coachingQueue.map((item) => (
-                  <Link key={item.title} to={item.to} className="action-card dashboard-action-card dashboard-queue-card">
-                    <strong>{item.title}</strong>
-                    <div className="dashboard-queue-value">{item.value}</div>
-                    <div className="detail-block">
-                      <div className="meta-text">{item.description}</div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-
             <ExpandableSection
               title="Recent Classes"
               note="The most recent sessions logged by your team."
               summary="Keep this collapsed unless you want a quick look at the most recent logged sessions."
               className={`dashboard-primary-section${isTutorialActive ? ' dashboard-tutorial-dimmed' : ''}`}
-              actions={<Link to="/classes" className="secondary-button">Manage Classes</Link>}
+              actions={<Link to="/classes" className="secondary-button">Open Class Logs</Link>}
             >
               {recentClasses.length === 0 ? (
                 <p className="empty-state">No classes have been logged yet.</p>
@@ -1079,75 +1067,50 @@ export default function DashboardPage() {
               )}
             </ExpandableSection>
 
-            <section className="two-column-grid dashboard-insights-grid">
-              <ExpandableSection
-                title="Top Topic"
-                note="The most-used curriculum topic right now."
-                summary="Expand when you want a quick signal on which topic is showing up the most."
-                className={isTutorialActive ? 'dashboard-tutorial-dimmed' : ''}
-              >
-                {!topTopic ? (
-                  <p className="empty-state">No topic usage has been logged yet.</p>
-                ) : (
-                  <div className="card-item dashboard-compact-card">
-                    <strong>{topTopic.topic_title}</strong>
-                    <div className="detail-block">
-                      <div className="meta-text">Type: {formatLabel(topTopic.topic_type)}</div>
-                      <div className="meta-text">
-                        Program: {topTopic.program_name || 'None'}
-                      </div>
-                      <div className="meta-text">
-                        Total Uses: {Number(topTopic.total_times_used)}
-                      </div>
-                      <div className="meta-text">
-                        Focus Count: {Number(topTopic.focus_count)}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </ExpandableSection>
-
-              <ExpandableSection
-                title="Top Training Method"
-                note="The method showing up most often in logged segments."
-                summary="Expand when you want a quick signal on which training method is dominating the logged classes."
-                className={isTutorialActive ? 'dashboard-tutorial-dimmed' : ''}
-              >
-                {!topMethod ? (
-                  <p className="empty-state">No training method usage has been logged yet.</p>
-                ) : (
-                  <div className="card-item dashboard-compact-card">
-                    <strong>{topMethod.training_method_name}</strong>
-                    <div className="detail-block">
-                      <div>{topMethod.description || 'No description added yet.'}</div>
-                      <div className="meta-text">
-                        Total Segments: {Number(topMethod.total_segments)}
-                      </div>
-                      <div className="meta-text">
-                        Total Duration: {Number(topMethod.total_duration_minutes)} minutes
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </ExpandableSection>
-            </section>
-
             <ExpandableSection
-              title="Want A Closer Look?"
-              note="Open Reports when you want a deeper look at trends instead of quick signals."
-              summary="Expand when you want to jump from quick workflow actions into deeper reporting."
+              title="Insights"
+              note="Open this when you want a quick read on topic and training-method trends."
+              summary="Keep this collapsed unless you want a deeper look than the main dashboard actions."
               className={`dashboard-cta-section${isTutorialActive ? ' dashboard-tutorial-dimmed' : ''}`}
               defaultOpen={false}
+              actions={<Link to="/reports" className="secondary-button">Open Reports</Link>}
             >
-              <Link to="/reports" className="action-card dashboard-report-card">
-                <strong>Open Reports</strong>
-                <div className="detail-block">
-                  <div className="meta-text">
-                    Explore underused topics, method usage, and broader curriculum trends.
+              <div className="two-column-grid dashboard-insights-grid">
+                {!topTopic ? (
+                  <div className="card-item dashboard-compact-card">
+                    <strong>Top Topic</strong>
+                    <p className="empty-state">No topic usage has been logged yet.</p>
                   </div>
-                  <div className="dashboard-report-link-text">Go to Reports</div>
-                </div>
-              </Link>
+                ) : (
+                  <div className="card-item dashboard-compact-card">
+                    <strong>Top Topic</strong>
+                    <div className="detail-block">
+                      <div>{topTopic.topic_title}</div>
+                      <div className="meta-text">Type: {formatLabel(topTopic.topic_type)}</div>
+                      <div className="meta-text">Program: {topTopic.program_name || 'None'}</div>
+                      <div className="meta-text">Total Uses: {Number(topTopic.total_times_used)}</div>
+                      <div className="meta-text">Focus Count: {Number(topTopic.focus_count)}</div>
+                    </div>
+                  </div>
+                )}
+
+                {!topMethod ? (
+                  <div className="card-item dashboard-compact-card">
+                    <strong>Top Training Method</strong>
+                    <p className="empty-state">No training method usage has been logged yet.</p>
+                  </div>
+                ) : (
+                  <div className="card-item dashboard-compact-card">
+                    <strong>Top Training Method</strong>
+                    <div className="detail-block">
+                      <div>{topMethod.training_method_name}</div>
+                      <div className="meta-text">{topMethod.description || 'No description added yet.'}</div>
+                      <div className="meta-text">Total Segments: {Number(topMethod.total_segments)}</div>
+                      <div className="meta-text">Total Duration: {Number(topMethod.total_duration_minutes)} minutes</div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </ExpandableSection>
           </>
         )}

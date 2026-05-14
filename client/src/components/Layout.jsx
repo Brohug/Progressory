@@ -1,22 +1,104 @@
-import { Link, useLocation } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+
+const getLinkClassName = ({ isActive }) => (
+  `app-nav-link${isActive ? ' is-active' : ''}`
+);
+
+const getBottomLinkClassName = ({ isActive }) => (
+  `app-mobile-nav-link${isActive ? ' is-active' : ''}`
+);
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const locationKey = `${location.pathname}${location.search}`;
+  const [menuState, setMenuState] = useState({
+    mobile: false,
+    more: false,
+    user: false,
+    routeKey: ''
+  });
+  const [guidePreference, setGuidePreference] = useState({
+    key: '',
+    value: null
+  });
 
   const isOwner = user?.role === 'owner';
   const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const isMember = user?.role === 'member';
   const searchParams = new URLSearchParams(location.search);
   const workflow = searchParams.get('workflow') || '';
+  const guideStorageKey = user?.id ? `progressory-layout-guide-collapsed-v1-${user.id}` : '';
+  const isMobileMenuOpen = menuState.mobile && menuState.routeKey === locationKey;
+  const isMoreMenuOpen = menuState.more && menuState.routeKey === locationKey;
+  const isUserMenuOpen = menuState.user && menuState.routeKey === locationKey;
+  const storedGuidePreference = useMemo(() => {
+    if (!guideStorageKey || typeof window === 'undefined') {
+      return false;
+    }
+
+    return window.localStorage.getItem(guideStorageKey) === 'true';
+  }, [guideStorageKey]);
+  const isGuideCollapsed = guidePreference.key === guideStorageKey && guidePreference.value !== null
+    ? guidePreference.value
+    : storedGuidePreference;
+
+  const toggleMobileMenu = () => {
+    setMenuState((prev) => ({
+      mobile: !(prev.mobile && prev.routeKey === locationKey),
+      more: false,
+      user: false,
+      routeKey: locationKey
+    }));
+  };
+
+  const toggleMoreMenu = () => {
+    setMenuState((prev) => ({
+      mobile: false,
+      more: !(prev.more && prev.routeKey === locationKey),
+      user: false,
+      routeKey: locationKey
+    }));
+  };
+
+  const toggleUserMenu = () => {
+    setMenuState((prev) => ({
+      mobile: false,
+      more: false,
+      user: !(prev.user && prev.routeKey === locationKey),
+      routeKey: locationKey
+    }));
+  };
+
+  const closeMenus = () => {
+    setMenuState({
+      mobile: false,
+      more: false,
+      user: false,
+      routeKey: locationKey
+    });
+  };
+
+  const toggleGuide = () => {
+    const nextValue = !isGuideCollapsed;
+    setGuidePreference({
+      key: guideStorageKey,
+      value: nextValue
+    });
+
+    if (guideStorageKey && typeof window !== 'undefined') {
+      window.localStorage.setItem(guideStorageKey, String(nextValue));
+    }
+  };
 
   const coachGuide = (() => {
     if (isMember && location.pathname === '/dashboard') {
       return {
         eyebrow: 'Member guide',
-        title: 'Start with your upcoming classes, then review progress, Library, or the Decision Tree.',
-        description: 'This keeps the member side simple: see what is coming up, revisit learning resources, and track what has been logged for you.',
+        title: 'Start with your upcoming classes, then review progress, Library, or Decision Trees.',
+        description: 'Keep the member side simple: see what is coming up, revisit learning resources, and track what has been logged for you.',
         primary: { label: 'Open my progress', to: '/my-progress' },
         secondary: { label: 'Open Library', to: '/library' }
       };
@@ -27,8 +109,8 @@ export default function Layout({ children }) {
         eyebrow: 'Member guide',
         title: 'Use this page to see what classes are planned next.',
         description: 'This view is read-only so members can stay focused on the class schedule instead of gym admin.',
-        primary: { label: 'Open Curriculum Index', to: '/index' },
-        secondary: { label: 'Open Decision Tree', to: '/decision-tree' }
+        primary: { label: 'Open Curriculum', to: '/index' },
+        secondary: { label: 'Open Decision Trees', to: '/decision-tree' }
       };
     }
 
@@ -38,26 +120,26 @@ export default function Layout({ children }) {
         title: 'Library only shows resources your coaches marked as member visible.',
         description: 'Use this page to revisit videos and notes tied to the curriculum topics your gym wants members to see.',
         primary: { label: 'Open my progress', to: '/my-progress' },
-        secondary: { label: 'Open Curriculum Index', to: '/index' }
+        secondary: { label: 'Open Curriculum', to: '/index' }
       };
     }
 
     if (isMember && location.pathname === '/my-progress') {
       return {
         eyebrow: 'Member guide',
-        title: 'Track what your coaches have logged, then use the Index and Tree to study it more deeply.',
-        description: 'Your progress page is the personal layer. The Index and Decision Tree help you explore the broader map around those topics.',
-        primary: { label: 'Open Curriculum Index', to: '/index' },
-        secondary: { label: 'Open Decision Tree', to: '/decision-tree' }
+        title: 'Track what your coaches logged, then use Curriculum and Decision Trees to study it more deeply.',
+        description: 'Your progress page is the personal layer. The wider study tools help you explore the map around those topics.',
+        primary: { label: 'Open Curriculum', to: '/index' },
+        secondary: { label: 'Open Decision Trees', to: '/decision-tree' }
       };
     }
 
     if (isMember && location.pathname === '/index') {
       return {
         eyebrow: 'Member guide',
-        title: 'Use the Curriculum Index as a study map, then jump into Library or Decision Tree when you want more depth.',
+        title: 'Use Curriculum as a study map, then jump into Library or Decision Trees for more depth.',
         description: 'This read-only view helps members explore the full curriculum language without changing the gym structure.',
-        primary: { label: 'Open Decision Tree', to: '/decision-tree' },
+        primary: { label: 'Open Decision Trees', to: '/decision-tree' },
         secondary: { label: 'Open Library', to: '/library' }
       };
     }
@@ -65,7 +147,7 @@ export default function Layout({ children }) {
     if (isMember && location.pathname === '/decision-tree') {
       return {
         eyebrow: 'Member guide',
-        title: 'Use the Tree to study options, then go back into Library or My Progress when you want a more practical review.',
+        title: 'Use Decision Trees to study options, then go back into Library or My Progress for practical review.',
         description: 'This keeps the member experience focused on learning, not coach/admin setup.',
         primary: { label: 'Open my progress', to: '/my-progress' },
         secondary: { label: 'Open Library', to: '/library' }
@@ -75,10 +157,10 @@ export default function Layout({ children }) {
     if (location.pathname === '/dashboard') {
       return {
         eyebrow: 'Coach guide',
-        title: 'Use Start Here for setup, or Quick Actions for today’s work.',
-        description: 'This stays flexible on purpose so owners can either keep onboarding the gym or jump straight into the job that matters right now.',
-        primary: null,
-        secondary: { label: 'Need attendance?', to: '/classes?workflow=attendance-ready' }
+        title: 'Use Today for right-now work, then Quick Actions when you need a fast jump elsewhere.',
+        description: 'This keeps the dashboard practical on mobile and desktop: start with the live coaching queue, then jump straight into the next job.',
+        primary: { label: 'Review Attendance', to: '/classes?workflow=attendance-ready', variant: 'attention' },
+        secondary: { label: 'Plan a Class', to: '/planned-classes' }
       };
     }
 
@@ -86,13 +168,13 @@ export default function Layout({ children }) {
       return {
         eyebrow: 'Best next move',
         title: 'After programs, add the topics that make those tracks usable.',
-        description: 'Programs give structure, but topics are what connect planning, classes, Library, and the Decision Tree.',
+        description: 'Programs give structure, but topics connect planning, class logs, Library, and Decision Trees.',
         primary: isManagement
-          ? { label: 'Add topics now', to: '/topics?action=create' }
-          : { label: 'Go to Curriculum Index', to: '/index' },
+          ? { label: 'Add topic now', to: '/topics?action=create' }
+          : { label: 'Go to Curriculum', to: '/index' },
         secondary: isManagement
-          ? { label: 'Browse the Index', to: '/index' }
-          : { label: 'Plan classes', to: '/planned-classes' }
+          ? { label: 'Open Curriculum', to: '/index' }
+          : { label: 'Open Class Planner', to: '/planned-classes' }
       };
     }
 
@@ -100,10 +182,10 @@ export default function Layout({ children }) {
       return {
         eyebrow: 'Best next move',
         title: 'After topics are in place, use them in planning or attach resources to them.',
-        description: 'The Index becomes most valuable once coaches are actively planning classes or linking resources around the topics they just added.',
+        description: 'Curriculum becomes most valuable once coaches are actively planning classes or linking resources around the topics they just added.',
         primary: isManagement
           ? { label: 'Open Topics', to: '/topics' }
-          : { label: 'Plan classes', to: '/planned-classes' },
+          : { label: 'Open Class Planner', to: '/planned-classes' },
         secondary: isManagement
           ? { label: 'Add topic', to: '/topics?action=create' }
           : { label: 'Open Library', to: '/library' }
@@ -113,10 +195,10 @@ export default function Layout({ children }) {
     if (location.pathname === '/planned-classes') {
       return {
         eyebrow: 'Best next move',
-        title: 'Build the class first, then finish it later in Completed Classes.',
-        description: 'Planning is the setup step. After class happens, use Classes to clean up attendance, topics, and training entries.',
-        primary: { label: 'Finished a class?', to: '/classes?workflow=today-completed' },
-        secondary: { label: 'Add scenarios', to: '/training-scenarios?action=create&source=planned-classes' }
+        title: 'Build the class first, then finish it later in Class Logs.',
+        description: 'Planning is the setup step. After class happens, use Class Logs to finish attendance, topics, and training entries.',
+        primary: { label: 'Log completed class', to: '/classes?workflow=today-completed' },
+        secondary: { label: 'Create scenario', to: '/training-scenarios?action=create&source=planned-classes' }
       };
     }
 
@@ -124,9 +206,9 @@ export default function Layout({ children }) {
       return {
         eyebrow: 'Coach workflow',
         title: 'Record attendance first, then fill in missing topics or training entries only if needed.',
-        description: 'This workflow is meant to reduce clutter. Open the class that still needs attention and finish the session from there.',
-        primary: null,
-        secondary: { label: 'View all classes', to: '/classes' }
+        description: 'Open the class that still needs attention and finish the session from there.',
+        primary: { label: 'Review Attendance', to: '/classes?workflow=attendance-ready', variant: 'attention' },
+        secondary: { label: 'View all class logs', to: '/classes' }
       };
     }
 
@@ -134,8 +216,8 @@ export default function Layout({ children }) {
       return {
         eyebrow: 'Best next move',
         title: 'Use this page to finish class admin after training actually happened.',
-        description: 'Classes work best after planning exists, attendance is recorded, and coaches are filling in only the details that still matter.',
-        primary: { label: 'Need attendance?', to: '/classes?workflow=attendance-ready' },
+        description: 'Class Logs work best after planning exists, attendance is recorded, and coaches fill in only the details that still matter.',
+        primary: { label: 'Review Attendance', to: '/classes?workflow=attendance-ready', variant: 'attention' },
         secondary: { label: 'View members', to: '/members' }
       };
     }
@@ -145,8 +227,8 @@ export default function Layout({ children }) {
         eyebrow: 'Best next move',
         title: 'After building a scenario, reuse it in planning or live class logs.',
         description: 'Scenarios help classes feel repeatable instead of rebuilt from scratch every time.',
-        primary: { label: 'Use in Planned Classes', to: '/planned-classes' },
-        secondary: { label: 'Use in Classes', to: '/classes?workflow=create-class' }
+        primary: { label: 'Use in Class Planner', to: '/planned-classes' },
+        secondary: { label: 'Use in Class Logs', to: '/classes?workflow=create-class' }
       };
     }
 
@@ -154,13 +236,13 @@ export default function Layout({ children }) {
       return {
         eyebrow: 'Best next move',
         title: 'Library is strongest when resources stay tied to real curriculum topics.',
-        description: 'If a resource feels disconnected, go link or add the topic first so coaches and members can actually find it later.',
+        description: 'If a resource feels disconnected, link or add the topic first so coaches and members can actually find it later.',
         primary: isManagement
           ? { label: 'Open Topics', to: '/topics' }
-          : { label: 'Go to Curriculum Index', to: '/index' },
+          : { label: 'Go to Curriculum', to: '/index' },
         secondary: isManagement
           ? { label: 'Add topic', to: '/topics?action=create' }
-          : { label: 'Open Decision Tree', to: '/decision-tree' }
+          : { label: 'Open Decision Trees', to: '/decision-tree' }
       };
     }
 
@@ -171,10 +253,10 @@ export default function Layout({ children }) {
         description: 'Reports are strongest when coaches can immediately act on what is missing, underused, or naturally connected to recent classes.',
         primary: isManagement
           ? { label: 'Add topic', to: '/topics?action=create' }
-          : { label: 'Plan classes', to: '/planned-classes?openForm=1' },
+          : { label: 'Plan a class', to: '/planned-classes?openForm=1' },
         secondary: isManagement
           ? { label: 'Open Topics', to: '/topics' }
-          : { label: 'Open Curriculum Index', to: '/index' }
+          : { label: 'Open Curriculum', to: '/index' }
       };
     }
 
@@ -183,17 +265,17 @@ export default function Layout({ children }) {
         eyebrow: 'Best next move',
         title: 'After members are added, make attendance and progress do the real work.',
         description: 'Members become useful once coaches are checking them in and logging what they are learning over time.',
-        primary: { label: 'Need attendance?', to: '/classes?workflow=attendance-ready' },
-        secondary: { label: 'Open Decision Tree', to: '/decision-tree' }
+        primary: { label: 'Review Attendance', to: '/classes?workflow=attendance-ready', variant: 'attention' },
+        secondary: { label: 'Open Decision Trees', to: '/decision-tree' }
       };
     }
 
     if (location.pathname === '/decision-tree') {
       return {
         eyebrow: 'Coach guide',
-        title: 'Use the Tree to narrow paths, then go back into classes, topics, or Library when you want to operationalize it.',
+        title: 'Use Decision Trees to narrow paths, then go back into classes, topics, or Library to operationalize them.',
         description: 'This is the thinking layer. The other pages turn those ideas into real class plans, resources, and recorded progress.',
-        primary: { label: 'Open Curriculum Index', to: '/index' },
+        primary: { label: 'Open Curriculum', to: '/index' },
         secondary: { label: 'Open Library', to: '/library' }
       };
     }
@@ -207,49 +289,189 @@ export default function Layout({ children }) {
     };
   })();
 
+  const primaryNavItems = useMemo(() => {
+    if (!user) {
+      return [];
+    }
+
+    if (isMember) {
+      return [
+        { label: 'Dashboard', to: '/dashboard' },
+        { label: 'Classes', to: '/planned-classes' },
+        { label: 'Progress', to: '/my-progress' },
+        { label: 'Curriculum', to: '/index' }
+      ];
+    }
+
+    return [
+      { label: 'Dashboard', to: '/dashboard' },
+      { label: 'Class Planner', to: '/planned-classes' },
+      { label: 'Class Logs', to: '/classes' },
+      { label: 'Members', to: '/members' },
+      { label: 'Curriculum', to: '/index' }
+    ];
+  }, [isMember, user]);
+
+  const moreNavItems = useMemo(() => {
+    if (!user) {
+      return [];
+    }
+
+    if (isMember) {
+      return [
+        { label: 'Library', to: '/library' },
+        { label: 'Decision Trees', to: '/decision-tree' }
+      ];
+    }
+
+    const items = [
+      { label: 'Class Planner', to: '/planned-classes' },
+      { label: 'Reports', to: '/reports' },
+      { label: 'Library', to: '/library' },
+      { label: 'Decision Trees', to: '/decision-tree' },
+      { label: 'Scenarios', to: '/training-scenarios' }
+    ];
+
+    if (isManagement) {
+      items.splice(1, 0, { label: 'Programs', to: '/programs' });
+    }
+
+    if (isOwner) {
+      items.splice(2, 0, { label: 'Staff', to: '/staff' });
+    }
+
+    return items;
+  }, [isManagement, isMember, isOwner, user]);
+
+  const mobileBottomNavItems = useMemo(() => {
+    if (!user) {
+      return [];
+    }
+
+    if (isMember) {
+      return [
+        { label: 'Dashboard', to: '/dashboard' },
+        { label: 'Classes', to: '/planned-classes' },
+        { label: 'Progress', to: '/my-progress' },
+        { label: 'Curriculum', to: '/index' }
+      ];
+    }
+
+    return [
+      { label: 'Dashboard', to: '/dashboard' },
+      { label: 'Classes', to: '/classes' },
+      { label: 'Members', to: '/members' },
+      { label: 'Curriculum', to: '/index' }
+    ];
+  }, [isMember, user]);
+
+  const mobileMenuItems = useMemo(() => (
+    [...primaryNavItems, ...moreNavItems.filter((item) => item.to !== '/planned-classes')]
+  ), [moreNavItems, primaryNavItems]);
+
+  const isMoreRouteActive = moreNavItems.some((item) => item.to === location.pathname);
+  const userMenuLabel = user ? `${user.first_name} ${user.last_name}` : 'Account';
+
   return (
     <div className="app-shell">
       <div className="app-container">
         <header className="app-header">
-          <h1 className="app-title">Progressory</h1>
+          <div className="app-header-top">
+            <div className="app-brand-block">
+              <h1 className="app-title">Progressory</h1>
+              {user ? (
+                <p className="app-subtitle">
+                  {user.gym_name} | {user.role}
+                </p>
+              ) : null}
+            </div>
 
-          {user && (
+            {user ? (
+              <div className="app-header-actions">
+                <button
+                  type="button"
+                  className="app-header-menu-toggle"
+                  onClick={toggleMobileMenu}
+                >
+                  <span aria-hidden="true">&#9776;</span> Menu
+                </button>
+
+                <div className="app-user-menu-shell">
+                  <button
+                    type="button"
+                    className="app-user-menu-toggle"
+                    onClick={toggleUserMenu}
+                  >
+                    {userMenuLabel}
+                  </button>
+                  {isUserMenuOpen ? (
+                    <div className="app-user-menu-panel">
+                      <div className="app-user-menu-summary">
+                        <strong>{user.first_name} {user.last_name}</strong>
+                        <span>{user.gym_name}</span>
+                        <span>{user.role}</span>
+                      </div>
+                      <button type="button" className="secondary-button" onClick={() => { closeMenus(); logout(); }}>
+                        Logout
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          {user ? (
             <>
-              <p className="app-subtitle">
-                Logged in as {user.first_name} {user.last_name} ({user.gym_name}) — {user.role}
-              </p>
+              <nav className="app-nav app-nav-desktop" aria-label="Primary">
+                {primaryNavItems.map((item) => (
+                  <NavLink key={item.to} to={item.to} className={getLinkClassName}>
+                    {item.label}
+                  </NavLink>
+                ))}
 
-              <nav className="app-nav">
-                <Link to="/dashboard">Dashboard</Link>
-                <Link to="/index">Curriculum Index</Link>
-                <Link to="/decision-tree">Decision Tree</Link>
-                <Link to="/planned-classes">Planned Classes</Link>
-                <Link to="/library">Library</Link>
-                {isMember ? <Link to="/my-progress">My Progress</Link> : (
-                  <>
-                    <Link to="/programs">Programs</Link>
-                    <Link to="/classes">Classes</Link>
-                    <Link to="/training-scenarios">Training Scenarios</Link>
-                    <Link to="/reports">Reports</Link>
-                    <Link to="/members">Members</Link>
-                    {isOwner && <Link to="/staff">Staff</Link>}
-                  </>
-                )}
+                <div className="app-nav-more-shell">
+                  <button
+                    type="button"
+                    className={`app-nav-link app-nav-more-toggle${isMoreRouteActive ? ' is-active' : ''}`}
+                    onClick={toggleMoreMenu}
+                  >
+                    More
+                  </button>
+                  {isMoreMenuOpen ? (
+                    <div className="app-nav-more-panel">
+                      {moreNavItems.map((item) => (
+                        <Link key={item.to} to={item.to} className="app-nav-more-link" onClick={closeMenus}>
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               </nav>
 
-              <div className="app-guidance-row">
-                <section className="coach-next-step-bar" aria-label="Coach next step">
-                  <div className="coach-next-step-copy">
-                    <div className="coach-next-step-heading">
-                      <span className="eyebrow">{coachGuide.eyebrow}</span>
-                      <strong>{coachGuide.title}</strong>
+              <div className="app-guidance-shell">
+                <section className={`coach-next-step-bar${isGuideCollapsed ? ' is-collapsed' : ''}`} aria-label="Coach next step">
+                  <div className="coach-next-step-topline">
+                    <div className="coach-next-step-copy">
+                      <div className="coach-next-step-heading">
+                        <span className="eyebrow">{coachGuide.eyebrow}</span>
+                        <strong>{coachGuide.title}</strong>
+                      </div>
+                      {!isGuideCollapsed ? <p>{coachGuide.description}</p> : null}
                     </div>
-                    <p>{coachGuide.description}</p>
+                    <button type="button" className="coach-guide-toggle" onClick={toggleGuide}>
+                      {isGuideCollapsed ? 'Show guide' : 'Hide guide'}
+                    </button>
                   </div>
-                  {(coachGuide.primary || coachGuide.secondary) ? (
+
+                  {!isGuideCollapsed && (coachGuide.primary || coachGuide.secondary) ? (
                     <div className="coach-next-step-actions">
                       {coachGuide.primary ? (
-                        <Link className="secondary-button" to={coachGuide.primary.to}>
+                        <Link
+                          className={`secondary-button${coachGuide.primary.variant === 'attention' ? ' is-attention' : ''}`}
+                          to={coachGuide.primary.to}
+                        >
                           {coachGuide.primary.label}
                         </Link>
                       ) : null}
@@ -261,19 +483,82 @@ export default function Layout({ children }) {
                     </div>
                   ) : null}
                 </section>
-
-                <div className="logout-row">
-                  <button className="secondary-button" onClick={logout}>
-                    Logout
-                  </button>
-                </div>
               </div>
             </>
-          )}
+          ) : null}
         </header>
+
+        {user && isMobileMenuOpen ? (
+          <>
+            <button
+              type="button"
+              className="app-mobile-overlay"
+              aria-label="Close menu"
+              onClick={closeMenus}
+            />
+            <aside className="app-mobile-drawer" aria-label="Mobile menu">
+              <div className="app-mobile-drawer-header">
+                <strong>Menu</strong>
+                <button type="button" className="secondary-button" onClick={closeMenus}>
+                  Close
+                </button>
+              </div>
+              <div className="app-mobile-drawer-list">
+                {mobileMenuItems.map((item) => (
+                  <Link key={item.to} to={item.to} className="app-mobile-drawer-link" onClick={closeMenus}>
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+              <div className="app-mobile-drawer-account">
+                <strong>{user.first_name} {user.last_name}</strong>
+                <span>{user.gym_name}</span>
+                <span>{user.role}</span>
+                <button type="button" className="secondary-button" onClick={() => { closeMenus(); logout(); }}>
+                  Logout
+                </button>
+              </div>
+            </aside>
+          </>
+        ) : null}
+
+        {user && isMoreMenuOpen ? (
+          <div className="app-mobile-more-sheet">
+            <div className="app-mobile-more-sheet-header">
+              <strong>More</strong>
+              <button type="button" className="secondary-button" onClick={closeMenus}>
+                Close
+              </button>
+            </div>
+            <div className="app-mobile-more-sheet-list">
+              {moreNavItems.map((item) => (
+                <Link key={item.to} to={item.to} className="app-mobile-more-link" onClick={closeMenus}>
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <main>{children}</main>
       </div>
+
+      {user ? (
+        <nav className="app-mobile-bottom-nav" aria-label="Mobile navigation">
+          {mobileBottomNavItems.map((item) => (
+            <NavLink key={item.to} to={item.to} className={getBottomLinkClassName}>
+              {item.label}
+            </NavLink>
+          ))}
+          <button
+            type="button"
+            className={`app-mobile-nav-link app-mobile-more-toggle${isMoreRouteActive || isMoreMenuOpen ? ' is-active' : ''}`}
+            onClick={toggleMoreMenu}
+          >
+            More
+          </button>
+        </nav>
+      ) : null}
     </div>
   );
 }
