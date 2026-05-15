@@ -266,7 +266,7 @@ export default function MembersPage() {
         last_name: editData.last_name,
         email: editData.email || null,
         belt_rank: editData.belt_rank || null,
-        is_active: editData.is_active === 'true'
+        ...(isManagement ? { is_active: editData.is_active === 'true' } : {})
       });
 
       await fetchMembers();
@@ -515,7 +515,7 @@ export default function MembersPage() {
     <Layout>
       <h2 className="page-title">Members</h2>
       <p className="page-intro">
-        Manage the roster, member access, and progress updates from one place without digging through the full class history first.
+        Manage the roster, member access, and progress from one place.
       </p>
 
       <section className="stats-grid">
@@ -533,7 +533,7 @@ export default function MembersPage() {
             <div>
               <h3>Add Member To Roster</h3>
               <p className="section-note">
-                Add the student to the roster first, then track progress and access only when you actually need it.
+                Add the student first, then track progress and access when you need it.
               </p>
             </div>
             <button
@@ -541,7 +541,7 @@ export default function MembersPage() {
               className="secondary-button"
               onClick={() => setShowCreateMemberForm((prev) => !prev)}
             >
-              {showCreateMemberForm ? 'Close member form' : 'Open member form'}
+              {showCreateMemberForm ? 'Close member form' : 'Add member'}
             </button>
           </div>
 
@@ -606,7 +606,7 @@ export default function MembersPage() {
         isOpen={isMemberListSectionOpen}
         onToggle={setIsMemberListSectionOpen}
         title="Roster And Progress"
-        note="Open this when you want to review member details, update progress, or manage login access."
+        note="Review member details, update progress, or manage login access."
         summary={`${filteredMembers.length} member${filteredMembers.length === 1 ? '' : 's'} in the current view.`}
         actions={(
           <button
@@ -667,7 +667,7 @@ export default function MembersPage() {
               return (
                 <li
                   key={member.id}
-                  className="card-item"
+                  className="card-item compact-topic-card member-card"
                   ref={(node) => {
                     if (node) {
                       memberItemRefs.current[member.id] = node;
@@ -678,29 +678,36 @@ export default function MembersPage() {
                     <div>
                       <strong>{member.first_name} {member.last_name}</strong>
                       <div className="compact-topic-meta meta-text">
-                        {member.program_name || 'No program'} | {member.belt_rank || 'No belt rank'} | {member.is_active ? 'Active' : 'Inactive'}
+                        {member.email || 'No email added yet'}
                       </div>
                     </div>
                   </div>
 
-                  <div className="inline-actions">
+                  <div className="member-card-summary-row">
+                    <span className="member-card-summary-pill">{member.program_name || 'No program'}</span>
+                    <span className="member-card-summary-pill">{member.belt_rank || 'No belt rank'}</span>
+                    <span className="member-card-summary-pill">{member.is_active ? 'Active roster' : 'Inactive roster'}</span>
+                    <span className="member-card-summary-pill">{member.user_id ? 'Login connected' : 'No login yet'}</span>
+                  </div>
+
+                  <div className="inline-actions member-card-actions">
                       <button className="secondary-button" onClick={() => toggleMemberDetails(member.id)}>
-                        {expandedMemberDetails[member.id] ? 'Hide roster details' : 'View roster details'}
+                        {expandedMemberDetails[member.id] ? 'Hide roster' : 'Roster'}
                       </button>
                     <button className="secondary-button" onClick={() => toggleMemberProgress(member.id)}>
-                      {expandedMembers[member.id] ? 'Hide member progress' : 'Open member progress'}
+                      {expandedMembers[member.id] ? 'Hide progress' : 'Progress'}
                     </button>
                     <button className="secondary-button" onClick={() => toggleEditMember(member)}>
-                      {editingMembers[member.id] ? 'Close roster editor' : 'Edit roster details'}
+                      {editingMembers[member.id] ? 'Close editor' : 'Edit roster'}
                     </button>
                     {isOwner ? (
                       <button className="secondary-button" onClick={() => toggleMemberAccessForm(member)}>
-                        {managingMemberAccessId === member.id ? 'Close login access' : 'Open login access'}
+                        {managingMemberAccessId === member.id ? 'Close access' : 'Login access'}
                       </button>
                     ) : null}
-                    {member.is_active ? (
+                    {isManagement && member.is_active ? (
                       <button className="danger-button" onClick={() => handleDeactivateMember(member)}>
-                        Remove from active roster
+                        Remove from roster
                       </button>
                     ) : null}
                   </div>
@@ -728,7 +735,7 @@ export default function MembersPage() {
                           <div>
                             <h4>Edit Roster Details</h4>
                             <p className="section-note">
-                              Update the member's roster details here without leaving the member card.
+                              Update the member&apos;s roster details here.
                             </p>
                           </div>
                         </div>
@@ -795,17 +802,19 @@ export default function MembersPage() {
                             />
                           </div>
 
-                          <div>
-                            <label>Active Status</label>
-                            <select
-                              name="is_active"
-                              value={editMemberMap[member.id]?.is_active || 'true'}
-                              onChange={(e) => handleEditMemberChange(member.id, e)}
-                            >
-                              <option value="true">Active</option>
-                              <option value="false">Inactive</option>
-                            </select>
-                          </div>
+                          {isManagement ? (
+                            <div>
+                              <label>Active Status</label>
+                              <select
+                                name="is_active"
+                                value={editMemberMap[member.id]?.is_active || 'true'}
+                                onChange={(e) => handleEditMemberChange(member.id, e)}
+                              >
+                                <option value="true">Active</option>
+                                <option value="false">Inactive</option>
+                              </select>
+                            </div>
+                          ) : null}
 
                           <div className="inline-actions">
                             <button type="submit">Save Roster Details</button>
@@ -822,7 +831,7 @@ export default function MembersPage() {
                           <div>
                             <h4>{member.user_id ? 'Reset Member Login Access' : 'Create Member Login Access'}</h4>
                             <p className="section-note">
-                              Generate a secure link so the member can set or reset their own password without you typing one for them.
+                              Generate a secure link so the member can set or reset their own password.
                             </p>
                           </div>
                         </div>
@@ -881,7 +890,7 @@ export default function MembersPage() {
                               >
                                 {submitting
                                   ? (member.login_is_active ? 'Deactivating login...' : 'Reactivating login...')
-                                  : (member.login_is_active ? 'Deactivate Login' : 'Reactivate Login')}
+                                  : (member.login_is_active ? 'Deactivate login' : 'Reactivate login')}
                               </button>
                             ) : null}
                           </div>
@@ -928,7 +937,7 @@ export default function MembersPage() {
                           <div>
                             <h4>Member Progress</h4>
                             <p className="section-note">
-                              Review progress records here and only open the update form when you need to log something new.
+                              Review progress records here and open the form when you need to log something new.
                             </p>
                             {isManagement ? (
                               <div className="inline-actions" style={{ marginTop: '10px' }}>
@@ -946,7 +955,7 @@ export default function MembersPage() {
                             className="secondary-button"
                             onClick={() => toggleMemberProgressForm(member.id)}
                           >
-                            {showMemberProgressFormMap[member.id] ? 'Close progress form' : 'Open progress form'}
+                            {showMemberProgressFormMap[member.id] ? 'Close progress form' : 'Log progress'}
                           </button>
                         </div>
 
@@ -980,7 +989,7 @@ export default function MembersPage() {
                                   className="secondary-button"
                                   onClick={() => toggleProgressDetails(progress.id)}
                                 >
-                                  {expandedProgressDetails[progress.id] ? 'Hide update details' : 'View update details'}
+                                  {expandedProgressDetails[progress.id] ? 'Hide details' : 'Open details'}
                                 </button>
                               </div>
 

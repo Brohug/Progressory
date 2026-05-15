@@ -8,11 +8,11 @@ const {
   removeMemberFromClass
 } = require('../controllers/attendanceController');
 
-const { protect } = require('../middleware/authMiddleware');
+const { protect, requireStaff } = require('../middleware/authMiddleware');
 
-router.post('/', protect, addMemberToClass);
-router.post('/bulk', protect, addMembersToClassBulk);
-router.get('/', protect, getClassMembers);
-router.delete('/:classMemberId', protect, removeMemberFromClass);
+router.post('/', protect, requireStaff, addMemberToClass);
+router.post('/bulk', protect, requireStaff, addMembersToClassBulk);
+router.get('/', protect, requireStaff, getClassMembers);
+router.delete('/:classMemberId', protect, requireStaff, removeMemberFromClass);
 
 module.exports = router;

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
+import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 import { formatLabel } from '../utils/formatLabel';
 
@@ -53,12 +54,19 @@ export default function MyProgressPage() {
       .slice(0, 5);
   }, [progress]);
 
+  const studyNextTopics = useMemo(() => (
+    progress
+      .filter((item) => item.status !== 'competent')
+      .sort((a, b) => new Date(b.updated_at || b.last_reviewed_at || 0) - new Date(a.updated_at || a.last_reviewed_at || 0))
+      .slice(0, 3)
+  ), [progress]);
+
   return (
     <Layout>
       <div className="page-shell">
         <h2 className="page-title">My Progress</h2>
         <p className="page-intro">
-          Review the curriculum topics your coaches have logged for you over time.
+          See what your coaches logged, what to study next, and where to reopen the right study tool fast.
         </p>
 
         {error ? <p className="error-text">{error}</p> : null}
@@ -99,7 +107,7 @@ export default function MyProgressPage() {
                   </div>
                 </Link>
                 <Link to="/decision-tree" className="action-card dashboard-action-card">
-                  <strong>Use the Decision Tree</strong>
+                  <strong>Use Decision Trees</strong>
                   <div className="detail-block">
                     <div className="meta-text">Work through realistic branches when you want a smarter study route.</div>
                   </div>
@@ -107,13 +115,64 @@ export default function MyProgressPage() {
               </div>
             </section>
 
+            <section className="page-section dashboard-onboarding-section">
+              <div className="section-header">
+                <div>
+                  <h3>Study next</h3>
+                  <p className="section-note">
+                    Keep this simple: reopen the topic, find the shared resource, or explore the next branch.
+                  </p>
+                </div>
+              </div>
+
+              {studyNextTopics.length === 0 ? (
+                <div className="dashboard-setup-card dashboard-setup-current">
+                  <strong>No study targets yet</strong>
+                  <div className="dashboard-setup-helper">
+                    Once your coaches log progress, this section will point you to the next topic worth revisiting.
+                  </div>
+                  <div className="inline-actions">
+                    <Link to="/library" className="secondary-button">Open Library</Link>
+                    <Link to="/decision-tree" className="secondary-button">Open Decision Trees</Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="action-grid">
+                  {studyNextTopics.map((item) => (
+                    <div key={`study-next-${item.id}`} className="action-card dashboard-action-card">
+                      <strong>{item.topic_title}</strong>
+                      <p className="dashboard-card-copy">
+                        {formatLabel(item.topic_type)} | {formatLabel(item.status)}
+                      </p>
+                      <div className="inline-actions">
+                        <Link className="secondary-button" to={buildIndexLink(item.topic_title)}>
+                          Open Curriculum
+                        </Link>
+                        <Link className="secondary-button" to={buildLibraryLink(item.topic_title)}>
+                          Open Library
+                        </Link>
+                        <Link className="secondary-button" to={buildDecisionTreeLink(item.topic_title)}>
+                          Study in Tree
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
             {member ? (
-              <section className="page-section">
+              <ExpandableSection
+                title={`${member.first_name} ${member.last_name}`}
+                note="Open the full list when you want every logged topic in one place."
+                summary={`${progress.length} tracked topic${progress.length === 1 ? '' : 's'} on your member profile.`}
+                className="page-section"
+              >
                 <div className="section-header">
                   <div>
-                    <h3>{member.first_name} {member.last_name}</h3>
+                    <h3>Full progress list</h3>
                     <p className="section-note">
-                      These progress updates are tied to your member profile.
+                      These updates are tied to your member profile.
                     </p>
                   </div>
                 </div>
@@ -153,14 +212,14 @@ export default function MyProgressPage() {
                             Find study resources
                           </Link>
                           <Link className="secondary-button" to={buildDecisionTreeLink(item.topic_title)}>
-                            Explore in Decision Tree
+                            Study in Tree
                           </Link>
                         </div>
                       </li>
                     ))}
                   </ul>
                 )}
-              </section>
+              </ExpandableSection>
             ) : null}
 
             <section className="page-section">
@@ -202,7 +261,7 @@ export default function MyProgressPage() {
                           Find study resources
                         </Link>
                         <Link className="secondary-button" to={buildDecisionTreeLink(item.topic_title)}>
-                          Explore in Decision Tree
+                          Study in Tree
                         </Link>
                       </div>
                     </li>

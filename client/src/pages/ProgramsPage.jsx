@@ -244,12 +244,13 @@ export default function ProgramsPage() {
           <Link to="/index" className="action-card dashboard-action-card">
             <strong>Browse curriculum map</strong>
             <div className="detail-block">
-              <div className="meta-text">Use the Curriculum Index when you want the broader teaching map before deciding which program topics to add next.</div>
+              <div className="meta-text">Use Curriculum when you want the broader teaching map before deciding which program topics to add next.</div>
             </div>
           </Link>
         </section>
       ) : null}
 
+      {isManagement ? (
       <section className="page-section" style={{ maxWidth: '760px' }}>
         <div className="compact-form-shell">
           <div className="compact-form-header">
@@ -298,9 +299,20 @@ export default function ProgramsPage() {
             </form>
           )}
 
-          {successMessage ? <p className="success-text">{successMessage}</p> : null}
+          {successMessage ? (
+            <div className="success-followup-row">
+              <p className="success-text" style={{ marginBottom: 0 }}>{successMessage}</p>
+              <Link className="secondary-button" to="/topics">
+                Next: View Topics
+              </Link>
+              <Link className="secondary-button" to="/topics?action=create">
+                Next: Add topic
+              </Link>
+            </div>
+          ) : null}
         </div>
       </section>
+      ) : null}
 
       {error && <p className="error-text">{error}</p>}
 
@@ -350,8 +362,15 @@ export default function ProgramsPage() {
                     className="secondary-button"
                     onClick={() => toggleProgramDetails(program.id)}
                   >
-                    {expandedProgramDetails[program.id] ? 'Hide details' : 'Show details'}
+                    {expandedProgramDetails[program.id] ? 'Hide details' : 'Open details'}
                   </button>
+                </div>
+
+                <div className="member-card-summary-row">
+                  <span className="member-card-summary-pill">{program.is_active ? 'Active' : 'Inactive'}</span>
+                  <span className="member-card-summary-pill">
+                    {topicCountByProgramId.get(program.id) || 0} topic{(topicCountByProgramId.get(program.id) || 0) === 1 ? '' : 's'}
+                  </span>
                 </div>
 
                 {expandedProgramDetails[program.id] && (
@@ -382,33 +401,45 @@ export default function ProgramsPage() {
                       View Topics
                     </Link>
                   ) : null}
-                  <button
-                    className="secondary-button"
-                    onClick={() => toggleEditProgram(program)}
-                  >
-                    {editingPrograms[program.id] ? 'Close program editor' : 'Open program editor'}
-                  </button>
-
-                  {program.is_active ? (
-                    <button
-                      className="danger-button"
-                      onClick={() => handleDeactivateProgram(program.id)}
-                      disabled={activeProgramId === program.id}
-                    >
-                      {activeProgramId === program.id ? 'Updating...' : 'Deactivate Program'}
-                    </button>
-                  ) : (
+                  {isManagement ? (
+                    <Link className="secondary-button" to={`/topics?action=create&suggestedProgramId=${program.id}`}>
+                      Add Topic
+                    </Link>
+                  ) : null}
+                  <Link className="secondary-button" to={`/index?search=${encodeURIComponent(program.name)}`}>
+                    Open Curriculum
+                  </Link>
+                  {isManagement ? (
                     <button
                       className="secondary-button"
-                      onClick={() => handleReactivateProgram(program.id)}
-                      disabled={activeProgramId === program.id}
+                      onClick={() => toggleEditProgram(program)}
                     >
-                      {activeProgramId === program.id ? 'Updating...' : 'Reactivate Program'}
+                      {editingPrograms[program.id] ? 'Close editor' : 'Edit program'}
                     </button>
-                  )}
+                  ) : null}
+
+                  {isManagement ? (
+                    program.is_active ? (
+                      <button
+                        className="danger-button"
+                        onClick={() => handleDeactivateProgram(program.id)}
+                        disabled={activeProgramId === program.id}
+                      >
+                        {activeProgramId === program.id ? 'Updating...' : 'Deactivate'}
+                      </button>
+                    ) : (
+                      <button
+                        className="secondary-button"
+                        onClick={() => handleReactivateProgram(program.id)}
+                        disabled={activeProgramId === program.id}
+                      >
+                        {activeProgramId === program.id ? 'Updating...' : 'Reactivate'}
+                      </button>
+                    )
+                  ) : null}
                 </div>
 
-                {editingPrograms[program.id] && (
+                {isManagement && editingPrograms[program.id] && (
                   <div className="detail-block">
                     <section className="compact-form-shell">
                       <div className="compact-form-header">

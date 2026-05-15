@@ -985,13 +985,12 @@ export default function ClassesPage() {
 
   return (
       <Layout>
+        <div className="classes-page">
         <h2 className="page-title">Class Logs</h2>
 
         <section className="page-section" style={{ maxWidth: '760px' }}>
           <p className="section-note" style={{ marginBottom: '14px' }}>
-            Use this page for completed classes and any unplanned sessions you need to log after the
-            fact. Training scenarios now live in their own page in the main navigation so they are
-            easier to build and reuse later.
+            Use this page for completed classes and any unplanned sessions you need to log after the fact.
           </p>
           <div
             style={{
@@ -1004,7 +1003,7 @@ export default function ClassesPage() {
           >
             <h3 style={{ marginBottom: 0 }}>Completed Classes</h3>
             <button onClick={() => setShowCreateClassForm((prev) => !prev)}>
-              {showCreateClassForm ? 'Close New Class Form' : 'Open New Class Form'}
+              {showCreateClassForm ? 'Close new class form' : 'Create class log'}
             </button>
           </div>
         </section>
@@ -1018,8 +1017,8 @@ export default function ClassesPage() {
                   {isTodayCompletedWorkflow
                     ? `You are viewing only completed classes from ${workflowDateLabel}.`
                     : isAttendanceReadyWorkflow
-                      ? 'You are viewing classes that still need attendance or final class logging.'
-                    : 'You are in a focused coach workflow view.'}
+                      ? 'You are viewing classes that still need attendance or final logging.'
+                      : 'You are in a focused workflow view.'}
                 </p>
               </div>
               <Link className="secondary-button" to="/classes">
@@ -1033,7 +1032,7 @@ export default function ClassesPage() {
         <section className="page-section" style={{ maxWidth: '760px' }}>
           <h3>Create Class</h3>
           <p className="section-note">
-            Log a completed class here when you are recording something that already happened.
+            Log a class here when it already happened.
           </p>
 
           <form className="form-grid" onSubmit={handleSubmit}>
@@ -1110,7 +1109,17 @@ export default function ClassesPage() {
           </div>
         </form>
 
-        {classMessage && <p className="success-text">{classMessage}</p>}
+        {classMessage ? (
+          <div className="success-followup-row">
+            <p className="success-text" style={{ marginBottom: 0 }}>{classMessage}</p>
+            <Link className="secondary-button" to="/classes?workflow=attendance-ready">
+              Next: Review attendance
+            </Link>
+            <Link className="secondary-button" to="/members">
+              Next: View Members
+            </Link>
+          </div>
+        ) : null}
         {error && <p className="error-text">{error}</p>}
       </section>
       ) : null}
@@ -1257,6 +1266,16 @@ export default function ClassesPage() {
               >
                 <strong>{classItem.title || 'Untitled Class'}</strong>
 
+                <div className="member-card-summary-row">
+                  <span className="member-card-summary-pill">{classItem.program_name || 'No program'}</span>
+                  <span className="member-card-summary-pill">
+                    {new Date(classItem.class_date).toLocaleDateString()}
+                  </span>
+                  <span className="member-card-summary-pill">
+                    {classItem.start_time || 'N/A'} - {classItem.end_time || 'N/A'}
+                  </span>
+                </div>
+
                 <div className="detail-block">
                   {showReadyBadge ? (
                     <div className="class-ready-badge">Ready for attendance</div>
@@ -1297,14 +1316,14 @@ export default function ClassesPage() {
                       className="secondary-button"
                       onClick={() => handleGoToNextStep(classItem, nextActionTarget)}
                     >
-                      Open Next Class Step
+                      Continue class log
                     </button>
                   ) : null}
                   <button
                     className="secondary-button"
                     onClick={() => toggleClassDetails(classItem)}
                   >
-                    {expandedClasses[classItem.id] ? 'Close Class Manager' : 'Open Class Manager'}
+                    {expandedClasses[classItem.id] ? 'Close class details' : 'Open class details'}
                   </button>
                 </div>
 
@@ -1315,7 +1334,7 @@ export default function ClassesPage() {
                         <div>
                           <h4>Edit Class Details</h4>
                           <p className="section-note">
-                            Open this when you need to adjust the title, date, time, or notes after class.
+                            Adjust the title, date, time, or notes here.
                           </p>
                         </div>
                         <button
@@ -1323,7 +1342,7 @@ export default function ClassesPage() {
                           className="secondary-button"
                           onClick={() => toggleClassFormSection(classItem.id, 'editDetails')}
                         >
-                          {expandedClassFormSectionsMap[classItem.id]?.editDetails ? 'Close class edit form' : 'Open class edit form'}
+                          {expandedClassFormSectionsMap[classItem.id]?.editDetails ? 'Close edit form' : 'Edit class details'}
                         </button>
                       </div>
 
@@ -1486,8 +1505,7 @@ export default function ClassesPage() {
                       <section id={`class-member-progress-${classItem.id}`} className="page-section">
                         <h4>Member Progress</h4>
                         <p className="section-note">
-                          Apply an introduced progress update for present members across the topics
-                          logged in this class.
+                          Apply progress for present members across the topics logged in this class.
                         </p>
                         <div className="inline-actions">
                           <button
@@ -1517,7 +1535,7 @@ export default function ClassesPage() {
                         <div>
                           <h4>Add Topic to Class</h4>
                           <p className="section-note">
-                            Open this when you want to log a topic taught or reviewed in class.
+                            Log a topic taught or reviewed in class.
                           </p>
                           {isManagement ? (
                             <div className="inline-actions" style={{ marginTop: '10px' }}>
@@ -1535,7 +1553,7 @@ export default function ClassesPage() {
                           className="secondary-button"
                           onClick={() => toggleClassFormSection(classItem.id, 'topics')}
                         >
-                          {expandedClassFormSectionsMap[classItem.id]?.topics ? 'Close topic form' : 'Open topic form'}
+                          {expandedClassFormSectionsMap[classItem.id]?.topics ? 'Close topic form' : 'Add topic'}
                         </button>
                       </div>
                       {expandedClassFormSectionsMap[classItem.id]?.topics ? (
@@ -1555,7 +1573,7 @@ export default function ClassesPage() {
                         <div>
                           <h4>Add Training Entry</h4>
                           <p className="section-note">
-                            Open this when you want to log rounds, scenarios, or other training structure from class.
+                            Log rounds, scenarios, or other training structure from class.
                           </p>
                         </div>
                         <button
@@ -1563,7 +1581,7 @@ export default function ClassesPage() {
                           className="secondary-button"
                           onClick={() => toggleClassFormSection(classItem.id, 'trainingEntries')}
                         >
-                          {expandedClassFormSectionsMap[classItem.id]?.trainingEntries ? 'Close training-entry form' : 'Open training-entry form'}
+                          {expandedClassFormSectionsMap[classItem.id]?.trainingEntries ? 'Close training-entry form' : 'Add training entry'}
                         </button>
                       </div>
                       {expandedClassFormSectionsMap[classItem.id]?.trainingEntries ? (
@@ -1693,6 +1711,7 @@ export default function ClassesPage() {
         )}
       </section>
       </ExpandableSection>
+      </div>
     </Layout>
   );
 }

@@ -28,6 +28,7 @@ const topicTypeCategoryHints = {
 export default function LibraryPage() {
   const { user } = useAuth();
   const isMember = user?.role === 'member';
+  const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const [searchParams, setSearchParams] = useSearchParams();
   const librarySource = searchParams.get('source') || '';
   const cameFromTree = librarySource === 'tree';
@@ -631,9 +632,10 @@ export default function LibraryPage() {
 
     return (
       <Layout>
+        <div className="library-page">
         <h2 className="page-title">Library</h2>
         <p className="page-intro">
-          Revisit the videos, notes, and teaching references your coaches have marked as member visible.
+          Open the resources your coaches shared, then jump back into Curriculum or the Tree when you want more context.
         </p>
 
         {error ? <p className="error-text">{error}</p> : null}
@@ -648,12 +650,12 @@ export default function LibraryPage() {
         </section>
 
         <section className="page-section dashboard-onboarding-section">
-          <div className="section-header">
-            <div>
-              <h3>Study next</h3>
-              <p className="section-note">Use the latest shared resource as the fast starting point, then narrow the rest of the Library when you need more.</p>
-            </div>
-          </div>
+              <div className="section-header">
+                <div>
+                  <h3>Study next</h3>
+                  <p className="section-note">Start with the latest shared resource, then reopen the topic or next branch if you need more context.</p>
+                </div>
+              </div>
           <div className="dashboard-setup-grid">
             <div className="dashboard-setup-current">
               <strong>{latestMemberEntry ? latestMemberEntry.title : 'No shared resources yet'}</strong>
@@ -689,7 +691,7 @@ export default function LibraryPage() {
                             topicType: latestMemberEntry.topic_type
                           })}
                           >
-                            View topic in Index
+                            Open Curriculum
                           </Link>
                         ) : null}
                         {latestMemberEntry.topic_title ? (
@@ -697,7 +699,7 @@ export default function LibraryPage() {
                             className="secondary-button"
                             to={`/decision-tree?search=${encodeURIComponent(latestMemberEntry.topic_title)}`}
                           >
-                            Explore in Decision Tree
+                            Study in Tree
                           </Link>
                         ) : null}
                       </div>
@@ -711,18 +713,18 @@ export default function LibraryPage() {
             </div>
 
             <div className="dashboard-setup-upcoming">
-              <strong>Use this with</strong>
+                  <strong>Keep moving</strong>
               <div className="dashboard-setup-list">
                 <Link to="/my-progress" className="dashboard-setup-item">
                   <span>My Progress</span>
                   <small>See which topics your coaches have already logged for you.</small>
                 </Link>
                 <Link to="/index" className="dashboard-setup-item">
-                  <span>Curriculum Index</span>
-                  <small>Use the topic map when you want the broader structure around a resource.</small>
+                  <span>Curriculum</span>
+                  <small>Use the topic map when you want the bigger picture around a resource.</small>
                 </Link>
                 <Link to="/decision-tree" className="dashboard-setup-item">
-                  <span>Decision Tree</span>
+                  <span>Decision Trees</span>
                   <small>Work through realistic follow-ups when you want more than a static resource.</small>
                 </Link>
               </div>
@@ -804,10 +806,10 @@ export default function LibraryPage() {
                     Open my progress
                   </Link>
                   <Link className="secondary-button" to="/index">
-                    Browse Curriculum Index
+                    Open Curriculum
                   </Link>
                   <Link className="secondary-button" to="/decision-tree">
-                    Try the Decision Tree
+                    Open Decision Trees
                   </Link>
                 </div>
               </div>
@@ -848,7 +850,7 @@ export default function LibraryPage() {
                           topicType: entry.topic_type
                         })}
                         >
-                          View topic in Index
+                          Open Curriculum
                         </Link>
                       ) : null}
                       {entry.topic_title ? (
@@ -856,7 +858,7 @@ export default function LibraryPage() {
                           className="secondary-button"
                           to={`/decision-tree?search=${encodeURIComponent(entry.topic_title)}`}
                         >
-                          Explore in Decision Tree
+                          Study in Tree
                         </Link>
                       ) : null}
                     </div>
@@ -865,6 +867,7 @@ export default function LibraryPage() {
               </ul>
           )}
         </ExpandableSection>
+        </div>
       </Layout>
     );
   }
@@ -885,12 +888,13 @@ export default function LibraryPage() {
 
   return (
     <Layout>
+      <div className="library-page">
       <h2 className="page-title">Library</h2>
 
       <ExpandableSection
         title="Create Library Entry"
-        note="Add a teaching resource, video note, or reference and only open the full form when you are ready to log it."
-        summary="Expand this when you want to add a video, note, or teaching resource to the library."
+        note="Add a teaching resource, video note, or reference."
+        summary="Open this when you want to add a library resource."
         className="library-create-section"
       >
         <div>
@@ -898,7 +902,7 @@ export default function LibraryPage() {
             <div>
               <h3>Create Library Entry</h3>
               <p className="section-note">
-                Add a teaching resource, video note, or reference and only open the full form when you are ready to log it.
+                Add a teaching resource, video note, or reference.
               </p>
             </div>
             <button
@@ -906,7 +910,7 @@ export default function LibraryPage() {
               className="secondary-button"
               onClick={() => setShowCreateEntryForm((prev) => !prev)}
             >
-              {showCreateEntryForm ? 'Close library form' : 'Open library form'}
+              {showCreateEntryForm ? 'Close library form' : 'Add library entry'}
             </button>
           </div>
 
@@ -924,7 +928,7 @@ export default function LibraryPage() {
           </div>
 
           <div className="library-preset-help meta-text">
-            Pick a quick start above to prefill the most common entry patterns, then open the form only when you are ready to finish the details.
+            Pick a quick start above to prefill the most common entry patterns.
           </div>
 
           {showCreateEntryForm && (
@@ -943,7 +947,7 @@ export default function LibraryPage() {
                   <div>
                     <strong>Creating from the current topic focus</strong>
                     <div className="meta-text">
-                      New entries can start linked to {selectedTopic.title} so your library grows directly around the curriculum.
+                      New entries can start linked to {selectedTopic.title}.
                     </div>
                   </div>
                 </div>
@@ -1003,9 +1007,9 @@ export default function LibraryPage() {
               </div>
 
               <div style={{ gridColumn: '1 / -1' }}>
-                <div className="meta-text">
-                  Tip: link entries to a curriculum topic whenever possible so they are easier to find from the Index and class-planning flows.
-                </div>
+              <div className="meta-text">
+                  Tip: link entries to a curriculum topic whenever possible so they are easier to find later.
+              </div>
               </div>
 
               <div>
@@ -1068,7 +1072,7 @@ export default function LibraryPage() {
                           className="secondary-button"
                           to={`/planned-classes?libraryTopicId=${encodeURIComponent(lastSavedTopicId)}&libraryTopicTitle=${encodeURIComponent(lastSavedTopicTitle)}&openForm=1`}
                         >
-                          Next: Use in planned classes
+                          Next: Plan a class
                         </Link>
                       </>
                     ) : null}
@@ -1084,7 +1088,7 @@ export default function LibraryPage() {
 
       <ExpandableSection
         title="Find the right resource fast"
-        note="Search by title, topic, program, description, or resource type, then narrow the list with quick filters."
+        note="Search by title, topic, program, description, or resource type."
         summary={`${filteredEntries.length} matching librar${filteredEntries.length === 1 ? 'y entry' : 'y entries'} in the current view.`}
         className="library-filters-section"
         defaultOpen={openFiltersByDefault}
@@ -1103,7 +1107,7 @@ export default function LibraryPage() {
             <div>
               <h3>Find the right resource fast</h3>
               <p className="section-note">
-                Search by title, topic, program, description, or resource type, then narrow the list with quick filters.
+                Search first, then narrow the list with filters if you need them.
               </p>
             </div>
             <button
@@ -1111,33 +1115,33 @@ export default function LibraryPage() {
               className="secondary-button"
               onClick={() => setShowLibraryGuide((prev) => !prev)}
             >
-              {showLibraryGuide ? 'Close library guide' : 'Open library guide'}
+              {showLibraryGuide ? 'Close guide' : 'Open guide'}
             </button>
           </div>
 
           {showLibraryGuide ? (
             <div className="library-guide-panel">
               <div>
-                <strong>Before Library can show resources, the topic must exist in this gym&apos;s Curriculum Index.</strong>
+                <strong>Before Library can show resources, the topic should exist in this gym&apos;s Curriculum.</strong>
                 <p className="meta-text">
-                  The full Index gives you the master map, but Library only searches saved resources for this gym. If you arrive here from the Decision Tree and see nothing, the topic either has not been added to this gym yet or no video/note has been saved for it.
+                  Library only searches saved resources for this gym. If you arrive here from Decision Trees and see nothing, the topic either has not been added yet or no resource has been saved for it.
                 </p>
               </div>
               <div className="library-guide-steps">
-                <span>1. Add the topic from Curriculum Index into this gym&apos;s curriculum topics.</span>
-                <span>2. Create a library entry, video note, or teaching resource.</span>
-                <span>3. Link that resource to the added topic so it appears in Library searches.</span>
+                <span>1. Add the topic from Curriculum.</span>
+                <span>2. Create a library entry.</span>
+                <span>3. Link the resource to that topic.</span>
               </div>
               <div className="inline-actions">
                 <Link className="secondary-button library-topic-link-button" to="/index">
-                  Go to Curriculum Index
+                  Open Curriculum
                 </Link>
                 <button
                   type="button"
                   className="secondary-button library-topic-link-button"
                   onClick={() => setShowCreateEntryForm(true)}
                 >
-                  Open library entry form
+                  Add library entry
                 </button>
               </div>
             </div>
@@ -1146,11 +1150,11 @@ export default function LibraryPage() {
           {cameFromTree ? (
             <div className="library-linked-topic-banner">
               <div>
-                <strong>Opened from Decision Tree{treeFocusName ? `: ${treeFocusName}` : ''}</strong>
+                <strong>Opened from Decision Trees{treeFocusName ? `: ${treeFocusName}` : ''}</strong>
                 <div className="meta-text">
                   {treePathLabel
-                    ? `Current path: ${treePathLabel}. Use this Library view to find coaching resources that support the exact lane you were tracing in the Tree.`
-                    : `This Library view came from the Decision Tree, so the current search is meant to support the path you were just building.`}
+                    ? `Current path: ${treePathLabel}. Use this Library view to find resources that support the exact lane you were tracing in the Tree.`
+                    : `This Library view came from Decision Trees, so the current search supports the path you were just building.`}
                 </div>
                 <div className="meta-text">
                   {treeFocusedEntriesCount} matching librar{treeFocusedEntriesCount === 1 ? 'y entry' : 'y entries'} currently fit this Tree-driven search.
@@ -1158,10 +1162,10 @@ export default function LibraryPage() {
               </div>
               <div className="inline-actions">
                 <Link className="secondary-button" to="/decision-tree">
-                  Back to Decision Tree
+                  Back to Decision Trees
                 </Link>
                 <button type="button" className="secondary-button" onClick={clearTreeFlow}>
-                  Clear Tree context
+                  Clear Tree focus
                 </button>
               </div>
             </div>
@@ -1172,7 +1176,7 @@ export default function LibraryPage() {
               <div>
                 <strong>Showing resources linked to {selectedTopic.title}</strong>
                 <div className="meta-text">
-                  This filtered view keeps the coaching work focused on one topic, so you can move from Library into planning, Index review, or Tree study without losing the thread.
+                  This keeps the coaching work focused on one topic.
                 </div>
               </div>
               <div className="inline-actions">
@@ -1185,16 +1189,16 @@ export default function LibraryPage() {
                     topicType: selectedTopic.topic_type
                   })}
                 >
-                  Back to Index item
+                  View in Curriculum
                 </Link>
                 <Link
                   className="secondary-button"
                   to={`/planned-classes?libraryTopicId=${encodeURIComponent(selectedTopic.id)}&libraryProgramId=${encodeURIComponent(selectedTopic.program_id || '')}&libraryTopicTitle=${encodeURIComponent(selectedTopic.title)}&openForm=1`}
                 >
-                  Use while planning class
+                  Plan a class
                 </Link>
                 <button type="button" className="secondary-button" onClick={clearTopicFocus}>
-                  Clear topic focus
+                  Clear topic filter
                 </button>
               </div>
             </div>
@@ -1231,7 +1235,7 @@ export default function LibraryPage() {
                 onChange={setTopicFilter}
                 placeholder="Search added curriculum topics..."
                 emptySelectionLabel="All topics"
-                helperText="Library links to topics added to this gym. Add missing items from the Curriculum Index first."
+                helperText="Library links to topics added to this gym. Add missing items from Curriculum first."
               />
             </div>
 
@@ -1267,7 +1271,7 @@ export default function LibraryPage() {
               Needs topic
             </button>
             <span className="meta-text">
-              Use this to clean up resources that are not tied to the Curriculum Index yet.
+              Use this to find resources that are not tied to Curriculum yet.
             </span>
           </div>
 
@@ -1290,7 +1294,7 @@ export default function LibraryPage() {
 
       <ExpandableSection
         title="Library Entries"
-        note="Expand this when you want to review saved resources, edit them, or work through inactive entries."
+        note="Review saved resources, edit them, or work through inactive entries."
         summary={`${filteredEntries.length} librar${filteredEntries.length === 1 ? 'y entry' : 'y entries'} in the current results.`}
         className="library-entries-section"
         defaultOpen={openEntriesByDefault}
@@ -1323,19 +1327,19 @@ export default function LibraryPage() {
             <div className="library-empty-callout">
               <strong>No saved library resources found yet.</strong>
               <p className="meta-text">
-                Library does not pull every Curriculum Index item automatically. First add the topic to this gym&apos;s Curriculum Index, then create a video note, teaching resource, or concept note linked to it.
+                Library does not pull every Curriculum item automatically. Add the topic first, then create a linked resource.
               </p>
               <p className="meta-text">
-                If you searched for a technique and this is blank, it usually means no video/resource has been saved for that topic yet.
+                If you searched for a technique and this is blank, no resource has been saved for that topic yet.
               </p>
             </div>
               <div className="inline-actions" style={{ justifyContent: 'center' }}>
                 <Link className="secondary-button" to="/index">
-                  Add Topic in Curriculum Index
+                  Add topic in Curriculum
                 </Link>
                 {!isMember ? (
                   <Link className="secondary-button" to="/topics?action=create">
-                    Add Topic In Topics
+                    Add topic in Topics
                   </Link>
                 ) : null}
                 <button
@@ -1343,7 +1347,7 @@ export default function LibraryPage() {
                   className="secondary-button"
                 onClick={() => setShowLibraryGuide(true)}
               >
-                Show Library Guide
+                Open guide
               </button>
             </div>
             <button
@@ -1351,7 +1355,7 @@ export default function LibraryPage() {
               className="secondary-button"
               onClick={() => setShowCreateEntryForm(true)}
             >
-              Create a library entry
+              Add library entry
             </button>
           </div>
         ) : (
@@ -1369,6 +1373,11 @@ export default function LibraryPage() {
                         <span className="library-status-chip is-warning">Needs topic</span>
                       )}
                     </div>
+                    <div className="member-card-summary-row">
+                      <span className="member-card-summary-pill">{formatSentenceLabel(entry.entry_type)}</span>
+                      <span className="member-card-summary-pill">{entry.program_name || 'No program'}</span>
+                      <span className="member-card-summary-pill">{entry.is_active ? 'Active' : 'Inactive'}</span>
+                    </div>
                     <div className="library-card-chip-row">
                       <span className="library-info-chip">{formatSentenceLabel(entry.entry_type)}</span>
                       <span className="library-info-chip">{entry.program_name || 'No program'}</span>
@@ -1383,7 +1392,7 @@ export default function LibraryPage() {
                       ) : (
                         <span
                           className="ui-tooltip-trigger"
-                          data-tooltip="Link this Library entry to a Curriculum Index topic first to focus it or open it from Index."
+                          data-tooltip="Link this Library entry to a Curriculum topic first to focus it or open it from Curriculum."
                         >
                           <button
                             type="button"
@@ -1430,7 +1439,7 @@ export default function LibraryPage() {
                     className="secondary-button"
                     onClick={() => toggleEntryDetails(entry.id)}
                   >
-                    {expandedEntryDetails[entry.id] ? 'Hide resource details' : 'View resource details'}
+                    {expandedEntryDetails[entry.id] ? 'Hide details' : 'Open details'}
                   </button>
                 </div>
 
@@ -1582,48 +1591,51 @@ export default function LibraryPage() {
                         className="secondary-button"
                         to={`/decision-tree?search=${encodeURIComponent(entry.topic_title || entry.title)}`}
                       >
-                        Study in Decision Tree
+                        Study in Tree
                       </Link>
                       <Link
                         className="secondary-button"
                         to={`/planned-classes?libraryTopicId=${encodeURIComponent(entry.curriculum_topic_id)}&libraryProgramId=${encodeURIComponent(entry.program_id || '')}&libraryTopicTitle=${encodeURIComponent(entry.topic_title || entry.title)}&openForm=1`}
                       >
-                        Use in planned classes
+                        Plan a class
                       </Link>
                     </>
                   ) : (
                     <span
                       className="ui-tooltip-trigger"
-                      data-tooltip="Link this Library entry to a curriculum topic first, then you can send it cleanly into class planning or Decision Tree study."
+                      data-tooltip="Link this Library entry to a curriculum topic first, then you can send it cleanly into class planning or Decision Trees."
                     >
                       <button type="button" className="secondary-button" disabled>
-                        Use in planned classes
+                        Plan a class
                       </button>
                     </span>
                   )}
-                  {entry.is_active ? (
-                    <button
-                      className="danger-button"
-                      onClick={() => handleSetActiveState(entry, false)}
-                      disabled={activeEntryId === entry.id}
-                    >
-                      {activeEntryId === entry.id ? 'Updating...' : 'Deactivate Entry'}
-                    </button>
-                  ) : (
-                    <button
-                      className="secondary-button"
-                      onClick={() => handleSetActiveState(entry, true)}
-                      disabled={activeEntryId === entry.id}
-                    >
-                      {activeEntryId === entry.id ? 'Updating...' : 'Make Entry Active Again'}
-                    </button>
-                  )}
+                  {isManagement ? (
+                    entry.is_active ? (
+                      <button
+                        className="danger-button"
+                        onClick={() => handleSetActiveState(entry, false)}
+                        disabled={activeEntryId === entry.id}
+                      >
+                        {activeEntryId === entry.id ? 'Updating...' : 'Deactivate'}
+                      </button>
+                    ) : (
+                      <button
+                        className="secondary-button"
+                        onClick={() => handleSetActiveState(entry, true)}
+                        disabled={activeEntryId === entry.id}
+                      >
+                        {activeEntryId === entry.id ? 'Updating...' : 'Reactivate'}
+                      </button>
+                    )
+                  ) : null}
                 </div>
               </li>
             ))}
           </ul>
         )}
       </ExpandableSection>
+      </div>
     </Layout>
   );
 }

@@ -436,11 +436,11 @@ export default function PlannedClassesPage() {
         topicTitle: topicTitleFromTree,
         programName: ''
       });
-      setMessage(`Planning around "${topicTitleFromTree}" from Decision Tree. Add the program, date, and any connected gym topics that support this class.`);
+      setMessage(`Planning around "${topicTitleFromTree}" from Decision Trees. Add the program, date, and any connected gym topics that support this class.`);
       setFormData((prev) => ({
         ...prev,
         title: prev.title || topicTitleFromTree,
-        notes: prev.notes || `Built from Decision Tree support for ${topicTitleFromTree}${topicTypeFromTree ? ` (${formatLabel(topicTypeFromTree)})` : ''}.`
+        notes: prev.notes || `Built from a Decision Trees path for ${topicTitleFromTree}${topicTypeFromTree ? ` (${formatLabel(topicTypeFromTree)})` : ''}.`
       }));
 
       if (openFormFromLibrary) {
@@ -539,8 +539,8 @@ export default function PlannedClassesPage() {
     });
 
     return [
-      { label: 'Upcoming plans', value: upcomingItems.length },
-      { label: 'Completed plans', value: completedItems.length },
+      { label: 'Upcoming classes', value: upcomingItems.length },
+      { label: 'Completed classes', value: completedItems.length },
       { label: 'Active programs', value: activePrograms.length },
       { label: 'Topics in this plan', value: selectedTopicIds.length }
     ];
@@ -652,7 +652,7 @@ export default function PlannedClassesPage() {
 
           <section className="stats-grid">
             <div className="stat-card">
-              <div className="stat-label">Upcoming plans</div>
+              <div className="stat-label">Upcoming classes</div>
               <div className="stat-value">{memberVisiblePlannedClasses.length}</div>
             </div>
             <div className="stat-card">
@@ -667,7 +667,7 @@ export default function PlannedClassesPage() {
             <div className="section-header">
               <div>
                 <h3>Next class snapshot</h3>
-                <p className="section-note">Start with the next class, then use the Index, Library, or Decision Tree if you want to study around it.</p>
+                <p className="section-note">Start with the next class, then use Curriculum, Library, or Decision Trees if you want to study around it.</p>
               </div>
             </div>
             <div className="dashboard-setup-grid">
@@ -699,7 +699,7 @@ export default function PlannedClassesPage() {
                     </>
                   ) : (
                     <div className="dashboard-setup-helper">
-                      Your gym has not shared an upcoming planned class yet. Library and the Decision Tree are still ready to use.
+                      Your gym has not shared an upcoming planned class yet. Library and Decision Trees are still ready to use.
                     </div>
                   )}
                 </div>
@@ -709,7 +709,7 @@ export default function PlannedClassesPage() {
                 <strong>Study from here</strong>
                 <div className="dashboard-setup-list">
                   <Link to="/index" className="dashboard-setup-item">
-                    <span>Open Curriculum Index</span>
+                    <span>Open Curriculum</span>
                     <small>Use the universal topic map before class starts.</small>
                   </Link>
                   <Link to="/library" className="dashboard-setup-item">
@@ -717,7 +717,7 @@ export default function PlannedClassesPage() {
                     <small>Revisit the videos and notes your coaches already shared.</small>
                   </Link>
                   <Link to="/decision-tree" className="dashboard-setup-item">
-                    <span>Open Decision Tree</span>
+                    <span>Open Decision Trees</span>
                     <small>Work through likely branches when you want more than a static list.</small>
                   </Link>
                 </div>
@@ -726,7 +726,7 @@ export default function PlannedClassesPage() {
           </section>
 
           <ExpandableSection
-            title="Upcoming planned classes"
+            title="Upcoming classes"
             note="Expand this to review the next planned sessions."
             summary={`${filteredMemberPlannedClasses.length} planned class${filteredMemberPlannedClasses.length === 1 ? '' : 'es'} in the current member view.`}
             className="planned-classes-results-section"
@@ -898,13 +898,13 @@ export default function PlannedClassesPage() {
 
             return [...prev, String(createdTopic.id)];
           });
-          setMessage('Topic pulled in from the Curriculum Index and added to this class plan successfully.');
+          setMessage('Topic pulled in from Curriculum and added to this class plan successfully.');
         }
       } catch (err) {
         console.error('Create planned class topic from index error:', err);
         setError(
           err.response?.data?.message ||
-            'Couldn\'t pull that topic in from the Curriculum Index just now.'
+            'Couldn\'t pull that topic in from Curriculum just now.'
         );
       } finally {
         setIsCreatingTopic(false);
@@ -1215,8 +1215,7 @@ export default function PlannedClassesPage() {
       <div className="planned-classes-page">
         <h2 className="page-title">Class Planner</h2>
         <p className="page-intro">
-          Map out upcoming classes, tie them to scenarios and topics, then complete the plan after
-          class and finish attendance inside the regular class workflow.
+          Plan the next class, tie it to topics or scenarios, then finish it later in Class Logs.
         </p>
 
         <section className="stats-grid planned-classes-stats-grid">
@@ -1233,8 +1232,7 @@ export default function PlannedClassesPage() {
             <div>
               <h3>Planning view</h3>
               <p className="section-note">
-                Check the calendar before you build the next class so you can spot open days and
-                keep the week balanced.
+                Switch views to spot open days and keep the week balanced.
               </p>
             </div>
 
@@ -1266,8 +1264,7 @@ export default function PlannedClassesPage() {
               <div>
                 <h3>{editingPlannedClassId ? 'Edit planned class' : 'Create planned class'}</h3>
                 <p className="section-note">
-                  Choose a program first so the scenario and topic pickers stay focused on the right
-                  part of your curriculum.
+                  Choose a program first so the topic and scenario pickers stay focused.
                 </p>
                 {isManagement ? (
                   <div className="inline-actions" style={{ marginTop: '10px' }}>
@@ -1582,8 +1579,8 @@ export default function PlannedClassesPage() {
         </section>
 
         <ExpandableSection
-          title="Upcoming planned classes"
-          note="Review what is coming up, make quick edits, or complete a plan once class is finished."
+          title="Upcoming classes"
+          note="Review what is coming up, make quick edits, or finish a plan after class."
           summary={`${plannedClasses.length} planned class${plannedClasses.length === 1 ? '' : 'es'} currently loaded.`}
           isOpen={isPlansSectionOpen}
           onToggle={setIsPlansSectionOpen}
@@ -1602,8 +1599,7 @@ export default function PlannedClassesPage() {
                 <div>
                   <h4>{visibleMonthLabel}</h4>
                   <p className="section-note">
-                    Scan what is planned this month by day, program, and primary topic. Click a day
-                    to start planning directly on that date.
+                    Click a day to start planning directly on that date.
                   </p>
                 </div>
 
@@ -1698,7 +1694,7 @@ export default function PlannedClassesPage() {
                             className="secondary-button"
                             onClick={() => handleCreatePlanForDate(day.date)}
                           >
-                            Create planned class
+                            Plan class
                           </button>
 
                           {day.plans.length > 0 ? (
@@ -1734,8 +1730,8 @@ export default function PlannedClassesPage() {
                     <h5>{formatDateForDisplay(selectedCalendarDay.dateKey)}</h5>
                     <p className="section-note">
                       {selectedCalendarDay.plans.length > 0
-                        ? 'Manage the planned classes on this date or create another class on the same day.'
-                        : 'No classes are planned on this date yet. Start a new plan directly from here.'}
+                        ? 'Manage the classes on this date or add another one.'
+                        : 'No classes are planned on this date yet.'}
                     </p>
                   </div>
 
@@ -1745,7 +1741,7 @@ export default function PlannedClassesPage() {
                       className="secondary-button"
                       onClick={() => handleCreatePlanForDate(selectedCalendarDay.date)}
                     >
-                      Create planned class
+                      Plan class
                     </button>
                   </div>
 
@@ -1775,7 +1771,7 @@ export default function PlannedClassesPage() {
                                   : navigate(`/classes?openClassId=${plannedClass.completed_class_id}`)
                               )}
                             >
-                              {plannedClass.status === 'planned' ? 'Edit plan' : 'Manage class'}
+                              {plannedClass.status === 'planned' ? 'Edit plan' : 'Open class log'}
                             </button>
                           </div>
                         </div>
@@ -1818,6 +1814,16 @@ export default function PlannedClassesPage() {
 
                       <div className="meta-text compact-topic-meta">
                         {plannedClass.program_name} • {plannedClass.topics.length} topic{plannedClass.topics.length === 1 ? '' : 's'}
+                      </div>
+
+                      <div className="member-card-summary-row">
+                        <span className="member-card-summary-pill">
+                          {plannedClass.status === 'completed' ? 'Completed class' : 'Upcoming class'}
+                        </span>
+                        <span className="member-card-summary-pill">{plannedClass.program_name || 'No program'}</span>
+                        <span className="member-card-summary-pill">
+                          {plannedClass.topics.length} topic{plannedClass.topics.length === 1 ? '' : 's'}
+                        </span>
                       </div>
 
                       {expandedPlannedClassDetailsMap[plannedClass.id] ? (
@@ -1893,7 +1899,7 @@ export default function PlannedClassesPage() {
                           className="secondary-button"
                           onClick={() => togglePlannedClassDetails(plannedClass.id)}
                         >
-                          {expandedPlannedClassDetailsMap[plannedClass.id] ? 'Hide plan details' : 'View plan details'}
+                          {expandedPlannedClassDetailsMap[plannedClass.id] ? 'Hide details' : 'Open details'}
                         </button>
                         {plannedClass.status === 'planned' ? (
                           <>
@@ -1902,7 +1908,7 @@ export default function PlannedClassesPage() {
                               className="secondary-button"
                               onClick={() => handleEdit(plannedClass)}
                             >
-                              Open plan editor
+                              Edit plan
                             </button>
                             <button
                               type="button"
@@ -1926,7 +1932,7 @@ export default function PlannedClassesPage() {
                             className="secondary-button"
                             onClick={() => navigate(`/classes?openClassId=${plannedClass.completed_class_id}`)}
                           >
-                            Open completed class
+                            Open class log
                           </button>
                         )}
                       </div>

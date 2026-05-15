@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import api from '../api/axios';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import ExpandableSection from '../components/ExpandableSection';
 import { formatLabel } from '../utils/formatLabel';
 import TopicSearchSelect from '../components/TopicSearchSelect';
+import { useAuth } from '../hooks/useAuth';
 
 export default function TopicsPage() {
+  const { user } = useAuth();
+  const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const [searchParams] = useSearchParams();
   const topicListSectionRef = useRef(null);
   const topicItemRefs = useRef({});
@@ -30,6 +33,7 @@ export default function TopicsPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [isCreateTopicOpen, setIsCreateTopicOpen] = useState(false);
   const [isTopicListOpen, setIsTopicListOpen] = useState(true);
+  const [expandedTopicDetails, setExpandedTopicDetails] = useState({});
 
   const topicTypes = [
     'position',
@@ -263,10 +267,18 @@ export default function TopicsPage() {
     }
   };
 
+  const toggleTopicDetails = (topicId) => {
+    setExpandedTopicDetails((prev) => ({
+      ...prev,
+      [topicId]: !prev[topicId]
+    }));
+  };
+
   return (
     <Layout>
       <h2 className="page-title">Topics</h2>
 
+      {isManagement ? (
       <ExpandableSection
         isOpen={isCreateTopicOpen}
         onToggle={setIsCreateTopicOpen}
@@ -347,8 +359,19 @@ export default function TopicsPage() {
           </div>
         </form>
 
-        {successMessage ? <p className="success-text">{successMessage}</p> : null}
+        {successMessage ? (
+          <div className="success-followup-row">
+            <p className="success-text" style={{ marginBottom: 0 }}>{successMessage}</p>
+            <Link className="secondary-button" to="/index">
+              Next: Open Curriculum
+            </Link>
+            <Link className="secondary-button" to="/library">
+              Next: Add library support
+            </Link>
+          </div>
+        ) : null}
       </ExpandableSection>
+      ) : null}
 
       {error && <p className="error-text">{error}</p>}
 
@@ -430,36 +453,67 @@ export default function TopicsPage() {
                   }
                 }}
               >
-                <strong>{topic.title}</strong>
-                <div className="detail-block">
-                  <div className="meta-text">Type: {formatLabel(topic.topic_type)}</div>
-                  <div className="meta-text">Program: {topic.program_name || 'None'}</div>
-                  <div className="meta-text">Parent: {topic.parent_topic_title || 'None'}</div>
-                  <div className="meta-text">
-                    Active: {topic.is_active ? 'Yes' : 'No'}
+                <div className="compact-topic-header">
+                  <div>
+                    <strong>{topic.title}</strong>
+                    <div className="compact-topic-meta meta-text">
+                      {formatLabel(topic.topic_type)} • {topic.program_name || 'No program'} • {topic.parent_topic_title || 'Top level'}
+                    </div>
                   </div>
-                  <div>{topic.description || 'No description added yet.'}</div>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => toggleTopicDetails(topic.id)}
+                  >
+                    {expandedTopicDetails[topic.id] ? 'Hide details' : 'Open details'}
+                  </button>
+                </div>
+
+                <div className="member-card-summary-row">
+                  <span className="member-card-summary-pill">{topic.is_active ? 'Active' : 'Inactive'}</span>
+                  <span className="member-card-summary-pill">{formatLabel(topic.topic_type)}</span>
+                  <span className="member-card-summary-pill">{topic.program_name || 'No program'}</span>
+                  <span className="member-card-summary-pill">{topic.parent_topic_title || 'Top level'}</span>
                 </div>
 
                 <div className="inline-actions">
-                  {topic.is_active ? (
-                    <button
-                      className="danger-button"
-                      onClick={() => handleSetActiveState(topic, false)}
-                      disabled={activeTopicId === topic.id}
-                    >
-                      {activeTopicId === topic.id ? 'Updating...' : 'Deactivate Topic'}
-                    </button>
-                  ) : (
-                    <button
-                      className="secondary-button"
-                      onClick={() => handleSetActiveState(topic, true)}
-                      disabled={activeTopicId === topic.id}
-                    >
-                      {activeTopicId === topic.id ? 'Updating...' : 'Make Topic Active Again'}
-                    </button>
-                  )}
+                  <Link className="secondary-button" to={`/index?search=${encodeURIComponent(topic.title)}`}>
+                    Open Curriculum
+                  </Link>
+                  <Link className="secondary-button" to={`/library?topicId=${topic.id}`}>
+                    Open Library
+                  </Link>
+                  {isManagement ? (
+                    topic.is_active ? (
+                      <button
+                        className="danger-button"
+                        onClick={() => handleSetActiveState(topic, false)}
+                        disabled={activeTopicId === topic.id}
+                      >
+                        {activeTopicId === topic.id ? 'Updating...' : 'Deactivate'}
+                      </button>
+                    ) : (
+                      <button
+                        className="secondary-button"
+                        onClick={() => handleSetActiveState(topic, true)}
+                        disabled={activeTopicId === topic.id}
+                      >
+                        {activeTopicId === topic.id ? 'Updating...' : 'Reactivate'}
+                      </button>
+                    )
+                  ) : null}
                 </div>
+
+                {expandedTopicDetails[topic.id] ? (
+                  <div className="detail-block">
+                    <div className="meta-text">Program: {topic.program_name || 'None'}</div>
+                    <div className="meta-text">Parent: {topic.parent_topic_title || 'None'}</div>
+                    <div className="meta-text">
+                      Active: {topic.is_active ? 'Yes' : 'No'}
+                    </div>
+                    <div>{topic.description || 'No description added yet.'}</div>
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>

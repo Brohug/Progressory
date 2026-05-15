@@ -280,25 +280,15 @@ export default function CurriculumIndexPage() {
   const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || '');
   const [skillLevelFilter, setSkillLevelFilter] = useState(searchParams.get('skillLevel') || '');
   const [entryNoticeMap, setEntryNoticeMap] = useState({});
+  const [expandedSearchEntryIds, setExpandedSearchEntryIds] = useState([]);
   const [creatingEntryId, setCreatingEntryId] = useState(null);
-  const [editingTopicId, setEditingTopicId] = useState(null);
   const [activeCreateEntryId, setActiveCreateEntryId] = useState(null);
-  const [activeEditTopicId, setActiveEditTopicId] = useState(null);
-  const [activeToggleTopicId, setActiveToggleTopicId] = useState(null);
   const [createTopicData, setCreateTopicData] = useState({
     title: '',
     topic_type: 'technique',
     program_id: '',
     parent_topic_id: '',
     description: ''
-  });
-  const [editTopicData, setEditTopicData] = useState({
-    title: '',
-    topic_type: 'technique',
-    program_id: '',
-    parent_topic_id: '',
-    description: '',
-    is_active: 'true'
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -491,26 +481,6 @@ export default function CurriculumIndexPage() {
     return matchingTopics.length > 0 ? matchingTopics : activeTopics;
   }, [createTopicData.program_id, topics]);
 
-  const availableEditParentTopics = useMemo(() => {
-    const activeTopics = topics.filter((topic) => topic.is_active);
-
-    if (!editingTopicId) {
-      return activeTopics;
-    }
-
-    const withoutCurrent = activeTopics.filter((topic) => String(topic.id) !== String(editingTopicId));
-
-    if (!editTopicData.program_id) {
-      return withoutCurrent;
-    }
-
-    const matchingTopics = withoutCurrent.filter((topic) => (
-      topic.program_id === null || String(topic.program_id) === String(editTopicData.program_id)
-    ));
-
-    return matchingTopics.length > 0 ? matchingTopics : withoutCurrent;
-  }, [editTopicData.program_id, editingTopicId, topics]);
-
   const filteredEntries = useMemo(() => {
     const normalizedSearch = normalizeValue(search);
     const exactEntryMatch = selectedEntryId
@@ -591,6 +561,38 @@ export default function CurriculumIndexPage() {
       })
     );
   }, [filteredEntries]);
+
+  const isCompactResultView = search.trim().length > 0 && filteredEntries.length > 1;
+
+  useEffect(() => {
+    if (!isCompactResultView) {
+      setExpandedSearchEntryIds([]);
+      return;
+    }
+
+    setExpandedSearchEntryIds((previousIds) => {
+      const visibleIds = new Set(filteredEntries.map((entry) => String(entry.id)));
+      const nextIds = previousIds.filter((entryId) => visibleIds.has(String(entryId)));
+
+      if (
+        selectedEntryId
+        && visibleIds.has(String(selectedEntryId))
+        && !nextIds.includes(selectedEntryId)
+      ) {
+        nextIds.push(selectedEntryId);
+      }
+
+      return nextIds;
+    });
+  }, [filteredEntries, isCompactResultView, selectedEntryId]);
+
+  const handleToggleCompactEntry = (entryId) => {
+    setExpandedSearchEntryIds((previousIds) => (
+      previousIds.includes(entryId)
+        ? previousIds.filter((currentId) => currentId !== entryId)
+        : [...previousIds, entryId]
+    ));
+  };
 
   const summaryCards = useMemo(() => {
     if (isMember) {
@@ -685,135 +687,14 @@ export default function CurriculumIndexPage() {
     }
   };
 
-  const handleOpenEditTopic = (entry) => {
-    if (!entry.topic) {
-      return;
-    }
-
-    setCreatingEntryId(null);
-    setEditingTopicId(entry.topic.id);
-    setEditTopicData({
-      title: entry.topic.title || entry.name,
-      topic_type: entry.topic.topic_type || inferTopicType(entry),
-      program_id: entry.topic.program_id ? String(entry.topic.program_id) : '',
-      parent_topic_id: entry.topic.parent_topic_id ? String(entry.topic.parent_topic_id) : '',
-      description: entry.topic.description || entry.description || '',
-      is_active: entry.topic.is_active ? 'true' : 'false'
-    });
-    setEntryNoticeMap((prev) => ({
-      ...prev,
-      [entry.id]: ''
-    }));
-  };
-
-  const handleEditTopicChange = (e) => {
-    const { name, value } = e.target;
-
-    setEditTopicData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleUpdateTopic = async (entry) => {
-    if (!entry.topic) {
-      return;
-    }
-
-    if (!editTopicData.title.trim()) {
-      setEntryNoticeMap((prev) => ({
-        ...prev,
-        [entry.id]: 'Add a topic title before saving changes.'
-      }));
-      return;
-    }
-
-    try {
-      setActiveEditTopicId(entry.topic.id);
-
-      await api.put(`/topics/${entry.topic.id}`, {
-        program_id: editTopicData.program_id ? Number(editTopicData.program_id) : null,
-        parent_topic_id: editTopicData.parent_topic_id ? Number(editTopicData.parent_topic_id) : null,
-        title: editTopicData.title.trim(),
-        topic_type: editTopicData.topic_type,
-        description: editTopicData.description || '',
-        is_active: editTopicData.is_active === 'true'
-      });
-
-      await fetchTopics();
-      setEditingTopicId(null);
-      setEntryNoticeMap((prev) => ({
-        ...prev,
-        [entry.id]: 'Topic updated successfully from the Curriculum Index.'
-      }));
-    } catch (err) {
-      console.error('Update topic from curriculum index error:', err);
-      setEntryNoticeMap((prev) => ({
-        ...prev,
-        [entry.id]: err.response?.data?.message || 'Couldn\'t update that topic just now.'
-      }));
-    } finally {
-      setActiveEditTopicId(null);
-    }
-  };
-
-  const handleToggleTopicActive = async (entry, nextIsActive) => {
-    if (!entry.topic) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      nextIsActive
-        ? 'Make this topic active again?'
-        : 'Make this topic inactive? It will stay in the curriculum, but it will be hidden from the default view.'
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setActiveToggleTopicId(entry.topic.id);
-      setEntryNoticeMap((prev) => ({
-        ...prev,
-        [entry.id]: ''
-      }));
-
-      await api.put(`/topics/${entry.topic.id}`, {
-        program_id: entry.topic.program_id ?? null,
-        parent_topic_id: entry.topic.parent_topic_id ?? null,
-        title: entry.topic.title,
-        topic_type: entry.topic.topic_type,
-        description: entry.topic.description || '',
-        is_active: nextIsActive
-      });
-
-      await fetchTopics();
-      setEntryNoticeMap((prev) => ({
-        ...prev,
-        [entry.id]: nextIsActive
-          ? 'Topic made active again successfully.'
-          : 'Topic made inactive successfully.'
-      }));
-    } catch (err) {
-      console.error('Toggle topic active state from curriculum index error:', err);
-      setEntryNoticeMap((prev) => ({
-        ...prev,
-        [entry.id]: err.response?.data?.message || 'Couldn\'t update that topic right now.'
-      }));
-    } finally {
-      setActiveToggleTopicId(null);
-    }
-  };
-
   return (
     <Layout>
         <div className="curriculum-index-page">
           <h2 className="page-title">Curriculum</h2>
           <p className="page-intro">
             {isMember
-              ? 'Search the broader curriculum map and use it as a read-only study reference.'
-              : 'Search the broader curriculum map and quickly see whether an item exists in Topics, has shown up in class logs, or already has supporting Library entries.'}
+              ? 'Search the curriculum map and use it as a read-only study reference.'
+              : 'Search the curriculum map, then see whether each item already exists in Topics, class logs, or Library.'}
           </p>
 
         {error && <p className="error-text">{error}</p>}
@@ -828,12 +709,12 @@ export default function CurriculumIndexPage() {
         </section>
 
         <section className="page-section">
-          <div className="section-header">
-            <div>
-              <h3>Search the index</h3>
-              <p className="section-note">Use this as a master reference layer before something has been fully built out elsewhere in the app.</p>
+            <div className="section-header">
+              <div>
+                <h3>Search the index</h3>
+              <p className="section-note">Use this as the master reference layer.</p>
+              </div>
             </div>
-          </div>
 
           <div className="filter-grid">
             <div>
@@ -889,14 +770,17 @@ export default function CurriculumIndexPage() {
 
           <ExpandableSection
             title="Index results"
-            note="Use this as both the broader curriculum map and the fastest place to add operational topics when the gym is missing something."
+            note="Use this as the broad curriculum map and the fastest place to add a missing topic."
             summary={`${filteredEntries.length} matching index item${filteredEntries.length === 1 ? '' : 's'} in the current view.`}
             className="curriculum-index-results-section"
           >
             <div className="section-header">
               <div>
                 <h3>Index results</h3>
-                <p className="section-note">Use this as the broad teaching map, then add the missing topic here when you realize the gym does not have it yet.</p>
+                <p className="section-note">Scan the map, then add the missing topic when the gym does not have it yet.</p>
+                {isCompactResultView ? (
+                  <p className="section-note">Broad search matches stay compact until you open the ones you want.</p>
+                ) : null}
               </div>
             </div>
 
@@ -926,9 +810,18 @@ export default function CurriculumIndexPage() {
                         <div className="card-list">
                           {entries.map((entry) => {
                       const usageCount = Number(entry.coverage?.total_times_used || 0);
+                      const isEntryExpanded = expandedSearchEntryIds.includes(entry.id)
+                        || String(entry.id) === String(selectedEntryId);
+                      const showEntryDetails = !isCompactResultView
+                        || isEntryExpanded
+                        || creatingEntryId === entry.id
+                        || activeCreateEntryId === entry.id;
 
                       return (
-                        <article key={entry.id} className="card-item curriculum-index-card">
+                        <article
+                          key={entry.id}
+                          className={`card-item curriculum-index-card${isCompactResultView && !showEntryDetails ? ' is-compact-collapsed' : ''}`}
+                        >
                           <div className="curriculum-index-card-header">
                             <div className="curriculum-index-title-block">
                               <span className="eyebrow">{entry.category}</span>
@@ -937,6 +830,19 @@ export default function CurriculumIndexPage() {
                             <span className="curriculum-index-skill-level">{entry.skillLevel}</span>
                           </div>
 
+                          {isCompactResultView ? (
+                            <div className="curriculum-index-compact-actions">
+                              <button
+                                type="button"
+                                className="secondary-button curriculum-index-compact-toggle"
+                                onClick={() => handleToggleCompactEntry(entry.id)}
+                              >
+                                {showEntryDetails ? 'Hide details' : 'Open details'}
+                              </button>
+                            </div>
+                          ) : null}
+
+                          {showEntryDetails ? (
                           <div className="detail-block">
                             <div>{entry.description}</div>
 
@@ -1004,8 +910,8 @@ export default function CurriculumIndexPage() {
                                 <strong>{entry.topic ? 'Available' : 'Not added yet'}</strong>
                                 <div className="meta-text">
                                   {entry.topic
-                                    ? 'This item already exists in Topics.'
-                                    : 'This item has not been added to Topics yet.'}
+                                    ? 'Already in Topics.'
+                                    : 'Not in Topics yet.'}
                                 </div>
                               </div>
 
@@ -1020,8 +926,8 @@ export default function CurriculumIndexPage() {
                                 </strong>
                                 <div className="meta-text">
                                   {usageCount > 0
-                                    ? 'This item has shown up in recent class logs.'
-                                    : 'No recent class usage has been logged for this item yet.'}
+                                    ? 'Already used in class logs.'
+                                    : 'No recent class usage yet.'}
                                 </div>
                               </div>
 
@@ -1034,38 +940,28 @@ export default function CurriculumIndexPage() {
                                 </strong>
                                 <div className="meta-text">
                                   {entry.linkedLibraryCount > 0
-                                    ? 'Supporting Library material is already connected.'
-                                    : 'No Library entries are linked to this item yet.'}
+                                    ? 'Library support is already connected.'
+                                    : 'No Library support yet.'}
                                 </div>
                                 <div className="inline-actions curriculum-index-library-action-row">
-                                  {entry.topic ? (
-                                    <Link
-                                      className="secondary-button curriculum-index-action-link"
-                                      to={`/library?topicId=${entry.topic.id}`}
-                                    >
-                                      {entry.linkedLibraryCount > 0 ? 'View linked library' : 'Open Library for this topic'}
-                                    </Link>
-                                  ) : (
-                                    <span
-                                      className="ui-tooltip-trigger"
-                                      data-tooltip="This is disabled until the topic has been added."
-                                    >
-                                      <button
-                                        type="button"
-                                        className="secondary-button curriculum-index-action-link is-disabled"
-                                        disabled
-                                      >
-                                        Add to Topics to use Library
-                                      </button>
-                                    </span>
-                                  )}
+                                  <Link
+                                    className="secondary-button curriculum-index-action-link"
+                                    to={
+                                      entry.topic
+                                        ? `/library?topicId=${entry.topic.id}`
+                                        : `/library?search=${encodeURIComponent(entry.name)}`
+                                    }
+                                  >
+                                    Open Library
+                                  </Link>
                                 </div>
                               </div>
                             </div>
                             ) : null}
                           </div>
+                          ) : null}
 
-                          {!isMember ? (
+                          {!isMember && showEntryDetails ? (
                           <div className="inline-actions curriculum-index-actions">
                             {!entry.topic ? (
                               <span
@@ -1077,41 +973,14 @@ export default function CurriculumIndexPage() {
                                   className="secondary-button"
                                   onClick={() => handleOpenCreateTopic(entry)}
                                 >
-                                  Add to Topics
+                                  Add topic
                                 </button>
                               </span>
                             ) : (
                               <>
-                                <button
-                                  type="button"
-                                  className="secondary-button"
-                                  onClick={() => handleOpenEditTopic(entry)}
-                                  disabled={activeToggleTopicId === entry.topic.id}
-                                >
-                                  Edit topic
-                                </button>
-                                {entry.topic.is_active ? (
-                                  <button
-                                    type="button"
-                                    className="secondary-button"
-                                    onClick={() => handleToggleTopicActive(entry, false)}
-                                    disabled={activeToggleTopicId === entry.topic.id}
-                                  >
-                                    {activeToggleTopicId === entry.topic.id ? 'Updating topic...' : 'Make inactive'}
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    className="secondary-button"
-                                    onClick={() => handleToggleTopicActive(entry, true)}
-                                    disabled={activeToggleTopicId === entry.topic.id}
-                                  >
-                                    {activeToggleTopicId === entry.topic.id ? 'Updating topic...' : 'Make active'}
-                                  </button>
-                                )}
                                 {usageCount > 0 ? (
                                   <Link className="secondary-button curriculum-index-action-link" to="/reports">
-                                    View usage in reports
+                                    Open Reports
                                   </Link>
                                 ) : (
                                   <button
@@ -1119,7 +988,7 @@ export default function CurriculumIndexPage() {
                                     className="secondary-button"
                                     onClick={() => handleCheckClassUsage(entry, usageCount)}
                                   >
-                                    Check class usage
+                                    Check usage
                                   </button>
                                 )}
                               </>
@@ -1127,7 +996,7 @@ export default function CurriculumIndexPage() {
                           </div>
                           ) : null}
 
-                          {!isMember && creatingEntryId === entry.id ? (
+                          {!isMember && showEntryDetails && creatingEntryId === entry.id ? (
                             <div className="quick-add-panel curriculum-index-create-panel">
                               <label>Topic title</label>
                               <input
@@ -1188,7 +1057,7 @@ export default function CurriculumIndexPage() {
                               />
 
                               <p className="section-note curriculum-index-inline-note">
-                                This lets the item enter the operational curriculum with hierarchy in place from the start.
+                                Add it with the right hierarchy from the start.
                               </p>
 
                               <div className="inline-actions">
@@ -1205,101 +1074,6 @@ export default function CurriculumIndexPage() {
                                   className="secondary-button"
                                   onClick={() => setCreatingEntryId(null)}
                                   disabled={activeCreateEntryId === entry.id}
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          ) : null}
-
-                          {!isMember && editingTopicId === entry.topic?.id ? (
-                            <div className="quick-add-panel curriculum-index-create-panel">
-                              <label>Topic title</label>
-                              <input
-                                type="text"
-                                name="title"
-                                value={editTopicData.title}
-                                onChange={handleEditTopicChange}
-                              />
-
-                              <label>Topic type</label>
-                              <select
-                                name="topic_type"
-                                value={editTopicData.topic_type}
-                                onChange={handleEditTopicChange}
-                              >
-                                <option value="position">Position</option>
-                                <option value="technique">Technique</option>
-                                <option value="concept">Concept</option>
-                                <option value="submission">Submission</option>
-                                <option value="escape">Escape</option>
-                                <option value="takedown">Takedown</option>
-                                <option value="drill_theme">Drill Theme</option>
-                              </select>
-
-                              <label>Program</label>
-                              <select
-                                name="program_id"
-                                value={editTopicData.program_id}
-                                onChange={handleEditTopicChange}
-                              >
-                                <option value="">No program</option>
-                                {activePrograms.map((program) => (
-                                  <option key={program.id} value={program.id}>
-                                    {program.name}
-                                  </option>
-                                ))}
-                              </select>
-
-                              <label>Parent topic (optional)</label>
-                              <TopicSearchSelect
-                                topics={availableEditParentTopics}
-                                value={editTopicData.parent_topic_id}
-                                onChange={(topicId) => setEditTopicData((prev) => ({
-                                  ...prev,
-                                  parent_topic_id: topicId
-                                }))}
-                                placeholder="Search for a parent topic..."
-                                helperText="Leave this blank if this should stay as a top-level topic."
-                                showEmptyState={false}
-                              />
-
-                              <label>Description</label>
-                              <textarea
-                                name="description"
-                                rows={3}
-                                value={editTopicData.description}
-                                onChange={handleEditTopicChange}
-                              />
-
-                              <label>Active status</label>
-                              <select
-                                name="is_active"
-                                value={editTopicData.is_active}
-                                onChange={handleEditTopicChange}
-                              >
-                                <option value="true">Active</option>
-                                <option value="false">Inactive</option>
-                              </select>
-
-                              <p className="section-note curriculum-index-inline-note">
-                                You can update the hierarchy here now, alongside the rest of the topic details.
-                              </p>
-
-                              <div className="inline-actions">
-                                <button
-                                  type="button"
-                                  className="secondary-button"
-                                  onClick={() => handleUpdateTopic(entry)}
-                                  disabled={activeEditTopicId === entry.topic?.id}
-                                >
-                                  {activeEditTopicId === entry.topic?.id ? 'Saving topic...' : 'Save topic'}
-                                </button>
-                                <button
-                                  type="button"
-                                  className="secondary-button"
-                                  onClick={() => setEditingTopicId(null)}
-                                  disabled={activeEditTopicId === entry.topic?.id}
                                 >
                                   Cancel
                                 </button>

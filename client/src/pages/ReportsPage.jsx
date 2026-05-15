@@ -322,7 +322,7 @@ export default function ReportsPage() {
       <div className="reports-page">
         <h2 className="page-title">Reports</h2>
         <p className="page-intro">
-          Review trends, spot underused curriculum areas, and better understand what is being taught and how it is being taught.
+          Review trends, spot gaps, and decide what to do next.
         </p>
 
         {error && <p className="error-text">{error}</p>}
@@ -345,6 +345,10 @@ export default function ReportsPage() {
                 {priorityActions.map((action) => (
                   <article key={action.title} className="reports-featured-card">
                     <strong>{action.title}</strong>
+                    <div className="member-card-summary-row">
+                      <span className="member-card-summary-pill">Priority action</span>
+                      <span className="member-card-summary-pill">Open next step</span>
+                    </div>
                     <div className="detail-block">
                       <div>{action.body}</div>
                     </div>
@@ -362,9 +366,9 @@ export default function ReportsPage() {
             ) : null}
 
             <ExpandableSection
-              title="Suggested Next Topics"
-              note="These suggestions help a coach keep the next class close to what was just taught while still bringing neglected topics back into the rotation."
-              summary="Expand when you want a short list of next-class ideas that flow naturally from recent teaching instead of feeling random."
+            title="Suggested Next Topics"
+              note="These suggestions keep the next class close to what was just taught while still bringing neglected topics back into the rotation."
+              summary="Expand when you want next-class ideas that flow naturally from recent teaching."
               className="reports-priority-section"
               defaultOpen
             >
@@ -375,25 +379,27 @@ export default function ReportsPage() {
                   {recommendedNextTopics.map((topic) => (
                     <article key={topic.id} className="reports-featured-card">
                       <strong>{topic.title}</strong>
+                      <div className="member-card-summary-row">
+                        <span className="member-card-summary-pill">{formatLabel(topic.topic_type)}</span>
+                        <span className="member-card-summary-pill">{topic.program_name || 'No program'}</span>
+                      </div>
                       <div className="detail-block">
-                        <div className="meta-text">Type: {formatLabel(topic.topic_type)}</div>
-                        <div className="meta-text">Program: {topic.program_name || 'None'}</div>
-                        <div className="meta-text">Why this fits next: {topic.scoreReasons.join(' | ')}</div>
+                        <div className="meta-text">Why next: {topic.scoreReasons.join(' | ')}</div>
                         {topic.recentRelationshipMatch ? (
                           <div className="meta-text">
-                            This would flow well after: {Array.from(topic.recentRelationshipMatch.recentTopicTitles).slice(0, 2).join(' | ')}
+                            Flows after: {Array.from(topic.recentRelationshipMatch.recentTopicTitles).slice(0, 2).join(' | ')}
                           </div>
                         ) : null}
                       </div>
                       <div className="inline-actions">
                         <Link className="secondary-button" to={`/topics?topicId=${topic.id}`}>
-                          View topic
+                          Open topic
                         </Link>
                         <Link
                           className="secondary-button"
                           to={`/planned-classes?openForm=1&reportTopicId=${topic.id}&reportTopicTitle=${encodeURIComponent(topic.title)}`}
                         >
-                          Plan next class
+                          Plan class
                         </Link>
                       </div>
                     </article>
@@ -403,9 +409,9 @@ export default function ReportsPage() {
             </ExpandableSection>
 
             <ExpandableSection
-              title="Consider Adding Nearby Topics"
-              note="These are nearby curriculum ideas the gym has not added yet, but they would connect cleanly to what coaches have been teaching lately."
-              summary="Expand when you want help spotting missing topics that would make the curriculum feel more complete and connected."
+            title="Consider Adding Nearby Topics"
+              note="These are nearby curriculum ideas the gym has not added yet, but they would connect cleanly to recent teaching."
+              summary="Expand when you want help spotting missing topics that would make the curriculum feel more complete."
               className="reports-priority-section"
             >
               {suggestedMissingTopics.length === 0 ? (
@@ -415,11 +421,14 @@ export default function ReportsPage() {
                   {suggestedMissingTopics.map((topic) => (
                     <article key={`${topic.name}-${topic.sourceTopicTitle}`} className="reports-featured-card">
                       <strong>{topic.name}</strong>
+                      <div className="member-card-summary-row">
+                        <span className="member-card-summary-pill">{formatLabel(topic.suggestedType)}</span>
+                        <span className="member-card-summary-pill">{topic.sourceProgramName || 'Any program'}</span>
+                      </div>
                       <div className="detail-block">
-                        <div className="meta-text">Suggested type: {formatLabel(topic.suggestedType)}</div>
                         <div className="meta-text">Closest recent topic: {topic.sourceTopicTitle}</div>
-                        <div className="meta-text">Why it belongs: {topic.relationLabel}</div>
-                        <div className="meta-text">Best program fit: {topic.sourceProgramName || 'Use any relevant program'}</div>
+                        <div className="meta-text">Why add it: {topic.relationLabel}</div>
+                        <div className="meta-text">Program fit: {topic.sourceProgramName || 'Use any relevant program'}</div>
                       </div>
                       <div className="inline-actions">
                         <Link
@@ -436,9 +445,9 @@ export default function ReportsPage() {
             </ExpandableSection>
 
             <ExpandableSection
-              title="Unused / Underutilized Topics"
-              note="Topics that have not shown up recently and may be worth revisiting in upcoming classes."
-              summary="Expand when you want to spot topics that are falling out of the teaching rotation."
+            title="Unused / Underutilized Topics"
+              note="Topics that have not shown up recently and may be worth revisiting."
+              summary="Expand when you want to spot topics falling out of the teaching rotation."
               className="reports-priority-section"
               defaultOpen
             >
@@ -449,9 +458,11 @@ export default function ReportsPage() {
                   {neglectedTopics.slice(0, 6).map((item) => (
                     <article key={item.topic_id} className="reports-featured-card">
                       <strong>{item.topic_title}</strong>
+                      <div className="member-card-summary-row">
+                        <span className="member-card-summary-pill">{formatLabel(item.topic_type)}</span>
+                        <span className="member-card-summary-pill">{item.program_name || 'No program'}</span>
+                      </div>
                       <div className="detail-block">
-                        <div className="meta-text">Type: {formatLabel(item.topic_type)}</div>
-                        <div className="meta-text">Program: {item.program_name || 'None'}</div>
                         <div className="meta-text">
                           Last Used:{' '}
                           {item.last_used_date
@@ -461,13 +472,13 @@ export default function ReportsPage() {
                       </div>
                       <div className="inline-actions">
                         <Link className="secondary-button" to={`/topics?topicId=${item.topic_id}`}>
-                          View topic
+                          Open topic
                         </Link>
                         <Link
                           className="secondary-button"
                           to={`/planned-classes?openForm=1&reportTopicId=${item.topic_id}&reportTopicTitle=${encodeURIComponent(item.topic_title)}`}
                         >
-                          Plan next class
+                          Plan class
                         </Link>
                       </div>
                     </article>
@@ -478,9 +489,9 @@ export default function ReportsPage() {
 
             <section className="two-column-grid reports-insights-grid">
               <ExpandableSection
-                title="Training Method Usage"
+              title="Training Method Usage"
                 note="How often each training method appears in logged class segments."
-                summary="Expand when you want to compare which training methods are getting the most use."
+                summary="Expand when you want to compare which methods are getting the most use."
                 className="reports-ranked-section"
               >
                 {topMethods.length === 0 ? (
@@ -505,7 +516,7 @@ export default function ReportsPage() {
               </ExpandableSection>
 
               <ExpandableSection
-                title="Top Topic Coverage"
+              title="Top Topic Coverage"
                 note="The most-used topics ranked by how often they appear in classes."
                 summary="Expand when you want to see which topics dominate the current teaching mix."
                 className="reports-ranked-section"
@@ -529,7 +540,7 @@ export default function ReportsPage() {
                         </div>
                         <div className="inline-actions">
                           <Link className="secondary-button" to={`/topics?topicId=${item.topic_id}`}>
-                            View topic
+                            Open topic
                           </Link>
                         </div>
                       </div>
@@ -540,9 +551,9 @@ export default function ReportsPage() {
             </section>
 
             <ExpandableSection
-              title="Recent Classes"
+            title="Recent Classes"
               note="The most recent classes included in this reporting view."
-              summary="Expand when you want to connect the reporting signals back to actual recent sessions."
+              summary="Expand when you want to connect these signals back to real sessions."
               className="reports-activity-section"
             >
               {recentClasses.length === 0 ? (

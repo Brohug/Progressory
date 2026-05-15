@@ -14,6 +14,8 @@ const relationshipGroups = [
 ];
 
 const defaultFocusId = '';
+const COLLAPSED_GUIDED_OPTION_LIMIT = 3;
+const COLLAPSED_SCENARIO_PREVIEW_LIMIT = 3;
 const excludedDecisionTreeSearchCategories = new Set([
   'Constraint-Led Games',
   'Drills',
@@ -2248,6 +2250,7 @@ export default function DecisionTreePage() {
   }, [queryEntryId, querySearch]);
   const [search, setSearch] = useState(querySearch);
   const [searchIsActive, setSearchIsActive] = useState(false);
+  const [expandedSearchResultIds, setExpandedSearchResultIds] = useState([]);
   const [focusId, setFocusId] = useState(initialQueryMatch?.id || defaultFocusId);
   const [history, setHistory] = useState([]);
   const [decisionPath, setDecisionPath] = useState(initialQueryMatch ? [initialQueryMatch.id] : []);
@@ -2309,6 +2312,25 @@ export default function DecisionTreePage() {
       })
       .slice(0, 8);
   }, [entries, search]);
+
+  const isCompactSearchResults = search.trim().length > 0 && searchResults.length > 1;
+
+  const visibleExpandedSearchResultIds = useMemo(() => {
+    if (!isCompactSearchResults) {
+      return [];
+    }
+
+    const visibleIds = new Set(searchResults.map((entry) => String(entry.id)));
+    return expandedSearchResultIds.filter((entryId) => visibleIds.has(String(entryId)));
+  }, [expandedSearchResultIds, isCompactSearchResults, searchResults]);
+
+  const toggleSearchResultDetails = (entryId) => {
+    setExpandedSearchResultIds((previousIds) => (
+      previousIds.includes(entryId)
+        ? previousIds.filter((currentId) => currentId !== entryId)
+        : [...previousIds, entryId]
+    ));
+  };
 
   const activeStyleHints = useMemo(() => getSelectedStyleHints(filters), [filters]);
 
@@ -2600,13 +2622,15 @@ export default function DecisionTreePage() {
   const getScenarioPreview = (scenario) => {
     if (scenario.followUps?.length) {
       return {
-        items: scenario.followUps.slice(0, 6).map((followUp) => ({
+        items: scenario.followUps.slice(0, COLLAPSED_SCENARIO_PREVIEW_LIMIT).map((followUp) => ({
           key: followUp.focusName,
           label: followUp.label,
           interactive: true,
           followUp
         })),
-        hint: ''
+        hint: scenario.followUps.length > COLLAPSED_SCENARIO_PREVIEW_LIMIT
+          ? (scenario.expandableLabel || 'Need more options?')
+          : ''
       };
     }
 
@@ -2617,14 +2641,13 @@ export default function DecisionTreePage() {
 
     return {
       items: firstPrompt.options
-        .filter((option) => !option.isExtended)
-        .slice(0, 6)
+        .slice(0, COLLAPSED_GUIDED_OPTION_LIMIT)
         .map((option) => ({
           key: `${scenario.label}-${option.label}`,
           label: option.label,
           interactive: false
         })),
-      hint: firstPrompt.options.some((option) => option.isExtended)
+      hint: firstPrompt.options.length > COLLAPSED_GUIDED_OPTION_LIMIT
         ? firstPrompt.expandableLabel || 'Need more options?'
         : ''
     };
@@ -2691,7 +2714,7 @@ export default function DecisionTreePage() {
     setActiveScenarioPrompt(null);
     setExpandedPromptKeys({});
     setShowEscapeContinuation(false);
-    setScenarioFeedback('Submission success logged. The decision tree has been reset for the next scenario.');
+    setScenarioFeedback('Submission success logged. Start a new problem or search a new start point next.');
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
@@ -2713,7 +2736,7 @@ export default function DecisionTreePage() {
 
   const resetFilters = () => {
     setFilters(defaultFilters);
-    setScenarioFeedback('Filters reset. Your current tree path stayed in place.');
+    setScenarioFeedback('Filters reset. Your current path stayed in place.');
   };
 
   return (
@@ -2721,14 +2744,16 @@ export default function DecisionTreePage() {
       <div className="decision-tree-page">
         <h2 className="page-title">Decision Trees</h2>
         <p className="page-intro">
-          Explore one universal grappling tree from the Curriculum Index, then use real-life filters to narrow the next best options for a coach, student, or matchup.
+          {isMember
+            ? 'Follow one study path at a time, then jump back into Curriculum or Library when you want more support.'
+            : 'Explore one universal grappling tree from Curriculum, then use real-life filters to narrow the next best options for a coach, student, or matchup.'}
         </p>
 
         <section className="page-section decision-tree-hero">
           <div>
             <p className="meta-text">Current focus</p>
             <h3>{focusEntry?.name || 'No start point selected yet'}</h3>
-            <p>{focusEntry?.description || 'Pick a coaching problem or search the Curriculum Index to start building a real path through the tree.'}</p>
+            <p>{focusEntry?.description || 'Pick a coaching problem or search Curriculum to start building a real path through the tree.'}</p>
             <div className="decision-tree-chip-row">
               {focusEntry?.category && <span className="curriculum-index-tag">{focusEntry.category}</span>}
               {focusEntry?.subcategory && <span className="curriculum-index-tag">{focusEntry.subcategory}</span>}
@@ -2808,9 +2833,11 @@ export default function DecisionTreePage() {
         <section className="page-section">
           <h3>Start point</h3>
           <p className="meta-text">
-            Search the universal Index and choose the position, attack, defense, or concept you want the tree to start from.
+            {isMember
+              ? 'Search the Curriculum and choose the position, attack, defense, or concept you want to study next.'
+              : 'Search Curriculum and choose the position, attack, defense, or concept you want the tree to start from.'}
           </p>
-          <label htmlFor="decision-tree-search">Search Curriculum Index</label>
+          <label htmlFor="decision-tree-search">Search Curriculum</label>
           <input
             id="decision-tree-search"
             type="text"
@@ -2832,23 +2859,58 @@ export default function DecisionTreePage() {
 
           {searchIsActive && searchResults.length > 0 && (
             <ul className="card-list decision-tree-search-results">
-              {searchResults.map((entry) => (
-                <li className="decision-tree-search-result" key={entry.id}>
-                  <button
-                    type="button"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => selectFocusEntry(entry, {
-                      pathMode: 'reset',
-                      scrollTarget: 'tree',
-                      closeSearch: true,
-                      feedback: `Focused on ${entry.name}. The page jumped to Tree branches below.`
-                    })}
-                  >
-                    <strong>{entry.name}</strong>
-                    <span>{entry.category}{entry.subcategory ? ` | ${entry.subcategory}` : ''}</span>
-                  </button>
-                </li>
-              ))}
+              {searchResults.map((entry) => {
+                const showSearchResultDetails = !isCompactSearchResults || visibleExpandedSearchResultIds.includes(entry.id);
+
+                return (
+                  <li className="decision-tree-search-result" key={entry.id}>
+                    <div className={`decision-tree-search-result-card${isCompactSearchResults && !showSearchResultDetails ? ' is-compact' : ''}`}>
+                      <div className="decision-tree-search-result-header">
+                        <div className="decision-tree-search-result-title">
+                          <strong>{entry.name}</strong>
+                          <span>{entry.category}{entry.subcategory ? ` | ${entry.subcategory}` : ''}</span>
+                        </div>
+                        <div className="decision-tree-search-result-actions">
+                          <button
+                            type="button"
+                            className="secondary-button"
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => selectFocusEntry(entry, {
+                              pathMode: 'reset',
+                              scrollTarget: 'tree',
+                              closeSearch: true,
+                              feedback: `Focused on ${entry.name}. The page jumped to Tree branches below.`
+                            })}
+                          >
+                            Use in tree
+                          </button>
+                          {isCompactSearchResults ? (
+                            <button
+                              type="button"
+                              className="secondary-button"
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => toggleSearchResultDetails(entry.id)}
+                            >
+                              {showSearchResultDetails ? 'Hide details' : 'Open details'}
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {showSearchResultDetails ? (
+                        <div className="decision-tree-search-result-details">
+                          <p>{entry.description}</p>
+                          {entry.relatedPositions?.length ? (
+                            <div className="meta-text">
+                              Related positions: {entry.relatedPositions.join(', ')}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
@@ -2936,7 +2998,9 @@ export default function DecisionTreePage() {
                 const prompt = activeScenarioPrompt.scenario.guidedPrompts[activeScenarioPrompt.stepIndex];
                 const promptKey = `${activeScenarioPrompt.scenario.label}-${activeScenarioPrompt.stepIndex}`;
                 const isExpanded = Boolean(expandedPromptKeys[promptKey]);
-                const visibleOptions = prompt.options.filter((option) => isExpanded || !option.isExtended);
+                const visibleOptions = isExpanded
+                  ? prompt.options
+                  : prompt.options.slice(0, COLLAPSED_GUIDED_OPTION_LIMIT);
 
                 return (
                   <>
@@ -2962,7 +3026,7 @@ export default function DecisionTreePage() {
                   </button>
                 ))}
               </div>
-              {prompt.options.some((option) => option.isExtended) ? (
+              {prompt.options.length > COLLAPSED_GUIDED_OPTION_LIMIT ? (
                 <button
                   type="button"
                   className="secondary-button decision-tree-guided-toggle"
@@ -3149,6 +3213,19 @@ export default function DecisionTreePage() {
 
           {focusEntry ? (
             <div className="decision-tree-success-row">
+              <Link className="secondary-button" to={buildCurriculumIndexLink(focusEntry)}>
+                Open Curriculum
+              </Link>
+              <Link
+                className="secondary-button"
+                to={buildLibraryLink({
+                  entryName: focusEntry.name,
+                  focusEntry,
+                  decisionPathEntries
+                })}
+              >
+                Open Library
+              </Link>
               {showEscapeContinuationAction ? (
                 <button
                   className="secondary-button decision-tree-continuation-toggle"

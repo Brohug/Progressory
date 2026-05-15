@@ -174,6 +174,16 @@ const updateMember = async (req, res) => {
       });
     }
 
+    if (
+      req.user.role === 'coach'
+      && is_active !== undefined
+      && Boolean(updatedIsActive) !== Boolean(currentMember.is_active)
+    ) {
+      return res.status(403).json({
+        message: 'Only owner or admin accounts can change member roster status'
+      });
+    }
+
     if (updatedProgramId !== null) {
       const [programRows] = await pool.query(
         'SELECT id FROM programs WHERE id = ? AND gym_id = ?',

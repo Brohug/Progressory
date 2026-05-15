@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
@@ -14,6 +14,9 @@ export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const locationKey = `${location.pathname}${location.search}`;
+  const desktopMoreMenuRef = useRef(null);
+  const mobileMoreSheetRef = useRef(null);
+  const mobileMoreButtonRef = useRef(null);
   const [menuState, setMenuState] = useState({
     mobile: false,
     more: false,
@@ -63,6 +66,14 @@ export default function Layout({ children }) {
     }));
   };
 
+  const closeMoreMenu = useCallback(() => {
+    setMenuState((prev) => ({
+      ...prev,
+      more: false,
+      routeKey: locationKey
+    }));
+  }, [locationKey]);
+
   const toggleUserMenu = () => {
     setMenuState((prev) => ({
       mobile: false,
@@ -80,6 +91,34 @@ export default function Layout({ children }) {
       routeKey: locationKey
     });
   };
+
+  useEffect(() => {
+    if (!isMoreMenuOpen) {
+      return undefined;
+    }
+
+    const handlePointerDownOutside = (event) => {
+      const target = event.target;
+
+      if (
+        desktopMoreMenuRef.current?.contains(target) ||
+        mobileMoreSheetRef.current?.contains(target) ||
+        mobileMoreButtonRef.current?.contains(target)
+      ) {
+        return;
+      }
+
+      closeMoreMenu();
+    };
+
+    document.addEventListener('mousedown', handlePointerDownOutside);
+    document.addEventListener('touchstart', handlePointerDownOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDownOutside);
+      document.removeEventListener('touchstart', handlePointerDownOutside);
+    };
+  }, [closeMoreMenu, isMoreMenuOpen]);
 
   const toggleGuide = () => {
     const nextValue = !isGuideCollapsed;
@@ -329,7 +368,8 @@ export default function Layout({ children }) {
       { label: 'Reports', to: '/reports' },
       { label: 'Library', to: '/library' },
       { label: 'Decision Trees', to: '/decision-tree' },
-      { label: 'Scenarios', to: '/training-scenarios' }
+      { label: 'Scenarios', to: '/training-scenarios' },
+      { label: 'Topics', to: '/topics' }
     ];
 
     if (isManagement) {
@@ -430,7 +470,7 @@ export default function Layout({ children }) {
                   </NavLink>
                 ))}
 
-                <div className="app-nav-more-shell">
+                <div className="app-nav-more-shell" ref={desktopMoreMenuRef}>
                   <button
                     type="button"
                     className={`app-nav-link app-nav-more-toggle${isMoreRouteActive ? ' is-active' : ''}`}
@@ -523,7 +563,7 @@ export default function Layout({ children }) {
         ) : null}
 
         {user && isMoreMenuOpen ? (
-          <div className="app-mobile-more-sheet">
+          <div className="app-mobile-more-sheet" ref={mobileMoreSheetRef}>
             <div className="app-mobile-more-sheet-header">
               <strong>More</strong>
               <button type="button" className="secondary-button" onClick={closeMenus}>
@@ -554,6 +594,7 @@ export default function Layout({ children }) {
             type="button"
             className={`app-mobile-nav-link app-mobile-more-toggle${isMoreRouteActive || isMoreMenuOpen ? ' is-active' : ''}`}
             onClick={toggleMoreMenu}
+            ref={mobileMoreButtonRef}
           >
             More
           </button>

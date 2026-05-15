@@ -384,6 +384,10 @@ export default function DashboardPage() {
     }
   ];
 
+  const staffPageIntro = isManagement
+    ? 'Start with today’s job, then jump straight into the next one.'
+    : 'Start with today’s class work, then jump into planning, logs, members, or study support.';
+
   useEffect(() => {
     if (!isMember) {
       return;
@@ -425,9 +429,9 @@ export default function DashboardPage() {
       <Layout>
         <div className="dashboard-page">
           <h2 className="page-title">Dashboard</h2>
-          <p className="page-intro">
-            Use this page to see what is coming up, review your progress, and reopen the resources your coaches want members to use.
-          </p>
+        <p className="page-intro">
+          Use this page to see what is coming up, review your progress, and reopen the study tools that actually help next.
+        </p>
 
           {error && <p className="error-text">{error}</p>}
 
@@ -447,10 +451,10 @@ export default function DashboardPage() {
               <section className="page-section dashboard-hero-section">
                 <div className="section-header">
                   <div>
-                    <h3>Quick Actions</h3>
-                    <p className="section-note">Jump straight into the part of the app that helps you study or prepare next.</p>
-                  </div>
+                  <h3>Today</h3>
+                  <p className="section-note">Open the next class, your progress, or the study tool you need right now.</p>
                 </div>
+              </div>
                 <div className="action-grid">
                   <Link to="/planned-classes" className="action-card dashboard-action-card">
                     <strong>See upcoming classes</strong>
@@ -478,7 +482,7 @@ export default function DashboardPage() {
               <section className="page-section dashboard-onboarding-section">
                 <div className="section-header">
                   <div>
-                    <h3>Member Snapshot</h3>
+                    <h3>What to study next</h3>
                     <p className="section-note">Keep this simple: what class is next, what to study, and what resources your coaches already shared.</p>
                   </div>
                 </div>
@@ -529,7 +533,7 @@ export default function DashboardPage() {
               <section className="page-section dashboard-queue-section">
                 <div className="section-header">
                   <div>
-                    <h3>What to open next</h3>
+                    <h3>Keep moving</h3>
                     <p className="section-note">Keep the member experience simple: class schedule, progress, and study tools.</p>
                   </div>
                 </div>
@@ -604,47 +608,39 @@ export default function DashboardPage() {
     );
   }
 
-  const quickActions = [
+  const quickActions = isManagement ? [
     {
       title: 'Review Attendance',
-      description: 'Finish attendance and class admin.',
-      cta: 'Open attendance queue',
+      description: 'Finish today\'s attendance work.',
+      cta: 'Review Attendance',
       to: '/classes?workflow=attendance-ready',
       featured: true
     },
     {
       title: 'Plan a Class',
       description: 'Build the next session.',
-      cta: 'Open Class Planner',
+      cta: 'Plan a Class',
       to: '/planned-classes'
     },
     {
       title: 'Log Completed Class',
       description: todayClassCount > 0
         ? `Finish ${todayClassCount} class${todayClassCount === 1 ? '' : 'es'} from today.`
-        : 'Open today\'s class-log view.',
-      cta: 'Open Class Logs',
+        : 'Open today\'s class logs.',
+      cta: 'Log Completed Class',
       to: `/classes?workflow=today-completed&classDate=${todayIsoDate}`
-    },
-    {
-      title: 'Log Unplanned Class',
-      description: 'Open a fresh class log.',
-      cta: 'Create Class Log',
-      to: '/classes?workflow=create-class'
     },
     {
       title: 'Create Scenario',
       description: 'Build reusable class templates.',
-      cta: 'Open Scenarios',
+      cta: 'Create Scenario',
       to: '/training-scenarios?action=create&source=dashboard'
     },
     {
-      title: isManagement ? 'Add Curriculum Topic' : 'Open Curriculum',
-      description: isManagement
-        ? 'Add the next curriculum topic.'
-        : 'Review the curriculum map.',
-      cta: isManagement ? 'Add Topic' : 'Open Curriculum',
-      to: isManagement ? '/topics?action=create' : '/index'
+      title: 'Add Curriculum Topic',
+      description: 'Add the next curriculum topic.',
+      cta: 'Add Curriculum Topic',
+      to: '/topics?action=create'
     },
     {
       title: 'Open Library',
@@ -655,14 +651,60 @@ export default function DashboardPage() {
     {
       title: 'View Members',
       description: 'Check roster and progress.',
-      cta: 'Open Members',
+      cta: 'View Members',
       to: '/members'
     },
     {
       title: 'Run Reports',
       description: 'Review gaps and trends.',
-      cta: 'Open Reports',
+      cta: 'Run Reports',
       to: '/reports'
+    }
+  ] : [
+    {
+      title: 'Review Attendance',
+      description: 'Finish today\'s attendance work.',
+      cta: 'Review Attendance',
+      to: '/classes?workflow=attendance-ready',
+      featured: true
+    },
+    {
+      title: 'Plan a Class',
+      description: 'Build the next session.',
+      cta: 'Plan a Class',
+      to: '/planned-classes'
+    },
+    {
+      title: 'Log Completed Class',
+      description: todayClassCount > 0
+        ? `Finish ${todayClassCount} class${todayClassCount === 1 ? '' : 'es'} from today.`
+        : 'Open today\'s class logs.',
+      cta: 'Log Completed Class',
+      to: `/classes?workflow=today-completed&classDate=${todayIsoDate}`
+    },
+    {
+      title: 'Create Scenario',
+      description: 'Reuse class structures faster.',
+      cta: 'Create Scenario',
+      to: '/training-scenarios?action=create&source=dashboard'
+    },
+    {
+      title: 'Open Curriculum',
+      description: 'Review the curriculum map.',
+      cta: 'Open Curriculum',
+      to: '/index'
+    },
+    {
+      title: 'Open Library',
+      description: 'Review teaching resources.',
+      cta: 'Open Library',
+      to: '/library'
+    },
+    {
+      title: 'View Members',
+      description: 'Check roster and progress.',
+      cta: 'View Members',
+      to: '/members'
     }
   ];
 
@@ -674,7 +716,7 @@ export default function DashboardPage() {
         ? `${todayPlannedCount} class${todayPlannedCount === 1 ? '' : 'es'} scheduled today.`
         : 'Nothing planned yet for today.',
       to: '/planned-classes',
-      cta: 'Open Class Planner'
+      cta: 'Plan a Class'
     },
     {
       title: 'Attendance to review',
@@ -701,7 +743,7 @@ export default function DashboardPage() {
       <div className="dashboard-page">
         <h2 className="page-title">Dashboard</h2>
         <p className="page-intro">
-          Use this page like a coach workflow. Pick the next job you need to handle, jump there directly, and keep the day moving without hunting through the app.
+          {staffPageIntro}
         </p>
 
         {error && <p className="error-text">{error}</p>}
@@ -710,13 +752,13 @@ export default function DashboardPage() {
           <p className="empty-state">Loading your dashboard...</p>
         ) : (
           <>
-            {tutorialState === 'prompt' ? (
+            {isManagement && tutorialState === 'prompt' ? (
               <section className="page-section dashboard-guide-section">
                 <div className="section-header">
                   <div>
                     <h3>Want a walkthrough of the application?</h3>
                     <p className="section-note">
-                      This tutorial shows the main owner flow, highlights the biggest sections, and keeps the rest of the dashboard visually quieter while you step through it.
+                      Get a quick owner setup tour and keep the rest of the page quieter while you follow it.
                     </p>
                   </div>
                   <div className="inline-actions">
@@ -725,14 +767,14 @@ export default function DashboardPage() {
                       className="secondary-button"
                       onClick={startTutorial}
                     >
-                      Yes, walk me through it
+                      Start walkthrough
                     </button>
                     <button
                       type="button"
                       className="secondary-button"
                       onClick={minimizeTutorial}
                     >
-                      Not now
+                      Skip for now
                     </button>
                   </div>
                 </div>
@@ -764,13 +806,13 @@ export default function DashboardPage() {
               </section>
             ) : null}
 
-            {tutorialState === 'minimized' && !setupComplete ? (
+            {isManagement && tutorialState === 'minimized' && !setupComplete ? (
               <section className="page-section dashboard-guide-mini">
                 <div className="section-header">
                   <div>
                     <h3>Want a walkthrough later?</h3>
                     <p className="section-note">
-                      Keep this tucked away for now, then expand it whenever you want the guided owner walkthrough again.
+                      Keep this tucked away for now and bring it back whenever you want the guided owner walkthrough again.
                     </p>
                   </div>
                   <div className="inline-actions">
@@ -832,7 +874,7 @@ export default function DashboardPage() {
               </section>
             ) : null}
 
-            {isTutorialActive && activeTutorialStep ? (
+            {isManagement && isTutorialActive && activeTutorialStep ? (
               <div className="dashboard-tutorial-overlay" role="dialog" aria-live="polite">
                 <div className="dashboard-tutorial-card">
                   <span className="eyebrow">
@@ -873,7 +915,7 @@ export default function DashboardPage() {
               <div className="section-header">
                 <div>
                   <h3>Today</h3>
-                  <p className="section-note">Start here when you need the fastest next action for today.</p>
+                  <p className="section-note">{isManagement ? 'Start here first.' : 'Handle the live coaching work first.'}</p>
                 </div>
               </div>
               <div className="action-grid">
@@ -896,7 +938,7 @@ export default function DashboardPage() {
               <div className="section-header">
                 <div>
                   <h3>Quick Actions</h3>
-                  <p className="section-note">Jump straight into the job you want to handle next.</p>
+                  <p className="section-note">{isManagement ? 'Jump straight to the next job.' : 'Use these when you already know the coaching job you need next.'}</p>
                 </div>
               </div>
               <div className="action-grid">
@@ -914,12 +956,12 @@ export default function DashboardPage() {
               </div>
             </section>
 
-            {!hideSetupChecklist ? (
+            {isManagement && !hideSetupChecklist ? (
               <section id="dashboard-start-here" className={`page-section dashboard-onboarding-section${getTutorialSectionClass('dashboard-start-here')}`}>
                 <div className="section-header">
                   <div>
                     <h3>Start Here</h3>
-                    <p className="section-note">Use this if you are setting up the gym or onboarding a coach for the first time.</p>
+                    <p className="section-note">Use this when setting up the gym or onboarding a coach.</p>
                   </div>
                   <div className="inline-actions">
                     <button
@@ -993,12 +1035,12 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </section>
-            ) : !setupComplete ? (
+            ) : isManagement && !setupComplete ? (
               <section className="page-section dashboard-onboarding-collapsed">
                 <div className="section-header">
                   <div>
                     <h3>Setup guide hidden</h3>
-                    <p className="section-note">Bring it back any time if you want the onboarding checklist again.</p>
+                    <p className="section-note">Bring it back any time.</p>
                   </div>
                   <div className="inline-actions">
                     <button
@@ -1013,12 +1055,12 @@ export default function DashboardPage() {
               </section>
             ) : null}
 
-            {setupComplete ? (
+            {isManagement && setupComplete ? (
               <section id="dashboard-helpful-extras" className={`page-section dashboard-extras-section${getTutorialSectionClass('dashboard-helpful-extras')}`}>
                 <div className="section-header">
                   <div>
                     <h3>Helpful Extras</h3>
-                    <p className="section-note">These upgrades make the app more valuable for coaches and members after the core workflow is already running.</p>
+                    <p className="section-note">Use these once the core workflow is already running.</p>
                   </div>
                 </div>
                 <div className="action-grid">
@@ -1036,8 +1078,8 @@ export default function DashboardPage() {
 
             <ExpandableSection
               title="Recent Classes"
-              note="The most recent sessions logged by your team."
-              summary="Keep this collapsed unless you want a quick look at the most recent logged sessions."
+              note="Recent sessions logged by your team."
+              summary="Open this when you want a quick look at the latest class logs."
               className={`dashboard-primary-section${isTutorialActive ? ' dashboard-tutorial-dimmed' : ''}`}
               actions={<Link to="/classes" className="secondary-button">Open Class Logs</Link>}
             >
@@ -1069,8 +1111,8 @@ export default function DashboardPage() {
 
             <ExpandableSection
               title="Insights"
-              note="Open this when you want a quick read on topic and training-method trends."
-              summary="Keep this collapsed unless you want a deeper look than the main dashboard actions."
+              note="Open this when you want topic and training-method trends."
+              summary="Keep this collapsed unless you want a deeper read than the main dashboard actions."
               className={`dashboard-cta-section${isTutorialActive ? ' dashboard-tutorial-dimmed' : ''}`}
               defaultOpen={false}
               actions={<Link to="/reports" className="secondary-button">Open Reports</Link>}

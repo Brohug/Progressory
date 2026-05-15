@@ -9,7 +9,7 @@ const {
   deleteMember
 } = require('../controllers/membersController');
 
-const { protect, requireStaff } = require('../middleware/authMiddleware');
+const { protect, requireStaff, requireManagement } = require('../middleware/authMiddleware');
 const progressRoutes = require('./progressRoutes');
 
 router.use(protect, requireStaff);
@@ -21,6 +21,6 @@ router.use('/:id/progress', progressRoutes);
 
 router.get('/:id', getMemberById);
 router.put('/:id', updateMember);
-router.delete('/:id', deleteMember);
+router.delete('/:id', requireManagement, deleteMember);
 
 module.exports = router;

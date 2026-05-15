@@ -110,7 +110,7 @@ export default function TrainingScenariosPage() {
     setIsCreateSectionOpen(true);
     setShowCreateScenarioForm(true);
     setScenarioError('');
-    setScenarioMessage('Use the form below to create a reusable training scenario.');
+    setScenarioMessage('Use the form below to create a reusable scenario.');
 
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete('action');
@@ -382,9 +382,7 @@ export default function TrainingScenariosPage() {
       <div className="training-scenarios-page">
         <h2 className="page-title">Scenarios</h2>
         <p className="page-intro">
-          Create reusable scenarios for your gym here, then pull them into planned classes and
-          completed class logs whenever they fit. Think of this page as your reusable class-setup
-          library.
+          Create reusable scenarios here, then pull them into class planning and class logs when they fit.
         </p>
 
         {isManagement ? (
@@ -392,13 +390,13 @@ export default function TrainingScenariosPage() {
             <Link to="/topics?action=create" className="action-card dashboard-action-card">
               <strong>Need a starting topic first?</strong>
               <div className="detail-block">
-                <div className="meta-text">Open Topics and add the position or technique first if the scenario you want to build does not have a clean curriculum anchor yet.</div>
+                <div className="meta-text">Open Topics and add the position or technique first.</div>
               </div>
             </Link>
             <Link to="/topics" className="action-card dashboard-action-card">
               <strong>Review scenario-ready topics</strong>
               <div className="detail-block">
-                <div className="meta-text">Search the topic library when you want the best starting position or teaching focus for the next reusable scenario.</div>
+                <div className="meta-text">Search the topic library for the best starting position or teaching focus.</div>
               </div>
             </Link>
           </section>
@@ -409,24 +407,21 @@ export default function TrainingScenariosPage() {
             <span className="eyebrow">Build Once</span>
             <strong>Create reusable scenarios</strong>
             <p>
-              Set the method, starting topic, and objectives once so coaches do not have to rebuild
-              the same scenario every time.
+              Set the method, starting topic, and objectives once.
             </p>
           </div>
           <div className="action-card">
             <span className="eyebrow">Plan Faster</span>
             <strong>Use them in planned classes</strong>
             <p>
-              Pull scenarios straight into Planned Classes when mapping out the week so the class
-              structure is already lined up.
+              Pull scenarios straight into Class Planner when mapping out the week.
             </p>
           </div>
           <div className="action-card">
             <span className="eyebrow">Reuse Later</span>
             <strong>Use them in completed classes</strong>
             <p>
-              Reuse the same scenarios when logging live classes so repeated coaching themes stay
-              consistent over time.
+              Reuse the same scenarios when logging live classes.
             </p>
           </div>
         </section>
@@ -452,7 +447,7 @@ export default function TrainingScenariosPage() {
               <div>
                 <h3>Create and reuse scenarios</h3>
                 <p className="section-note">
-                  Build a scenario once, then reuse it later in Planned Classes and Completed Classes.
+                  Build a scenario once, then reuse it later in Class Planner and Class Logs.
                 </p>
                 {isManagement ? (
                   <div className="inline-actions" style={{ marginTop: '10px' }}>
@@ -485,7 +480,7 @@ export default function TrainingScenariosPage() {
                   value={scenarioFormData.program_id}
                   onChange={handleScenarioFormChange}
                 >
-                  <option value="">No Program</option>
+                  <option value="">No program</option>
                   {programs.filter((program) => program.is_active).map((program) => (
                     <option key={program.id} value={program.id}>
                       {program.name}
@@ -597,7 +592,17 @@ export default function TrainingScenariosPage() {
               </div>
             </form>
 
-            {scenarioMessage ? <p className="success-text">{scenarioMessage}</p> : null}
+            {scenarioMessage ? (
+              <div className="success-followup-row">
+                <p className="success-text" style={{ marginBottom: 0 }}>{scenarioMessage}</p>
+                <Link className="secondary-button" to="/planned-classes">
+                  Next: Open Class Planner
+                </Link>
+                <Link className="secondary-button" to="/classes">
+                  Next: Open Class Logs
+                </Link>
+              </div>
+            ) : null}
             {scenarioError ? <p className="error-text">{scenarioError}</p> : null}
             </section>
           ) : null}
@@ -645,7 +650,7 @@ export default function TrainingScenariosPage() {
                       <div className="meta-text compact-topic-meta">
                         {(scenario.training_method_name || 'No method')}
                         {' • '}
-                        {(scenario.program_name || 'No Program')}
+                        {(scenario.program_name || 'No program')}
                       </div>
                     </div>
                     <button
@@ -653,9 +658,19 @@ export default function TrainingScenariosPage() {
                       className="secondary-button"
                       onClick={() => toggleScenarioDetails(scenario.id)}
                     >
-                      {expandedScenarioDetails[scenario.id] ? 'Hide scenario details' : 'View scenario details'}
+                      {expandedScenarioDetails[scenario.id] ? 'Hide details' : 'Open details'}
                     </button>
                   </div>
+
+                  <div className="member-card-summary-row">
+                    <span className="member-card-summary-pill">{scenario.training_method_name || 'No method'}</span>
+                    <span className="member-card-summary-pill">{scenario.program_name || 'No program'}</span>
+                    <span className="member-card-summary-pill">
+                      {scenario.round_duration_seconds ? `${scenario.round_duration_seconds}s` : 'No duration'}
+                    </span>
+                    <span className="member-card-summary-pill">{scenario.is_active ? 'Active' : 'Inactive'}</span>
+                  </div>
+
                   {expandedScenarioDetails[scenario.id] ? (
                     <div className="detail-block">
                       <div className="meta-text">
@@ -679,7 +694,7 @@ export default function TrainingScenariosPage() {
                       className="secondary-button"
                       onClick={() => toggleEditScenario(scenario)}
                     >
-                      {editingScenarios[scenario.id] ? 'Close scenario editor' : 'Open scenario editor'}
+                      {editingScenarios[scenario.id] ? 'Close editor' : 'Edit scenario'}
                     </button>
 
                   {scenario.is_active ? (
@@ -688,7 +703,7 @@ export default function TrainingScenariosPage() {
                       onClick={() => handleDeactivateScenario(scenario.id)}
                       disabled={activeScenarioId === scenario.id}
                     >
-                      {activeScenarioId === scenario.id ? 'Updating...' : 'Deactivate Scenario'}
+                      {activeScenarioId === scenario.id ? 'Updating...' : 'Deactivate'}
                     </button>
                   ) : null}
                   <button
@@ -726,7 +741,7 @@ export default function TrainingScenariosPage() {
                               value={editScenarioMap[scenario.id]?.program_id || ''}
                               onChange={(e) => handleEditScenarioChange(scenario.id, e)}
                             >
-                              <option value="">No Program</option>
+                              <option value="">No program</option>
                               {programs.filter((program) => program.is_active).map((program) => (
                                 <option key={program.id} value={program.id}>
                                   {program.name}
