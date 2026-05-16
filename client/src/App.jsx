@@ -4,6 +4,7 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import ProtectedRoute from './components/ProtectedRoute';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 const MemberAccessPage = lazy(() => import('./pages/MemberAccessPage'));
 const StaffAccessPage = lazy(() => import('./pages/StaffAccessPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
@@ -19,6 +20,8 @@ const StaffPage = lazy(() => import('./pages/StaffPage'));
 const CurriculumIndexPage = lazy(() => import('./pages/CurriculumIndexPage'));
 const DecisionTreePage = lazy(() => import('./pages/DecisionTreePage'));
 const MyProgressPage = lazy(() => import('./pages/MyProgressPage'));
+const MyAccountPage = lazy(() => import('./pages/MyAccountPage'));
+const BillingPage = lazy(() => import('./pages/BillingPage'));
 
 const STAFF_ROLES = ['owner', 'admin', 'coach'];
 const MANAGEMENT_ROLES = ['owner', 'admin'];
@@ -48,7 +51,8 @@ export default function App() {
         <ScrollToTop />
         <Suspense fallback={<RouteFallback />}>
           <Routes>
-            <Route path="/" element={<LoginPage />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
             <Route path="/member-access/:token" element={<MemberAccessPage />} />
             <Route path="/staff-access/:token" element={<StaffAccessPage />} />
             <Route
@@ -152,6 +156,22 @@ export default function App() {
               element={
                 <ProtectedRoute allowedRoles={['member']}>
                   <MyProgressPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <ProtectedRoute allowedRoles={['owner', ...STAFF_ROLES.slice(1), 'member']}>
+                  <MyAccountPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/billing"
+              element={
+                <ProtectedRoute allowedRoles={['owner']}>
+                  <BillingPage />
                 </ProtectedRoute>
               }
             />

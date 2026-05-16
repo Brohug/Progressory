@@ -81,7 +81,8 @@ const register = async (req, res) => {
     await connection.commit();
 
     const [rows] = await connection.query(
-      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, g.name AS gym_name, g.slug
+      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.created_at, u.updated_at,
+              g.name AS gym_name, g.slug
        FROM users u
        JOIN gyms g ON u.gym_id = g.id
        WHERE u.id = ?`,
@@ -121,6 +122,7 @@ const login = async (req, res) => {
 
     const [rows] = await pool.query(
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.password_hash, u.role, u.is_active,
+              u.created_at, u.updated_at,
               m.id AS member_id,
               g.name AS gym_name, g.slug
        FROM users u
@@ -165,6 +167,8 @@ const login = async (req, res) => {
         email: user.email,
         role: user.role,
         member_id: user.member_id || null,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
         gym_name: user.gym_name,
         slug: user.slug
       }
@@ -324,6 +328,7 @@ const setMemberAccessPassword = async (req, res) => {
 
     const [userRows] = await pool.query(
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
+              u.created_at, u.updated_at,
               m.id AS member_id,
               g.name AS gym_name, g.slug
        FROM users u
@@ -455,6 +460,7 @@ const setStaffAccessPassword = async (req, res) => {
 
     const [userRows] = await pool.query(
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
+              u.created_at, u.updated_at,
               m.id AS member_id,
               g.name AS gym_name, g.slug
        FROM users u
@@ -478,6 +484,8 @@ const setStaffAccessPassword = async (req, res) => {
         email: user.email,
         role: user.role,
         member_id: user.member_id || null,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
         gym_name: user.gym_name,
         slug: user.slug
       }
@@ -499,6 +507,7 @@ const getMe = async (req, res) => {
   try {
     const [rows] = await pool.query(
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
+              u.created_at, u.updated_at,
               m.id AS member_id,
               g.name AS gym_name, g.slug
        FROM users u
@@ -517,6 +526,62 @@ const getMe = async (req, res) => {
     return res.status(200).json(rows[0]);
   } catch (error) {
     console.error('Get me error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    const firstName = req.body.first_name?.trim();
+    const lastName = req.body.last_name?.trim();
+    const email = req.body.email?.trim().toLowerCase();
+
+    if (!firstName || !lastName || !email) {
+      return res.status(400).json({
+        message: 'First name, last name, and email are required'
+      });
+    }
+
+    const [existingUsers] = await pool.query(
+      'SELECT id FROM users WHERE email = ? AND id <> ?',
+      [email, req.user.id]
+    );
+
+    if (existingUsers.length > 0) {
+      return res.status(400).json({
+        message: 'That email is already in use'
+      });
+    }
+
+    await pool.query(
+      `UPDATE users
+       SET first_name = ?, last_name = ?, email = ?, updated_at = NOW()
+       WHERE id = ? AND gym_id = ?`,
+      [firstName, lastName, email, req.user.id, req.user.gym_id]
+    );
+
+    const [rows] = await pool.query(
+      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
+              u.created_at, u.updated_at,
+              m.id AS member_id,
+              g.name AS gym_name, g.slug
+       FROM users u
+       JOIN gyms g ON u.gym_id = g.id
+       LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
+       WHERE u.id = ?`,
+      [req.user.id]
+    );
+
+    return res.status(200).json({
+      message: 'Profile updated successfully',
+      user: rows[0]
+    });
+  } catch (error) {
+    console.error('Update profile error:', error.message);
 
     return res.status(500).json({
       message: 'Server error',
@@ -576,7 +641,7 @@ const changePassword = async (req, res) => {
     const passwordHash = await bcrypt.hash(newPassword, 10);
 
     await pool.query(
-      'UPDATE users SET password_hash = ? WHERE id = ? AND gym_id = ?',
+      'UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = ? AND gym_id = ?',
       [passwordHash, user.id, user.gym_id]
     );
 
@@ -597,6 +662,7 @@ module.exports = {
   register,
   login,
   getMe,
+  updateProfile,
   changePassword,
   getMemberAccessInvite,
   setMemberAccessPassword,

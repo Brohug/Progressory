@@ -454,6 +454,172 @@ ul {
   font-size: 13px;
 }
 
+.account-page .page-intro {
+  max-width: 760px;
+}
+
+.billing-page .page-intro {
+  max-width: 760px;
+}
+
+.account-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.account-summary-card {
+  display: grid;
+  gap: 14px;
+}
+
+.account-access-list {
+  display: grid;
+  gap: 10px;
+}
+
+.account-access-kicker {
+  margin-bottom: 10px;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.account-access-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(71, 85, 105, 0.74);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.56);
+  color: #dbeafe;
+}
+
+.account-access-item.is-muted {
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.account-access-item .app-icon {
+  color: #7dd3fc;
+}
+
+.account-access-item.is-muted .app-icon {
+  color: #93c5fd;
+}
+
+.account-summary-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.account-summary-heading > div {
+  min-width: 0;
+}
+
+.account-inline-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.account-security-status {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.account-security-status-list {
+  display: grid;
+  gap: 8px;
+}
+
+.account-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(71, 85, 105, 0.74);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.account-status-row strong {
+  color: #f8fafc;
+  text-align: right;
+}
+
+.account-billing-card {
+  display: grid;
+  gap: 14px;
+}
+
+.account-billing-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.account-billing-status-card {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid rgba(71, 85, 105, 0.74);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.1), transparent 38%),
+    rgba(15, 23, 42, 0.56);
+}
+
+.account-billing-status-card strong {
+  color: #f8fafc;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.account-billing-list {
+  display: grid;
+  gap: 10px;
+}
+
+.account-permissions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.account-link-list {
+  display: grid;
+  gap: 10px;
+}
+
+.account-link-card {
+  min-height: 0;
+  padding: 14px;
+}
+
+.account-password-form {
+  max-width: 760px;
+}
+
+.account-security-section .decision-tree-collapsible-summary {
+  margin-top: 0;
+}
+
+.account-form-feedback {
+  margin: 0;
+}
+
+.account-stat-text {
+  font-size: 20px;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
 .app-guidance-shell {
   margin-top: 8px;
 }
@@ -1606,6 +1772,131 @@ a.dashboard-setup-item {
   box-shadow: var(--shadow);
 }
 
+.landing-page {
+  min-height: 100vh;
+  padding: 24px 18px 48px;
+  background:
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.14), transparent 26%),
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.1), transparent 24%),
+    linear-gradient(180deg, #0f172a 0%, #111827 100%);
+}
+
+.landing-header {
+  width: min(1180px, 100%);
+  margin: 0 auto 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(71, 85, 105, 0.82);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.82);
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.24);
+  backdrop-filter: blur(8px);
+}
+
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.landing-shell {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 22px;
+}
+
+.landing-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.9fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+.landing-hero-copy,
+.landing-plan-card {
+  border: 1px solid rgba(71, 85, 105, 0.82);
+  border-radius: 22px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.1), transparent 32%),
+    linear-gradient(180deg, rgba(17, 28, 54, 0.82), rgba(11, 18, 32, 0.94));
+  box-shadow: 0 18px 36px rgba(2, 6, 23, 0.24);
+}
+
+.landing-hero-copy {
+  display: grid;
+  gap: 16px;
+}
+
+.landing-hero-copy h1 {
+  margin: 0;
+  font-size: clamp(2.1rem, 4vw, 3.8rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.landing-subheadline {
+  margin: 0;
+  max-width: 760px;
+  color: #dbeafe;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.landing-chip-row,
+.landing-cta-row,
+.landing-onboarding-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.landing-cta-note {
+  margin: -2px 0 0;
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 760px;
+}
+
+.landing-plan-card {
+  display: grid;
+  gap: 16px;
+}
+
+.landing-plan-price {
+  display: grid;
+  gap: 6px;
+}
+
+.landing-plan-price strong {
+  font-size: 2rem;
+  line-height: 1;
+  color: #f8fafc;
+}
+
+.landing-plan-price span {
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+.landing-plan-list {
+  display: grid;
+  gap: 10px;
+}
+
+.landing-section .account-summary-card {
+  min-height: 0;
+}
+
+.landing-final-cta .landing-cta-row {
+  margin-top: 8px;
+}
+
 .dashboard-queue-card {
   min-height: 166px;
 }
@@ -1622,6 +1913,10 @@ a.dashboard-setup-item {
 }
 
 @media (max-width: 900px) {
+  .landing-hero {
+    grid-template-columns: 1fr;
+  }
+
   .app-guidance-row,
   .coach-next-step-bar {
     flex-direction: column;
@@ -3473,6 +3768,32 @@ a.dashboard-setup-item {
 }
 
 @media (max-width: 640px) {
+  .landing-page {
+    padding: 16px 16px 40px;
+  }
+
+  .landing-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px;
+  }
+
+  .landing-header-actions .secondary-button,
+  .landing-cta-row .secondary-button {
+    width: 100%;
+  }
+
+  .landing-hero-copy,
+  .landing-plan-card {
+    padding: 18px;
+  }
+
+  .landing-chip-row,
+  .landing-cta-row,
+  .landing-onboarding-grid {
+    display: grid;
+  }
+
   .app-container {
     padding: 16px 16px 124px;
     overflow-x: clip;
@@ -3911,6 +4232,59 @@ a.dashboard-setup-item {
   .library-page .library-status-chip {
     font-size: 12px;
     padding: 6px 10px;
+  }
+
+  .account-access-item {
+    align-items: flex-start;
+  }
+
+  .account-status-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .account-status-row strong {
+    text-align: left;
+  }
+
+  .account-page .page-intro,
+  .billing-page .page-intro {
+    max-width: none;
+  }
+
+  .account-overview-grid,
+  .account-permissions-grid,
+  .account-billing-status-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .account-summary-card,
+  .account-billing-card {
+    gap: 12px;
+  }
+
+  .account-summary-heading {
+    align-items: flex-start;
+  }
+
+  .account-inline-meta {
+    gap: 6px;
+  }
+
+  .account-access-item,
+  .account-billing-status-card {
+    padding: 10px 12px;
+  }
+
+  .account-billing-status-card strong {
+    font-size: 16px;
+  }
+
+  .account-profile-section .inline-actions .secondary-button,
+  .account-security-section .inline-actions .secondary-button,
+  .account-billing-section .inline-actions .secondary-button {
+    width: 100%;
   }
 
   .members-page .member-card-actions {

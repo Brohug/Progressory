@@ -50,8 +50,19 @@ export function AuthProvider({ children }) {
     return undefined;
   }, [token]);
 
+  const refreshUser = async () => {
+    if (!token) {
+      return null;
+    }
+
+    const response = await api.get('/auth/me');
+    setUser(response.data);
+    localStorage.setItem('user', JSON.stringify(response.data));
+    return response.data;
+  };
+
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, isAuthReady }}>
+    <AuthContext.Provider value={{ token, user, login, logout, refreshUser, isAuthReady }}>
       {children}
     </AuthContext.Provider>
   );
