@@ -41,6 +41,7 @@ body,
 
 body {
   min-width: 320px;
+  overflow-x: hidden;
 }
 
 a {
@@ -138,6 +139,7 @@ ul {
 
 .app-shell {
   min-height: 100vh;
+  overflow-x: clip;
 }
 
 .app-container {
@@ -204,6 +206,35 @@ ul {
   background: #162033;
 }
 
+.app-mobile-top-nav {
+  display: none;
+}
+
+.app-mobile-top-nav-shell {
+  display: none;
+}
+
+.app-mobile-top-nav-hint {
+  display: none;
+}
+
+.app-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+.app-nav-icon {
+  width: 30px;
+  height: 30px;
+  padding: 4px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(125, 211, 252, 0.14);
+  color: #bfdbfe;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
 .app-nav {
   display: flex;
   flex-wrap: wrap;
@@ -213,7 +244,9 @@ ul {
 
 .app-nav-link,
 .app-nav-more-toggle {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 14px;
   border-radius: 10px;
   background: #0b1220;
@@ -236,6 +269,23 @@ ul {
 .app-nav-more-toggle.is-active {
   border-color: var(--accent);
   color: #f8fafc;
+}
+
+.app-nav-link:hover .app-nav-icon,
+.app-nav-link.is-active .app-nav-icon,
+.app-nav-more-toggle:hover .app-nav-icon,
+.app-nav-more-toggle.is-active .app-nav-icon,
+.app-user-menu-toggle:hover .app-nav-icon,
+.app-user-menu-toggle:focus-visible .app-nav-icon,
+.app-header-menu-toggle:hover .app-nav-icon,
+.app-header-menu-toggle:focus-visible .app-nav-icon,
+.app-mobile-nav-link.is-active .app-nav-icon,
+.app-mobile-more-toggle.is-active .app-nav-icon,
+.app-mobile-more-link:hover .app-nav-icon,
+.app-mobile-drawer-link:hover .app-nav-icon {
+  background: rgba(29, 78, 216, 0.34);
+  border-color: rgba(125, 211, 252, 0.34);
+  color: #eff6ff;
 }
 
 .app-nav-more-toggle:hover,
@@ -327,7 +377,9 @@ ul {
 }
 
 .app-nav-more-link {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid transparent;
@@ -547,6 +599,28 @@ a.action-card:focus-visible {
   text-transform: uppercase;
 }
 
+.dashboard-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  border: 1px solid rgba(125, 211, 252, 0.3);
+  background:
+    radial-gradient(circle at top left, rgba(125, 211, 252, 0.18), transparent 42%),
+    linear-gradient(145deg, rgba(29, 78, 216, 0.32), rgba(14, 165, 233, 0.14));
+  color: #eff6ff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 20px rgba(2, 6, 23, 0.18);
+}
+
+.dashboard-card-icon .app-icon {
+  width: 24px;
+  height: 24px;
+}
+
 .eyebrow {
   display: inline-block;
   margin-bottom: 10px;
@@ -620,6 +694,7 @@ a.action-card:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   min-height: 42px;
   padding: 10px 14px;
   border: 1px solid transparent;
@@ -920,6 +995,20 @@ a.secondary-button:focus-visible {
   gap: 12px;
   align-items: flex-start;
   flex-wrap: wrap;
+}
+
+.expandable-section.is-sticky-header .compact-form-header {
+  position: sticky;
+  top: 84px;
+  z-index: 35;
+  margin: -16px -18px 12px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+  background: linear-gradient(180deg, rgba(12, 21, 39, 0.98), rgba(12, 21, 39, 0.92));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
 }
 
 .compact-form-header .section-note {
@@ -2833,6 +2922,13 @@ a.dashboard-setup-item {
   cursor: pointer;
 }
 
+.decision-tree-scenario-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
 .decision-tree-scenario-card:hover,
 .decision-tree-scenario-card:focus-visible {
   border-color: var(--accent);
@@ -2852,10 +2948,23 @@ a.dashboard-setup-item {
   font-weight: 600;
 }
 
+.decision-tree-scenario-toggle {
+  min-height: 34px;
+  padding: 7px 12px;
+  white-space: nowrap;
+}
+
 .decision-tree-scenario-card .decision-tree-follow-up-row {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  margin-top: 4px;
+}
+
+.decision-tree-scenario-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 4px;
 }
 
@@ -2927,6 +3036,39 @@ a.dashboard-setup-item {
   display: grid;
   gap: 10px;
   margin-top: 10px;
+}
+
+.expandable-section-summary-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.expandable-section-summary-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  background: rgba(15, 23, 42, 0.62);
+  color: #dbeafe;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sticky-action-bar {
+  position: sticky;
+  top: 164px;
+  z-index: 20;
+  margin: 0 0 14px;
+  padding: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.1);
+  border-radius: 14px;
+  background: rgba(11, 18, 32, 0.94);
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.16);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .decision-tree-summary-chip-row {
@@ -3251,6 +3393,18 @@ a.dashboard-setup-item {
     align-items: stretch;
   }
 
+  .expandable-section.is-sticky-header .compact-form-header {
+    top: 70px;
+    margin: -14px -14px 10px;
+    padding: 14px 14px 10px;
+  }
+
+  .sticky-action-bar {
+    top: 146px;
+    margin-bottom: 12px;
+    padding: 10px;
+  }
+
   .compact-topic-header .secondary-button,
   .decision-tree-search-result-header .secondary-button,
   .compact-form-header .secondary-button,
@@ -3285,7 +3439,8 @@ a.dashboard-setup-item {
 
 @media (max-width: 640px) {
   .app-container {
-    padding: 16px 16px 94px;
+    padding: 16px 16px 124px;
+    overflow-x: clip;
   }
 
   .app-title {
@@ -3298,6 +3453,7 @@ a.dashboard-setup-item {
 
   .app-header {
     padding: 16px;
+    margin-bottom: 18px;
   }
 
   .app-header-top {
@@ -3316,7 +3472,8 @@ a.dashboard-setup-item {
 
   .app-header-menu-toggle,
   .app-mobile-overlay,
-  .app-mobile-bottom-nav,
+  .app-mobile-top-nav-shell,
+  .app-mobile-top-nav,
   .app-mobile-drawer,
   .app-mobile-more-sheet {
     display: flex;
@@ -3324,6 +3481,15 @@ a.dashboard-setup-item {
 
   .coach-next-step-topline {
     flex-direction: column;
+  }
+
+  .app-guidance-shell {
+    margin-top: 10px;
+  }
+
+  .coach-next-step-bar {
+    position: static;
+    width: 100%;
   }
 
   .coach-next-step-actions {
@@ -3337,9 +3503,13 @@ a.dashboard-setup-item {
   .app-mobile-overlay {
     position: fixed;
     inset: 0;
-    z-index: 40;
+    z-index: 200;
     border: 0;
     background: rgba(2, 6, 23, 0.6);
+  }
+
+  .app-mobile-more-overlay {
+    z-index: 205;
   }
 
   .app-mobile-drawer {
@@ -3348,7 +3518,7 @@ a.dashboard-setup-item {
     right: 0;
     bottom: 0;
     width: min(320px, 88vw);
-    z-index: 45;
+    z-index: 215;
     flex-direction: column;
     gap: 18px;
     padding: 18px;
@@ -3395,26 +3565,65 @@ a.dashboard-setup-item {
     color: #f8fafc;
   }
 
-  .app-mobile-bottom-nav {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 42;
-    justify-content: space-around;
+  .app-mobile-top-nav-shell {
+    position: sticky;
+    top: 8px;
+    z-index: 120;
+    display: flex;
+    flex-direction: column;
     gap: 6px;
-    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-    border-top: 1px solid var(--border);
-    background: rgba(11, 18, 32, 0.98);
-    backdrop-filter: blur(12px);
+    margin: 0 0 14px;
+    padding: 6px;
+    border: 1px solid rgba(96, 165, 250, 0.16);
+    border-radius: 18px;
+    background: rgba(9, 16, 30, 0.92);
+    box-shadow: 0 18px 38px rgba(2, 6, 23, 0.26);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .app-mobile-top-nav-shell::after {
+    content: '';
+    position: absolute;
+    right: 6px;
+    top: 6px;
+    bottom: 28px;
+    width: 34px;
+    pointer-events: none;
+    border-radius: 0 14px 14px 0;
+    background: linear-gradient(90deg, rgba(9, 16, 30, 0), rgba(9, 16, 30, 0.94));
+  }
+
+  .app-mobile-top-nav-shell.is-scroll-discovered::after {
+    display: none;
+  }
+
+  .app-mobile-top-nav {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 6px;
+    margin: 0;
+    padding: 0 36px 0 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .app-mobile-top-nav::-webkit-scrollbar {
+    display: none;
   }
 
   .app-mobile-nav-link {
-    flex: 1 1 0;
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 7px;
     min-height: 44px;
+    min-width: max-content;
     padding: 8px 10px;
     border-radius: 12px;
     border: 1px solid transparent;
@@ -3422,7 +3631,23 @@ a.dashboard-setup-item {
     color: #cbd5e1;
     font-size: 12px;
     font-weight: 800;
+    line-height: 1.2;
     text-decoration: none;
+  }
+
+  .app-mobile-nav-link,
+  .app-mobile-more-toggle {
+    white-space: nowrap;
+  }
+
+  .app-mobile-top-nav-hint {
+    display: block;
+    padding: 0 4px;
+    color: #93c5fd;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
   }
 
   .app-mobile-more-toggle {
@@ -3448,17 +3673,580 @@ a.dashboard-setup-item {
 
   .app-mobile-more-sheet {
     position: fixed;
-    left: 12px;
-    right: 12px;
-    bottom: 78px;
-    z-index: 43;
+    left: 10px;
+    right: 10px;
+    top: 74px;
+    bottom: auto;
+    z-index: 220;
     flex-direction: column;
     gap: 14px;
     padding: 16px;
     border: 1px solid var(--border);
-    border-radius: 18px;
+    border-radius: 20px;
     background: rgba(11, 18, 32, 0.98);
     box-shadow: var(--shadow);
+    max-height: min(56vh, 420px);
+    overflow-y: auto;
+  }
+
+  .app-mobile-more-link,
+  .app-mobile-drawer-link {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .page-section,
+  .action-card,
+  .card-item,
+  .summary-card,
+  .stat-card,
+  .curriculum-index-card,
+  .decision-tree-search-result-card,
+  .decision-tree-guided-option,
+  .decision-tree-scenario-card,
+  .decision-tree-top-card,
+  .decision-tree-logic-card,
+  .decision-tree-reaction-card {
+    max-width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  button,
+  .secondary-button,
+  .danger-button,
+  .success-button,
+  .library-resource-link {
+    min-height: 44px;
+  }
+
+  .member-card-summary-pill,
+  .curriculum-index-tag,
+  .library-info-chip,
+  .library-status-chip,
+  .suggestion-chip,
+  .decision-tree-follow-up-chip,
+  .decision-tree-follow-up-hint {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .page-section {
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+
+  .detail-block {
+    gap: 10px;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+
+  .page-section h3,
+  .page-section h4 {
+    margin-bottom: 10px;
+  }
+
+  .section-note,
+  .meta-text,
+  .dashboard-setup-item small,
+  .dashboard-setup-helper {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .stat-card,
+  .summary-card,
+  .action-card,
+  .card-item,
+  .dashboard-setup-card,
+  .planned-classes-calendar-day,
+  .decision-tree-top-card,
+  .curriculum-index-status-card {
+    padding: 12px;
+  }
+
+  .stats-grid,
+  .action-grid,
+  .card-list,
+  .dashboard-guide-grid,
+  .dashboard-guide-mini-expanded,
+  .dashboard-setup-grid,
+  .dashboard-setup-list,
+  .planned-classes-readiness-grid,
+  .decision-tree-scenario-groups {
+    gap: 10px;
+  }
+
+  .dashboard-page .stats-grid,
+  .reports-page .stats-grid,
+  .planned-classes-page .stats-grid {
+    margin-bottom: 18px;
+  }
+
+  .dashboard-hero-section,
+  .dashboard-guide-highlight,
+  .dashboard-guide-steps,
+  .dashboard-setup-progress,
+  .dashboard-setup-card,
+  .dashboard-setup-upcoming {
+    padding: 14px;
+  }
+
+  .dashboard-action-card,
+  .dashboard-report-card,
+  .dashboard-queue-card,
+  .dashboard-extra-card,
+  .dashboard-setup-current {
+    min-height: 0;
+  }
+
+  .dashboard-guide-mini-expanded,
+  .dashboard-guide-grid {
+    margin-top: 10px;
+  }
+
+  .dashboard-setup-progress {
+    margin-bottom: 12px;
+  }
+
+  .dashboard-setup-progress-checklist {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-setup-progress-item,
+  .dashboard-guide-step,
+  .dashboard-setup-item,
+  .planned-classes-readiness-card {
+    padding: 10px 12px;
+  }
+
+  .dashboard-card-copy,
+  .dashboard-card-cta {
+    margin-top: 8px;
+  }
+
+  .planned-classes-page .item-card,
+  .reports-featured-card,
+  .library-edit-form,
+  .decision-tree-guided-prompt,
+  .decision-tree-branch-group {
+    padding: 12px;
+  }
+
+  .library-card-chip-row,
+  .decision-tree-chip-row,
+  .suggestion-chip-row,
+  .member-card-summary-row,
+  .curriculum-index-tag-row {
+    min-width: 0;
+  }
+
+  .curriculum-index-page .page-intro,
+  .decision-tree-page .page-intro {
+    max-width: none;
+  }
+
+  .members-page .compact-topic-header,
+  .library-page .compact-topic-header,
+  .library-page .library-card-title-row,
+  .library-page .library-topic-link-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .members-page .compact-topic-header > div,
+  .library-page .compact-topic-header > div {
+    min-width: 0;
+  }
+
+  .members-page .member-card-summary-row,
+  .library-page .member-card-summary-row {
+    gap: 6px;
+  }
+
+  .members-page .member-card-summary-pill,
+  .library-page .member-card-summary-pill,
+  .library-page .library-info-chip,
+  .library-page .library-status-chip {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .members-page .member-card-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .members-page .member-card-actions .danger-button,
+  .members-page .member-card-actions .success-button {
+    grid-column: 1 / -1;
+  }
+
+  .members-page .member-card-actions .secondary-button,
+  .members-page .member-card-actions .danger-button,
+  .members-page .member-card-actions .success-button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .members-page .detail-block .inline-actions,
+  .library-page .detail-block .inline-actions {
+    margin-top: 8px;
+  }
+
+  .members-page .detail-block,
+  .library-page .detail-block {
+    gap: 8px;
+  }
+
+  .library-page .member-card-summary-row {
+    display: none;
+  }
+
+  .library-page .library-card-chip-row {
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .library-page .library-card-chip-row + .library-card-chip-row {
+    margin-top: 4px;
+  }
+
+  .library-page .library-topic-link-row {
+    margin-top: 6px;
+  }
+
+  .library-page .library-topic-link-button,
+  .library-page .library-topic-chip,
+  .library-page .compact-topic-header > .secondary-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .library-page .meta-text[style*='marginTop'] {
+    margin-top: 4px !important;
+  }
+
+  .dashboard-page .stats-grid,
+  .reports-page .stats-grid,
+  .planned-classes-page .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .dashboard-page .stat-card,
+  .reports-page .stat-card,
+  .planned-classes-page .stat-card {
+    padding: 10px 12px;
+  }
+
+  .dashboard-page .dashboard-action-card,
+  .reports-page .reports-featured-card,
+  .planned-classes-page .item-card,
+  .classes-page .card-item {
+    padding: 12px;
+  }
+
+  .dashboard-page .dashboard-card-icon,
+  .reports-page .dashboard-card-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .dashboard-page .dashboard-card-icon .app-icon,
+  .reports-page .dashboard-card-icon .app-icon {
+    width: 21px;
+    height: 21px;
+  }
+
+  .dashboard-page .dashboard-card-copy,
+  .reports-page .dashboard-card-copy {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .dashboard-page .dashboard-card-cta,
+  .reports-page .dashboard-card-cta {
+    min-height: 36px;
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+
+  .reports-page .reports-featured-grid,
+  .reports-page .reports-ranked-list,
+  .reports-page .reports-activity-list {
+    gap: 10px;
+  }
+
+  .reports-page .reports-featured-card .inline-actions,
+  .reports-page .reports-ranked-row .inline-actions,
+  .reports-page .reports-activity-item .inline-actions {
+    gap: 8px;
+  }
+
+  .reports-page .reports-ranked-row,
+  .reports-page .reports-activity-item,
+  .reports-page .reports-featured-card {
+    padding: 12px;
+  }
+
+  .reports-page .reports-ranked-row,
+  .reports-page .reports-activity-header,
+  .reports-page .reports-activity-meta,
+  .reports-page .reports-ranked-stats {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .reports-page .reports-rank {
+    align-self: flex-start;
+  }
+
+  .planned-classes-page .planned-classes-view-section .inline-actions,
+  .planned-classes-page .planned-classes-calendar-toolbar,
+  .planned-classes-page .planned-classes-calendar-focus-item,
+  .classes-page .section-header,
+  .classes-page .compact-topic-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .planned-classes-page .planned-classes-view-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .planned-classes-page .planned-classes-view-toggle .secondary-button {
+    width: 100%;
+  }
+
+  .planned-classes-page .planned-classes-readiness-grid {
+    gap: 8px;
+  }
+
+  .planned-classes-page .planned-classes-readiness-card {
+    padding: 10px 12px;
+  }
+
+  .planned-classes-page .planned-classes-card-topics,
+  .planned-classes-page .planned-classes-selected-topics,
+  .planned-classes-page .planned-classes-library-actions {
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .planned-classes-page .planned-classes-library-actions .secondary-button,
+  .planned-classes-page .planned-classes-topic-actions .secondary-button,
+  .planned-classes-page .planned-classes-calendar-day-actions .secondary-button,
+  .planned-classes-page .planned-classes-calendar-focus-item .secondary-button {
+    width: 100%;
+  }
+
+  .planned-classes-page .planned-classes-calendar {
+    gap: 12px;
+  }
+
+  .planned-classes-page .planned-classes-calendar-day {
+    gap: 8px;
+  }
+
+  .planned-classes-page .planned-classes-calendar-item,
+  .planned-classes-page .planned-classes-calendar-selected-action {
+    padding: 9px 10px;
+  }
+
+  .planned-classes-page .planned-classes-calendar-focus-panel {
+    margin-top: 12px;
+    padding: 12px;
+  }
+
+  .classes-page .inline-actions {
+    gap: 8px;
+  }
+
+  .classes-page .detail-block {
+    gap: 8px;
+  }
+
+  .classes-page .compact-topic-header > div,
+  .classes-page .section-header > div,
+  .planned-classes-page .section-header > div,
+  .reports-page .section-header > div,
+  .dashboard-page .section-header > div {
+    min-width: 0;
+  }
+
+  .classes-page .inline-actions .secondary-button,
+  .classes-page .inline-actions .danger-button,
+  .classes-page .inline-actions .success-button,
+  .reports-page .inline-actions .secondary-button,
+  .planned-classes-page .inline-actions .secondary-button,
+  .dashboard-page .inline-actions .secondary-button {
+    min-width: 0;
+  }
+
+  .curriculum-index-group {
+    gap: 12px;
+  }
+
+  .curriculum-index-subgroups {
+    gap: 10px;
+  }
+
+  .curriculum-index-subgroup {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .curriculum-index-subgroup-header,
+  .curriculum-index-group-header,
+  .decision-tree-section-heading,
+  .decision-tree-hero,
+  .decision-tree-hero-actions,
+  .decision-tree-header-actions,
+  .decision-tree-branch-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .curriculum-index-card,
+  .decision-tree-search-result-card,
+  .decision-tree-guided-prompt,
+  .decision-tree-branch-group,
+  .decision-tree-logic-card,
+  .decision-tree-reaction-card,
+  .decision-tree-scenario-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .curriculum-index-card.is-compact-collapsed {
+    padding: 12px 14px;
+  }
+
+  .curriculum-index-card-header,
+  .decision-tree-search-result-header,
+  .decision-tree-top-card-header {
+    gap: 10px;
+  }
+
+  .curriculum-index-title-block strong,
+  .decision-tree-search-result-title strong,
+  .decision-tree-hero h3 {
+    line-height: 1.2;
+  }
+
+  .curriculum-index-tag-row,
+  .decision-tree-chip-row,
+  .decision-tree-fit-row,
+  .decision-tree-follow-up-row {
+    gap: 7px;
+  }
+
+  .curriculum-index-status-card {
+    padding: 12px 14px;
+    min-height: 0;
+  }
+
+  .curriculum-index-actions,
+  .curriculum-index-library-action-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .curriculum-index-library-action-row .secondary-button,
+  .curriculum-index-actions .secondary-button,
+  .curriculum-index-actions .curriculum-index-action-link {
+    width: 100%;
+  }
+
+  .decision-tree-hero {
+    gap: 14px;
+  }
+
+  .decision-tree-hero h3 {
+    font-size: 22px;
+  }
+
+  .decision-tree-search-results {
+    margin-top: 10px;
+  }
+
+  .decision-tree-search-result {
+    margin-bottom: 10px;
+  }
+
+  .decision-tree-search-result-actions {
+    gap: 10px;
+  }
+
+  .decision-tree-search-result-details {
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .decision-tree-guided-grid,
+  .decision-tree-scenario-grid {
+    gap: 10px;
+  }
+
+  .decision-tree-guided-option {
+    min-height: 0;
+    padding: 13px;
+  }
+
+  .decision-tree-guided-toggle {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .decision-tree-follow-up-chip,
+  .decision-tree-follow-up-hint,
+  .decision-tree-follow-up-chip-static {
+    font-size: 12px;
+  }
+
+  .decision-tree-top-card {
+    gap: 10px;
+  }
+
+  .decision-tree-top-actions .secondary-button,
+  .decision-tree-success-row .secondary-button,
+  .decision-tree-success-row .success-button,
+  .decision-tree-reaction-actions .secondary-button,
+  .decision-tree-focus-links .secondary-button {
+    justify-content: center;
+  }
+
+  .decision-tree-scenario-card.is-collapsible {
+    min-height: 0;
+    gap: 10px;
+  }
+
+  .decision-tree-scenario-card.is-collapsible:not(.is-expanded) {
+    padding: 12px 14px;
+  }
+
+  .decision-tree-scenario-card-header {
+    align-items: center;
+  }
+
+  .decision-tree-scenario-card-header strong {
+    line-height: 1.3;
+  }
+
+  .decision-tree-scenario-card-actions .secondary-button,
+  .decision-tree-scenario-toggle {
+    width: 100%;
   }
 }
 input[type="date"],

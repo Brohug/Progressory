@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import AppIcon from './AppIcon';
 
 const getLinkClassName = ({ isActive }) => (
   `app-nav-link${isActive ? ' is-active' : ''}`
@@ -10,6 +11,46 @@ const getBottomLinkClassName = ({ isActive }) => (
   `app-mobile-nav-link${isActive ? ' is-active' : ''}`
 );
 
+const getIconNameForPath = (path) => {
+  switch (path) {
+    case '/dashboard':
+      return 'dashboard';
+    case '/planned-classes':
+      return 'planner';
+    case '/classes':
+      return 'logs';
+    case '/members':
+      return 'members';
+    case '/index':
+      return 'curriculum';
+    case '/library':
+      return 'library';
+    case '/decision-tree':
+      return 'trees';
+    case '/reports':
+      return 'reports';
+    case '/training-scenarios':
+      return 'scenarios';
+    case '/topics':
+      return 'topics';
+    case '/programs':
+      return 'programs';
+    case '/staff':
+      return 'staff';
+    case '/my-progress':
+      return 'progress';
+    default:
+      return 'dashboard';
+  }
+};
+
+const renderNavLabel = (label, iconName) => (
+  <>
+    <AppIcon name={iconName} className="app-nav-icon" />
+    <span>{label}</span>
+  </>
+);
+
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const location = useLocation();
@@ -17,12 +58,14 @@ export default function Layout({ children }) {
   const desktopMoreMenuRef = useRef(null);
   const mobileMoreSheetRef = useRef(null);
   const mobileMoreButtonRef = useRef(null);
+  const mobileTopNavRef = useRef(null);
   const [menuState, setMenuState] = useState({
     mobile: false,
     more: false,
     user: false,
     routeKey: ''
   });
+  const [hasSeenMobileNavScroll, setHasSeenMobileNavScroll] = useState(false);
   const [guidePreference, setGuidePreference] = useState({
     key: '',
     value: null
@@ -58,6 +101,7 @@ export default function Layout({ children }) {
   };
 
   const toggleMoreMenu = () => {
+    setHasSeenMobileNavScroll(true);
     setMenuState((prev) => ({
       mobile: false,
       more: !(prev.more && prev.routeKey === locationKey),
@@ -119,6 +163,26 @@ export default function Layout({ children }) {
       document.removeEventListener('touchstart', handlePointerDownOutside);
     };
   }, [closeMoreMenu, isMoreMenuOpen]);
+
+  useEffect(() => {
+    const navElement = mobileTopNavRef.current;
+
+    if (!navElement || hasSeenMobileNavScroll) {
+      return undefined;
+    }
+
+    const handleScroll = () => {
+      if (navElement.scrollLeft > 8) {
+        setHasSeenMobileNavScroll(true);
+      }
+    };
+
+    navElement.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      navElement.removeEventListener('scroll', handleScroll);
+    };
+  }, [hasSeenMobileNavScroll, locationKey]);
 
   const toggleGuide = () => {
     const nextValue = !isGuideCollapsed;
@@ -433,7 +497,8 @@ export default function Layout({ children }) {
                   className="app-header-menu-toggle"
                   onClick={toggleMobileMenu}
                 >
-                  <span aria-hidden="true">&#9776;</span> Menu
+                  <AppIcon name="more" className="app-nav-icon" />
+                  <span>Menu</span>
                 </button>
 
                 <div className="app-user-menu-shell">
@@ -442,7 +507,8 @@ export default function Layout({ children }) {
                     className="app-user-menu-toggle"
                     onClick={toggleUserMenu}
                   >
-                    {userMenuLabel}
+                    <AppIcon name="account" className="app-nav-icon" />
+                    <span>{userMenuLabel}</span>
                   </button>
                   {isUserMenuOpen ? (
                     <div className="app-user-menu-panel">
@@ -452,7 +518,8 @@ export default function Layout({ children }) {
                         <span>{user.role}</span>
                       </div>
                       <button type="button" className="secondary-button" onClick={() => { closeMenus(); logout(); }}>
-                        Logout
+                        <AppIcon name="logout" />
+                        <span>Logout</span>
                       </button>
                     </div>
                   ) : null}
@@ -466,7 +533,7 @@ export default function Layout({ children }) {
               <nav className="app-nav app-nav-desktop" aria-label="Primary">
                 {primaryNavItems.map((item) => (
                   <NavLink key={item.to} to={item.to} className={getLinkClassName}>
-                    {item.label}
+                    {renderNavLabel(item.label, getIconNameForPath(item.to))}
                   </NavLink>
                 ))}
 
@@ -476,13 +543,13 @@ export default function Layout({ children }) {
                     className={`app-nav-link app-nav-more-toggle${isMoreRouteActive ? ' is-active' : ''}`}
                     onClick={toggleMoreMenu}
                   >
-                    More
+                    {renderNavLabel('More', 'more')}
                   </button>
                   {isMoreMenuOpen ? (
                     <div className="app-nav-more-panel">
                       {moreNavItems.map((item) => (
                         <Link key={item.to} to={item.to} className="app-nav-more-link" onClick={closeMenus}>
-                          {item.label}
+                          {renderNavLabel(item.label, getIconNameForPath(item.to))}
                         </Link>
                       ))}
                     </div>
@@ -512,12 +579,14 @@ export default function Layout({ children }) {
                           className={`secondary-button${coachGuide.primary.variant === 'attention' ? ' is-attention' : ''}`}
                           to={coachGuide.primary.to}
                         >
-                          {coachGuide.primary.label}
+                          <AppIcon name={getIconNameForPath(coachGuide.primary.to)} />
+                          <span>{coachGuide.primary.label}</span>
                         </Link>
                       ) : null}
                       {coachGuide.secondary ? (
                         <Link className="secondary-button" to={coachGuide.secondary.to}>
-                          {coachGuide.secondary.label}
+                          <AppIcon name={getIconNameForPath(coachGuide.secondary.to)} />
+                          <span>{coachGuide.secondary.label}</span>
                         </Link>
                       ) : null}
                     </div>
@@ -527,6 +596,31 @@ export default function Layout({ children }) {
             </>
           ) : null}
         </header>
+
+        {user ? (
+          <div className={`app-mobile-top-nav-shell${hasSeenMobileNavScroll ? ' is-scroll-discovered' : ''}`}>
+            <nav className="app-mobile-top-nav" aria-label="Mobile navigation" ref={mobileTopNavRef}>
+              {mobileBottomNavItems.map((item) => (
+                <NavLink key={item.to} to={item.to} className={getBottomLinkClassName}>
+                  {renderNavLabel(item.label, getIconNameForPath(item.to))}
+                </NavLink>
+              ))}
+              <button
+                type="button"
+                className={`app-mobile-nav-link app-mobile-more-toggle${isMoreRouteActive || isMoreMenuOpen ? ' is-active' : ''}`}
+                onClick={toggleMoreMenu}
+                ref={mobileMoreButtonRef}
+              >
+                {renderNavLabel('More', 'more')}
+              </button>
+            </nav>
+            {!hasSeenMobileNavScroll ? (
+              <div className="app-mobile-top-nav-hint" aria-hidden="true">
+                Swipe right for more
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         {user && isMobileMenuOpen ? (
           <>
@@ -540,13 +634,14 @@ export default function Layout({ children }) {
               <div className="app-mobile-drawer-header">
                 <strong>Menu</strong>
                 <button type="button" className="secondary-button" onClick={closeMenus}>
-                  Close
+                  <AppIcon name="close" />
+                  <span>Close</span>
                 </button>
               </div>
               <div className="app-mobile-drawer-list">
                 {mobileMenuItems.map((item) => (
                   <Link key={item.to} to={item.to} className="app-mobile-drawer-link" onClick={closeMenus}>
-                    {item.label}
+                    {renderNavLabel(item.label, getIconNameForPath(item.to))}
                   </Link>
                 ))}
               </div>
@@ -555,7 +650,8 @@ export default function Layout({ children }) {
                 <span>{user.gym_name}</span>
                 <span>{user.role}</span>
                 <button type="button" className="secondary-button" onClick={() => { closeMenus(); logout(); }}>
-                  Logout
+                  <AppIcon name="logout" />
+                  <span>Logout</span>
                 </button>
               </div>
             </aside>
@@ -563,43 +659,34 @@ export default function Layout({ children }) {
         ) : null}
 
         {user && isMoreMenuOpen ? (
-          <div className="app-mobile-more-sheet" ref={mobileMoreSheetRef}>
-            <div className="app-mobile-more-sheet-header">
-              <strong>More</strong>
-              <button type="button" className="secondary-button" onClick={closeMenus}>
-                Close
-              </button>
+          <>
+            <button
+              type="button"
+              className="app-mobile-overlay app-mobile-more-overlay"
+              aria-label="Close more menu"
+              onClick={closeMenus}
+            />
+            <div className="app-mobile-more-sheet" ref={mobileMoreSheetRef}>
+              <div className="app-mobile-more-sheet-header">
+                <strong>More</strong>
+                <button type="button" className="secondary-button" onClick={closeMenus}>
+                  <AppIcon name="close" />
+                  <span>Close</span>
+                </button>
+              </div>
+              <div className="app-mobile-more-sheet-list">
+                {moreNavItems.map((item) => (
+                  <Link key={item.to} to={item.to} className="app-mobile-more-link" onClick={closeMenus}>
+                    {renderNavLabel(item.label, getIconNameForPath(item.to))}
+                  </Link>
+                ))}
+              </div>
             </div>
-            <div className="app-mobile-more-sheet-list">
-              {moreNavItems.map((item) => (
-                <Link key={item.to} to={item.to} className="app-mobile-more-link" onClick={closeMenus}>
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </div>
+          </>
         ) : null}
 
         <main>{children}</main>
       </div>
-
-      {user ? (
-        <nav className="app-mobile-bottom-nav" aria-label="Mobile navigation">
-          {mobileBottomNavItems.map((item) => (
-            <NavLink key={item.to} to={item.to} className={getBottomLinkClassName}>
-              {item.label}
-            </NavLink>
-          ))}
-          <button
-            type="button"
-            className={`app-mobile-nav-link app-mobile-more-toggle${isMoreRouteActive || isMoreMenuOpen ? ' is-active' : ''}`}
-            onClick={toggleMoreMenu}
-            ref={mobileMoreButtonRef}
-          >
-            More
-          </button>
-        </nav>
-      ) : null}
     </div>
   );
 }

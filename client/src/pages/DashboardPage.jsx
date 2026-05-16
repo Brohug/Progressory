@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
+import AppIcon from '../components/AppIcon';
 import Layout from '../components/Layout';
 import ExpandableSection from '../components/ExpandableSection';
 import { useAuth } from '../hooks/useAuth';
@@ -349,6 +350,7 @@ export default function DashboardPage() {
   const helpfulExtras = [
     {
       key: 'libraryVideos',
+      icon: 'library',
       title: 'Add videos to your Library',
       description: 'Save coach notes, video links, and member-facing references so people can revisit what they learned.',
       helper: activeLibraryVideoCount > 0
@@ -457,21 +459,25 @@ export default function DashboardPage() {
               </div>
                 <div className="action-grid">
                   <Link to="/planned-classes" className="action-card dashboard-action-card">
+                    <span className="dashboard-card-icon"><AppIcon name="planner" /></span>
                     <strong>See upcoming classes</strong>
                     <p className="dashboard-card-copy">Review the classes your gym has planned next.</p>
                     <span className="dashboard-card-cta">Open classes</span>
                   </Link>
                   <Link to="/my-progress" className="action-card dashboard-action-card">
+                    <span className="dashboard-card-icon"><AppIcon name="progress" /></span>
                     <strong>Open my progress</strong>
                     <p className="dashboard-card-copy">See the topics your coaches have already logged for you.</p>
                     <span className="dashboard-card-cta">Open progress</span>
                   </Link>
                   <Link to="/library" className="action-card dashboard-action-card">
+                    <span className="dashboard-card-icon"><AppIcon name="library" /></span>
                     <strong>Open Library</strong>
                     <p className="dashboard-card-copy">Revisit videos and notes your gym marked as member visible.</p>
                     <span className="dashboard-card-cta">Open Library</span>
                   </Link>
                   <Link to="/decision-tree" className="action-card dashboard-action-card">
+                    <span className="dashboard-card-icon"><AppIcon name="trees" /></span>
                     <strong>Use Decision Trees</strong>
                     <p className="dashboard-card-copy">Study routes and options around the positions and topics you are learning.</p>
                     <span className="dashboard-card-cta">Open Decision Trees</span>
@@ -539,6 +545,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="action-grid">
                   <Link to="/planned-classes" className="action-card dashboard-action-card dashboard-queue-card">
+                    <span className="dashboard-card-icon"><AppIcon name="planner" /></span>
                     <strong>Upcoming planned classes</strong>
                     <div className="dashboard-queue-value">
                       {plannedClasses.filter((item) => item.status === 'planned').length}
@@ -548,6 +555,7 @@ export default function DashboardPage() {
                     </div>
                   </Link>
                   <Link to="/my-progress" className="action-card dashboard-action-card dashboard-queue-card">
+                    <span className="dashboard-card-icon"><AppIcon name="progress" /></span>
                     <strong>Tracked curriculum topics</strong>
                     <div className="dashboard-queue-value">{memberProgress.length}</div>
                     <div className="detail-block">
@@ -555,6 +563,7 @@ export default function DashboardPage() {
                     </div>
                   </Link>
                   <Link to="/library" className="action-card dashboard-action-card dashboard-queue-card">
+                    <span className="dashboard-card-icon"><AppIcon name="library" /></span>
                     <strong>Member-visible library entries</strong>
                     <div className="dashboard-queue-value">{memberVisibleLibraryEntries.length}</div>
                     <div className="detail-block">
@@ -611,6 +620,7 @@ export default function DashboardPage() {
   const quickActions = isManagement ? [
     {
       title: 'Review Attendance',
+      icon: 'attendance',
       description: 'Finish today\'s attendance work.',
       cta: 'Review Attendance',
       to: '/classes?workflow=attendance-ready',
@@ -618,12 +628,14 @@ export default function DashboardPage() {
     },
     {
       title: 'Plan a Class',
+      icon: 'planner',
       description: 'Build the next session.',
       cta: 'Plan a Class',
       to: '/planned-classes'
     },
     {
       title: 'Log Completed Class',
+      icon: 'logs',
       description: todayClassCount > 0
         ? `Finish ${todayClassCount} class${todayClassCount === 1 ? '' : 'es'} from today.`
         : 'Open today\'s class logs.',
@@ -632,30 +644,35 @@ export default function DashboardPage() {
     },
     {
       title: 'Create Scenario',
+      icon: 'scenarios',
       description: 'Build reusable class templates.',
       cta: 'Create Scenario',
       to: '/training-scenarios?action=create&source=dashboard'
     },
     {
       title: 'Add Curriculum Topic',
+      icon: 'topics',
       description: 'Add the next curriculum topic.',
       cta: 'Add Curriculum Topic',
       to: '/topics?action=create'
     },
     {
       title: 'Open Library',
+      icon: 'library',
       description: 'Review teaching resources.',
       cta: 'Open Library',
       to: '/library'
     },
     {
       title: 'View Members',
+      icon: 'members',
       description: 'Check roster and progress.',
       cta: 'View Members',
       to: '/members'
     },
     {
       title: 'Run Reports',
+      icon: 'reports',
       description: 'Review gaps and trends.',
       cta: 'Run Reports',
       to: '/reports'
@@ -663,6 +680,7 @@ export default function DashboardPage() {
   ] : [
     {
       title: 'Review Attendance',
+      icon: 'attendance',
       description: 'Finish today\'s attendance work.',
       cta: 'Review Attendance',
       to: '/classes?workflow=attendance-ready',
@@ -670,12 +688,14 @@ export default function DashboardPage() {
     },
     {
       title: 'Plan a Class',
+      icon: 'planner',
       description: 'Build the next session.',
       cta: 'Plan a Class',
       to: '/planned-classes'
     },
     {
       title: 'Log Completed Class',
+      icon: 'logs',
       description: todayClassCount > 0
         ? `Finish ${todayClassCount} class${todayClassCount === 1 ? '' : 'es'} from today.`
         : 'Open today\'s class logs.',
@@ -684,24 +704,28 @@ export default function DashboardPage() {
     },
     {
       title: 'Create Scenario',
+      icon: 'scenarios',
       description: 'Reuse class structures faster.',
       cta: 'Create Scenario',
       to: '/training-scenarios?action=create&source=dashboard'
     },
     {
       title: 'Open Curriculum',
+      icon: 'curriculum',
       description: 'Review the curriculum map.',
       cta: 'Open Curriculum',
       to: '/index'
     },
     {
       title: 'Open Library',
+      icon: 'library',
       description: 'Review teaching resources.',
       cta: 'Open Library',
       to: '/library'
     },
     {
       title: 'View Members',
+      icon: 'members',
       description: 'Check roster and progress.',
       cta: 'View Members',
       to: '/members'
@@ -711,6 +735,7 @@ export default function DashboardPage() {
   const coachingQueue = [
     {
       title: 'Classes planned today',
+      icon: 'planner',
       value: todayPlannedCount,
       description: todayPlannedCount > 0
         ? `${todayPlannedCount} class${todayPlannedCount === 1 ? '' : 'es'} scheduled today.`
@@ -720,6 +745,7 @@ export default function DashboardPage() {
     },
     {
       title: 'Attendance to review',
+      icon: 'attendance',
       value: attendanceSnapshot.classesNeedingAttendance,
       description: attendanceSnapshot.classesNeedingAttendance > 0
         ? `${attendanceSnapshot.classesNeedingAttendance} class${attendanceSnapshot.classesNeedingAttendance === 1 ? '' : 'es'} still need attention.`
@@ -925,6 +951,7 @@ export default function DashboardPage() {
                     to={item.to}
                     className={`action-card dashboard-action-card dashboard-queue-card${item.featured ? ' is-featured' : ''}`}
                   >
+                    <span className="dashboard-card-icon"><AppIcon name={item.icon} /></span>
                     <strong>{item.title}</strong>
                     <div className="dashboard-queue-value">{item.value}</div>
                     <p className="dashboard-card-copy">{item.description}</p>
@@ -948,6 +975,7 @@ export default function DashboardPage() {
                     to={action.to}
                     className={`action-card dashboard-action-card${action.featured ? ' is-featured' : ''}`}
                   >
+                    <span className="dashboard-card-icon"><AppIcon name={action.icon} /></span>
                     <strong>{action.title}</strong>
                     <p className="dashboard-card-copy">{action.description}</p>
                     <span className="dashboard-card-cta">{action.cta}</span>
@@ -1064,9 +1092,10 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="action-grid">
-                  {helpfulExtras.map((item) => (
-                    <Link key={item.key} to={item.to} className="action-card dashboard-action-card dashboard-extra-card">
-                      <strong>{item.title}</strong>
+                    {helpfulExtras.map((item) => (
+                      <Link key={item.key} to={item.to} className="action-card dashboard-action-card dashboard-extra-card">
+                        <span className="dashboard-card-icon"><AppIcon name={item.icon} /></span>
+                        <strong>{item.title}</strong>
                       <p className="dashboard-card-copy">{item.description}</p>
                       <div className="dashboard-setup-helper">{item.helper}</div>
                       <span className="dashboard-card-cta">Open Library</span>

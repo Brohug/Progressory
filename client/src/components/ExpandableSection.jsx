@@ -4,12 +4,14 @@ export default function ExpandableSection({
   title,
   note = '',
   summary = '',
+  summaryMeta = null,
   defaultOpen = false,
   isOpen: controlledIsOpen,
   className = '',
   children,
   actions = null,
-  onToggle = null
+  onToggle = null,
+  stickyHeader = false
 }) {
   const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
   const isControlled = typeof controlledIsOpen === 'boolean';
@@ -25,7 +27,7 @@ export default function ExpandableSection({
   };
 
   return (
-    <section className={`page-section compact-form-shell expandable-section${isOpen ? ' is-open' : ''}${className ? ` ${className}` : ''}`}>
+    <section className={`page-section compact-form-shell expandable-section${isOpen ? ' is-open' : ''}${stickyHeader ? ' is-sticky-header' : ''}${className ? ` ${className}` : ''}`}>
       <div className="compact-form-header">
         <div>
           <h3>{title}</h3>
@@ -42,6 +44,15 @@ export default function ExpandableSection({
       {!isOpen ? (
         <div className="decision-tree-collapsible-summary">
           <p className="meta-text">{summary || `Open ${title} when you are ready to work on it.`}</p>
+          {summaryMeta?.length ? (
+            <div className="expandable-section-summary-meta">
+              {summaryMeta.map((item) => (
+                <span key={`${title}-${item}`} className="expandable-section-summary-chip">
+                  {item}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
       ) : children}
     </section>

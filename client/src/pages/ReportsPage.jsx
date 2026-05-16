@@ -370,7 +370,6 @@ export default function ReportsPage() {
               note="These suggestions keep the next class close to what was just taught while still bringing neglected topics back into the rotation."
               summary="Expand when you want next-class ideas that flow naturally from recent teaching."
               className="reports-priority-section"
-              defaultOpen
             >
               {recommendedNextTopics.length === 0 ? (
                 <p className="empty-state">There is not enough recent teaching signal yet to make a strong recommendation. Log a few more classes or add more topics to improve this list.</p>
@@ -449,7 +448,6 @@ export default function ReportsPage() {
               note="Topics that have not shown up recently and may be worth revisiting."
               summary="Expand when you want to spot topics falling out of the teaching rotation."
               className="reports-priority-section"
-              defaultOpen
             >
               {neglectedTopics.length === 0 ? (
                 <p className="empty-state">No underused topics showed up in this time range.</p>

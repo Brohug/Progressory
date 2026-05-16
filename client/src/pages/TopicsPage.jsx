@@ -138,6 +138,16 @@ export default function TopicsPage() {
     });
   }, [orderedTopics, topicSearch, topicTypeFilter, programFilter]);
 
+  const activeTopicCount = topics.filter((topic) => topic.is_active).length;
+  const inactiveTopicCount = topics.length - activeTopicCount;
+  const activeTopicFilters = [
+    topicSearch ? `Search: ${topicSearch}` : '',
+    topicTypeFilter ? `Type: ${formatLabel(topicTypeFilter)}` : '',
+    programFilter
+      ? `Program: ${programs.find((program) => String(program.id) === programFilter)?.name || 'Selected'}`
+      : ''
+  ].filter(Boolean);
+
   useEffect(() => {
     const topicId = searchParams.get('topicId');
 
@@ -380,8 +390,13 @@ export default function TopicsPage() {
         onToggle={setIsTopicListOpen}
         title="Topic List"
         note="Search and filter your curriculum as the topic library grows."
-        summary="Expand this when you want to search, filter, or review the current topic library."
-        defaultOpen
+        summary={`${filteredTopics.length} topic${filteredTopics.length === 1 ? '' : 's'} in the current view.`}
+        summaryMeta={[
+          `${activeTopicCount} active`,
+          inactiveTopicCount > 0 ? `${inactiveTopicCount} inactive` : 'No inactive topics',
+          activeTopicFilters.length > 0 ? `${activeTopicFilters.length} filter${activeTopicFilters.length === 1 ? '' : 's'} active` : 'No filters active'
+        ]}
+        stickyHeader
         actions={(
           <button
             className="secondary-button"
@@ -393,45 +408,47 @@ export default function TopicsPage() {
       >
         <div ref={topicListSectionRef} />
 
-        <div className="filter-grid">
-          <div>
-            <label>Search Topics</label>
-            <input
-              type="text"
-              value={topicSearch}
-              onChange={(e) => setTopicSearch(e.target.value)}
-              placeholder="Search by title, description, or parent topic..."
-            />
-          </div>
+        <div className="sticky-action-bar">
+          <div className="filter-grid">
+            <div>
+              <label>Search Topics</label>
+              <input
+                type="text"
+                value={topicSearch}
+                onChange={(e) => setTopicSearch(e.target.value)}
+                placeholder="Search by title, description, or parent topic..."
+              />
+            </div>
 
-          <div>
-            <label>Filter By Type</label>
-            <select
-              value={topicTypeFilter}
-              onChange={(e) => setTopicTypeFilter(e.target.value)}
-            >
-              <option value="">All Types</option>
-              {topicTypes.map((type) => (
-                <option key={type} value={type}>
-                  {formatLabel(type)}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div>
+              <label>Filter By Type</label>
+              <select
+                value={topicTypeFilter}
+                onChange={(e) => setTopicTypeFilter(e.target.value)}
+              >
+                <option value="">All Types</option>
+                {topicTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {formatLabel(type)}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div>
-            <label>Filter By Program</label>
-            <select
-              value={programFilter}
-              onChange={(e) => setProgramFilter(e.target.value)}
-            >
-              <option value="">All Programs</option>
-              {programs.map((program) => (
-                <option key={program.id} value={String(program.id)}>
-                  {program.name}
-                </option>
-              ))}
-            </select>
+            <div>
+              <label>Filter By Program</label>
+              <select
+                value={programFilter}
+                onChange={(e) => setProgramFilter(e.target.value)}
+              >
+                <option value="">All Programs</option>
+                {programs.map((program) => (
+                  <option key={program.id} value={String(program.id)}>
+                    {program.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 

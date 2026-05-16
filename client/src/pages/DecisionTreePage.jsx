@@ -2263,12 +2263,35 @@ export default function DecisionTreePage() {
   );
   const [pendingScrollTarget, setPendingScrollTarget] = useState('');
   const [activeScenarioPrompt, setActiveScenarioPrompt] = useState(null);
+  const [isMobileScenarioCards, setIsMobileScenarioCards] = useState(() => (
+    typeof window !== 'undefined' ? window.innerWidth <= 640 : false
+  ));
+  const [expandedScenarioCardLabels, setExpandedScenarioCardLabels] = useState({});
   const [expandedPromptKeys, setExpandedPromptKeys] = useState({});
   const [showEscapeContinuation, setShowEscapeContinuation] = useState(false);
   const filtersSectionRef = useRef(null);
   const scenarioPromptRef = useRef(null);
   const treeBranchesRef = useRef(null);
   const recommendationsRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 640px)');
+    const syncMobileState = (event) => {
+      setIsMobileScenarioCards(event.matches);
+    };
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', syncMobileState);
+      return () => mediaQuery.removeEventListener('change', syncMobileState);
+    }
+
+    mediaQuery.addListener(syncMobileState);
+    return () => mediaQuery.removeListener(syncMobileState);
+  }, []);
 
   const entries = curriculumIndexSeed;
 
@@ -2653,6 +2676,13 @@ export default function DecisionTreePage() {
     };
   };
 
+  const toggleScenarioCard = (label) => {
+    setExpandedScenarioCardLabels((current) => ({
+      ...current,
+      [label]: !current[label]
+    }));
+  };
+
   const applyGuidedScenarioOption = (option) => {
     if (!activeScenarioPrompt) return;
 
@@ -2939,51 +2969,76 @@ export default function DecisionTreePage() {
                   {group.scenarios.map((scenario) => (
                     (() => {
                       const preview = getScenarioPreview(scenario);
+                      const isExpanded = !isMobileScenarioCards || Boolean(expandedScenarioCardLabels[scenario.label]);
 
                       return (
-                        <button
+                        <article
                           key={scenario.label}
-                          type="button"
-                          className="decision-tree-scenario-card"
-                          onClick={() => applyCoachingScenario(scenario)}
+                          className={`decision-tree-scenario-card${isMobileScenarioCards ? ' is-collapsible' : ''}${isExpanded ? ' is-expanded' : ''}`}
                         >
-                          <strong>{scenario.label}</strong>
-                          <span>{scenario.description}</span>
-                          {preview.items.length || preview.hint ? (
-                            <span className="decision-tree-follow-up-row" aria-label="Scenario preview options">
-                              {preview.items.map((item) => (
-                                item.interactive ? (
-                                  <span
-                                    key={item.key}
-                                    className="decision-tree-follow-up-chip"
-                                    role="button"
-                                    tabIndex={0}
-                                    onClick={(event) => applyScenarioFollowUp(event, scenario, item.followUp)}
-                                    onKeyDown={(event) => {
-                                      if (event.key === 'Enter' || event.key === ' ') {
-                                        applyScenarioFollowUp(event, scenario, item.followUp);
-                                      }
-                                    }}
-                                  >
-                                    {item.label}
-                                  </span>
-                                ) : (
-                                  <span
-                                    key={item.key}
-                                    className="decision-tree-follow-up-chip decision-tree-follow-up-chip-static"
-                                  >
-                                    {item.label}
-                                  </span>
-                                )
-                              ))}
-                              {preview.hint ? (
-                                <span className="decision-tree-follow-up-chip decision-tree-follow-up-hint">
-                                  {preview.hint}
+                          <div className="decision-tree-scenario-card-header">
+                            <strong>{scenario.label}</strong>
+                            {isMobileScenarioCards ? (
+                              <button
+                                type="button"
+                                className="secondary-button decision-tree-scenario-toggle"
+                                onClick={() => toggleScenarioCard(scenario.label)}
+                              >
+                                {isExpanded ? 'Hide' : 'Expand'}
+                              </button>
+                            ) : null}
+                          </div>
+
+                          {isExpanded ? (
+                            <>
+                              <span>{scenario.description}</span>
+                              {preview.items.length || preview.hint ? (
+                                <span className="decision-tree-follow-up-row" aria-label="Scenario preview options">
+                                  {preview.items.map((item) => (
+                                    item.interactive ? (
+                                      <span
+                                        key={item.key}
+                                        className="decision-tree-follow-up-chip"
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={(event) => applyScenarioFollowUp(event, scenario, item.followUp)}
+                                        onKeyDown={(event) => {
+                                          if (event.key === 'Enter' || event.key === ' ') {
+                                            applyScenarioFollowUp(event, scenario, item.followUp);
+                                          }
+                                        }}
+                                      >
+                                        {item.label}
+                                      </span>
+                                    ) : (
+                                      <span
+                                        key={item.key}
+                                        className="decision-tree-follow-up-chip decision-tree-follow-up-chip-static"
+                                      >
+                                        {item.label}
+                                      </span>
+                                    )
+                                  ))}
+                                  {preview.hint ? (
+                                    <span className="decision-tree-follow-up-chip decision-tree-follow-up-hint">
+                                      {preview.hint}
+                                    </span>
+                                  ) : null}
                                 </span>
                               ) : null}
-                            </span>
+
+                              <div className="decision-tree-scenario-card-actions">
+                                <button
+                                  type="button"
+                                  className="secondary-button"
+                                  onClick={() => applyCoachingScenario(scenario)}
+                                >
+                                  Start here
+                                </button>
+                              </div>
+                            </>
                           ) : null}
-                        </button>
+                        </article>
                       );
                     })()
                   ))}

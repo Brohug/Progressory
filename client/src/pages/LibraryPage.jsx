@@ -342,6 +342,9 @@ export default function LibraryPage() {
     return nextFilters;
   }, [search, selectedProgram, selectedTopic, entryTypeFilter, needsTopicOnly]);
 
+  const activeEntryCount = entries.filter((entry) => entry.is_active).length;
+  const inactiveEntryCount = entries.length - activeEntryCount;
+
   const getCoachingUseBadges = (entry) => {
     const badges = [];
 
@@ -736,9 +739,16 @@ export default function LibraryPage() {
           title="Find Library Resources"
           note="Search by title, topic, or resource type."
           summary={`${filteredEntries.length} member-visible librar${filteredEntries.length === 1 ? 'y entry' : 'y entries'} available.`}
+          summaryMeta={[
+            `${filteredEntries.length} visible to members`,
+            activeFilters.length > 0 ? `${activeFilters.length} filter${activeFilters.length === 1 ? '' : 's'} active` : 'No filters active',
+            selectedTopic ? `Focused on ${selectedTopic.title}` : 'No topic focus'
+          ]}
           className="library-filters-section"
           defaultOpen
+          stickyHeader
         >
+          <div className="sticky-action-bar">
           <div className="form-grid">
             <div>
               <label>Search</label>
@@ -786,15 +796,22 @@ export default function LibraryPage() {
                 Clear filters
               </button>
             </div>
-          ) : null}
+            ) : null}
+          </div>
         </ExpandableSection>
 
           <ExpandableSection
             title="Library Entries"
             note="Open the resources your gym has shared with members."
             summary={`${filteredEntries.length} librar${filteredEntries.length === 1 ? 'y entry' : 'y entries'} in the current results.`}
+            summaryMeta={[
+              selectedTopic ? `Topic: ${selectedTopic.title}` : 'All member topics',
+              search ? `Search: ${search}` : 'No search active',
+              filteredEntries.length > 0 ? 'Ready to study' : 'No matching entries'
+            ]}
             className="library-entries-section"
             defaultOpen
+            stickyHeader
           >
             {loading ? (
               <p className="empty-state">Loading library...</p>
@@ -1090,11 +1107,18 @@ export default function LibraryPage() {
         title="Find the right resource fast"
         note="Search by title, topic, program, description, or resource type."
         summary={`${filteredEntries.length} matching librar${filteredEntries.length === 1 ? 'y entry' : 'y entries'} in the current view.`}
+        summaryMeta={[
+          `${activeEntryCount} active`,
+          inactiveEntryCount > 0 ? `${inactiveEntryCount} inactive` : 'No inactive entries',
+          activeFilters.length > 0 ? `${activeFilters.length} filter${activeFilters.length === 1 ? '' : 's'} active` : 'No filters active'
+        ]}
         className="library-filters-section"
         defaultOpen={openFiltersByDefault}
+        stickyHeader
       >
-        <div className="summary-grid" style={{ marginBottom: '16px' }}>
-          {summaryCards.map((card) => (
+          <div className="sticky-action-bar">
+          <div className="summary-grid" style={{ marginBottom: '16px' }}>
+            {summaryCards.map((card) => (
             <div key={card.label} className="summary-card">
               <div className="meta-text">{card.label}</div>
               <strong style={{ fontSize: '1.4rem' }}>{card.value}</strong>
@@ -1275,8 +1299,8 @@ export default function LibraryPage() {
             </span>
           </div>
 
-          {activeFilters.length > 0 ? (
-            <div className="library-active-filters">
+            {activeFilters.length > 0 ? (
+              <div className="library-active-filters">
               <div className="library-filter-chip-row">
                 {activeFilters.map((filter) => (
                   <span key={filter.key} className="library-filter-chip">
@@ -1287,17 +1311,24 @@ export default function LibraryPage() {
               <button type="button" className="secondary-button" onClick={clearAllFilters}>
                 Clear filters
               </button>
-            </div>
-          ) : null}
-        </div>
+              </div>
+            ) : null}
+          </div>
+          </div>
       </ExpandableSection>
 
       <ExpandableSection
         title="Library Entries"
         note="Review saved resources, edit them, or work through inactive entries."
         summary={`${filteredEntries.length} librar${filteredEntries.length === 1 ? 'y entry' : 'y entries'} in the current results.`}
+        summaryMeta={[
+          showInactive ? 'Showing inactive entries' : 'Showing active entries',
+          selectedTopic ? `Topic: ${selectedTopic.title}` : 'All topics',
+          sortBy === 'updated_desc' ? 'Sorted by latest update' : `Sorted by ${sortBy.replaceAll('_', ' ')}`
+        ]}
         className="library-entries-section"
         defaultOpen={openEntriesByDefault}
+        stickyHeader
         actions={(
           <button
             className="secondary-button"

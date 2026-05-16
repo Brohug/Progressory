@@ -772,7 +772,13 @@ export default function CurriculumIndexPage() {
             title="Index results"
             note="Use this as the broad curriculum map and the fastest place to add a missing topic."
             summary={`${filteredEntries.length} matching index item${filteredEntries.length === 1 ? '' : 's'} in the current view.`}
+            summaryMeta={[
+              selectedEntryId ? 'Focused on one result' : 'Broad result view',
+              search ? `Search: ${search}` : 'No search active',
+              categoryFilter ? `Category: ${categoryFilter}` : 'All categories'
+            ]}
             className="curriculum-index-results-section"
+            stickyHeader
           >
             <div className="section-header">
               <div>
