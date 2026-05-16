@@ -680,21 +680,23 @@ export default function Layout({ children }) {
                   <span>Close</span>
                 </button>
               </div>
-              <div className="app-mobile-drawer-list">
-                {mobileMenuItems.map((item) => (
-                  <Link key={item.to} to={item.to} className="app-mobile-drawer-link" onClick={closeMenus}>
-                    {renderNavLabel(item.label, getIconNameForPath(item.to))}
-                  </Link>
-                ))}
-              </div>
-              <div className="app-mobile-drawer-account">
-                <strong>{user.first_name} {user.last_name}</strong>
-                <span>{user.gym_name}</span>
-                <span>{user.role}</span>
-                <button type="button" className="secondary-button" onClick={() => { closeMenus(); logout(); }}>
-                  <AppIcon name="logout" />
-                  <span>Logout</span>
-                </button>
+              <div className="app-mobile-drawer-content">
+                <div className="app-mobile-drawer-list">
+                  {mobileMenuItems.map((item) => (
+                    <Link key={item.to} to={item.to} className="app-mobile-drawer-link" onClick={closeMenus}>
+                      {renderNavLabel(item.label, getIconNameForPath(item.to))}
+                    </Link>
+                  ))}
+                </div>
+                <div className="app-mobile-drawer-account">
+                  <strong>{user.first_name} {user.last_name}</strong>
+                  <span>{user.gym_name}</span>
+                  <span>{user.role}</span>
+                  <button type="button" className="secondary-button" onClick={() => { closeMenus(); logout(); }}>
+                    <AppIcon name="logout" />
+                    <span>Logout</span>
+                  </button>
+                </div>
               </div>
             </aside>
           </>
