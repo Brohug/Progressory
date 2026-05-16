@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import api from '../api/axios';
 import AppIcon from './AppIcon';
 
 const getLinkClassName = ({ isActive }) => (
@@ -66,6 +67,17 @@ export default function Layout({ children }) {
     routeKey: ''
   });
   const [hasSeenMobileNavScroll, setHasSeenMobileNavScroll] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordFormStatus, setPasswordFormStatus] = useState({
+    error: '',
+    success: '',
+    submitting: false
+  });
   const [guidePreference, setGuidePreference] = useState({
     key: '',
     value: null
@@ -119,6 +131,12 @@ export default function Layout({ children }) {
   }, [locationKey]);
 
   const toggleUserMenu = () => {
+    const isClosing = menuState.user && menuState.routeKey === locationKey;
+    if (isClosing) {
+      setShowPasswordForm(false);
+      resetPasswordFormState();
+    }
+
     setMenuState((prev) => ({
       mobile: false,
       more: false,
@@ -128,11 +146,26 @@ export default function Layout({ children }) {
   };
 
   const closeMenus = () => {
+    setShowPasswordForm(false);
+    resetPasswordFormState();
     setMenuState({
       mobile: false,
       more: false,
       user: false,
       routeKey: locationKey
+    });
+  };
+
+  const resetPasswordFormState = () => {
+    setPasswordForm({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+    setPasswordFormStatus({
+      error: '',
+      success: '',
+      submitting: false
     });
   };
 
@@ -183,6 +216,43 @@ export default function Layout({ children }) {
       navElement.removeEventListener('scroll', handleScroll);
     };
   }, [hasSeenMobileNavScroll, locationKey]);
+
+  const handlePasswordFieldChange = (event) => {
+    const { name, value } = event.target;
+    setPasswordForm((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleChangePassword = async (event) => {
+    event.preventDefault();
+    setPasswordFormStatus({
+      error: '',
+      success: '',
+      submitting: true
+    });
+
+    try {
+      const response = await api.post('/auth/change-password', passwordForm);
+      setPasswordForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+      setPasswordFormStatus({
+        error: '',
+        success: response.data?.message || 'Password changed successfully',
+        submitting: false
+      });
+    } catch (error) {
+      setPasswordFormStatus({
+        error: error.response?.data?.message || 'Could not change password right now.',
+        success: '',
+        submitting: false
+      });
+    }
+  };
 
   const toggleGuide = () => {
     const nextValue = !isGuideCollapsed;
@@ -517,6 +587,72 @@ export default function Layout({ children }) {
                         <span>{user.gym_name}</span>
                         <span>{user.role}</span>
                       </div>
+                      <div className="app-user-menu-actions">
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => {
+                            setShowPasswordForm((prev) => !prev);
+                            setPasswordFormStatus((prev) => ({
+                              ...prev,
+                              error: '',
+                              success: prev.success
+                            }));
+                          }}
+                        >
+                          <AppIcon name="account" />
+                          <span>{showPasswordForm ? 'Hide password form' : 'Change password'}</span>
+                        </button>
+                      </div>
+                      {showPasswordForm ? (
+                        <form className="app-user-menu-form" onSubmit={handleChangePassword}>
+                          <div>
+                            <label htmlFor="currentPassword">Current password</label>
+                            <input
+                              id="currentPassword"
+                              type="password"
+                              name="currentPassword"
+                              value={passwordForm.currentPassword}
+                              onChange={handlePasswordFieldChange}
+                              autoComplete="current-password"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="newPassword">New password</label>
+                            <input
+                              id="newPassword"
+                              type="password"
+                              name="newPassword"
+                              value={passwordForm.newPassword}
+                              onChange={handlePasswordFieldChange}
+                              autoComplete="new-password"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="confirmPassword">Confirm new password</label>
+                            <input
+                              id="confirmPassword"
+                              type="password"
+                              name="confirmPassword"
+                              value={passwordForm.confirmPassword}
+                              onChange={handlePasswordFieldChange}
+                              autoComplete="new-password"
+                            />
+                          </div>
+                          {passwordFormStatus.error ? (
+                            <p className="error-text app-user-menu-feedback">{passwordFormStatus.error}</p>
+                          ) : null}
+                          {passwordFormStatus.success ? (
+                            <p className="success-text app-user-menu-feedback">{passwordFormStatus.success}</p>
+                          ) : null}
+                          <div className="app-user-menu-form-actions">
+                            <button type="submit" className="secondary-button" disabled={passwordFormStatus.submitting}>
+                              <AppIcon name="account" />
+                              <span>{passwordFormStatus.submitting ? 'Saving...' : 'Save new password'}</span>
+                            </button>
+                          </div>
+                        </form>
+                      ) : null}
                       <button type="button" className="secondary-button" onClick={() => { closeMenus(); logout(); }}>
                         <AppIcon name="logout" />
                         <span>Logout</span>

@@ -525,10 +525,79 @@ const getMe = async (req, res) => {
   }
 };
 
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        message: 'Current password, new password, and confirmation are required'
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        message: 'New password must be at least 8 characters'
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        message: 'New password confirmation does not match'
+      });
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({
+        message: 'Choose a different password than the current one'
+      });
+    }
+
+    const [rows] = await pool.query(
+      'SELECT id, gym_id, password_hash FROM users WHERE id = ? AND gym_id = ?',
+      [req.user.id, req.user.gym_id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: 'Account not found'
+      });
+    }
+
+    const user = rows[0];
+    const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        message: 'Current password is incorrect'
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    await pool.query(
+      'UPDATE users SET password_hash = ? WHERE id = ? AND gym_id = ?',
+      [passwordHash, user.id, user.gym_id]
+    );
+
+    return res.status(200).json({
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    console.error('Change password error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
   getMe,
+  changePassword,
   getMemberAccessInvite,
   setMemberAccessPassword,
   getStaffAccessInvite,

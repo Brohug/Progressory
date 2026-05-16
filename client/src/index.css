@@ -419,6 +419,41 @@ ul {
   font-size: 14px;
 }
 
+.app-user-menu-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.app-user-menu-form {
+  display: grid;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(56, 189, 248, 0.12);
+}
+
+.app-user-menu-form label {
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.app-user-menu-form input {
+  min-height: 40px;
+}
+
+.app-user-menu-form-actions {
+  display: flex;
+  justify-content: stretch;
+}
+
+.app-user-menu-form-actions .secondary-button {
+  width: 100%;
+}
+
+.app-user-menu-feedback {
+  margin: 0;
+  font-size: 13px;
+}
+
 .app-guidance-shell {
   margin-top: 8px;
 }

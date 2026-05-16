@@ -5,6 +5,7 @@ const {
   register,
   login,
   getMe,
+  changePassword,
   getMemberAccessInvite,
   setMemberAccessPassword,
   getStaffAccessInvite,
@@ -19,5 +20,6 @@ router.post('/member-access/:token', setMemberAccessPassword);
 router.get('/staff-access/:token', getStaffAccessInvite);
 router.post('/staff-access/:token', setStaffAccessPassword);
 router.get('/me', protect, getMe);
+router.post('/change-password', protect, changePassword);
 
 module.exports = router;
