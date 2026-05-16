@@ -186,6 +186,40 @@ export default function Layout({ children }) {
     };
   }, [hasSeenMobileNavScroll, locationKey]);
 
+  useEffect(() => {
+    const shouldLockScroll = isMobileMenuOpen || isMoreMenuOpen;
+
+    if (!shouldLockScroll || typeof document === 'undefined') {
+      return undefined;
+    }
+
+    const { body, documentElement } = document;
+    const scrollY = window.scrollY;
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyPosition = body.style.position;
+    const previousBodyTop = body.style.top;
+    const previousBodyWidth = body.style.width;
+    const previousHtmlOverflow = documentElement.style.overflow;
+    const previousOverscroll = body.style.overscrollBehavior;
+
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.width = '100%';
+    documentElement.style.overflow = 'hidden';
+    body.style.overscrollBehavior = 'none';
+
+    return () => {
+      body.style.overflow = previousBodyOverflow;
+      body.style.position = previousBodyPosition;
+      body.style.top = previousBodyTop;
+      body.style.width = previousBodyWidth;
+      documentElement.style.overflow = previousHtmlOverflow;
+      body.style.overscrollBehavior = previousOverscroll;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isMobileMenuOpen, isMoreMenuOpen]);
+
   const toggleGuide = () => {
     const nextValue = !isGuideCollapsed;
     setGuidePreference({

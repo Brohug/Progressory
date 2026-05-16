@@ -3881,6 +3881,11 @@ a.dashboard-setup-item {
     background: rgba(11, 18, 32, 0.98);
     border-left: 1px solid var(--border);
     box-shadow: var(--shadow);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    min-height: 0;
   }
 
   .app-mobile-drawer-header,
@@ -3895,6 +3900,16 @@ a.dashboard-setup-item {
   .app-mobile-more-sheet-list {
     display: grid;
     gap: 10px;
+    min-height: 0;
+  }
+
+  .app-mobile-drawer-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    padding-right: 2px;
   }
 
   .app-mobile-drawer-link,
@@ -4043,6 +4058,9 @@ a.dashboard-setup-item {
     box-shadow: var(--shadow);
     max-height: min(56vh, 420px);
     overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
   }
 
   .app-mobile-more-link,
