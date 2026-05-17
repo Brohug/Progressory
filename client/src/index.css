@@ -3943,6 +3943,12 @@ a.dashboard-setup-item {
     color: #f8fafc;
   }
 
+  .app-mobile-drawer-account-actions {
+    display: grid;
+    gap: 8px;
+    margin-top: 2px;
+  }
+
   .app-mobile-top-nav-shell {
     position: sticky;
     top: 8px;

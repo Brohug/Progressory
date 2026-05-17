@@ -692,6 +692,18 @@ export default function Layout({ children }) {
                   <strong>{user.first_name} {user.last_name}</strong>
                   <span>{user.gym_name}</span>
                   <span>{user.role}</span>
+                  <div className="app-mobile-drawer-account-actions">
+                    <Link to="/account" className="secondary-button" onClick={closeMenus}>
+                      <AppIcon name="account" />
+                      <span>My Account</span>
+                    </Link>
+                    {isOwner ? (
+                      <Link to="/billing" className="secondary-button" onClick={closeMenus}>
+                        <AppIcon name="reports" />
+                        <span>Billing</span>
+                      </Link>
+                    ) : null}
+                  </div>
                   <button type="button" className="secondary-button" onClick={() => { closeMenus(); logout(); }}>
                     <AppIcon name="logout" />
                     <span>Logout</span>
