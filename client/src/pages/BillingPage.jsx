@@ -7,7 +7,7 @@ export default function BillingPage() {
       <div className="billing-page">
         <h2 className="page-title">Billing</h2>
         <p className="page-intro">
-          This owner-only workspace will hold subscription, renewal, and payment controls once billing goes live.
+          This owner-only workspace will hold billing, subscription, and payment controls once billing goes live.
         </p>
 
         <section className="page-section">
@@ -15,7 +15,7 @@ export default function BillingPage() {
             <div>
               <h3>Billing overview</h3>
               <p className="section-note">
-                For now, this page helps frame where billing controls will live without mixing unfinished payment setup into the rest of the app.
+                For now, this page frames where owner-only billing controls will live without mixing unfinished payment setup into the rest of the app.
               </p>
             </div>
           </div>

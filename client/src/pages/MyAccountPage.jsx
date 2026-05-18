@@ -347,7 +347,7 @@ export default function MyAccountPage() {
               <div>
                 <h3>Billing</h3>
                 <p className="section-note">
-                  Billing is not live yet, but this is where owner-only subscription controls will land.
+                  This owner-only workspace will hold billing, subscription, and payment controls once billing goes live.
                 </p>
               </div>
             </div>

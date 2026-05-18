@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from "./context/AuthContext.jsx";
 import ProtectedRoute from './components/ProtectedRoute';
@@ -36,10 +36,16 @@ function RouteFallback() {
 
 function ScrollToTop() {
   const location = useLocation();
+  const previousPathRef = useRef(location.pathname);
 
   useEffect(() => {
+    if (previousPathRef.current === location.pathname) {
+      return;
+    }
+
+    previousPathRef.current = location.pathname;
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  }, [location.pathname, location.search]);
+  }, [location.pathname]);
 
   return null;
 }

@@ -346,8 +346,8 @@ export default function PlannedClassesPage() {
           storeReadyForAttendanceIds(processedResult.processed.map((item) => item.classId));
           setMessage(
             processedResult.processedCount === 1
-              ? '1 planned class moved into Completed Classes and is ready for attendance.'
-              : `${processedResult.processedCount} planned classes moved into Completed Classes and are ready for attendance.`
+              ? '1 planned class moved into Completed classes and is ready for attendance.'
+              : `${processedResult.processedCount} planned classes moved into Completed classes and are ready for attendance.`
           );
         }
       } catch (err) {
@@ -1025,8 +1025,8 @@ export default function PlannedClassesPage() {
         storeReadyForAttendanceIds(processedResult.processed.map((item) => item.classId));
         setMessage(
           processedResult.processedCount === 1
-            ? 'Planned class saved and moved into Completed Classes because its scheduled end time is already in the past.'
-            : `${processedResult.processedCount} planned classes were moved into Completed Classes because their scheduled end times are already in the past.`
+            ? 'Planned class saved and moved into Completed classes because its scheduled end time is already in the past.'
+            : `${processedResult.processedCount} planned classes were moved into Completed classes because their scheduled end times are already in the past.`
         );
       }
     } catch (err) {
@@ -1597,7 +1597,8 @@ export default function PlannedClassesPage() {
             <div className="planned-classes-calendar">
               <div className="planned-classes-calendar-toolbar">
                 <div>
-                  <h4>{visibleMonthLabel}</h4>
+                  <span className="planned-classes-calendar-month-badge">{visibleMonthLabel}</span>
+                  <h4>Monthly calendar</h4>
                   <p className="section-note">
                     Click a day to start planning directly on that date.
                   </p>
@@ -1641,8 +1642,18 @@ export default function PlannedClassesPage() {
                           onClick={() => handleSelectCalendarDay(day.date)}
                           disabled={!day.isCurrentMonth}
                         >
-                          <span>{day.date.toLocaleDateString(undefined, { weekday: 'short' })}</span>
-                          <strong>{day.date.getDate()}</strong>
+                          <span className="planned-classes-calendar-day-weekday">
+                            {day.date.toLocaleDateString(undefined, { weekday: 'short' })}
+                          </span>
+                          <strong className="planned-classes-calendar-day-date">
+                            {day.date.getDate()}
+                          </strong>
+                          <span className="planned-classes-calendar-day-month-date">
+                            {day.date.toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </span>
                         </button>
                         <span className="meta-text">
                           {day.plans.length > 0

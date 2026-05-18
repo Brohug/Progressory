@@ -887,7 +887,12 @@ const curriculumIndexSeed = [
     skillLevel: 'Beginner',
     tags: ['movement', 'takedown defense', 'base'],
     description: 'A defensive reaction that throws the hips back to shut down penetration, win weight onto the head and shoulders, and regain cleaner head control.',
-    relatedPositions: ['Standing', 'Front Headlock']
+    relatedPositions: ['Standing', 'Front Headlock', 'Go-Behind Position'],
+    entriesIntoPosition: ['Single Leg', 'Double Leg', 'Shot Recovery'],
+    commonAttacks: ['Front Headlock', 'Front Headlock To Spin Behind', 'Go-Behind Position'],
+    commonTransitions: ['Front Headlock', 'Sprawl Front Headlock', 'Go-Behind Position'],
+    commonFollowUps: ['Front Headlock', 'Sprawl Front Headlock', 'Go-Behind Position', 'Single Leg'],
+    commonDefenses: ['Posture', 'Shot Recovery', 'Standing']
   },
   {
     id: 'movements-inversion',
@@ -1501,21 +1506,21 @@ const curriculumIndexSeed = [
     commonFollowUps: ['Omoplata', 'Back Control', 'Triangle Choke'],
     commonDefenses: ['Posture', 'Hand Fighting', 'Granby Roll']
   },
-  {
-    id: 'positions-shoulder-crunch',
-    category: 'Positions',
-    subcategory: 'Ground',
-    name: 'Shoulder Crunch',
+    {
+      id: 'positions-shoulder-crunch',
+      category: 'Positions',
+      subcategory: 'Ground',
+      name: 'Shoulder Crunch',
     skillLevel: 'Intermediate',
     tags: ['position', 'guard', 'upper body control'],
     description: 'A seated or supine upper-body control that traps one shoulder and opens sweeps, clamp entries, and arm-drag style attacks before the top player can square posture back up.',
     relatedPositions: ['Butterfly Guard', 'Clamp Guard', 'Closed Guard'],
     entriesIntoPosition: ['Butterfly Guard', 'Closed Guard', 'Seated Guard'],
-    commonAttacks: ['Shoulder Crunch Butterfly Sweep', 'Triangle Choke', 'Arm Drag To Back'],
-    commonTransitions: ['Clamp Guard', 'High Guard', 'K-Guard'],
-    commonFollowUps: ['Shoulder Crunch Butterfly Sweep', 'Triangle Choke', 'Arm Drag To Back'],
-    commonDefenses: ['Posture', 'Posting', 'Hand Fighting']
-  },
+      commonAttacks: ['Shoulder Crunch Butterfly Sweep', 'Triangle Choke', 'Choi Bar', 'Arm Drag To Back'],
+      commonTransitions: ['Clamp Guard', 'High Guard', 'K-Guard'],
+      commonFollowUps: ['Shoulder Crunch Butterfly Sweep', 'Triangle Choke', 'Choi Bar', 'Arm Drag To Back'],
+      commonDefenses: ['Posture', 'Posting', 'Hand Fighting']
+    },
   {
     id: 'positions-crackhead-control',
     category: 'Positions',
@@ -1925,6 +1930,21 @@ const curriculumIndexSeed = [
     commonDefenses: ['Ashi Garami', 'Cross Ashi', 'Hand Fighting']
   },
   {
+    id: 'positions-70-30',
+    category: 'Positions',
+    subcategory: 'Ground',
+    name: '70/30',
+    skillLevel: 'Advanced',
+    tags: ['position', 'leg entanglement', 'backside'],
+    description: 'A backside leg-entanglement variation that sharpens heel exposure while keeping strong rotational control for inside heel hooks and related follow-up attacks.',
+    relatedPositions: ['Backside 50/50', '50/50', 'Saddle', 'Lachy Lock'],
+    entriesIntoPosition: ['Backside 50/50', '50/50', 'Ashi Garami'],
+    commonAttacks: ['Lachy Lock', 'Inside Heel Hook', 'Mikey Lock'],
+    commonTransitions: ['Backside 50/50', 'Lachy Lock', 'Inside Heel Hook'],
+    commonFollowUps: ['Lachy Lock', 'Inside Heel Hook', 'Backside 50/50'],
+    commonDefenses: ['Heel Hook Line Defense', 'Leg Lock Defense', 'Hand Fighting']
+  },
+  {
     id: 'positions-saddle',
     category: 'Positions',
     subcategory: 'Ground',
@@ -2115,7 +2135,7 @@ const curriculumIndexSeed = [
     entriesIntoPosition: ['Snap Down To Front Headlock', 'Front Headlock Standing', 'Turtle'],
     commonAttacks: ['Guillotine', "D'Arce Choke", 'Anaconda Choke', 'Japanese Necktie', 'Peruvian Necktie'],
     commonTransitions: ['Front Headlock To Spin Behind', 'Turtle', 'Crucifix', 'Back Control'],
-    commonFollowUps: ['Guillotine', 'Front Headlock To Spin Behind', 'Back Control', 'Crucifix'],
+      commonFollowUps: ['Guillotine', "D'Arce Choke", 'Front Headlock To Spin Behind', 'Back Control', 'Crucifix'],
     commonDefenses: ['Hand Fighting', 'Hip Heist', 'Sit-Out']
   },
   {
@@ -2906,9 +2926,9 @@ const curriculumIndexSeed = [
     description: 'A finishing control position where the elbow line is isolated and hip pressure can start extending the arm before the defender reconnects the hands, stacks in, or turns the shoulder free.',
     relatedPositions: ['Spiderweb Position', 'Straight Armbar From Mount', 'Back Control'],
     entriesIntoPosition: ['Straight Armbar From Guard', 'Straight Armbar From Mount', 'Back Control'],
-    commonAttacks: ['Straight Armbar From Guard', 'Belly-Down Armbar', 'Straight Armbar From Mount'],
+    commonAttacks: ['Straight Armbar From Guard', 'Belly-Down Armbar', 'Choi Bar', 'Straight Armbar From Mount'],
     commonTransitions: ['Spiderweb Position', 'Triangle Position', 'Omoplata Position'],
-    commonFollowUps: ['Belly-Down Armbar', 'Omoplata Position', 'Back Control'],
+    commonFollowUps: ['Belly-Down Armbar', 'Choi Bar', 'Omoplata Position', 'Back Control'],
     commonDefenses: ['Armbar Hitchhiker Defense', 'Two-On-One Grip Fight', 'Armbar Stacking Defense']
   },
   {
@@ -2941,21 +2961,21 @@ const curriculumIndexSeed = [
     commonFollowUps: ['Straight Armbar From Mount', 'Mounted Triangle', 'Technical Mount To Back'],
     commonDefenses: ['Armbar Stacking Defense', 'Armbar Hitchhiker Defense', 'Turn-To-Knees Escape']
   },
-  {
-    id: 'positions-triangle-position',
-    category: 'Positions',
-    subcategory: 'Ground',
-    name: 'Triangle Position',
+    {
+      id: 'positions-triangle-position',
+      category: 'Positions',
+      subcategory: 'Ground',
+      name: 'Triangle Position',
     skillLevel: 'Beginner',
     tags: ['position', 'submission control', 'triangle'],
     description: 'A head-and-arm trapping control position where angle, shoulder line, and leg configuration decide whether the choke closes cleanly or whether an armbar or omoplata follow-up is the better finish.',
     relatedPositions: ['Closed Guard', 'High Guard', 'Mounted Triangle'],
     entriesIntoPosition: ['Triangle Choke', 'High Guard', 'Armbar Position'],
-    commonAttacks: ['Triangle Choke', 'Straight Armbar From Guard', 'Omoplata'],
-    commonTransitions: ['Mounted Triangle', 'Armbar Position', 'Closed Guard'],
-    commonFollowUps: ['Triangle Choke', 'Armbar Position', 'Mounted Triangle'],
-    commonDefenses: ['Triangle Posture Defense', 'Armbar Stacking Defense', 'Triangle Hand-Fight / Angle-Kill Defense']
-  },
+      commonAttacks: ['Triangle Choke', 'Straight Armbar From Guard', 'Choi Bar', 'Omoplata'],
+      commonTransitions: ['Mounted Triangle', 'Armbar Position', 'Closed Guard'],
+      commonFollowUps: ['Triangle Choke', 'Choi Bar', 'Armbar Position', 'Mounted Triangle'],
+      commonDefenses: ['Triangle Posture Defense', 'Armbar Stacking Defense', 'Triangle Hand-Fight / Angle-Kill Defense']
+    },
   {
     id: 'positions-omoplata-position',
     category: 'Positions',
@@ -8059,9 +8079,9 @@ const curriculumIndexSeed = [
     description: 'A straight armbar from guard that depends on isolating the elbow line, turning the angle, and extending the hips before posture or stacking pressure can unwind the finish.',
     relatedPositions: ['Closed Guard', 'High Guard', 'Armbar Position'],
     entriesIntoPosition: ['Closed Guard', 'High Guard', 'Triangle Position'],
-    commonAttacks: ['Triangle Choke', 'Omoplata', 'Belly-Down Armbar'],
+    commonAttacks: ['Triangle Choke', 'Omoplata', 'Choi Bar', 'Belly-Down Armbar'],
     commonTransitions: ['Armbar Position', 'Triangle Position', 'Omoplata Position'],
-    commonFollowUps: ['Armbar Position', 'Triangle Choke', 'Omoplata Position'],
+    commonFollowUps: ['Armbar Position', 'Triangle Choke', 'Choi Bar', 'Omoplata Position'],
     commonDefenses: ['Armbar Stacking Defense', 'Armbar Hitchhiker Defense', 'Hand Fighting']
   },
   {
@@ -8124,6 +8144,21 @@ const curriculumIndexSeed = [
     commonFollowUps: ['Armbar Position', 'Back Control', 'Technical Mount To Back'],
     commonDefenses: ['Armbar Hitchhiker Defense', 'Hand Fighting', 'Shoulder Roll']
   },
+    {
+      id: 'submissions-choi-bar',
+      category: 'Submissions',
+      subcategory: 'Arm Locks',
+      name: 'Choi Bar',
+      skillLevel: 'Advanced',
+      tags: ['submission', 'armbar', 'shoulder crunch', 'triangle chain'],
+      description: 'A modern armbar entry that grows out of strong arm isolation and shoulder-crunch style control, then turns that control into a tighter elbow line before posture, stacking, shoulder freedom, or a late step-up changes the exchange.',
+      relatedPositions: ['Shoulder Crunch', 'Butterfly Half', 'Closed Guard', 'Open Guard', 'Triangle Position'],
+      entriesIntoPosition: ['Shoulder Crunch', 'Butterfly Guard', 'Butterfly Half', 'Closed Guard', 'Z-Guard'],
+      commonAttacks: ['Straight Armbar From Guard', 'Triangle Choke', 'Belly-Down Armbar'],
+      commonTransitions: ['Shoulder Crunch', 'Triangle Position', 'Armbar Position', 'Back Control', 'Ashi Garami'],
+      commonFollowUps: ['Straight Armbar From Guard', 'Triangle Choke', 'Shoulder Crunch Butterfly Sweep', 'Armbar Position', 'Back Control', 'Ashi Garami'],
+      commonDefenses: ['Posture', 'Hand Fighting', 'Armbar Stacking Defense']
+    },
   {
     id: 'submissions-arm-triangle',
     category: 'Submissions',
@@ -9225,12 +9260,12 @@ const curriculumIndexSeed = [
     name: 'Lachy Lock',
     skillLevel: 'Advanced',
     tags: ['leg lock', 'submission', 'heel hook'],
-    description: 'A named heel-hook variation that keeps the knee line trapped while using rotational pressure and bridge mechanics to make the finish harder to turn off. It sits in the same family as other tight inside-rotation heel-hook attacks, but still depends on solid control more than flashy movement.',
-    relatedPositions: ['Inside Sankaku', 'Saddle', 'Cross Ashi'],
-    entriesIntoPosition: ['Inside Sankaku', 'Saddle', 'Cross Ashi', 'Backside 50/50'],
-    commonAttacks: ['Inside Heel Hook', 'Outside Heel Hook', 'Aoki Lock'],
-    commonTransitions: ['Inside Heel Hook', 'Outside Heel Hook', 'Kneebar', 'Toe Hold'],
-    commonFollowUps: ['Side Control', 'Backside 50/50', 'Leg Drag', 'Pass To Knee On Belly'],
+    description: 'A named heel-hook finish that usually grows out of backside leg-entanglement control where the knee line is already trapped and the heel exposure can be tightened through rotational pressure. It is best treated as a specific heel-hook branch inside a broader entanglement system, not as an isolated one-off move.',
+    relatedPositions: ['Backside 50/50', '70/30', '50/50', 'Inside Sankaku', 'Saddle', 'Cross Ashi'],
+    entriesIntoPosition: ['Backside 50/50', '70/30', '50/50', 'Inside Sankaku', 'Saddle'],
+    commonAttacks: ['Inside Heel Hook', 'Outside Heel Hook', 'Kneebar', 'Toe Hold', 'Mikey Lock'],
+    commonTransitions: ['Inside Heel Hook', 'Outside Heel Hook', 'Kneebar', 'Toe Hold', 'Mikey Lock', 'Backside 50/50'],
+    commonFollowUps: ['Side Control', 'Backside 50/50', 'Leg Drag', 'Pass To Knee On Belly', 'Ashi Garami'],
     commonDefenses: ['Heel Hook Line Defense', 'Hand Fighting', 'Posting', 'Kneebar Turn Defense']
   },
   {
@@ -9680,7 +9715,7 @@ const curriculumIndexSeed = [
   {
     id: 'drills-pummeling',
     category: 'Drills',
-    subcategory: null,
+    subcategory: 'Partner Drills',
     name: 'Pummeling',
     skillLevel: 'Beginner',
     tags: ['drill', 'underhooks', 'standing'],
@@ -9690,7 +9725,7 @@ const curriculumIndexSeed = [
   {
     id: 'drills-breakfalls',
     category: 'Drills',
-    subcategory: null,
+    subcategory: 'Solo Drills',
     name: 'Breakfalls',
     skillLevel: 'Beginner',
     tags: ['drill', 'safety', 'movement'],
@@ -9700,7 +9735,7 @@ const curriculumIndexSeed = [
   {
     id: 'drills-technical-stand-up-reps',
     category: 'Drills',
-    subcategory: null,
+    subcategory: 'Solo Drills',
     name: 'Technical Stand-Up Reps',
     skillLevel: 'Beginner',
     tags: ['drill', 'movement', 'recovery'],
@@ -9710,7 +9745,7 @@ const curriculumIndexSeed = [
   {
     id: 'drills-shrimping-lines',
     category: 'Drills',
-    subcategory: null,
+    subcategory: 'Solo Drills',
     name: 'Shrimping Lines',
     skillLevel: 'Beginner',
     tags: ['drill', 'movement', 'hip escape'],
@@ -9720,7 +9755,7 @@ const curriculumIndexSeed = [
   {
     id: 'drills-bridging-reps',
     category: 'Drills',
-    subcategory: null,
+    subcategory: 'Solo Drills',
     name: 'Bridging Reps',
     skillLevel: 'Beginner',
     tags: ['drill', 'movement', 'escapes'],
@@ -9730,7 +9765,7 @@ const curriculumIndexSeed = [
   {
     id: 'drills-guard-retention-rounds',
     category: 'Constraint-Led Games',
-    subcategory: null,
+    subcategory: 'Defensive Games',
     name: 'Guard Retention Rounds',
     skillLevel: 'Intermediate',
     tags: ['drill', 'guard retention', 'timing'],
@@ -9740,7 +9775,7 @@ const curriculumIndexSeed = [
   {
     id: 'drills-positional-isolation-rounds',
     category: 'Constraint-Led Games',
-    subcategory: null,
+    subcategory: 'Positional Games',
     name: 'Positional Isolation Rounds',
     skillLevel: 'Intermediate',
     tags: ['drill', 'positional sparring', 'repetition'],
@@ -9750,7 +9785,7 @@ const curriculumIndexSeed = [
   {
     id: 'drills-constraint-led-games',
     category: 'Constraint-Led Games',
-    subcategory: null,
+    subcategory: 'Decision Games',
     name: 'Constraint-Led Games',
     skillLevel: 'Advanced',
     tags: ['drill', 'ecological', 'decision making'],
@@ -9760,7 +9795,7 @@ const curriculumIndexSeed = [
   {
     id: 'drills-positional-sparring-systems',
     category: 'Constraint-Led Games',
-    subcategory: null,
+    subcategory: 'Positional Games',
     name: 'Positional Sparring Systems',
     skillLevel: 'Intermediate',
     tags: ['drill', 'positional sparring', 'structure'],
@@ -9770,7 +9805,7 @@ const curriculumIndexSeed = [
   {
     id: 'drills-hand-fight-specific-rounds',
     category: 'Constraint-Led Games',
-    subcategory: null,
+    subcategory: 'Standing Games',
     name: 'Hand-Fight Specific Rounds',
     skillLevel: 'Intermediate',
     tags: ['drill', 'hand fighting', 'timing'],
@@ -9780,7 +9815,7 @@ const curriculumIndexSeed = [
   {
     id: 'drills-guard-passing-decision-tree-rounds',
     category: 'Constraint-Led Games',
-    subcategory: null,
+    subcategory: 'Decision Games',
     name: 'Passing Decision Tree Rounds',
     skillLevel: 'Advanced',
     tags: ['drill', 'guard passing', 'decision making'],
@@ -9790,7 +9825,7 @@ const curriculumIndexSeed = [
   {
     id: 'drills-submission-chain-rounds',
     category: 'Constraint-Led Games',
-    subcategory: null,
+    subcategory: 'Submission Games',
     name: 'Submission Chain Rounds',
     skillLevel: 'Advanced',
     tags: ['drill', 'submissions', 'chains'],
@@ -9800,7 +9835,7 @@ const curriculumIndexSeed = [
   {
     id: 'positional-sparring-mount-escape-rounds',
     category: 'Positional Sparring',
-    subcategory: null,
+    subcategory: 'Escape Rounds',
     name: 'Mount Escape Rounds',
     skillLevel: 'Beginner',
     tags: ['positional sparring', 'mount', 'escapes'],
@@ -9810,7 +9845,7 @@ const curriculumIndexSeed = [
   {
     id: 'positional-sparring-side-control-escape-rounds',
     category: 'Positional Sparring',
-    subcategory: null,
+    subcategory: 'Escape Rounds',
     name: 'Side Control Escape Rounds',
     skillLevel: 'Beginner',
     tags: ['positional sparring', 'side control', 'escapes'],
@@ -9820,7 +9855,7 @@ const curriculumIndexSeed = [
   {
     id: 'positional-sparring-back-control-rounds',
     category: 'Positional Sparring',
-    subcategory: null,
+    subcategory: 'Control Rounds',
     name: 'Back Control Rounds',
     skillLevel: 'Intermediate',
     tags: ['positional sparring', 'back control', 'finishing'],
@@ -9830,7 +9865,7 @@ const curriculumIndexSeed = [
   {
     id: 'positional-sparring-guard-retention-rounds',
     category: 'Positional Sparring',
-    subcategory: null,
+    subcategory: 'Guard Rounds',
     name: 'Guard Retention Rounds',
     skillLevel: 'Intermediate',
     tags: ['positional sparring', 'guard retention', 'passing'],
@@ -9840,7 +9875,7 @@ const curriculumIndexSeed = [
   {
     id: 'positional-sparring-half-guard-rounds',
     category: 'Positional Sparring',
-    subcategory: null,
+    subcategory: 'Guard Rounds',
     name: 'Half Guard Rounds',
     skillLevel: 'Intermediate',
     tags: ['positional sparring', 'half guard', 'sweeps'],
@@ -9850,7 +9885,7 @@ const curriculumIndexSeed = [
   {
     id: 'positional-sparring-front-headlock-rounds',
     category: 'Positional Sparring',
-    subcategory: null,
+    subcategory: 'Scramble Rounds',
     name: 'Front Headlock Rounds',
     skillLevel: 'Intermediate',
     tags: ['positional sparring', 'front headlock', 'scrambles'],
@@ -9860,7 +9895,7 @@ const curriculumIndexSeed = [
   {
     id: 'positional-sparring-hand-fight-rounds',
     category: 'Positional Sparring',
-    subcategory: null,
+    subcategory: 'Standing Rounds',
     name: 'Hand-Fight Specific Rounds',
     skillLevel: 'Intermediate',
     tags: ['positional sparring', 'hand fighting', 'standing'],
@@ -10307,4 +10342,3 @@ const dedupedCurriculumIndexSeed = curriculumIndexSeed.filter((entry, index, ent
 });
 
 export default dedupedCurriculumIndexSeed;
-

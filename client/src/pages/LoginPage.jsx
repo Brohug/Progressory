@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../hooks/useAuth';
+import AppIcon from '../components/AppIcon';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function LoginPage() {
     password: 'Password123!'
   });
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const memberAccessToken = searchParams.get('memberAccessToken');
@@ -28,15 +30,17 @@ export default function LoginPage() {
     }
   }, [navigate, searchParams]);
 
-  const handleChange = (e) => {
+  const handleChange = (event) => {
+    const { name, value } = event.target;
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: value
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSubmitting(true);
     setError('');
 
     try {
@@ -45,40 +49,69 @@ export default function LoginPage() {
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '50px auto' }}>
-      <h2>Login</h2>
-
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '12px' }}>
-          <label>Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            style={{ width: '100%', padding: '8px' }}
-          />
+    <div className="auth-page-shell">
+      <div className="auth-card auth-login-card">
+        <div className="account-summary-heading">
+          <span className="dashboard-card-icon"><AppIcon name="account" /></span>
+          <div>
+            <h2>Welcome back</h2>
+            <p className="section-note">
+              Log in to open your gym dashboard, classes, curriculum, and progress tools.
+            </p>
+          </div>
         </div>
 
-        <div style={{ marginBottom: '12px' }}>
-          <label>Password</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            style={{ width: '100%', padding: '8px' }}
-          />
+        <form onSubmit={handleSubmit} className="form-grid">
+          <div>
+            <label htmlFor="loginEmail">Email</label>
+            <input
+              id="loginEmail"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              autoComplete="email"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="loginPassword">Password</label>
+            <input
+              id="loginPassword"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              autoComplete="current-password"
+            />
+          </div>
+
+          {error ? <p className="error-text">{error}</p> : null}
+
+          <div className="inline-actions auth-login-actions">
+            <button type="submit" disabled={submitting}>
+              {submitting ? 'Logging in...' : 'Log in'}
+            </button>
+            <Link to="/" className="secondary-button">
+              <AppIcon name="dashboard" />
+              <span>Back to founder page</span>
+            </Link>
+          </div>
+        </form>
+
+        <div className="auth-login-support">
+          <strong>Need access first?</strong>
+          <p className="meta-text">
+            Use your staff or member setup link if your gym sent you one, or return to the founder page if you are exploring Progressory for your academy.
+          </p>
         </div>
-
-        <button type="submit">Login</button>
-      </form>
-
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      </div>
     </div>
   );
 }

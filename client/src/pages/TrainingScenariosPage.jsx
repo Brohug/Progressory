@@ -437,7 +437,7 @@ export default function TrainingScenariosPage() {
 
         <ExpandableSection
           title="Create and reuse scenarios"
-          note="Build a scenario once, then reuse it later in Planned Classes and Completed Classes."
+          note="Build a scenario once, then reuse it later in Class Planner and Class Logs."
           summary="Expand this when you are ready to build or edit reusable training scenarios."
           className="scenarios-create-section"
           isOpen={isCreateSectionOpen}
@@ -610,7 +610,7 @@ export default function TrainingScenariosPage() {
 
         <ExpandableSection
           title="Existing Training Scenarios"
-          note="These scenarios are ready to reuse in Planned Classes and Completed Classes."
+          note="These scenarios are ready to reuse in Class Planner and Class Logs."
           summary={`${orderedScenarios.length} scenario${orderedScenarios.length === 1 ? '' : 's'} ready to review.`}
           actions={(
             <button
@@ -626,7 +626,7 @@ export default function TrainingScenariosPage() {
             <div>
               <h3>Existing Training Scenarios</h3>
               <p className="section-note">
-                These scenarios are ready to reuse in Planned Classes and Completed Classes.
+                These scenarios are ready to reuse in Class Planner and Class Logs.
               </p>
             </div>
           </div>

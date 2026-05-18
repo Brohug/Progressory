@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
+import GuidedSearchPrompt from '../components/GuidedSearchPrompt';
 import Layout from '../components/Layout';
 import TopicSearchSelect from '../components/TopicSearchSelect';
 import curriculumIndexSeed from '../data/curriculumIndexSeed';
 import { useAuth } from '../hooks/useAuth';
+import { findGuidedSearchPrompt } from '../utils/guidedSearchPrompts';
 
 const skillLevelOrder = ['Beginner', 'Intermediate', 'Advanced'];
 
@@ -101,7 +103,7 @@ const getSearchIntentCategoryBonus = (entry, normalizedSearch) => {
     .some((term) => normalizedSearch.includes(term));
   const isStrategyQuery = ['strategy', 'game plan', 'reaction', 'transition', 'decision', 'teaching pattern']
     .some((term) => normalizedSearch.includes(term));
-  const isDrillQuery = ['drill', 'round', 'sparring', 'game', 'positional']
+  const isDrillQuery = ['drill', 'round', 'sparring', 'game', 'positional', 'solo', 'partner', 'practice']
     .some((term) => normalizedSearch.includes(term));
 
   if (isDefenseQuery) {
@@ -270,6 +272,7 @@ export default function CurriculumIndexPage() {
   const { user } = useAuth();
   const isMember = user?.role === 'member';
   const [searchParams, setSearchParams] = useSearchParams();
+  const resultsSectionRef = useRef(null);
   const [selectedEntryId, setSelectedEntryId] = useState(searchParams.get('entryId') || '');
   const [topics, setTopics] = useState([]);
   const [programs, setPrograms] = useState([]);
@@ -281,6 +284,11 @@ export default function CurriculumIndexPage() {
   const [skillLevelFilter, setSkillLevelFilter] = useState(searchParams.get('skillLevel') || '');
   const [entryNoticeMap, setEntryNoticeMap] = useState({});
   const [expandedSearchEntryIds, setExpandedSearchEntryIds] = useState([]);
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  const [guidedSearchScope, setGuidedSearchScope] = useState(null);
+  const [guidedSearchHistory, setGuidedSearchHistory] = useState([]);
+  const [guidedPromptOverride, setGuidedPromptOverride] = useState(null);
+  const [guidedActiveLabel, setGuidedActiveLabel] = useState('');
   const [creatingEntryId, setCreatingEntryId] = useState(null);
   const [activeCreateEntryId, setActiveCreateEntryId] = useState(null);
   const [createTopicData, setCreateTopicData] = useState({
@@ -292,6 +300,9 @@ export default function CurriculumIndexPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isResultsSectionOpen, setIsResultsSectionOpen] = useState(
+    Boolean(searchParams.get('search') || searchParams.get('entryId'))
+  );
 
   useEffect(() => {
     const loadIndexSignals = async () => {
@@ -339,9 +350,17 @@ export default function CurriculumIndexPage() {
   }, [isMember]);
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 220);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [search]);
+
+  useEffect(() => {
     const nextParams = new URLSearchParams();
 
-    if (search) nextParams.set('search', search);
+    if (debouncedSearch) nextParams.set('search', debouncedSearch);
     if (categoryFilter) nextParams.set('category', categoryFilter);
     if (skillLevelFilter) nextParams.set('skillLevel', skillLevelFilter);
     if (selectedEntryId) nextParams.set('entryId', selectedEntryId);
@@ -349,7 +368,7 @@ export default function CurriculumIndexPage() {
     if (nextParams.toString() !== searchParams.toString()) {
       setSearchParams(nextParams, { replace: true });
     }
-  }, [search, categoryFilter, skillLevelFilter, selectedEntryId, searchParams, setSearchParams]);
+  }, [debouncedSearch, categoryFilter, skillLevelFilter, selectedEntryId, searchParams, setSearchParams]);
 
   const fetchTopics = async () => {
     const response = await api.get('/topics');
@@ -482,7 +501,7 @@ export default function CurriculumIndexPage() {
   }, [createTopicData.program_id, topics]);
 
   const filteredEntries = useMemo(() => {
-    const normalizedSearch = normalizeValue(search);
+    const normalizedSearch = normalizeValue(debouncedSearch);
     const exactEntryMatch = selectedEntryId
       ? enrichedEntries.find((entry) => entry.id === selectedEntryId)
       : null;
@@ -492,6 +511,12 @@ export default function CurriculumIndexPage() {
     }
 
     const matchingEntries = enrichedEntries.filter((entry) => {
+      const matchesGuidedScope = !guidedSearchScope?.allowedCategories
+        || guidedSearchScope.allowedCategories.includes(entry.category);
+      const matchesResultNames = !guidedSearchScope?.resultNames?.length
+        || guidedSearchScope.resultNames.some((name) => normalizeValue(entry.name) === normalizeValue(name));
+      const matchesBlockedNames = !guidedSearchScope?.blockedNames?.length
+        || !guidedSearchScope.blockedNames.some((blockedName) => normalizeValue(entry.name) === normalizeValue(blockedName));
       const haystack = [
         entry.category,
         entry.subcategory,
@@ -510,11 +535,17 @@ export default function CurriculumIndexPage() {
         .map(normalizeValue)
         .join(' ');
 
-      const matchesSearch = !normalizedSearch || haystack.includes(normalizedSearch);
+      const matchesSearch = !normalizedSearch || haystack.includes(normalizedSearch) || (
+        guidedSearchScope?.resultNames?.length
+        ? guidedSearchScope.resultNames.some((name) => normalizeValue(entry.name) === normalizeValue(name))
+        : false
+      );
+      const matchesRequiredTerms = !guidedSearchScope?.requiredTerms?.length
+        || guidedSearchScope.requiredTerms.every((term) => haystack.includes(normalizeValue(term)));
       const matchesCategory = !categoryFilter || entry.category === categoryFilter;
       const matchesSkillLevel = !skillLevelFilter || entry.skillLevel === skillLevelFilter;
 
-      return matchesSearch && matchesCategory && matchesSkillLevel;
+      return matchesSearch && matchesRequiredTerms && matchesCategory && matchesSkillLevel && matchesGuidedScope && matchesBlockedNames && matchesResultNames;
     });
 
     const dedupedEntries = getCollapsedSearchResults(matchingEntries, normalizedSearch, categoryFilter);
@@ -532,7 +563,7 @@ export default function CurriculumIndexPage() {
 
       return a.name.localeCompare(b.name);
     });
-  }, [enrichedEntries, search, categoryFilter, skillLevelFilter, selectedEntryId]);
+  }, [categoryFilter, debouncedSearch, enrichedEntries, guidedSearchScope, selectedEntryId, skillLevelFilter]);
 
   const groupedEntries = useMemo(() => {
     const categoryGroups = filteredEntries.reduce((acc, entry) => {
@@ -546,7 +577,15 @@ export default function CurriculumIndexPage() {
 
     return Object.fromEntries(
       Object.entries(categoryGroups).map(([category, entries]) => {
-        const groupedBySubcategory = entries.reduce((acc, entry) => {
+        const categoryDefinitionEntry = entries.find(
+          (entry) => normalizeValue(entry.name) === normalizeValue(category)
+        );
+
+        const contentEntries = categoryDefinitionEntry
+          ? entries.filter((entry) => entry.id !== categoryDefinitionEntry.id)
+          : entries;
+
+        const groupedBySubcategory = contentEntries.reduce((acc, entry) => {
           const subcategoryKey = entry.subcategory || 'Core Topics';
 
           if (!acc[subcategoryKey]) {
@@ -557,12 +596,15 @@ export default function CurriculumIndexPage() {
           return acc;
         }, {});
 
-        return [category, groupedBySubcategory];
+        return [category, {
+          description: categoryDefinitionEntry?.description || '',
+          subgroups: groupedBySubcategory
+        }];
       })
     );
   }, [filteredEntries]);
 
-  const isCompactResultView = search.trim().length > 0 && filteredEntries.length > 1;
+  const isCompactResultView = debouncedSearch.trim().length > 0 && filteredEntries.length > 1;
 
   useEffect(() => {
     if (!isCompactResultView) {
@@ -616,6 +658,16 @@ export default function CurriculumIndexPage() {
       { label: 'Used In Class Logs', value: usedInClassesCount }
     ];
   }, [categories.length, enrichedEntries, groupedEntries, isMember, skillLevels.length]);
+
+  const guidedSearchPrompt = useMemo(() => {
+    const normalizedSearch = normalizeValue(search);
+
+    if (!normalizedSearch || selectedEntryId || categoryFilter || skillLevelFilter) {
+      return null;
+    }
+
+    return guidedPromptOverride || findGuidedSearchPrompt(normalizedSearch);
+  }, [categoryFilter, guidedPromptOverride, search, selectedEntryId, skillLevelFilter]);
 
   const handleCheckClassUsage = (entry, usageCount) => {
     setEntryNoticeMap((prev) => ({
@@ -687,6 +739,81 @@ export default function CurriculumIndexPage() {
     }
   };
 
+  const handleApplyGuidedSearch = (option) => {
+    const currentPrompt = guidedSearchPrompt;
+
+    setGuidedSearchHistory((current) => {
+      const nextState = {
+        search,
+        guidedSearchScope,
+        prompt: currentPrompt,
+        activeLabel: guidedActiveLabel
+      };
+
+      if (current.length > 0) {
+        const previous = current[current.length - 1];
+        if (
+          previous.search === nextState.search
+          && JSON.stringify(previous.guidedSearchScope) === JSON.stringify(nextState.guidedSearchScope)
+          && previous.prompt?.question === nextState.prompt?.question
+        ) {
+          return current;
+        }
+      }
+
+      return [...current, nextState];
+    });
+
+    if (option.nextPrompt) {
+      setGuidedPromptOverride(option.nextPrompt);
+      setGuidedActiveLabel(option.label);
+      return;
+    }
+
+    setSelectedEntryId('');
+    setIsResultsSectionOpen(true);
+    setGuidedPromptOverride(null);
+    setGuidedActiveLabel(option.label);
+    setGuidedSearchScope(
+      option.allowedCategories || option.requiredTerms?.length
+        ? {
+            allowedCategories: option.allowedCategories || null,
+            requiredTerms: option.requiredTerms || [],
+            blockedNames: option.blockedNames || [],
+            resultNames: option.resultNames || []
+          }
+        : null
+    );
+    if (option.preserveSearch) {
+      setSearch(search);
+    } else if (option.searchValue !== undefined) {
+      setSearch(option.searchValue);
+    } else if (option.focusName || option.value) {
+      setSearch(option.focusName || option.value);
+    }
+    window.setTimeout(() => {
+      resultsSectionRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 80);
+  };
+
+  const handleBackGuidedSearch = () => {
+    setGuidedSearchHistory((current) => {
+      if (current.length === 0) {
+        return current;
+      }
+
+      const previous = current[current.length - 1];
+      setSearch(previous.search || '');
+      setGuidedSearchScope(previous.guidedSearchScope || null);
+      setGuidedPromptOverride(previous.prompt || null);
+      setGuidedActiveLabel(previous.activeLabel || '');
+      return current.slice(0, -1);
+    });
+  };
+
   return (
     <Layout>
         <div className="curriculum-index-page">
@@ -698,15 +825,6 @@ export default function CurriculumIndexPage() {
           </p>
 
         {error && <p className="error-text">{error}</p>}
-
-        <section className="stats-grid">
-          {summaryCards.map((card) => (
-            <div key={card.label} className="stat-card">
-              <div className="stat-label">{card.label}</div>
-              <div className="stat-value">{card.value}</div>
-            </div>
-          ))}
-        </section>
 
         <section className="page-section">
             <div className="section-header">
@@ -724,6 +842,10 @@ export default function CurriculumIndexPage() {
                 value={search}
                 onChange={(e) => {
                   setSelectedEntryId('');
+                  setGuidedPromptOverride(null);
+                  setGuidedSearchHistory([]);
+                  setGuidedSearchScope(null);
+                  setGuidedActiveLabel('');
                   setSearch(e.target.value);
                 }}
                 placeholder="Search by name, category, tag, or related position..."
@@ -766,8 +888,25 @@ export default function CurriculumIndexPage() {
               </select>
             </div>
           </div>
+
+          <GuidedSearchPrompt
+            prompt={guidedSearchPrompt}
+            onApply={handleApplyGuidedSearch}
+            onBack={guidedSearchHistory.length ? handleBackGuidedSearch : null}
+            activeLabel={guidedActiveLabel}
+          />
         </section>
 
+        <section className="stats-grid">
+          {summaryCards.map((card) => (
+            <div key={card.label} className="stat-card">
+              <div className="stat-label">{card.label}</div>
+              <div className="stat-value">{card.value}</div>
+            </div>
+          ))}
+        </section>
+
+          <div ref={resultsSectionRef} />
           <ExpandableSection
             title="Index results"
             note="Use this as the broad curriculum map and the fastest place to add a missing topic."
@@ -779,16 +918,12 @@ export default function CurriculumIndexPage() {
             ]}
             className="curriculum-index-results-section"
             stickyHeader
+            isOpen={isResultsSectionOpen}
+            onToggle={setIsResultsSectionOpen}
           >
-            <div className="section-header">
-              <div>
-                <h3>Index results</h3>
-                <p className="section-note">Scan the map, then add the missing topic when the gym does not have it yet.</p>
-                {isCompactResultView ? (
-                  <p className="section-note">Broad search matches stay compact until you open the ones you want.</p>
-                ) : null}
-              </div>
-            </div>
+            {isCompactResultView ? (
+              <p className="section-note">Broad search matches stay compact until you open the ones you want.</p>
+            ) : null}
 
           {loading ? (
             <p className="empty-state">Loading curriculum signals...</p>
@@ -796,12 +931,21 @@ export default function CurriculumIndexPage() {
             <p className="empty-state">No index items match that search right now.</p>
           ) : (
             <div className="curriculum-index-groups">
-              {Object.entries(groupedEntries).map(([category, subcategoryGroups]) => (
+              {Object.entries(groupedEntries).map(([category, group]) => {
+                const subcategoryGroups = group.subgroups;
+                const totalItems = Object.values(subcategoryGroups).flat().length;
+
+                return (
                 <section key={category} className="curriculum-index-group">
                   <div className="curriculum-index-group-header">
-                    <h4>{category}</h4>
+                    <div>
+                      <h4>{category}</h4>
+                      {group.description ? (
+                        <p className="section-note curriculum-index-group-note">{group.description}</p>
+                      ) : null}
+                    </div>
                     <span className="meta-text">
-                      {Object.values(subcategoryGroups).flat().length} items
+                      {totalItems} items
                     </span>
                   </div>
 
@@ -1100,7 +1244,8 @@ export default function CurriculumIndexPage() {
                     ))}
                   </div>
                 </section>
-              ))}
+              );
+              })}
             </div>
           )}
         </ExpandableSection>

@@ -6,14 +6,26 @@ const demoRequestHref = 'mailto:owner.progressory@gmail.com?subject=Progressory%
 const founderAccessHref = 'mailto:owner.progressory@gmail.com?subject=Progressory%20Founder%20Access';
 
 const whoItHelps = [
-  'Gym owners',
-  'Coaches',
-  'Kids programs',
-  'Growing academies'
+  {
+    title: 'Gym owners',
+    description: 'Keep curriculum, coach accounts, and student progress organized without relying on scattered notes or memory.'
+  },
+  {
+    title: 'Coaches',
+    description: 'Plan classes faster, log what happened, and give students a clearer system without carrying every detail in your head.'
+  },
+  {
+    title: 'Kids programs',
+    description: 'Create more consistency for instructors and parents when students need structure, progress visibility, and repeatable teaching tracks.'
+  },
+  {
+    title: 'Growing academies',
+    description: 'Add a cleaner curriculum and planning system before growth makes coaching communication and progress tracking harder to manage.'
+  }
 ];
 
 const founderPlanItems = [
-  'First 5–10 gyms only',
+  'First 5-10 gyms only',
   'Locked-in while subscribed',
   '30-day free trial',
   'Cancel anytime',
@@ -83,8 +95,8 @@ export default function LandingPage() {
 
             <div className="landing-chip-row">
               {whoItHelps.map((item) => (
-                <span key={item} className="member-card-summary-pill">
-                  {item}
+                <span key={item.title} className="member-card-summary-pill">
+                  {item.title}
                 </span>
               ))}
             </div>
@@ -108,7 +120,7 @@ export default function LandingPage() {
             <span className="eyebrow">Founder Plan</span>
             <div className="landing-plan-price">
               <strong>$49/month</strong>
-              <span>for first 5–10 gyms</span>
+              <span>for first 5-10 gyms</span>
             </div>
             <div className="landing-plan-list">
               {founderPlanItems.map((item) => (
@@ -132,14 +144,12 @@ export default function LandingPage() {
           </div>
           <div className="account-permissions-grid">
             {whoItHelps.map((item) => (
-              <div key={item} className="summary-card account-summary-card">
+              <div key={item.title} className="summary-card account-summary-card">
                 <div className="account-summary-heading">
                   <span className="dashboard-card-icon"><AppIcon name="members" /></span>
                   <div>
-                    <strong>{item}</strong>
-                    <div className="meta-text">
-                      Progressory keeps planning, curriculum, and progress easier to manage as your academy grows.
-                    </div>
+                    <strong>{item.title}</strong>
+                    <div className="meta-text">{item.description}</div>
                   </div>
                 </div>
               </div>
@@ -150,7 +160,7 @@ export default function LandingPage() {
         <section className="page-section landing-section">
           <div className="section-header">
             <div>
-              <h3>What’s included</h3>
+              <h3>What's included</h3>
               <p className="section-note">
                 Enough structure to organize coaching, planning, and student tracking from one system.
               </p>
@@ -175,7 +185,7 @@ export default function LandingPage() {
             <div>
               <h3>Decision Trees make problem-solving easier</h3>
               <p className="section-note">
-                This is one of the strongest bonus layers in the app for gyms that want students to keep learning even when coaches cannot answer every question live.
+                This is one of the strongest bonus layers in the app for gyms that want students to keep learning even when coaches are spread across a full room and cannot get to every student and every question during live class time.
               </p>
             </div>
           </div>

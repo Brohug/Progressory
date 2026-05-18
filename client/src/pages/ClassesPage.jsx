@@ -216,8 +216,8 @@ export default function ClassesPage() {
           storeReadyForAttendanceIds(processedResult.processed.map((item) => item.classId));
           setClassMessage(
             processedResult.processedCount === 1
-              ? '1 planned class was moved into Completed Classes and is ready for attendance.'
-              : `${processedResult.processedCount} planned classes were moved into Completed Classes and are ready for attendance.`
+              ? '1 planned class was moved into Completed classes and is ready for attendance.'
+              : `${processedResult.processedCount} planned classes were moved into Completed classes and are ready for attendance.`
           );
         }
 
@@ -1001,7 +1001,7 @@ export default function ClassesPage() {
               flexWrap: 'wrap'
             }}
           >
-            <h3 style={{ marginBottom: 0 }}>Completed Classes</h3>
+            <h3 style={{ marginBottom: 0 }}>Class log workspace</h3>
             <button onClick={() => setShowCreateClassForm((prev) => !prev)}>
               {showCreateClassForm ? 'Close new class form' : 'Create class log'}
             </button>

@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import GuidedSearchPrompt from '../components/GuidedSearchPrompt';
 import Layout from '../components/Layout';
 import curriculumIndexSeed from '../data/curriculumIndexSeed';
 import { useAuth } from '../hooks/useAuth';
+import { findGuidedSearchPrompt } from '../utils/guidedSearchPrompts';
 
 const relationshipGroups = [
   { key: 'entriesIntoPosition', label: 'Entries' },
@@ -631,7 +633,7 @@ const getSearchIntentCategoryBonus = (entry, normalizedSearch) => {
     .some((term) => normalizedSearch.includes(term));
   const isStrategyQuery = ['strategy', 'game plan', 'reaction', 'transition', 'decision', 'teaching pattern']
     .some((term) => normalizedSearch.includes(term));
-  const isDrillQuery = ['drill', 'round', 'sparring', 'game', 'positional']
+  const isDrillQuery = ['drill', 'round', 'sparring', 'game', 'positional', 'solo', 'partner', 'practice']
     .some((term) => normalizedSearch.includes(term));
 
   if (isDefenseQuery) {
@@ -2250,6 +2252,10 @@ export default function DecisionTreePage() {
   }, [queryEntryId, querySearch]);
   const [search, setSearch] = useState(querySearch);
   const [searchIsActive, setSearchIsActive] = useState(false);
+  const [guidedSearchScope, setGuidedSearchScope] = useState(null);
+  const [guidedSearchHistory, setGuidedSearchHistory] = useState([]);
+  const [guidedPromptOverride, setGuidedPromptOverride] = useState(null);
+  const [guidedActiveLabel, setGuidedActiveLabel] = useState('');
   const [expandedSearchResultIds, setExpandedSearchResultIds] = useState([]);
   const [focusId, setFocusId] = useState(initialQueryMatch?.id || defaultFocusId);
   const [history, setHistory] = useState([]);
@@ -2325,7 +2331,28 @@ export default function DecisionTreePage() {
 
     const matchingEntries = entries
       .filter((entry) => !excludedDecisionTreeSearchCategories.has(entry.category))
-      .filter((entry) => getEntryText(entry).includes(normalizedSearch));
+      .filter((entry) => (
+        !guidedSearchScope?.allowedCategories || guidedSearchScope.allowedCategories.includes(entry.category)
+      ))
+      .filter((entry) => (
+        !guidedSearchScope?.resultNames?.length
+        || guidedSearchScope.resultNames.some((name) => normalizeValue(entry.name) === normalizeValue(name))
+      ))
+      .filter((entry) => (
+        !guidedSearchScope?.blockedNames?.length
+        || !guidedSearchScope.blockedNames.some((blockedName) => normalizeValue(entry.name) === normalizeValue(blockedName))
+      ))
+      .filter((entry) => {
+        const entryText = getEntryText(entry);
+        const matchesResultNames = guidedSearchScope?.resultNames?.length
+          ? guidedSearchScope.resultNames.some((name) => normalizeValue(entry.name) === normalizeValue(name))
+          : false;
+        const matchesSearch = entryText.includes(normalizedSearch) || matchesResultNames;
+        const matchesRequiredTerms = !guidedSearchScope?.requiredTerms?.length
+          || guidedSearchScope.requiredTerms.every((term) => entryText.includes(normalizeValue(term)));
+
+        return matchesSearch && matchesRequiredTerms;
+      });
 
     return getCollapsedSearchResults(matchingEntries, normalizedSearch)
       .sort((a, b) => {
@@ -2334,9 +2361,19 @@ export default function DecisionTreePage() {
         return scoreB - scoreA || a.name.localeCompare(b.name);
       })
       .slice(0, 8);
-  }, [entries, search]);
+  }, [entries, guidedSearchScope, search]);
 
   const isCompactSearchResults = search.trim().length > 0 && searchResults.length > 1;
+
+  const guidedTreeSearchPrompt = useMemo(() => {
+    const normalizedSearch = normalizeValue(search);
+
+    if (!normalizedSearch) {
+      return null;
+    }
+
+    return guidedPromptOverride || findGuidedSearchPrompt(normalizedSearch);
+  }, [guidedPromptOverride, search]);
 
   const visibleExpandedSearchResultIds = useMemo(() => {
     if (!isCompactSearchResults) {
@@ -2353,6 +2390,108 @@ export default function DecisionTreePage() {
         ? previousIds.filter((currentId) => currentId !== entryId)
         : [...previousIds, entryId]
     ));
+  };
+
+  const handleApplyGuidedTreeSearch = (option) => {
+    const currentPrompt = guidedPromptOverride || guidedTreeSearchPrompt;
+
+    setGuidedSearchHistory((current) => {
+      const nextState = {
+        search,
+        guidedSearchScope,
+        prompt: currentPrompt,
+        activeLabel: guidedActiveLabel
+      };
+
+      if (current.length > 0) {
+        const previous = current[current.length - 1];
+        if (
+          previous.search === nextState.search
+          && JSON.stringify(previous.guidedSearchScope) === JSON.stringify(nextState.guidedSearchScope)
+        ) {
+          return current;
+        }
+      }
+
+      return [...current, nextState];
+    });
+
+    if (option.nextPrompt) {
+      setGuidedPromptOverride(option.nextPrompt);
+      setGuidedActiveLabel(option.label);
+      setExpandedSearchResultIds([]);
+      return;
+    }
+
+    if (option.enterTree) {
+      const familyEntry = entries.find((entry) => normalizeValue(entry.name) === normalizeValue(search));
+      const nextFocusName = option.focusName || option.label;
+      const nextEntry = entries.find((entry) => normalizeValue(entry.name) === normalizeValue(nextFocusName));
+
+      if (nextEntry) {
+        if (nextEntry.id !== focusEntry?.id) {
+          setHistory((current) => (focusEntry ? [focusEntry, ...current].slice(0, 8) : current));
+          setFocusId(nextEntry.id);
+        }
+
+        setShowEscapeContinuation(false);
+        setDecisionPath(
+          familyEntry && familyEntry.id !== nextEntry.id
+            ? [familyEntry.id, nextEntry.id]
+            : [nextEntry.id]
+        );
+        setPendingScrollTarget('tree');
+        setSearchIsActive(false);
+        setExpandedSearchResultIds([]);
+        setGuidedPromptOverride(null);
+        setGuidedActiveLabel(option.label);
+        setScenarioFeedback(
+          familyEntry && familyEntry.id !== nextEntry.id
+            ? `Starting from ${familyEntry.name} through ${nextEntry.name}.`
+            : `Starting from ${nextEntry.name}.`
+        );
+        return;
+      }
+    }
+
+    setGuidedPromptOverride(null);
+    setGuidedActiveLabel(option.label);
+    setGuidedSearchScope(
+      option.allowedCategories || option.requiredTerms?.length
+        ? {
+            allowedCategories: option.allowedCategories || null,
+            requiredTerms: option.requiredTerms || [],
+            blockedNames: option.blockedNames || [],
+            resultNames: option.resultNames || []
+          }
+        : null
+    );
+    if (option.preserveSearch) {
+      setSearch(search);
+    } else if (option.searchValue !== undefined) {
+      setSearch(option.searchValue);
+    } else if (option.focusName || option.value) {
+      setSearch(option.focusName || option.value);
+    }
+    setSearchIsActive(true);
+    setExpandedSearchResultIds([]);
+  };
+
+  const handleBackGuidedTreeSearch = () => {
+    setGuidedSearchHistory((current) => {
+      if (current.length === 0) {
+        return current;
+      }
+
+      const previous = current[current.length - 1];
+      setGuidedSearchScope(previous.guidedSearchScope || null);
+      setSearch(previous.search || '');
+      setGuidedPromptOverride(previous.prompt || null);
+      setGuidedActiveLabel(previous.activeLabel || '');
+      setSearchIsActive(Boolean(previous.search));
+      setExpandedSearchResultIds([]);
+      return current.slice(0, -1);
+    });
   };
 
   const activeStyleHints = useMemo(() => getSelectedStyleHints(filters), [filters]);
@@ -2877,14 +3016,25 @@ export default function DecisionTreePage() {
             spellCheck={false}
             value={search}
             onFocus={() => setSearchIsActive(true)}
-            onBlur={() => {
+              onBlur={() => {
               window.setTimeout(() => setSearchIsActive(false), 120);
             }}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setSearchIsActive(true);
-            }}
-            placeholder="Search closed guard, knee cut, front headlock..."
+              onChange={(event) => {
+                setGuidedPromptOverride(null);
+                setGuidedSearchHistory([]);
+                setGuidedSearchScope(null);
+                setGuidedActiveLabel('');
+                setSearch(event.target.value);
+                setSearchIsActive(true);
+              }}
+              placeholder="Search closed guard, knee cut, front headlock..."
+            />
+
+          <GuidedSearchPrompt
+            prompt={guidedTreeSearchPrompt}
+            onApply={handleApplyGuidedTreeSearch}
+            onBack={guidedSearchHistory.length ? handleBackGuidedTreeSearch : null}
+            activeLabel={guidedActiveLabel}
           />
 
           {searchIsActive && searchResults.length > 0 && (
@@ -2894,7 +3044,28 @@ export default function DecisionTreePage() {
 
                 return (
                   <li className="decision-tree-search-result" key={entry.id}>
-                    <div className={`decision-tree-search-result-card${isCompactSearchResults && !showSearchResultDetails ? ' is-compact' : ''}`}>
+                      <div
+                        className={`decision-tree-search-result-card${isCompactSearchResults && !showSearchResultDetails ? ' is-compact' : ''}`}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => selectFocusEntry(entry, {
+                          pathMode: 'reset',
+                          scrollTarget: 'tree',
+                          closeSearch: true,
+                          feedback: `Focused on ${entry.name}. The page jumped to Tree branches below.`
+                        })}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            selectFocusEntry(entry, {
+                              pathMode: 'reset',
+                              scrollTarget: 'tree',
+                              closeSearch: true,
+                              feedback: `Focused on ${entry.name}. The page jumped to Tree branches below.`
+                            });
+                          }
+                        }}
+                      >
                       <div className="decision-tree-search-result-header">
                         <div className="decision-tree-search-result-title">
                           <strong>{entry.name}</strong>
@@ -2905,12 +3076,15 @@ export default function DecisionTreePage() {
                             type="button"
                             className="secondary-button"
                             onMouseDown={(event) => event.preventDefault()}
-                            onClick={() => selectFocusEntry(entry, {
-                              pathMode: 'reset',
-                              scrollTarget: 'tree',
-                              closeSearch: true,
-                              feedback: `Focused on ${entry.name}. The page jumped to Tree branches below.`
-                            })}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                selectFocusEntry(entry, {
+                                  pathMode: 'reset',
+                                  scrollTarget: 'tree',
+                                  closeSearch: true,
+                                  feedback: `Focused on ${entry.name}. The page jumped to Tree branches below.`
+                                });
+                              }}
                           >
                             Use in tree
                           </button>
@@ -2919,7 +3093,10 @@ export default function DecisionTreePage() {
                               type="button"
                               className="secondary-button"
                               onMouseDown={(event) => event.preventDefault()}
-                              onClick={() => toggleSearchResultDetails(entry.id)}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  toggleSearchResultDetails(entry.id);
+                                }}
                             >
                               {showSearchResultDetails ? 'Hide details' : 'Open details'}
                             </button>

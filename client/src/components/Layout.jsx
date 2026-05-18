@@ -483,28 +483,6 @@ export default function Layout({ children }) {
     return items;
   }, [isManagement, isMember, isOwner, user]);
 
-  const mobileBottomNavItems = useMemo(() => {
-    if (!user) {
-      return [];
-    }
-
-    if (isMember) {
-      return [
-        { label: 'Dashboard', to: '/dashboard' },
-        { label: 'Classes', to: '/planned-classes' },
-        { label: 'Progress', to: '/my-progress' },
-        { label: 'Curriculum', to: '/index' }
-      ];
-    }
-
-    return [
-      { label: 'Dashboard', to: '/dashboard' },
-      { label: 'Classes', to: '/classes' },
-      { label: 'Members', to: '/members' },
-      { label: 'Curriculum', to: '/index' }
-    ];
-  }, [isMember, user]);
-
   const mobileMenuItems = useMemo(() => (
     [...primaryNavItems, ...moreNavItems.filter((item) => item.to !== '/planned-classes')]
   ), [moreNavItems, primaryNavItems]);
@@ -558,6 +536,12 @@ export default function Layout({ children }) {
                           <AppIcon name="account" />
                           <span>My Account</span>
                         </Link>
+                        {isOwner ? (
+                          <Link className="secondary-button" to="/billing" onClick={closeMenus}>
+                            <AppIcon name="reports" />
+                            <span>Billing</span>
+                          </Link>
+                        ) : null}
                       </div>
                       <button type="button" className="secondary-button" onClick={() => { closeMenus(); logout(); }}>
                         <AppIcon name="logout" />
@@ -642,7 +626,7 @@ export default function Layout({ children }) {
         {user ? (
           <div className={`app-mobile-top-nav-shell${hasSeenMobileNavScroll ? ' is-scroll-discovered' : ''}`}>
             <nav className="app-mobile-top-nav" aria-label="Mobile navigation" ref={mobileTopNavRef}>
-              {mobileBottomNavItems.map((item) => (
+              {primaryNavItems.map((item) => (
                 <NavLink key={item.to} to={item.to} className={getBottomLinkClassName}>
                   {renderNavLabel(item.label, getIconNameForPath(item.to))}
                 </NavLink>

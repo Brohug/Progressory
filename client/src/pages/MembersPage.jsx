@@ -518,15 +518,6 @@ export default function MembersPage() {
         Manage the roster, member access, and progress from one place.
       </p>
 
-      <section className="stats-grid">
-        {memberSummaryCards.map((card) => (
-          <div key={card.label} className="stat-card">
-            <div className="stat-label">{card.label}</div>
-            <div className="stat-value">{card.value}</div>
-          </div>
-        ))}
-      </section>
-
       <section className="page-section" style={{ maxWidth: '760px' }}>
         <div className="compact-form-shell">
           <div className="compact-form-header">
@@ -1030,6 +1021,15 @@ export default function MembersPage() {
           </ul>
         )}
       </ExpandableSection>
+
+      <section className="stats-grid">
+        {memberSummaryCards.map((card) => (
+          <div key={card.label} className="stat-card">
+            <div className="stat-label">{card.label}</div>
+            <div className="stat-value">{card.value}</div>
+          </div>
+        ))}
+      </section>
     </Layout>
   );
 }
