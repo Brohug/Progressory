@@ -27,6 +27,8 @@ const getIconNameForPath = (path) => {
       return 'library';
     case '/decision-tree':
       return 'trees';
+    case '/entry-setups':
+      return 'setups';
     case '/reports':
       return 'reports';
     case '/training-scenarios':
@@ -419,6 +421,16 @@ export default function Layout({ children }) {
       };
     }
 
+    if (location.pathname === '/entry-setups') {
+      return {
+        eyebrow: 'Coach guide',
+        title: 'Use Entry Setups to create the opening, then continue the sequence in Decision Trees.',
+        description: 'This layer is for the reaction that creates the attack. Once the opening works, Decision Trees can take over the continuation.',
+        primary: { label: 'Open Curriculum', to: '/index' },
+        secondary: { label: 'Open Decision Trees', to: '/decision-tree' }
+      };
+    }
+
     return {
       eyebrow: 'Coach guide',
       title: 'Use the app one coaching job at a time.',
@@ -459,7 +471,8 @@ export default function Layout({ children }) {
     if (isMember) {
       return [
         { label: 'Library', to: '/library' },
-        { label: 'Decision Trees', to: '/decision-tree' }
+        { label: 'Decision Trees', to: '/decision-tree' },
+        { label: 'Entry Setups', to: '/entry-setups' }
       ];
     }
 
@@ -468,6 +481,7 @@ export default function Layout({ children }) {
       { label: 'Reports', to: '/reports' },
       { label: 'Library', to: '/library' },
       { label: 'Decision Trees', to: '/decision-tree' },
+      { label: 'Entry Setups', to: '/entry-setups' },
       { label: 'Scenarios', to: '/training-scenarios' },
       { label: 'Topics', to: '/topics' }
     ];

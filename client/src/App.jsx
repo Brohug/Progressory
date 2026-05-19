@@ -19,6 +19,7 @@ const MembersPage = lazy(() => import('./pages/MembersPage'));
 const StaffPage = lazy(() => import('./pages/StaffPage'));
 const CurriculumIndexPage = lazy(() => import('./pages/CurriculumIndexPage'));
 const DecisionTreePage = lazy(() => import('./pages/DecisionTreePage'));
+const EntrySetupsPage = lazy(() => import('./pages/EntrySetupsPage'));
 const MyProgressPage = lazy(() => import('./pages/MyProgressPage'));
 const MyAccountPage = lazy(() => import('./pages/MyAccountPage'));
 const BillingPage = lazy(() => import('./pages/BillingPage'));
@@ -98,6 +99,14 @@ export default function App() {
               element={
                 <ProtectedRoute allowedRoles={['owner', ...STAFF_ROLES.slice(1), 'member']}>
                   <DecisionTreePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/entry-setups"
+              element={
+                <ProtectedRoute allowedRoles={['owner', ...STAFF_ROLES.slice(1), 'member']}>
+                  <EntrySetupsPage />
                 </ProtectedRoute>
               }
             />

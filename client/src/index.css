@@ -462,10 +462,203 @@ ul {
   max-width: 760px;
 }
 
+.entry-setups-page .page-intro {
+  max-width: 780px;
+}
+
 .account-overview-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
+}
+
+.entry-setups-overview-grid,
+.entry-setups-family-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.entry-setup-family-card {
+  gap: 12px;
+}
+
+.entry-setup-family-card.is-selected {
+  border-color: rgba(56, 189, 248, 0.7);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.18), 0 18px 36px rgba(2, 6, 23, 0.24);
+}
+
+.entry-setup-family-header {
+  display: grid;
+  gap: 4px;
+}
+
+.entry-setups-search-shell {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid rgba(71, 85, 105, 0.74);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.entry-setups-search-row {
+  display: grid;
+  gap: 12px;
+}
+
+.entry-setups-lane-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.entry-setups-lane-row .secondary-button.is-active {
+  background: var(--accent);
+  color: #0f172a;
+  border-color: transparent;
+}
+
+.entry-setups-search-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.entry-setup-family-lane {
+  margin-top: 8px;
+}
+
+.entry-setup-family-block {
+  display: grid;
+  gap: 8px;
+}
+
+.entry-setup-family-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.entry-setup-family-collapsed-preview {
+  display: grid;
+  gap: 8px;
+}
+
+.related-setup-families {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.related-setup-family-list {
+  display: grid;
+  gap: 10px;
+}
+
+.related-setup-family-item {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid rgba(71, 85, 105, 0.72);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.related-setup-family-item strong {
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+
+.related-setup-family-summary {
+  margin: 0;
+}
+
+.related-setup-family-preview {
+  display: grid;
+  gap: 6px;
+}
+
+.related-setup-family-preview .curriculum-index-tag-row {
+  gap: 6px;
+}
+
+.related-setup-family-preview .entry-setup-info-chip {
+  padding: 7px 12px;
+  font-size: 0.88rem;
+}
+
+.related-setup-family-actions {
+  gap: 8px;
+}
+
+.entry-setup-sequence-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.entry-setup-sequence-step {
+  display: flex;
+  min-width: 0;
+}
+
+.entry-setup-sequence-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #60a5fa;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.entry-setup-info-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(71, 85, 105, 0.74);
+  background: rgba(15, 23, 42, 0.48);
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.25;
+  cursor: default;
+  user-select: text;
+}
+
+.entry-setup-info-chip-accent {
+  border-color: rgba(56, 189, 248, 0.42);
+  background: rgba(21, 45, 87, 0.76);
+  color: #f8fafc;
+}
+
+.entry-setup-sequence-chip {
+  min-height: 44px;
+}
+
+.entry-setup-sequence-step-start .entry-setup-sequence-chip {
+  border-color: rgba(56, 189, 248, 0.42);
+  background: rgba(21, 45, 87, 0.76);
+  color: #f8fafc;
+}
+
+.entry-setup-sequence-step-middle .entry-setup-sequence-chip {
+  border-color: rgba(71, 85, 105, 0.82);
+  background: rgba(15, 23, 42, 0.56);
+}
+
+.entry-setup-sequence-step-finish .entry-setup-sequence-chip {
+  border-color: rgba(34, 197, 94, 0.34);
+  background: rgba(8, 33, 24, 0.72);
+  color: #f8fafc;
+}
+
+.entry-setup-family-toggle {
+  justify-self: start;
 }
 
 .account-summary-card {
@@ -876,6 +1069,12 @@ a.action-card:focus-visible {
   flex-wrap: wrap;
 }
 
+.decision-tree-sequence-trail {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(71, 85, 105, 0.4);
+}
+
 .suggestion-chip {
   padding: 8px 12px;
   border-radius: 999px;
@@ -899,6 +1098,15 @@ a.action-card:focus-visible {
   background: rgba(37, 99, 235, 0.22);
   color: #f8fafc;
   box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.18);
+}
+
+.suggestion-chip.is-clickable {
+  cursor: pointer;
+}
+
+.suggestion-chip:disabled {
+  opacity: 1;
+  cursor: default;
 }
 
 .suggestion-chip-back {
@@ -1987,6 +2195,10 @@ a.dashboard-setup-item {
   }
 
   .dashboard-setup-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .entry-setups-family-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -4330,6 +4542,66 @@ a.dashboard-setup-item {
     max-width: none;
   }
 
+  .entry-setups-search-shell {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .entry-setups-search-summary {
+    gap: 8px;
+  }
+
+  .entry-setups-lane-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .entry-setups-search-summary .secondary-button {
+    width: 100%;
+  }
+
+  .entry-setup-family-card {
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .entry-setup-family-card.is-collapsible .entry-setup-family-header {
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    gap: 10px;
+  }
+
+  .entry-setup-family-card.is-collapsible .entry-setup-family-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .entry-setup-family-card.is-collapsible .entry-setup-family-actions .secondary-button,
+  .entry-setup-family-toggle {
+    width: 100%;
+  }
+
+  .entry-setup-family-card.is-collapsible .entry-setup-family-collapsed-preview .entry-setup-info-chip {
+    padding: 7px 11px;
+    font-size: 0.86rem;
+  }
+
+  .entry-setup-sequence-row {
+    display: grid;
+    gap: 10px;
+  }
+
+  .entry-setup-sequence-arrow {
+    justify-self: center;
+    transform: rotate(90deg);
+  }
+
+  .entry-setup-sequence-step .entry-setup-sequence-chip {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
   .members-page .compact-topic-header,
   .library-page .compact-topic-header,
   .library-page .library-card-title-row,
@@ -4370,7 +4642,8 @@ a.dashboard-setup-item {
   }
 
   .account-page .page-intro,
-  .billing-page .page-intro {
+  .billing-page .page-intro,
+  .entry-setups-page .page-intro {
     max-width: none;
   }
 

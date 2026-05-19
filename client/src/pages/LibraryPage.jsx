@@ -3,7 +3,9 @@ import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
+import RelatedSetupFamilies from '../components/RelatedSetupFamilies';
 import curriculumIndexSeed from '../data/curriculumIndexSeed';
+import { findRelatedSetupFamilies } from '../data/entrySetupFamilies';
 import { formatSentenceLabel } from '../utils/formatLabel';
 import TopicSearchSelect from '../components/TopicSearchSelect';
 import { useAuth } from '../hooks/useAuth';
@@ -369,6 +371,10 @@ export default function LibraryPage() {
     return badges.slice(0, 3);
   };
 
+  const getRelatedSetupFamiliesForEntry = (entry) => (
+    findRelatedSetupFamilies(entry.topic_title || entry.title)
+  );
+
   const availableTopics = useMemo(() => {
     const activeTopics = topics.filter((topic) => topic.is_active);
 
@@ -673,6 +679,7 @@ export default function LibraryPage() {
                     <div className="dashboard-setup-helper">
                       {latestMemberEntry.description || 'Open the resource to review what your coaches shared most recently.'}
                     </div>
+                      <RelatedSetupFamilies families={getRelatedSetupFamiliesForEntry(latestMemberEntry)} />
                       <div className="inline-actions">
                         {latestMemberEntry.video_url ? (
                           <a
@@ -850,6 +857,7 @@ export default function LibraryPage() {
                   </div>
                   <div className="detail-block">
                     <div>{entry.description || 'No description added yet.'}</div>
+                    <RelatedSetupFamilies families={getRelatedSetupFamiliesForEntry(entry)} />
                   </div>
                     <div className="inline-actions">
                       {entry.video_url ? (
@@ -1464,6 +1472,7 @@ export default function LibraryPage() {
                           : entry.description
                         : 'No description added yet.'}
                     </div>
+                    <RelatedSetupFamilies families={getRelatedSetupFamiliesForEntry(entry)} />
                   </div>
                   <button
                     type="button"

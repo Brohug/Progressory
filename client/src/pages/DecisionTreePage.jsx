@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import api from '../api/axios';
 import GuidedSearchPrompt from '../components/GuidedSearchPrompt';
 import Layout from '../components/Layout';
+import RelatedSetupFamilies from '../components/RelatedSetupFamilies';
 import curriculumIndexSeed from '../data/curriculumIndexSeed';
+import { findRelatedSetupFamilies } from '../data/entrySetupFamilies';
 import { useAuth } from '../hooks/useAuth';
-import { findGuidedSearchPrompt } from '../utils/guidedSearchPrompts';
+import { findGuidedSearchPrompt, getSetupFamilyPrompt } from '../utils/guidedSearchPrompts';
 
 const relationshipGroups = [
   { key: 'entriesIntoPosition', label: 'Entries' },
@@ -2222,13 +2225,50 @@ const buildCurriculumIndexLink = (entry) => {
   return `/index?${params.toString()}`;
 };
 
+const buildTrainingScenarioDraftLink = ({ setupFamily, focusEntry, currentSequenceTrail }) => {
+  const params = new URLSearchParams();
+  const trailLabels = currentSequenceTrail.map((step) => step.label).filter(Boolean);
+  const focusName = focusEntry?.name || '';
+  const draftName = setupFamily
+    ? `${focusName || setupFamily} scenario draft`
+    : `${focusName || 'Decision Tree'} scenario draft`;
+  const draftDescription = setupFamily
+    ? `Drafted from Decision Trees through the ${setupFamily} setup family.`
+    : 'Drafted from the current Decision Tree sequence.';
+  const draftTopObjective = focusName
+    ? `Build toward ${focusName} through the current sequence.`
+    : 'Use the current sequence to shape the scenario.';
+  const draftConstraints = trailLabels.length
+    ? `Current sequence: ${trailLabels.join(' -> ')}`
+    : '';
+
+  params.set('action', 'create');
+  params.set('draftName', draftName);
+  params.set('draftDescription', draftDescription);
+  params.set('draftTopObjective', draftTopObjective);
+  if (draftConstraints) {
+    params.set('draftConstraints', draftConstraints);
+  }
+  if (setupFamily) {
+    params.set('draftSetupFamily', setupFamily);
+  }
+  if (focusName) {
+    params.set('draftFocusName', focusName);
+  }
+
+  return `/training-scenarios?${params.toString()}`;
+};
+
 export default function DecisionTreePage() {
   const { user } = useAuth();
   const isMember = user?.role === 'member';
-  const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const [searchParams] = useSearchParams();
   const querySearch = searchParams.get('search') || '';
   const queryEntryId = searchParams.get('entryId') || '';
+  const setupFamily = searchParams.get('setupFamily') || '';
+  const initialSetupPrompt = useMemo(() => (
+    setupFamily ? getSetupFamilyPrompt(setupFamily) : null
+  ), [setupFamily]);
   const initialQueryMatch = useMemo(() => {
     if (queryEntryId) {
       return curriculumIndexSeed.find((entry) => entry.id === queryEntryId) || null;
@@ -2252,9 +2292,10 @@ export default function DecisionTreePage() {
   }, [queryEntryId, querySearch]);
   const [search, setSearch] = useState(querySearch);
   const [searchIsActive, setSearchIsActive] = useState(false);
+  const [topics, setTopics] = useState([]);
   const [guidedSearchScope, setGuidedSearchScope] = useState(null);
   const [guidedSearchHistory, setGuidedSearchHistory] = useState([]);
-  const [guidedPromptOverride, setGuidedPromptOverride] = useState(null);
+  const [guidedPromptOverride, setGuidedPromptOverride] = useState(initialSetupPrompt);
   const [guidedActiveLabel, setGuidedActiveLabel] = useState('');
   const [expandedSearchResultIds, setExpandedSearchResultIds] = useState([]);
   const [focusId, setFocusId] = useState(initialQueryMatch?.id || defaultFocusId);
@@ -2265,7 +2306,11 @@ export default function DecisionTreePage() {
   const [showPartnerContext, setShowPartnerContext] = useState(false);
   const [showSimulation, setShowSimulation] = useState(false);
   const [scenarioFeedback, setScenarioFeedback] = useState(
-    initialQueryMatch ? `Focused on ${initialQueryMatch.name} from Library. Start tracing the next coaching branches below.` : ''
+    initialQueryMatch
+      ? setupFamily
+        ? `Starting from ${initialQueryMatch.name} through the ${setupFamily} setup family. Continue the branch below.`
+        : `Focused on ${initialQueryMatch.name} from Library. Start tracing the next coaching branches below.`
+      : ''
   );
   const [pendingScrollTarget, setPendingScrollTarget] = useState('');
   const [activeScenarioPrompt, setActiveScenarioPrompt] = useState(null);
@@ -2298,6 +2343,31 @@ export default function DecisionTreePage() {
     mediaQuery.addListener(syncMobileState);
     return () => mediaQuery.removeListener(syncMobileState);
   }, []);
+
+  useEffect(() => {
+    if (isMember) {
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    const loadTopics = async () => {
+      try {
+        const response = await api.get('/topics');
+        if (isMounted) {
+          setTopics(response.data || []);
+        }
+      } catch (error) {
+        console.error('Load decision tree topics error:', error);
+      }
+    };
+
+    loadTopics();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isMember]);
 
   const entries = curriculumIndexSeed;
 
@@ -2374,6 +2444,73 @@ export default function DecisionTreePage() {
 
     return guidedPromptOverride || findGuidedSearchPrompt(normalizedSearch);
   }, [guidedPromptOverride, search]);
+
+  const currentSequenceTrail = useMemo(() => {
+    const trail = [];
+    const pushUnique = (item) => {
+      if (!item?.label || trail.some((existing) => existing.label === item.label && existing.type === item.type)) {
+        return;
+      }
+
+      trail.push(item);
+    };
+
+    if (setupFamily && initialSetupPrompt) {
+      pushUnique({
+        label: setupFamily,
+        type: 'setup-family',
+        clickable: true
+      });
+    }
+
+    guidedSearchHistory.forEach((step, index) => {
+      if (step.activeLabel) {
+        pushUnique({
+          label: step.activeLabel,
+          type: 'guided',
+          clickable: true,
+          snapshotIndex: index
+        });
+      }
+    });
+
+    if (guidedActiveLabel) {
+      pushUnique({
+        label: guidedActiveLabel,
+        type: 'guided-current',
+        clickable: false
+      });
+    }
+
+    if (!searchIsActive) {
+      decisionPathEntries.forEach((entry, index) => {
+        pushUnique({
+          label: entry.name,
+          type: 'tree-node',
+          clickable: index < decisionPathEntries.length - 1,
+          entryId: entry.id
+        });
+      });
+
+      if (!decisionPathEntries.length && focusEntry?.name) {
+        pushUnique({
+          label: focusEntry.name,
+          type: 'focus-node',
+          clickable: false
+        });
+      }
+    }
+
+    if (!trail.length && search) {
+      pushUnique({
+        label: search,
+        type: 'search',
+        clickable: false
+      });
+    }
+
+    return trail;
+  }, [decisionPathEntries, focusEntry, guidedActiveLabel, guidedSearchHistory, initialSetupPrompt, search, searchIsActive, setupFamily]);
 
   const visibleExpandedSearchResultIds = useMemo(() => {
     if (!isCompactSearchResults) {
@@ -2494,6 +2631,62 @@ export default function DecisionTreePage() {
     });
   };
 
+  const handleSequenceTrailStepClick = (step) => {
+    if (!step?.clickable) {
+      return;
+    }
+
+    if (step.type === 'setup-family' && initialSetupPrompt) {
+      setGuidedPromptOverride(initialSetupPrompt);
+      setGuidedSearchHistory([]);
+      setGuidedSearchScope(null);
+      setGuidedActiveLabel('');
+      setSearch(querySearch);
+      setSearchIsActive(true);
+      setExpandedSearchResultIds([]);
+      setScenarioFeedback(`Returned to the ${setupFamily} setup family.`);
+      setPendingScrollTarget('tree');
+      return;
+    }
+
+    if (step.type === 'guided' && typeof step.snapshotIndex === 'number') {
+      const snapshot = guidedSearchHistory[step.snapshotIndex];
+
+      if (!snapshot) {
+        return;
+      }
+
+      setSearch(snapshot.search || querySearch);
+      setGuidedSearchScope(snapshot.guidedSearchScope || null);
+      setGuidedPromptOverride(snapshot.prompt || initialSetupPrompt || null);
+      setGuidedActiveLabel(snapshot.activeLabel || '');
+      setGuidedSearchHistory((current) => current.slice(0, step.snapshotIndex));
+      setSearchIsActive(true);
+      setExpandedSearchResultIds([]);
+      setDecisionPath([]);
+      setFocusId(initialQueryMatch?.id || defaultFocusId);
+      setPendingScrollTarget('tree');
+      setScenarioFeedback(`Returned to ${snapshot.activeLabel}.`);
+      return;
+    }
+
+    if (step.type === 'tree-node' && step.entryId) {
+      const targetEntry = entries.find((entry) => entry.id === step.entryId);
+
+      if (!targetEntry) {
+        return;
+      }
+
+      setFocusId(targetEntry.id);
+      setDecisionPath((current) => {
+        const targetIndex = current.indexOf(step.entryId);
+        return targetIndex >= 0 ? current.slice(0, targetIndex + 1) : [step.entryId];
+      });
+      setPendingScrollTarget('tree');
+      setScenarioFeedback(`Returned to ${targetEntry.name} in the current sequence.`);
+    }
+  };
+
   const activeStyleHints = useMemo(() => getSelectedStyleHints(filters), [filters]);
 
   const branchGroups = useMemo(() => (
@@ -2563,6 +2756,14 @@ export default function DecisionTreePage() {
     [filters]
   );
   const focusDecisionTreeModel = focusEntry?.decisionTreeModel || null;
+  const focusTopicMatch = useMemo(() => (
+    focusEntry
+      ? topics.find((topic) => normalizeValue(topic.title) === normalizeValue(focusEntry.name))
+      : null
+  ), [focusEntry, topics]);
+  const relatedSetupFamilies = useMemo(() => (
+    focusEntry ? findRelatedSetupFamilies(focusEntry.name) : []
+  ), [focusEntry]);
   const focusReactionGroups = useMemo(() => {
     if (!focusDecisionTreeModel?.commonReactions?.length) return [];
     const allowDefensiveBranches = isDefensiveRecommendationContext({ focusEntry, filters });
@@ -2933,28 +3134,43 @@ export default function DecisionTreePage() {
                   <Link className="secondary-button" to={buildCurriculumIndexLink(focusEntry)}>
                     View in Index
                   </Link>
-                <Link
-                  className="secondary-button"
-                  to={buildLibraryLink({
-                    entryName: focusEntry.name,
-                    focusEntry,
-                    decisionPathEntries
-                  })}
+                  <Link
+                    className="secondary-button"
+                    to={buildLibraryLink({
+                      entryName: focusEntry.name,
+                      focusEntry,
+                      decisionPathEntries
+                    })}
                   >
                     Find Library Resources
                   </Link>
                   {!isMember ? (
-                    <Link className="secondary-button" to={buildPlannedClassLink(focusEntry)}>
-                      Plan next class
-                    </Link>
+                    <>
+                      <Link className="secondary-button" to={buildPlannedClassLink(focusEntry)}>
+                        Plan next class
+                      </Link>
+                      {currentSequenceTrail.length > 0 ? (
+                        <Link
+                          className="secondary-button"
+                          to={buildTrainingScenarioDraftLink({
+                            setupFamily,
+                            focusEntry,
+                            currentSequenceTrail
+                          })}
+                        >
+                          Save as scenario draft
+                        </Link>
+                      ) : null}
+                    </>
                   ) : null}
-                  {isManagement ? (
+                  {!isMember && !focusTopicMatch ? (
                     <Link className="secondary-button" to={buildAddTopicLink(focusEntry)}>
                       Add topic
                     </Link>
                   ) : null}
                 </div>
               ) : null}
+              {focusEntry ? <RelatedSetupFamilies families={relatedSetupFamilies} /> : null}
           </div>
           <div className="decision-tree-hero-actions">
             <button className="secondary-button" type="button" onClick={goBack} disabled={!history.length}>
@@ -3006,6 +3222,11 @@ export default function DecisionTreePage() {
               ? 'Search the Curriculum and choose the position, attack, defense, or concept you want to study next.'
               : 'Search Curriculum and choose the position, attack, defense, or concept you want the tree to start from.'}
           </p>
+          {setupFamily ? (
+            <p className="section-note">
+              Continuing from setup family: <strong>{setupFamily}</strong>
+            </p>
+          ) : null}
           <label htmlFor="decision-tree-search">Search Curriculum</label>
           <input
             id="decision-tree-search"
@@ -3036,6 +3257,26 @@ export default function DecisionTreePage() {
             onBack={guidedSearchHistory.length ? handleBackGuidedTreeSearch : null}
             activeLabel={guidedActiveLabel}
           />
+
+          {currentSequenceTrail.length > 0 ? (
+            <div className="guided-search-active-state decision-tree-sequence-trail">
+              <span className="meta-text">Current sequence</span>
+              <div className="suggestion-chip-row">
+                {currentSequenceTrail.map((step, index) => (
+                  <button
+                    key={`sequence-step-${step.label}-${index}`}
+                    type="button"
+                    className={`suggestion-chip${index === currentSequenceTrail.length - 1 ? ' selected' : ''}${step.clickable ? ' is-clickable' : ''}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => handleSequenceTrailStepClick(step)}
+                    disabled={!step.clickable}
+                  >
+                    {step.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {searchIsActive && searchResults.length > 0 && (
             <ul className="card-list decision-tree-search-results">

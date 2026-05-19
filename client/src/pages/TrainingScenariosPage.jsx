@@ -5,6 +5,14 @@ import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 import { useAuth } from '../hooks/useAuth';
 
+const normalizeValue = (value) => (
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+);
+
 export default function TrainingScenariosPage() {
   const { user } = useAuth();
   const isManagement = user?.role === 'owner' || user?.role === 'admin';
@@ -36,6 +44,14 @@ export default function TrainingScenariosPage() {
     constraints_text: '',
     round_duration_seconds: ''
   });
+  const draftScenario = useMemo(() => ({
+    name: searchParams.get('draftName') || '',
+    description: searchParams.get('draftDescription') || '',
+    topObjective: searchParams.get('draftTopObjective') || '',
+    constraints: searchParams.get('draftConstraints') || '',
+    setupFamily: searchParams.get('draftSetupFamily') || '',
+    focusName: searchParams.get('draftFocusName') || ''
+  }), [searchParams]);
 
   const clearScenarioFeedback = (scenarioId) => {
     setScenarioFeedbackMap((prev) => ({
@@ -110,12 +126,60 @@ export default function TrainingScenariosPage() {
     setIsCreateSectionOpen(true);
     setShowCreateScenarioForm(true);
     setScenarioError('');
-    setScenarioMessage('Use the form below to create a reusable scenario.');
+    setScenarioMessage(
+      draftScenario.name
+        ? 'Review the prefilled scenario draft below, then adjust anything that should change before saving.'
+        : 'Use the form below to create a reusable scenario.'
+    );
+  }, [draftScenario.name, searchParams]);
+
+  useEffect(() => {
+    if (searchParams.get('action') !== 'create' || loading) {
+      return;
+    }
+
+    const hasDraft = Boolean(
+      draftScenario.name
+      || draftScenario.description
+      || draftScenario.topObjective
+      || draftScenario.constraints
+      || draftScenario.setupFamily
+      || draftScenario.focusName
+    );
+
+    if (hasDraft) {
+      setScenarioFormData((prev) => {
+        const focusTopic = draftScenario.focusName
+          ? allTopics.find((topic) => normalizeValue(topic.title) === normalizeValue(draftScenario.focusName))
+          : null;
+
+        return {
+          ...prev,
+          name: draftScenario.name || prev.name,
+          description: draftScenario.description || prev.description,
+          top_objective: draftScenario.topObjective || prev.top_objective,
+          constraints_text: draftScenario.constraints || prev.constraints_text,
+          starting_position_topic_id: focusTopic ? String(focusTopic.id) : prev.starting_position_topic_id,
+          program_id: focusTopic?.program_id ? String(focusTopic.program_id) : prev.program_id
+        };
+      });
+    }
 
     const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete('action');
-    setSearchParams(nextParams, { replace: true });
-  }, [searchParams, setSearchParams]);
+    [
+      'action',
+      'draftName',
+      'draftDescription',
+      'draftTopObjective',
+      'draftConstraints',
+      'draftSetupFamily',
+      'draftFocusName'
+    ].forEach((key) => nextParams.delete(key));
+
+    if (nextParams.toString() !== searchParams.toString()) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [allTopics, draftScenario, loading, searchParams, setSearchParams]);
 
   const orderedScenarios = useMemo(() => {
     const active = trainingScenarios.filter((scenario) => scenario.is_active);
@@ -471,6 +535,21 @@ export default function TrainingScenariosPage() {
             <p className="section-note">
               Give coaches a reusable setup they can pull into planning or live class logs later.
             </p>
+
+            {draftScenario.setupFamily || draftScenario.focusName ? (
+              <div className="library-linked-topic-banner" style={{ marginBottom: '14px' }}>
+                <div>
+                  <strong>Drafted from the current learning sequence</strong>
+                  <div className="meta-text">
+                    {draftScenario.setupFamily && draftScenario.focusName
+                      ? `Built from ${draftScenario.setupFamily} toward ${draftScenario.focusName}.`
+                      : draftScenario.setupFamily
+                        ? `Built from ${draftScenario.setupFamily}.`
+                        : `Built toward ${draftScenario.focusName}.`}
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
             <form className="form-grid" onSubmit={handleCreateScenario}>
               <div>

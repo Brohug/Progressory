@@ -4,8 +4,10 @@ import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
 import GuidedSearchPrompt from '../components/GuidedSearchPrompt';
 import Layout from '../components/Layout';
+import RelatedSetupFamilies from '../components/RelatedSetupFamilies';
 import TopicSearchSelect from '../components/TopicSearchSelect';
 import curriculumIndexSeed from '../data/curriculumIndexSeed';
+import { findRelatedSetupFamilies } from '../data/entrySetupFamilies';
 import { useAuth } from '../hooks/useAuth';
 import { findGuidedSearchPrompt } from '../utils/guidedSearchPrompts';
 
@@ -478,6 +480,7 @@ export default function CurriculumIndexPage() {
         topic,
         coverage,
         linkedLibraryCount,
+        relatedSetupFamilies: findRelatedSetupFamilies(entry.name),
         duplicateVariants: (duplicateNameMap.get(normalizeValue(entry.name)) || []).filter(
           (variant) => variant.id !== entry.id
         ),
@@ -1030,6 +1033,8 @@ export default function CurriculumIndexPage() {
                                 Related positions: {entry.relatedPositions.join(', ')}
                               </div>
                             ) : null}
+
+                            <RelatedSetupFamilies families={entry.relatedSetupFamilies} />
 
                             {relationshipGroups.some((group) => entry[group.key]?.length) ? (
                               <div className="detail-block">
