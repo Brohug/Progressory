@@ -640,6 +640,68 @@ const setupFamilyPromptConfig = {
       }
     ]
   },
+  'ankle-pick entry setups': {
+    question: 'Which ankle-pick setup branch do you want to continue from?',
+    options: [
+      {
+        label: 'Head touch + level change',
+        nextPrompt: {
+          question: 'What reaction did the level change create?',
+          options: [
+            { label: 'They step', value: 'ankle pick', enterTree: true, focusName: 'Ankle Pick', allowedCategories: ['Takedowns'] },
+            { label: 'They stay tall', value: 'single leg', enterTree: true, focusName: 'Single Leg', allowedCategories: ['Takedowns'] },
+            { label: 'They sprawl early', value: 'front headlock standing', enterTree: true, focusName: 'Front Headlock Standing', allowedCategories: ['Positions', 'Takedowns'] },
+            { label: 'They square up', value: 'body lock standing', enterTree: true, focusName: 'Body Lock Standing', allowedCategories: ['Positions', 'Takedowns'] }
+          ]
+        }
+      },
+      {
+        label: 'Collar tie snap',
+        nextPrompt: {
+          question: 'What opening did the collar tie create?',
+          options: [
+            { label: 'Foot stays planted', value: 'ankle pick', enterTree: true, focusName: 'Ankle Pick', allowedCategories: ['Takedowns'] },
+            { label: 'Posture stays high', value: 'single leg', enterTree: true, focusName: 'Single Leg', allowedCategories: ['Takedowns'] },
+            { label: 'Head drops forward', value: 'front headlock standing', enterTree: true, focusName: 'Front Headlock Standing', allowedCategories: ['Positions', 'Takedowns'] },
+            { label: 'Chest comes in close', value: 'body lock standing', enterTree: true, focusName: 'Body Lock Standing', allowedCategories: ['Positions', 'Takedowns'] }
+          ]
+        }
+      },
+      { label: 'Wrist post pull', value: 'ankle pick', allowedCategories: ['Takedowns', 'Grip Fighting'] },
+      { label: 'Inside tie to outside angle', value: 'ankle pick', allowedCategories: ['Takedowns', 'Grip Fighting'] }
+    ]
+  },
+  'low-single entry setups': {
+    question: 'Which low-single setup branch do you want to continue from?',
+    options: [
+      {
+        label: 'Wrist post pull',
+        nextPrompt: {
+          question: 'What reaction did the wrist-post pull create?',
+          options: [
+            { label: 'Lead foot stays heavy', value: 'low single', enterTree: true, focusName: 'Low Single', allowedCategories: ['Takedowns'] },
+            { label: 'They square up', value: 'single leg', enterTree: true, focusName: 'Single Leg', allowedCategories: ['Takedowns'] },
+            { label: 'They sprawl early', value: 'front headlock standing', enterTree: true, focusName: 'Front Headlock Standing', allowedCategories: ['Positions', 'Takedowns'] },
+            { label: 'They step away', value: 'ankle pick', enterTree: true, focusName: 'Ankle Pick', allowedCategories: ['Takedowns'] }
+          ]
+        }
+      },
+      {
+        label: 'Collar tie snap',
+        nextPrompt: {
+          question: 'What did the collar-tie snap open up?',
+          options: [
+            { label: 'Head stays high', value: 'low single', enterTree: true, focusName: 'Low Single', allowedCategories: ['Takedowns'] },
+            { label: 'Lead leg reaches back', value: 'single leg', enterTree: true, focusName: 'Single Leg', allowedCategories: ['Takedowns'] },
+            { label: 'They post forward', value: 'front headlock standing', enterTree: true, focusName: 'Front Headlock Standing', allowedCategories: ['Positions', 'Takedowns'] },
+            { label: 'Foot plants wide', value: 'ankle pick', enterTree: true, focusName: 'Ankle Pick', allowedCategories: ['Takedowns'] }
+          ]
+        }
+      },
+      { label: 'Inside tie angle change', value: 'low single', allowedCategories: ['Takedowns', 'Grip Fighting'] },
+      { label: 'Head touch to level change', value: 'low single', allowedCategories: ['Takedowns', 'Grip Fighting'] }
+    ]
+  },
   'guard wrestle-up setups': {
     question: 'Which wrestle-up setup branch do you want to continue from?',
     options: [
@@ -700,6 +762,192 @@ const setupFamilyPromptConfig = {
       },
       { label: 'Hip bump threat', value: 'kimura', allowedCategories: ['Sweeps', 'Submissions'] },
       { label: 'Overhook clamp', value: 'triangle choke', allowedCategories: ['Submissions', 'Positions'] }
+    ]
+  },
+  'butterfly-sweep setups': {
+    question: 'Which butterfly-sweep setup branch do you want to continue from?',
+    options: [
+      {
+        label: 'Double underhooks',
+        nextPrompt: {
+          question: 'What reaction did the double underhooks create?',
+          options: [
+            { label: 'They post wide', value: 'butterfly sweep', enterTree: true, focusName: 'Butterfly Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'They base back', value: 'wrestle-up single leg sweep', enterTree: true, focusName: 'Wrestle-Up Single Leg Sweep', allowedCategories: ['Sweeps', 'Takedowns'] },
+            { label: 'Arm stays isolated', value: 'shoulder crunch butterfly sweep', enterTree: true, focusName: 'Shoulder Crunch Butterfly Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'Back starts to show', value: 'back control', enterTree: true, focusName: 'Back Control', allowedCategories: ['Back Takes', 'Positions'] }
+          ]
+        }
+      },
+      {
+        label: 'Overhook clamp',
+        nextPrompt: {
+          question: 'What continuation do you want from the overhook clamp?',
+          options: [
+            { label: 'Butterfly sweep', value: 'butterfly sweep', enterTree: true, focusName: 'Butterfly Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'Triangle lane', value: 'triangle choke', enterTree: true, focusName: 'Triangle Choke', allowedCategories: ['Submissions'] },
+            { label: 'Armbar lane', value: 'straight armbar from guard', enterTree: true, focusName: 'Straight Armbar From Guard', allowedCategories: ['Submissions'] },
+            { label: 'Back exposure', value: 'back control', enterTree: true, focusName: 'Back Control', allowedCategories: ['Back Takes', 'Positions'] }
+          ]
+        }
+      },
+      { label: 'Shoulder crunch', value: 'shoulder crunch butterfly sweep', allowedCategories: ['Sweeps', 'Submissions'] },
+      { label: 'Arm drag sit-up', value: 'back control', allowedCategories: ['Back Takes', 'Sweeps'] }
+    ]
+  },
+  'knee-shield wrestle-up setups': {
+    question: 'Which knee-shield wrestle-up branch do you want to continue from?',
+    options: [
+      {
+        label: 'Knee shield frame',
+        nextPrompt: {
+          question: 'What reaction did the knee shield frame create?',
+          options: [
+            { label: 'They pressure forward', value: 'dogfight sweep', enterTree: true, focusName: 'Dogfight Sweep', allowedCategories: ['Sweeps', 'Positions'] },
+            { label: 'They post the far hand', value: 'wrestle-up single leg sweep', enterTree: true, focusName: 'Wrestle-Up Single Leg Sweep', allowedCategories: ['Sweeps', 'Takedowns'] },
+            { label: 'They drift high', value: 'technical stand-up sweep', enterTree: true, focusName: 'Technical Stand-Up Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'Leg line opens', value: 'single-leg from seated guard', enterTree: true, focusName: 'Single-Leg From Seated Guard', allowedCategories: ['Sweeps', 'Takedowns'] }
+          ]
+        }
+      },
+      {
+        label: 'Underhook sit-up',
+        nextPrompt: {
+          question: 'What continuation do you want from the underhook sit-up?',
+          options: [
+            { label: 'Dogfight', value: 'dogfight sweep', enterTree: true, focusName: 'Dogfight Sweep', allowedCategories: ['Sweeps', 'Positions'] },
+            { label: 'Wrestle up', value: 'wrestle-up single leg sweep', enterTree: true, focusName: 'Wrestle-Up Single Leg Sweep', allowedCategories: ['Sweeps', 'Takedowns'] },
+            { label: 'Come up on the leg', value: 'single-leg from seated guard', enterTree: true, focusName: 'Single-Leg From Seated Guard', allowedCategories: ['Sweeps', 'Takedowns'] },
+            { label: 'Stand to top', value: 'technical stand-up sweep', enterTree: true, focusName: 'Technical Stand-Up Sweep', allowedCategories: ['Sweeps'] }
+          ]
+        }
+      },
+      { label: 'Wrist control', value: 'dogfight sweep', allowedCategories: ['Sweeps', 'Positions'] },
+      { label: 'Inside elbow lift', value: 'wrestle-up single leg sweep', allowedCategories: ['Sweeps', 'Takedowns'] }
+    ]
+  },
+  'x-guard sweep setups': {
+    question: 'Which X-guard sweep setup branch do you want to continue from?',
+    options: [
+      {
+        label: 'Shin-to-shin',
+        nextPrompt: {
+          question: 'What reaction did the shin-to-shin entry create?',
+          options: [
+            { label: 'They stay tall', value: 'x-guard', enterTree: true, focusName: 'X-Guard', allowedCategories: ['Positions', 'Sweeps'] },
+            { label: 'They step wide', value: 'x-guard to ankle pick', enterTree: true, focusName: 'X-Guard To Ankle Pick', allowedCategories: ['Sweeps', 'Takedowns'] },
+            { label: 'Hips get light', value: 'basic x-guard sweep', enterTree: true, focusName: 'Basic X-Guard Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'Back starts to show', value: 'x-guard back take', enterTree: true, focusName: 'X-Guard Back Take', allowedCategories: ['Sweeps', 'Back Takes'] }
+          ]
+        }
+      },
+      {
+        label: 'Under-leg lift',
+        nextPrompt: {
+          question: 'What continuation do you want from the under-leg lift?',
+          options: [
+            { label: 'Overhead sweep', value: 'x-guard overhead sweep', enterTree: true, focusName: 'X-Guard Overhead Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'Ankle-pick lane', value: 'x-guard to ankle pick', enterTree: true, focusName: 'X-Guard To Ankle Pick', allowedCategories: ['Sweeps', 'Takedowns'] },
+            { label: 'Leg-drag finish', value: 'x-guard to leg drag sweep', enterTree: true, focusName: 'X-Guard To Leg Drag Sweep', allowedCategories: ['Sweeps', 'Passing'] },
+            { label: 'Back-take lane', value: 'x-guard back take', enterTree: true, focusName: 'X-Guard Back Take', allowedCategories: ['Sweeps', 'Back Takes'] }
+          ]
+        }
+      },
+      { label: 'Off-balance pull', value: 'basic x-guard sweep', allowedCategories: ['Sweeps', 'Positions'] },
+      { label: 'Upper-body steering', value: 'x-guard back take', allowedCategories: ['Sweeps', 'Back Takes'] }
+    ]
+  },
+  'spider / lasso sweep setups': {
+    question: 'Which spider / lasso sweep branch do you want to continue from?',
+    options: [
+      {
+        label: 'Spider sleeve control',
+        nextPrompt: {
+          question: 'What reaction did the spider sleeve control create?',
+          options: [
+            { label: 'They posture forward', value: 'balloon sweep from spider', enterTree: true, focusName: 'Balloon Sweep From Spider', allowedCategories: ['Sweeps'] },
+            { label: 'They widen the post', value: 'overhead sweep', enterTree: true, focusName: 'Overhead Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'Shoulder line stays trapped', value: 'omoplata', enterTree: true, focusName: 'Omoplata', allowedCategories: ['Submissions'] },
+            { label: 'Leg line crosses', value: 'spider lasso sweep', enterTree: true, focusName: 'Spider Lasso Sweep', allowedCategories: ['Sweeps'] }
+          ]
+        }
+      },
+      {
+        label: 'Lasso tension',
+        nextPrompt: {
+          question: 'What continuation do you want from the lasso tension?',
+          options: [
+            { label: 'Basic lasso sweep', value: 'basic lasso sweep', enterTree: true, focusName: 'Basic Lasso Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'Lasso tilt sweep', value: 'lasso tilt sweep', enterTree: true, focusName: 'Lasso Tilt Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'Lasso overhead sweep', value: 'lasso overhead sweep', enterTree: true, focusName: 'Lasso Overhead Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'Omoplata lane', value: 'omoplata', enterTree: true, focusName: 'Omoplata', allowedCategories: ['Submissions'] }
+          ]
+        }
+      },
+      { label: 'Collar-sleeve pull', value: 'balloon sweep', allowedCategories: ['Sweeps', 'Positions'] },
+      { label: 'Foot-on-hip extension', value: 'overhead sweep', allowedCategories: ['Sweeps', 'Positions'] }
+    ]
+  },
+  'de la riva sweep setups': {
+    question: 'Which De La Riva sweep branch do you want to continue from?',
+    options: [
+      {
+        label: 'DLR sleeve pull',
+        nextPrompt: {
+          question: 'What reaction did the sleeve pull create?',
+          options: [
+            { label: 'They post forward', value: 'basic de la riva off-balance sweep', enterTree: true, focusName: 'Basic De La Riva Off-Balance Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'Tripod lane opens', value: 'de la riva tripod variation', enterTree: true, focusName: 'De La Riva Tripod Variation', allowedCategories: ['Sweeps'] },
+            { label: 'Leg line opens', value: 'de la riva to single-leg x sweep', enterTree: true, focusName: 'De La Riva To Single-Leg X Sweep', allowedCategories: ['Sweeps', 'Positions'] },
+            { label: 'Back starts to show', value: 'berimbolo', enterTree: true, focusName: 'Berimbolo', allowedCategories: ['Back Takes', 'Sweeps'] }
+          ]
+        }
+      },
+      {
+        label: 'Ankle steering',
+        nextPrompt: {
+          question: 'What continuation do you want from the ankle steering?',
+          options: [
+            { label: 'Off-balance sweep', value: 'basic de la riva off-balance sweep', enterTree: true, focusName: 'Basic De La Riva Off-Balance Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'Tripod variation', value: 'de la riva tripod variation', enterTree: true, focusName: 'De La Riva Tripod Variation', allowedCategories: ['Sweeps'] },
+            { label: 'Single-Leg X lane', value: 'de la riva to single-leg x sweep', enterTree: true, focusName: 'De La Riva To Single-Leg X Sweep', allowedCategories: ['Sweeps', 'Positions'] },
+            { label: 'Bolo lane', value: 'berimbolo', enterTree: true, focusName: 'Berimbolo', allowedCategories: ['Back Takes', 'Sweeps'] }
+          ]
+        }
+      },
+      { label: 'Tripod off-balance', value: 'de la riva tripod variation', allowedCategories: ['Sweeps', 'Positions'] },
+      { label: 'Waiter-style tilt', value: 'de la riva to single-leg x sweep', allowedCategories: ['Sweeps', 'Positions'] }
+    ]
+  },
+  'deep-half sweep setups': {
+    question: 'Which deep-half sweep branch do you want to continue from?',
+    options: [
+      {
+        label: 'Under-hip entry',
+        nextPrompt: {
+          question: 'What reaction did the under-hip entry create?',
+          options: [
+            { label: 'They commit weight forward', value: 'deep half waiter sweep', enterTree: true, focusName: 'Deep Half Waiter Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'Base stays wide', value: 'basic deep half sweep', enterTree: true, focusName: 'Basic Deep Half Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'Leg line opens', value: 'single-leg x', enterTree: true, focusName: 'Single-Leg X', allowedCategories: ['Positions', 'Sweeps'] },
+            { label: 'Hips drift across', value: 'leg drag', enterTree: true, focusName: 'Leg Drag', allowedCategories: ['Passing', 'Sweeps'] }
+          ]
+        }
+      },
+      {
+        label: 'Waiter wedge',
+        nextPrompt: {
+          question: 'What continuation do you want from the waiter wedge?',
+          options: [
+            { label: 'Waiter sweep', value: 'deep half waiter sweep', enterTree: true, focusName: 'Deep Half Waiter Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'Basic deep-half sweep', value: 'basic deep half sweep', enterTree: true, focusName: 'Basic Deep Half Sweep', allowedCategories: ['Sweeps'] },
+            { label: 'Single-Leg X lane', value: 'single-leg x', enterTree: true, focusName: 'Single-Leg X', allowedCategories: ['Positions', 'Sweeps'] },
+            { label: 'Leg-drag finish', value: 'leg drag', enterTree: true, focusName: 'Leg Drag', allowedCategories: ['Passing', 'Sweeps'] }
+          ]
+        }
+      },
+      { label: 'Inside knee turn', value: 'basic deep half sweep', allowedCategories: ['Sweeps', 'Positions'] },
+      { label: 'Shoulder under the belt line', value: 'deep half guard', allowedCategories: ['Sweeps', 'Positions'] }
     ]
   },
   'passing setup chains': {
@@ -808,6 +1056,130 @@ const setupFamilyPromptConfig = {
       }
     ]
   },
+  'leg-drag passing setups': {
+    question: 'Which leg-drag setup branch do you want to continue from?',
+    options: [
+      {
+        label: 'Ankle-control pull',
+        nextPrompt: {
+          question: 'What opening did the ankle-control pull create?',
+          options: [
+            { label: 'Knees turn off line', value: 'leg drag', enterTree: true, focusName: 'Leg Drag', allowedCategories: ['Passing'] },
+            { label: 'Bottom leg lightens', value: 'backstep pass', enterTree: true, focusName: 'Backstep Pass', allowedCategories: ['Passing'] },
+            { label: 'Hip line stays exposed', value: 'pass to knee on belly', enterTree: true, focusName: 'Pass To Knee On Belly', allowedCategories: ['Passing'] },
+            { label: 'Chest clears the legs', value: 'side control', enterTree: true, focusName: 'Side Control', allowedCategories: ['Positions', 'Passing'] }
+          ]
+        }
+      },
+      {
+        label: 'Shin redirect',
+        nextPrompt: {
+          question: 'What continuation do you want from the shin redirect?',
+          options: [
+            { label: 'Finish leg drag', value: 'leg drag', enterTree: true, focusName: 'Leg Drag', allowedCategories: ['Passing'] },
+            { label: 'Backstep lane', value: 'backstep pass', enterTree: true, focusName: 'Backstep Pass', allowedCategories: ['Passing'] },
+            { label: 'Knee on belly lane', value: 'pass to knee on belly', enterTree: true, focusName: 'Pass To Knee On Belly', allowedCategories: ['Passing'] },
+            { label: 'Side control lane', value: 'side control', enterTree: true, focusName: 'Side Control', allowedCategories: ['Positions', 'Passing'] }
+          ]
+        }
+      },
+      { label: 'Leg pummel', value: 'leg drag', allowedCategories: ['Passing', 'Positions'] },
+      { label: 'Body lock to leg drag', value: 'leg drag', allowedCategories: ['Passing', 'Positions'] }
+    ]
+  },
+  'knee-cut passing setups': {
+    question: 'Which knee-cut passing branch do you want to continue from?',
+    options: [
+      {
+        label: 'Near-side arm pin',
+        nextPrompt: {
+          question: 'What opening did the near-side arm pin create?',
+          options: [
+            { label: 'Knee-cut lane opens', value: 'knee cut', enterTree: true, focusName: 'Knee Cut', allowedCategories: ['Passing'] },
+            { label: 'They frame hard', value: 'crossface underhook half guard pass', enterTree: true, focusName: 'Crossface Underhook Half Guard Pass', allowedCategories: ['Passing'] },
+            { label: 'Hip line stays exposed', value: 'hip smash pass', enterTree: true, focusName: 'Hip Smash Pass', allowedCategories: ['Passing'] },
+            { label: 'They turn away', value: 'backstep half guard pass', enterTree: true, focusName: 'Backstep Half Guard Pass', allowedCategories: ['Passing'] }
+          ]
+        }
+      },
+      {
+        label: 'Shin redirect',
+        nextPrompt: {
+          question: 'What continuation do you want from the shin redirect?',
+          options: [
+            { label: 'Finish knee cut', value: 'knee cut', enterTree: true, focusName: 'Knee Cut', allowedCategories: ['Passing'] },
+            { label: 'Crossface-underhook lane', value: 'crossface underhook half guard pass', enterTree: true, focusName: 'Crossface Underhook Half Guard Pass', allowedCategories: ['Passing'] },
+            { label: 'Hip smash lane', value: 'hip smash pass', enterTree: true, focusName: 'Hip Smash Pass', allowedCategories: ['Passing'] },
+            { label: 'Backstep lane', value: 'backstep half guard pass', enterTree: true, focusName: 'Backstep Half Guard Pass', allowedCategories: ['Passing'] }
+          ]
+        }
+      },
+      { label: 'Crossface threat', value: 'knee cut', allowedCategories: ['Passing', 'Positions'] },
+      { label: 'Hip switch fake', value: 'hip smash pass', allowedCategories: ['Passing', 'Positions'] }
+    ]
+  },
+  'torreando passing setups': {
+    question: 'Which torreando passing branch do you want to continue from?',
+    options: [
+      {
+        label: 'Sleeve clear',
+        nextPrompt: {
+          question: 'What opening did the sleeve clear create?',
+          options: [
+            { label: 'Torreando lane opens', value: 'torreando pass', enterTree: true, focusName: 'Torreando Pass', allowedCategories: ['Passing'] },
+            { label: 'Bullfighter lane opens', value: 'bullfighter pass', enterTree: true, focusName: 'Bullfighter Pass', allowedCategories: ['Passing'] },
+            { label: 'Cross-step lane opens', value: 'cross-step pass', enterTree: true, focusName: 'Cross-Step Pass', allowedCategories: ['Passing'] },
+            { label: 'Chest clears to finish', value: 'pass to knee on belly', enterTree: true, focusName: 'Pass To Knee On Belly', allowedCategories: ['Passing'] }
+          ]
+        }
+      },
+      {
+        label: 'Ankle steering',
+        nextPrompt: {
+          question: 'What continuation do you want from the ankle steering?',
+          options: [
+            { label: 'Torreando pass', value: 'torreando pass', enterTree: true, focusName: 'Torreando Pass', allowedCategories: ['Passing'] },
+            { label: 'Bullfighter pass', value: 'bullfighter pass', enterTree: true, focusName: 'Bullfighter Pass', allowedCategories: ['Passing'] },
+            { label: 'Cross-step pass', value: 'cross-step pass', enterTree: true, focusName: 'Cross-Step Pass', allowedCategories: ['Passing'] },
+            { label: 'Knee-on-belly finish', value: 'pass to knee on belly', enterTree: true, focusName: 'Pass To Knee On Belly', allowedCategories: ['Passing'] }
+          ]
+        }
+      },
+      { label: 'Hip turn', value: 'torreando pass', allowedCategories: ['Passing', 'Positions'] },
+      { label: 'Outside-angle footwork', value: 'bullfighter pass', allowedCategories: ['Passing', 'Positions'] }
+    ]
+  },
+  'over-under / stack passing setups': {
+    question: 'Which over-under / stack passing branch do you want to continue from?',
+    options: [
+      {
+        label: 'Double-under pressure',
+        nextPrompt: {
+          question: 'What opening did the double-under pressure create?',
+          options: [
+            { label: 'Over-under lane opens', value: 'over-under pass', enterTree: true, focusName: 'Over-Under Pass', allowedCategories: ['Passing'] },
+            { label: 'Stack lane opens', value: 'stack pass', enterTree: true, focusName: 'Stack Pass', allowedCategories: ['Passing'] },
+            { label: 'Folding lane opens', value: 'folding pass', enterTree: true, focusName: 'Folding Pass', allowedCategories: ['Passing'] },
+            { label: 'Head clears north-south', value: 'north-south pass', enterTree: true, focusName: 'North-South Pass', allowedCategories: ['Passing'] }
+          ]
+        }
+      },
+      {
+        label: 'Leg fold',
+        nextPrompt: {
+          question: 'What continuation do you want from the leg fold?',
+          options: [
+            { label: 'Over-under pass', value: 'over-under pass', enterTree: true, focusName: 'Over-Under Pass', allowedCategories: ['Passing'] },
+            { label: 'Stack pass', value: 'stack pass', enterTree: true, focusName: 'Stack Pass', allowedCategories: ['Passing'] },
+            { label: 'Folding pass', value: 'folding pass', enterTree: true, focusName: 'Folding Pass', allowedCategories: ['Passing'] },
+            { label: 'North-south pass', value: 'north-south pass', enterTree: true, focusName: 'North-South Pass', allowedCategories: ['Passing'] }
+          ]
+        }
+      },
+      { label: 'Hip stack', value: 'stack pass', allowedCategories: ['Passing', 'Positions'] },
+      { label: 'Shoulder-drive angle', value: 'over-under pass', allowedCategories: ['Passing', 'Positions'] }
+    ]
+  },
   'submission-entry setups': {
     question: 'Which submission-entry setup branch do you want to continue from?',
     options: [
@@ -901,6 +1273,130 @@ const setupFamilyPromptConfig = {
         }
       },
       { label: 'Gift wrap', value: 'gift wrap', allowedCategories: ['Positions', 'Submissions'] }
+    ]
+  },
+  'triangle-entry setups': {
+    question: 'Which triangle-entry setup branch do you want to continue from?',
+    options: [
+      {
+        label: 'Collar tie + wrist control',
+        nextPrompt: {
+          question: 'What attack do you want from the wrist-control lane?',
+          options: [
+            { label: 'Triangle choke', value: 'triangle choke', enterTree: true, focusName: 'Triangle Choke', allowedCategories: ['Submissions'] },
+            { label: 'Omoplata', value: 'omoplata', enterTree: true, focusName: 'Omoplata', allowedCategories: ['Submissions'] },
+            { label: 'Straight armbar', value: 'straight armbar from guard', enterTree: true, focusName: 'Straight Armbar From Guard', allowedCategories: ['Submissions'] },
+            { label: 'Mounted triangle path', value: 'mounted triangle', enterTree: true, focusName: 'Mounted Triangle', allowedCategories: ['Submissions'] }
+          ]
+        }
+      },
+      {
+        label: 'Shoulder crunch',
+        nextPrompt: {
+          question: 'What continuation do you want from shoulder crunch control?',
+          options: [
+            { label: 'Triangle choke', value: 'triangle choke', enterTree: true, focusName: 'Triangle Choke', allowedCategories: ['Submissions'] },
+            { label: 'Omoplata', value: 'omoplata', enterTree: true, focusName: 'Omoplata', allowedCategories: ['Submissions'] },
+            { label: 'Straight armbar', value: 'straight armbar from guard', enterTree: true, focusName: 'Straight Armbar From Guard', allowedCategories: ['Submissions'] },
+            { label: 'Butterfly sweep', value: 'shoulder crunch butterfly sweep', enterTree: true, focusName: 'Shoulder Crunch Butterfly Sweep', allowedCategories: ['Sweeps'] }
+          ]
+        }
+      },
+      { label: 'Overhook clamp', value: 'triangle choke', allowedCategories: ['Submissions', 'Positions'] },
+      { label: 'Leg pummel to angle', value: 'triangle choke', allowedCategories: ['Submissions', 'Positions'] }
+    ]
+  },
+  'kimura-entry setups': {
+    question: 'Which kimura-entry setup branch do you want to continue from?',
+    options: [
+      {
+        label: 'Hip bump threat',
+        nextPrompt: {
+          question: 'What reaction did the hip-bump threat create?',
+          options: [
+            { label: 'They post the hand', value: 'kimura', enterTree: true, focusName: 'Kimura', allowedCategories: ['Submissions'] },
+            { label: 'Arm straightens', value: 'tarikoplata', enterTree: true, focusName: 'Tarikoplata', allowedCategories: ['Submissions'] },
+            { label: 'Elbow hides but shoulder stays trapped', value: 'straight armbar from guard', enterTree: true, focusName: 'Straight Armbar From Guard', allowedCategories: ['Submissions'] },
+            { label: 'Back starts to show', value: 'technical mount to back', enterTree: true, focusName: 'Technical Mount To Back', allowedCategories: ['Back Takes', 'Submissions'] }
+          ]
+        }
+      },
+      {
+        label: 'Kimura trap',
+        nextPrompt: {
+          question: 'What continuation do you want from kimura-trap control?',
+          options: [
+            { label: 'Finish kimura', value: 'kimura', enterTree: true, focusName: 'Kimura', allowedCategories: ['Submissions'] },
+            { label: 'Tarikoplata', value: 'tarikoplata', enterTree: true, focusName: 'Tarikoplata', allowedCategories: ['Submissions'] },
+            { label: 'Armbar lane', value: 'straight armbar from side control', enterTree: true, focusName: 'Straight Armbar From Side Control', allowedCategories: ['Submissions'] },
+            { label: 'Back take', value: 'technical mount to back', enterTree: true, focusName: 'Technical Mount To Back', allowedCategories: ['Back Takes', 'Submissions'] }
+          ]
+        }
+      },
+      { label: 'Wrist pin', value: 'kimura', allowedCategories: ['Submissions', 'Positions'] },
+      { label: 'Overhook clamp', value: 'kimura', allowedCategories: ['Submissions', 'Positions'] }
+    ]
+  },
+  'omoplata-entry setups': {
+    question: 'Which omoplata-entry setup branch do you want to continue from?',
+    options: [
+      {
+        label: 'Overhook clamp',
+        nextPrompt: {
+          question: 'What reaction did the overhook clamp create?',
+          options: [
+            { label: 'Shoulder stays exposed', value: 'omoplata', enterTree: true, focusName: 'Omoplata', allowedCategories: ['Submissions'] },
+            { label: 'Triangle lane opens', value: 'triangle choke', enterTree: true, focusName: 'Triangle Choke', allowedCategories: ['Submissions'] },
+            { label: 'Arm turns weak', value: 'monoplata', enterTree: true, focusName: 'Monoplata', allowedCategories: ['Submissions'] },
+            { label: 'Back starts to show', value: 'back control', enterTree: true, focusName: 'Back Control', allowedCategories: ['Back Takes', 'Submissions'] }
+          ]
+        }
+      },
+      {
+        label: 'Collar-sleeve angle',
+        nextPrompt: {
+          question: 'What continuation do you want from the collar-sleeve angle?',
+          options: [
+            { label: 'Omoplata', value: 'omoplata', enterTree: true, focusName: 'Omoplata', allowedCategories: ['Submissions'] },
+            { label: 'Triangle choke', value: 'triangle choke', enterTree: true, focusName: 'Triangle Choke', allowedCategories: ['Submissions'] },
+            { label: 'Monoplata', value: 'monoplata', enterTree: true, focusName: 'Monoplata', allowedCategories: ['Submissions'] },
+            { label: 'Back control', value: 'back control', enterTree: true, focusName: 'Back Control', allowedCategories: ['Back Takes', 'Submissions'] }
+          ]
+        }
+      },
+      { label: 'Triangle reaction', value: 'omoplata', allowedCategories: ['Submissions', 'Positions'] },
+      { label: 'Hip angle shift', value: 'omoplata position', allowedCategories: ['Submissions', 'Positions'] }
+    ]
+  },
+  'guillotine-entry setups': {
+    question: 'Which guillotine-entry setup branch do you want to continue from?',
+    options: [
+      {
+        label: 'Snap down',
+        nextPrompt: {
+          question: 'What reaction did the snap down create?',
+          options: [
+            { label: 'Neck stays exposed', value: 'guillotine', enterTree: true, focusName: 'Guillotine', allowedCategories: ['Submissions'] },
+            { label: 'They drive in', value: 'arm-in guillotine', enterTree: true, focusName: 'Arm-In Guillotine', allowedCategories: ['Submissions'] },
+            { label: 'They posture awkwardly', value: 'high elbow guillotine', enterTree: true, focusName: 'High Elbow Guillotine', allowedCategories: ['Submissions'] },
+            { label: 'Finish hides but angle breaks', value: 'front headlock go-behind', enterTree: true, focusName: 'Front Headlock Go-Behind', allowedCategories: ['Back Takes', 'Takedowns'] }
+          ]
+        }
+      },
+      {
+        label: 'Front headlock catch',
+        nextPrompt: {
+          question: 'What continuation do you want from the front-headlock catch?',
+          options: [
+            { label: 'Guillotine', value: 'guillotine', enterTree: true, focusName: 'Guillotine', allowedCategories: ['Submissions'] },
+            { label: 'High-elbow guillotine', value: 'high elbow guillotine', enterTree: true, focusName: 'High Elbow Guillotine', allowedCategories: ['Submissions'] },
+            { label: 'Arm-in guillotine', value: 'arm-in guillotine', enterTree: true, focusName: 'Arm-In Guillotine', allowedCategories: ['Submissions'] },
+            { label: 'Go-behind', value: 'front headlock go-behind', enterTree: true, focusName: 'Front Headlock Go-Behind', allowedCategories: ['Back Takes', 'Takedowns'] }
+          ]
+        }
+      },
+      { label: 'Arm-in exposure', value: 'arm-in guillotine', allowedCategories: ['Submissions', 'Positions'] },
+      { label: 'Seated head clamp', value: 'guillotine position', allowedCategories: ['Submissions', 'Positions'] }
     ]
   }
 };

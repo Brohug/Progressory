@@ -98,6 +98,44 @@ export const setupFamilies = [
     relatedTerms: ['body lock takedown', 'rear body lock standing', 'rear body lock mat return', 'duck under', 'single leg', 'mat return']
   },
   {
+    title: 'Ankle-pick entry setups',
+    lane: 'Standing',
+    summary: 'Use level changes and post reactions to expose the ankle cleanly.',
+    description:
+      'This family is for head touches, collar ties, wrist pulls, and inside-tie reactions that make the opponent step or lighten the lead leg before the ankle pick actually opens.',
+    setupNodes: ['Head Touch + Level Change', 'Collar Tie Snap', 'Wrist Post Pull', 'Inside Tie To Outside Angle'],
+    nextAttacks: ['Ankle Pick', 'Single Leg', 'Front Headlock Standing', 'Body Lock Standing'],
+    exampleSequence: [
+      'Head touch + level change',
+      'They step',
+      'Ankle pick',
+      'They square back up',
+      'Single-leg continuation'
+    ],
+    curriculumSearch: 'ankle pick',
+    treeSearch: 'ankle pick',
+    relatedTerms: ['ankle pick', 'single leg', 'front headlock standing', 'body lock standing', 'collar tie', 'inside tie']
+  },
+  {
+    title: 'Low-single entry setups',
+    lane: 'Standing',
+    summary: 'Use reactions that make the lead leg light before you drop to the low single.',
+    description:
+      'This family is for level changes, wrist-post pulls, collar-tie snaps, and angle changes that make the lead foot reachable before the defender can sprawl or square back up.',
+    setupNodes: ['Wrist Post Pull', 'Collar Tie Snap', 'Inside Tie Angle Change', 'Head Touch To Level Change'],
+    nextAttacks: ['Low Single', 'Ankle Pick', 'Single Leg', 'Front Headlock Standing'],
+    exampleSequence: [
+      'Wrist post pull',
+      'Lead foot plants heavy',
+      'Low single',
+      'They square their hips',
+      'Single-leg continuation'
+    ],
+    curriculumSearch: 'low single',
+    treeSearch: 'low single',
+    relatedTerms: ['low single', 'ankle pick', 'single leg', 'front headlock standing', 'collar tie', 'inside tie']
+  },
+  {
     title: 'Guard wrestle-up setups',
     lane: 'Guard',
     summary: 'Use bottom position reactions to create a come-up.',
@@ -134,6 +172,120 @@ export const setupFamilies = [
     curriculumSearch: 'closed guard',
     treeSearch: 'triangle choke',
     relatedTerms: ['closed guard', 'triangle choke', 'straight armbar from guard', 'kimura', 'scissor sweep', 'shoulder crunch', 'omoplata']
+  },
+  {
+    title: 'Butterfly-sweep setups',
+    lane: 'Guard',
+    summary: 'Use upper-body wins and posts to make the butterfly sweep feel inevitable.',
+    description:
+      'This family is for double underhooks, overhook clamp reactions, shoulder-crunch control, and arm-drag sit-ups that create the butterfly sweep, wrestle-up, or back-take lane.',
+    setupNodes: ['Double Underhooks', 'Overhook Clamp', 'Shoulder Crunch', 'Arm Drag Sit-Up'],
+    nextAttacks: ['Butterfly Sweep', 'Wrestle-Up Single Leg Sweep', 'Shoulder Crunch Butterfly Sweep', 'Back Control'],
+    exampleSequence: [
+      'Double underhooks',
+      'They post wide',
+      'Butterfly sweep',
+      'They base out',
+      'Wrestle-up / back-take continuation'
+    ],
+    curriculumSearch: 'butterfly sweep',
+    treeSearch: 'butterfly sweep',
+    relatedTerms: ['butterfly sweep', 'wrestle-up single leg sweep', 'shoulder crunch butterfly sweep', 'back control', 'double underhooks', 'arm drag']
+  },
+  {
+    title: 'Knee-shield wrestle-up setups',
+    lane: 'Guard',
+    summary: 'Use the knee shield to win the hand fight before you come up.',
+    description:
+      'This family is for knee-shield frames, wrist control, and underhook timing that make the top player post or drift high enough for the wrestle-up, dogfight, or sit-up sweep lane.',
+    setupNodes: ['Knee Shield Frame', 'Wrist Control', 'Inside Elbow Lift', 'Underhook Sit-Up'],
+    nextAttacks: ['Dogfight Sweep', 'Wrestle-Up Single Leg Sweep', 'Single-Leg From Seated Guard', 'Technical Stand-Up Sweep'],
+    exampleSequence: [
+      'Knee shield frame',
+      'They pressure forward',
+      'Underhook sit-up',
+      'They post the far hand',
+      'Wrestle-up single / dogfight continuation'
+    ],
+    curriculumSearch: 'knee shield',
+    treeSearch: 'dogfight sweep',
+    relatedTerms: ['knee shield', 'dogfight sweep', 'wrestle-up single leg sweep', 'technical stand-up sweep', 'underhook half guard']
+  },
+  {
+    title: 'X-guard sweep setups',
+    lane: 'Guard',
+    summary: 'Make the standing player carry your hooks and weight before the sweep opens.',
+    description:
+      'This family is for shin-to-shin entries, under-leg lifts, off-balancing pulls, and upper-body steering that make the X-guard sweep, ankle-pick lane, or leg-drag finish appear without forcing the position too early.',
+    setupNodes: ['Shin-To-Shin', 'Under-Leg Lift', 'Off-Balance Pull', 'Upper-Body Steering'],
+    nextAttacks: ['Basic X-Guard Sweep', 'X-Guard To Ankle Pick', 'X-Guard To Leg Drag Sweep', 'X-Guard Back Take'],
+    exampleSequence: [
+      'Shin-to-shin',
+      'They stay tall',
+      'X-guard entry',
+      'They widen the base',
+      'Ankle-pick / overhead-sweep continuation'
+    ],
+    curriculumSearch: 'x-guard',
+    treeSearch: 'x-guard',
+    relatedTerms: ['x-guard', 'shin to shin', 'basic x-guard sweep', 'x-guard to ankle pick', 'x-guard to leg drag sweep', 'x-guard back take']
+  },
+  {
+    title: 'Spider / lasso sweep setups',
+    lane: 'Guard',
+    summary: 'Use sleeve and leg tension to make the top player light before you tip them.',
+    description:
+      'This family is for spider guard, lasso guard, and collar-sleeve style control that creates overhead sweeps, balloon sweeps, omoplata lanes, and top-position follow-ups once the base gets stretched out.',
+    setupNodes: ['Spider Sleeve Control', 'Lasso Tension', 'Collar-Sleeve Pull', 'Foot-On-Hip Extension'],
+    nextAttacks: ['Balloon Sweep From Spider', 'Basic Lasso Sweep', 'Spider Lasso Sweep', 'Omoplata'],
+    exampleSequence: [
+      'Spider sleeve control',
+      'They posture forward',
+      'Balloon / overhead lane opens',
+      'They widen the post',
+      'Omoplata / top-position continuation'
+    ],
+    curriculumSearch: 'spider guard',
+    treeSearch: 'balloon sweep',
+    relatedTerms: ['spider guard', 'lasso guard', 'balloon sweep from spider', 'basic lasso sweep', 'spider lasso sweep', 'omoplata']
+  },
+  {
+    title: 'De La Riva sweep setups',
+    lane: 'Guard',
+    summary: 'Off-balance the lead leg and hip line before you commit to the sweep or back-take lane.',
+    description:
+      'This family is for De La Riva pulls, ankle steering, tripod-style off-balancing, and waiter-style follow-ups that create sweeps, leg-drag finishes, or back exposure once the standing player loses alignment.',
+    setupNodes: ['DLR Sleeve Pull', 'Ankle Steering', 'Tripod Off-Balance', 'Waiter-Style Tilt'],
+    nextAttacks: ['Basic De La Riva Off-Balance Sweep', 'De La Riva Tripod Variation', 'De La Riva To Single-Leg X Sweep', 'Berimbolo'],
+    exampleSequence: [
+      'DLR sleeve pull',
+      'They post the weight forward',
+      'Tripod / off-balance lane opens',
+      'They recover late',
+      'Single-Leg X / bolo continuation'
+    ],
+    curriculumSearch: 'de la riva',
+    treeSearch: 'de la riva',
+    relatedTerms: ['de la riva', 'basic de la riva off-balance sweep', 'de la riva tripod variation', 'de la riva to single-leg x sweep', 'berimbolo']
+  },
+  {
+    title: 'Deep-half sweep setups',
+    lane: 'Guard',
+    summary: 'Get under the hips first, then let the top player carry the sweep for you.',
+    description:
+      'This family is for deep-half entries, waiter-style wedges, and under-the-centerline angles that open the waiter sweep, basic deep-half sweep, or leg-transition lanes once the top player commits their balance.',
+    setupNodes: ['Under-Hip Entry', 'Waiter Wedge', 'Inside Knee Turn', 'Shoulder Under The Belt Line'],
+    nextAttacks: ['Deep Half Waiter Sweep', 'Basic Deep Half Sweep', 'Single-Leg X', 'Leg Drag'],
+    exampleSequence: [
+      'Under-hip entry',
+      'They commit weight forward',
+      'Waiter / deep-half lane opens',
+      'They post wide',
+      'Single-Leg X / leg-drag continuation'
+    ],
+    curriculumSearch: 'deep half guard',
+    treeSearch: 'deep half guard',
+    relatedTerms: ['deep half guard', 'deep half waiter sweep', 'basic deep half sweep', 'waiter guard', 'single-leg x']
   },
   {
     title: 'Passing setup chains',
@@ -174,6 +326,82 @@ export const setupFamilies = [
     relatedTerms: ['top half guard', 'half guard smash pass', 'backstep half guard pass', 'knee cut', 'hip smash pass']
   },
   {
+    title: 'Leg-drag passing setups',
+    lane: 'Passing',
+    summary: 'Pull the legs off center first, then run the drag before the guard resets.',
+    description:
+      'This family is for ankle-control pulls, shin redirects, body-lock-to-leg-drag reactions, and leg pummels that move the knees off line before the drag, backstep, or side-control finish appears.',
+    setupNodes: ['Ankle-Control Pull', 'Shin Redirect', 'Leg Pummel', 'Body Lock To Leg Drag'],
+    nextAttacks: ['Leg Drag', 'Backstep Pass', 'Pass To Knee On Belly', 'Side Control'],
+    exampleSequence: [
+      'Ankle-control pull',
+      'Knees turn off line',
+      'Leg drag',
+      'They square the hips late',
+      'Backstep / side-control continuation'
+    ],
+    curriculumSearch: 'leg drag',
+    treeSearch: 'leg drag',
+    relatedTerms: ['leg drag', 'backstep pass', 'pass to knee on belly', 'side control', 'ankle control', 'body lock pass']
+  },
+  {
+    title: 'Knee-cut passing setups',
+    lane: 'Passing',
+    summary: 'Win the frame battle first, then slide into the knee-cut lane cleanly.',
+    description:
+      'This family is for grip wins, shin redirects, near-side arm pins, and upper-body pressure that open the knee cut before the bottom player can rebuild the frame or chase the underhook.',
+    setupNodes: ['Near-Side Arm Pin', 'Shin Redirect', 'Crossface Threat', 'Hip Switch Fake'],
+    nextAttacks: ['Knee Cut', 'Hip Smash Pass', 'Crossface Underhook Half Guard Pass', 'Backstep Half Guard Pass'],
+    exampleSequence: [
+      'Near-side arm pin',
+      'Shin redirect',
+      'Knee-cut lane opens',
+      'They frame hard',
+      'Crossface-underhook continuation'
+    ],
+    curriculumSearch: 'knee cut',
+    treeSearch: 'knee cut',
+    relatedTerms: ['knee cut', 'hip smash pass', 'crossface underhook half guard pass', 'backstep half guard pass', 'shin redirect']
+  },
+  {
+    title: 'Torreando passing setups',
+    lane: 'Passing',
+    summary: 'Clear the grips and turn the hips before you run around the guard.',
+    description:
+      'This family is for sleeve clearing, ankle steering, hip turns, and outside-angle footwork that make the torreando, bullfighter, or cross-step lane open before the guard can reconnect to your legs.',
+    setupNodes: ['Sleeve Clear', 'Ankle Steering', 'Hip Turn', 'Outside-Angle Footwork'],
+    nextAttacks: ['Torreando Pass', 'Bullfighter Pass', 'Cross-Step Pass', 'Pass To Knee On Belly'],
+    exampleSequence: [
+      'Sleeve clear',
+      'Hips turn off line',
+      'Torreando lane opens',
+      'They chase the far hip',
+      'Cross-step / knee-on-belly continuation'
+    ],
+    curriculumSearch: 'torreando pass',
+    treeSearch: 'torreando pass',
+    relatedTerms: ['torreando pass', 'bullfighter pass', 'cross-step pass', 'pass to knee on belly']
+  },
+  {
+    title: 'Over-under / stack passing setups',
+    lane: 'Passing',
+    summary: 'Fold the hips and stack the knees before you drive the finish.',
+    description:
+      'This family is for double-under pressure, leg folding, hip stacking, and shoulder-driven angle changes that make the over-under, stack, or north-south style pass open without rushing through the frames.',
+    setupNodes: ['Double-Under Pressure', 'Leg Fold', 'Hip Stack', 'Shoulder-Drive Angle'],
+    nextAttacks: ['Over-Under Pass', 'Stack Pass', 'Folding Pass', 'North-South Pass'],
+    exampleSequence: [
+      'Double-under pressure',
+      'Knees fold toward the chest',
+      'Stack / over-under lane opens',
+      'They turn the hips late',
+      'North-south / folding-pass continuation'
+    ],
+    curriculumSearch: 'over-under pass',
+    treeSearch: 'over-under pass',
+    relatedTerms: ['over-under pass', 'stack pass', 'folding pass', 'north-south pass', 'double under pass']
+  },
+  {
     title: 'Submission-entry setups',
     lane: 'Submission',
     summary: 'Create the control that makes the finish realistic first.',
@@ -210,6 +438,82 @@ export const setupFamilies = [
     curriculumSearch: 'armbar',
     treeSearch: 'armbar',
     relatedTerms: ['armbar', 'straight armbar from guard', 'straight armbar from mount', 'choi bar', 'mounted triangle', 'kimura trap', 'gift wrap']
+  },
+  {
+    title: 'Triangle-entry setups',
+    lane: 'Submission',
+    summary: 'Win the wrist, angle, or posture break first, then lock the triangle cleanly.',
+    description:
+      'This family is for collar-tie and wrist-control lanes, shoulder-crunch control, overhook clamps, and angle-building leg pummels that make the triangle, omoplata, or armbar chain open cleanly.',
+    setupNodes: ['Collar Tie + Wrist Control', 'Shoulder Crunch', 'Overhook Clamp', 'Leg Pummel To Angle'],
+    nextAttacks: ['Triangle Choke', 'Omoplata', 'Straight Armbar From Guard', 'Mounted Triangle'],
+    exampleSequence: [
+      'Collar tie + wrist control',
+      'Angle opens',
+      'Triangle choke',
+      'They posture awkwardly',
+      'Omoplata / armbar continuation'
+    ],
+    curriculumSearch: 'triangle choke',
+    treeSearch: 'triangle choke',
+    relatedTerms: ['triangle choke', 'mounted triangle', 'omoplata', 'straight armbar from guard', 'shoulder crunch', 'overhook clamp']
+  },
+  {
+    title: 'Kimura-entry setups',
+    lane: 'Submission',
+    summary: 'Win the elbow and shoulder line first, then choose the best kimura-chain finish.',
+    description:
+      'This family is for wrist pins, hip-bump threats, overhook reactions, and trap-style control that open the kimura, tarikoplata, armbar, or back-take lane without forcing the finish too early.',
+    setupNodes: ['Wrist Pin', 'Hip Bump Threat', 'Overhook Clamp', 'Kimura Trap'],
+    nextAttacks: ['Kimura', 'Tarikoplata', 'Straight Armbar From Guard', 'Technical Mount To Back'],
+    exampleSequence: [
+      'Hip bump threat',
+      'They post the hand',
+      'Kimura grip connects',
+      'They straighten the arm',
+      'Tarikoplata / armbar continuation'
+    ],
+    curriculumSearch: 'kimura',
+    treeSearch: 'kimura',
+    relatedTerms: ['kimura', 'kimura trap', 'tarikoplata', 'straight armbar from guard', 'technical mount to back', 'overhook clamp']
+  },
+  {
+    title: 'Omoplata-entry setups',
+    lane: 'Submission',
+    summary: 'Win the angle and shoulder line first, then let the omoplata open naturally.',
+    description:
+      'This family is for overhook clamps, collar-sleeve angles, triangle-to-omoplata reactions, and posture breaks that expose the shoulder without forcing the finish before the angle is there.',
+    setupNodes: ['Overhook Clamp', 'Collar-Sleeve Angle', 'Triangle Reaction', 'Hip Angle Shift'],
+    nextAttacks: ['Omoplata', 'Monoplata', 'Triangle Choke', 'Back Control'],
+    exampleSequence: [
+      'Overhook clamp',
+      'They posture the shoulder line forward',
+      'Omoplata lane opens',
+      'They roll or posture awkwardly',
+      'Triangle / back-take continuation'
+    ],
+    curriculumSearch: 'omoplata',
+    treeSearch: 'omoplata',
+    relatedTerms: ['omoplata', 'monoplata', 'triangle choke', 'collar-sleeve guard', 'overhook clamp', 'omoplata position']
+  },
+  {
+    title: 'Guillotine-entry setups',
+    lane: 'Submission',
+    summary: 'Break posture or win the head position first, then choose the right guillotine finish.',
+    description:
+      'This family is for snap-downs, front-headlock catches, arm-in exposures, and seated-control reactions that make the guillotine, high-elbow guillotine, or go-behind lane open with much less force.',
+    setupNodes: ['Snap Down', 'Front Headlock Catch', 'Arm-In Exposure', 'Seated Head Clamp'],
+    nextAttacks: ['Guillotine', 'High Elbow Guillotine', 'Arm-In Guillotine', 'Front Headlock Go-Behind'],
+    exampleSequence: [
+      'Snap down',
+      'Neck stays exposed',
+      'Guillotine grip connects',
+      'They hide the finish line',
+      'High-elbow / go-behind continuation'
+    ],
+    curriculumSearch: 'guillotine',
+    treeSearch: 'guillotine',
+    relatedTerms: ['guillotine', 'high elbow guillotine', 'arm-in guillotine', 'front headlock', 'front headlock go-behind', 'snap down']
   }
 ];
 

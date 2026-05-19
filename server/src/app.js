@@ -15,6 +15,7 @@ const libraryRoutes = require('./routes/libraryRoutes');
 const membersRoutes = require('./routes/membersRoutes');
 const usersRoutes = require('./routes/usersRoutes');
 const meRoutes = require('./routes/meRoutes');
+const entrySetupExampleRoutes = require('./routes/entrySetupExampleRoutes');
 
 const app = express();
 
@@ -71,6 +72,7 @@ app.use('/api/library', libraryRoutes);
 app.use('/api/members', membersRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/me', meRoutes);
+app.use('/api/entry-setup-examples', entrySetupExampleRoutes);
 
 const PORT = process.env.PORT || 4000;
 
