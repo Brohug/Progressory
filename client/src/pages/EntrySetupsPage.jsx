@@ -1,5 +1,5 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import Layout from '../components/Layout';
 import { getEntrySetupFamilySlug, setupFamilies } from '../data/entrySetupFamilies';
@@ -18,7 +18,7 @@ const buildInitialCustomExampleForm = (visibility = 'private') => ({
   description: '',
   setup_nodes_input: '',
   next_attacks_input: '',
-  example_sequence_input: '',
+  example_sequence_steps: ['', '', '', ''],
   curriculum_search: '',
   tree_search: '',
   visibility
@@ -39,26 +39,77 @@ const parseCommaSeparatedList = (value) => (
     .filter(Boolean)
 );
 
-const parseSequenceList = (value) => {
-  const text = String(value || '').trim();
-
-  if (!text) {
-    return [];
-  }
-
-  const segments = text.split(/\s*(?:->|>|,)\s*/);
-
-  return segments
-    .map((item) => item.trim())
-    .filter(Boolean);
-};
-
 const buildListInputValue = (items, delimiter = ', ') => (
   Array.isArray(items) ? items.join(delimiter) : ''
 );
 
+const buildSequenceStepArray = (items = [], minimumSteps = 4) => {
+  const cleaned = Array.isArray(items)
+    ? items.map((item) => String(item || '').trim()).filter(Boolean)
+    : [];
+
+  if (cleaned.length >= minimumSteps) {
+    return cleaned;
+  }
+
+  return [...cleaned, ...Array.from({ length: minimumSteps - cleaned.length }, () => '')];
+};
+
+const formatExamplePreviewLine = (steps = [], limit = 4) => {
+  const visible = (Array.isArray(steps) ? steps : [])
+    .map((step) => String(step || '').trim())
+    .filter(Boolean)
+    .slice(0, limit);
+
+  return visible.join(' -> ');
+};
+
+const getSequenceStepLabel = (index, totalSteps) => {
+  if (index === 0) {
+    return 'Start';
+  }
+
+  if (index === totalSteps - 1) {
+    return 'Finish';
+  }
+
+  return `Step ${index + 1}`;
+};
+
+const normalizeSearchText = (value) => (
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+);
+
+const getSearchScore = (normalizedSearch, parts = [], exactTerms = []) => {
+  if (!normalizedSearch) {
+    return 0;
+  }
+
+  const normalizedExactTerms = exactTerms
+    .map((term) => normalizeSearchText(term))
+    .filter(Boolean);
+
+  if (normalizedExactTerms.some((term) => term === normalizedSearch)) {
+    return 4;
+  }
+
+  if (normalizedExactTerms.some((term) => term.startsWith(normalizedSearch))) {
+    return 3;
+  }
+
+  const haystack = normalizeSearchText(parts.join(' '));
+
+  return haystack.includes(normalizedSearch) ? 1 : -1;
+};
+
 export default function EntrySetupsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const selectedFamily = searchParams.get('family') || '';
   const [familySearch, setFamilySearch] = useState('');
@@ -69,14 +120,17 @@ export default function EntrySetupsPage() {
   const [customExamplesError, setCustomExamplesError] = useState('');
   const [customExamplesFeedback, setCustomExamplesFeedback] = useState('');
   const [isExampleFormOpen, setIsExampleFormOpen] = useState(false);
+  const [showExampleAdvancedFields, setShowExampleAdvancedFields] = useState(false);
   const [editingExampleId, setEditingExampleId] = useState(null);
   const [exampleSort, setExampleSort] = useState('newest');
+  const [builtInSort, setBuiltInSort] = useState('recommended');
   const [isBuiltInCompactView, setIsBuiltInCompactView] = useState(true);
   const [isSavedCompactView, setIsSavedCompactView] = useState(true);
   const [exampleForm, setExampleForm] = useState(() => buildInitialCustomExampleForm());
   const [isMobileCompactCards, setIsMobileCompactCards] = useState(() => (
     typeof window !== 'undefined' ? window.innerWidth <= 720 : false
   ));
+  const exampleFormRef = useRef(null);
   const quickLanes = useMemo(() => ['Standing', 'Guard', 'Passing', 'Submission'], []);
   const isOwner = user?.role === 'owner';
   const useBuiltInCompactCards = isMobileCompactCards || isBuiltInCompactView;
@@ -106,6 +160,15 @@ export default function EntrySetupsPage() {
       return;
     }
 
+    setExpandedFamilies((current) => (
+      current[selectedFamily]
+        ? current
+        : {
+            ...current,
+            [selectedFamily]: true
+          }
+    ));
+
     const familyId = `entry-setup-family-${getEntrySetupFamilySlug(selectedFamily)}`;
 
     window.setTimeout(() => {
@@ -115,6 +178,19 @@ export default function EntrySetupsPage() {
       });
     }, 120);
   }, [selectedFamily]);
+
+  useEffect(() => {
+    if (!isExampleFormOpen) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      exampleFormRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 120);
+  }, [isExampleFormOpen]);
 
   useEffect(() => {
     setExampleForm((current) => ({
@@ -159,70 +235,102 @@ export default function EntrySetupsPage() {
   }, []);
 
   const filteredSetupFamilies = useMemo(() => {
-    const normalizedSearch = familySearch
-      .trim()
-      .toLowerCase();
+    const normalizedSearch = normalizeSearchText(familySearch);
+    const laneScopedFamilies = activeLane
+      ? setupFamilies.filter((family) => family.lane === activeLane)
+      : setupFamilies;
 
-    if (!normalizedSearch) {
-      return activeLane
-        ? setupFamilies.filter((family) => family.lane === activeLane)
-        : setupFamilies;
-    }
+    const scoredFamilies = laneScopedFamilies.map((family, index) => ({
+      family,
+      index,
+      score: getSearchScore(
+        normalizedSearch,
+        [
+          family.lane,
+          family.title,
+          family.summary,
+          family.description,
+          ...(family.setupNodes || []),
+          ...(family.nextAttacks || []),
+          ...(family.exampleSequence || [])
+        ],
+        [family.title, ...(family.relatedTerms || [])]
+      )
+    }));
 
-    return setupFamilies.filter((family) => {
-      const haystack = [
-        family.lane,
-        family.title,
-        family.summary,
-        family.description,
-        ...(family.setupNodes || []),
-        ...(family.nextAttacks || []),
-        ...(family.exampleSequence || [])
-      ]
-        .join(' ')
-        .toLowerCase();
+    const visibleFamilies = normalizedSearch
+      ? scoredFamilies.filter((entry) => entry.score >= 0)
+      : scoredFamilies;
 
-      return haystack.includes(normalizedSearch) && (!activeLane || family.lane === activeLane);
+    visibleFamilies.sort((left, right) => {
+      if (normalizedSearch && right.score !== left.score) {
+        return right.score - left.score;
+      }
+
+      if (builtInSort === 'a-z') {
+        return left.family.title.localeCompare(right.family.title);
+      }
+
+      if (builtInSort === 'lane') {
+        const laneCompare = left.family.lane.localeCompare(right.family.lane);
+
+        if (laneCompare !== 0) {
+          return laneCompare;
+        }
+
+        return left.family.title.localeCompare(right.family.title);
+      }
+
+      return left.index - right.index;
     });
-  }, [activeLane, familySearch]);
+
+    return visibleFamilies.map((entry) => entry.family);
+  }, [activeLane, builtInSort, familySearch]);
 
   const filteredCustomExamples = useMemo(() => {
-    const normalizedSearch = familySearch
-      .trim()
-      .toLowerCase();
+    const normalizedSearch = normalizeSearchText(familySearch);
 
-    return customExamples.filter((example) => {
+    return customExamples.map((example) => {
       const matchesLane = !activeLane || example.lane === activeLane;
 
       if (!matchesLane) {
-        return false;
+        return null;
       }
 
-      if (!normalizedSearch) {
-        return true;
+      const score = getSearchScore(
+        normalizedSearch,
+        [
+          example.lane,
+          example.title,
+          example.linked_family_title,
+          example.summary,
+          example.description,
+          ...(example.setup_nodes || []),
+          ...(example.next_attacks || []),
+          ...(example.example_sequence || [])
+        ],
+        [example.title, example.linked_family_title]
+      );
+
+      if (normalizedSearch && score < 0) {
+        return null;
       }
 
-      const haystack = [
-        example.lane,
-        example.title,
-        example.linked_family_title,
-        example.summary,
-        example.description,
-        ...(example.setup_nodes || []),
-        ...(example.next_attacks || []),
-        ...(example.example_sequence || [])
-      ]
-        .join(' ')
-        .toLowerCase();
-
-      return haystack.includes(normalizedSearch);
-    });
+      return { example, score };
+    }).filter(Boolean);
   }, [activeLane, customExamples, familySearch]);
 
   const sortedCustomExamples = useMemo(() => {
     const sorted = [...filteredCustomExamples];
 
-    sorted.sort((left, right) => {
+    sorted.sort((leftEntry, rightEntry) => {
+      if (familySearch && rightEntry.score !== leftEntry.score) {
+        return rightEntry.score - leftEntry.score;
+      }
+
+      const left = leftEntry.example;
+      const right = rightEntry.example;
+
       if (exampleSort === 'shared-first' && left.visibility !== right.visibility) {
         return left.visibility === 'gym_shared' ? -1 : 1;
       }
@@ -239,8 +347,11 @@ export default function EntrySetupsPage() {
       return new Date(right.updated_at || right.created_at || 0) - new Date(left.updated_at || left.created_at || 0);
     });
 
-    return sorted;
-  }, [exampleSort, filteredCustomExamples, user?.id]);
+    return sorted.map((entry) => entry.example);
+  }, [exampleSort, familySearch, filteredCustomExamples, user?.id]);
+
+  const topBuiltInMatch = filteredSetupFamilies[0] || null;
+  const topSavedMatch = sortedCustomExamples[0] || null;
 
   const sharedExamples = useMemo(
     () => sortedCustomExamples.filter((example) => example.visibility === 'gym_shared'),
@@ -252,11 +363,40 @@ export default function EntrySetupsPage() {
     [sortedCustomExamples]
   );
 
+  const updateSelectedFamilyUrl = (familyTitle, replace = true) => {
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (familyTitle) {
+      nextParams.set('family', familyTitle);
+    } else {
+      nextParams.delete('family');
+    }
+
+    const nextSearch = nextParams.toString();
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextSearch ? `?${nextSearch}` : ''
+      },
+      { replace }
+    );
+  };
+
+  const navigateFromFamily = (destination, familyTitle) => {
+    updateSelectedFamilyUrl(familyTitle, true);
+    navigate(destination);
+  };
+
   const toggleFamily = (familyTitle) => {
+    const isCurrentlyExpanded = Boolean(expandedFamilies[familyTitle]);
+
     setExpandedFamilies((current) => ({
       ...current,
       [familyTitle]: !current[familyTitle]
     }));
+
+    updateSelectedFamilyUrl(isCurrentlyExpanded ? '' : familyTitle, true);
   };
 
   const toggleExpandedCard = (cardKey) => {
@@ -296,6 +436,7 @@ export default function EntrySetupsPage() {
 
   const resetExampleComposer = () => {
     setEditingExampleId(null);
+    setShowExampleAdvancedFields(false);
     setExampleForm(buildInitialCustomExampleForm(isOwner ? 'private' : 'private'));
   };
 
@@ -308,6 +449,7 @@ export default function EntrySetupsPage() {
 
   const openCloneFamilyForm = (family) => {
     setEditingExampleId(null);
+    setShowExampleAdvancedFields(false);
     setExampleForm({
       title: `${family.title} - my version`,
       lane: family.lane || 'Standing',
@@ -316,7 +458,7 @@ export default function EntrySetupsPage() {
       description: family.description || '',
       setup_nodes_input: buildListInputValue(family.setupNodes),
       next_attacks_input: buildListInputValue(family.nextAttacks),
-      example_sequence_input: buildListInputValue(family.exampleSequence, ' -> '),
+      example_sequence_steps: buildSequenceStepArray(family.exampleSequence),
       curriculum_search: family.curriculumSearch || family.title,
       tree_search: family.treeSearch || family.title,
       visibility: 'private'
@@ -328,6 +470,7 @@ export default function EntrySetupsPage() {
 
   const openEditExampleForm = (example) => {
     setEditingExampleId(example.id);
+    setShowExampleAdvancedFields(true);
     setExampleForm({
       title: example.title || '',
       lane: example.lane || 'Standing',
@@ -336,7 +479,7 @@ export default function EntrySetupsPage() {
       description: example.description || '',
       setup_nodes_input: buildListInputValue(example.setup_nodes),
       next_attacks_input: buildListInputValue(example.next_attacks),
-      example_sequence_input: buildListInputValue(example.example_sequence, ' -> '),
+      example_sequence_steps: buildSequenceStepArray(example.example_sequence),
       curriculum_search: example.curriculum_search || '',
       tree_search: example.tree_search || '',
       visibility: isOwner && example.visibility === 'gym_shared' ? 'gym_shared' : 'private'
@@ -351,6 +494,99 @@ export default function EntrySetupsPage() {
     resetExampleComposer();
   };
 
+  const applyLinkedFamilyDefaults = () => {
+    const linkedFamily = getLinkedFamily(exampleForm.linked_family_title);
+
+    if (!linkedFamily) {
+      return;
+    }
+
+    setExampleForm((current) => ({
+      ...current,
+      lane: linkedFamily.lane || current.lane,
+      summary: linkedFamily.summary || current.summary,
+      description: linkedFamily.description || current.description,
+      setup_nodes_input: buildListInputValue(linkedFamily.setupNodes),
+      next_attacks_input: buildListInputValue(linkedFamily.nextAttacks),
+      example_sequence_steps: buildSequenceStepArray(linkedFamily.exampleSequence),
+      curriculum_search: linkedFamily.curriculumSearch || current.curriculum_search || linkedFamily.title,
+      tree_search: linkedFamily.treeSearch || current.tree_search || linkedFamily.title
+    }));
+
+    setShowExampleAdvancedFields(true);
+  };
+
+  const handleLinkedFamilyChange = (value) => {
+    const linkedFamily = getLinkedFamily(value);
+
+    setExampleForm((current) => ({
+      ...current,
+      linked_family_title: value,
+      lane: linkedFamily?.lane || current.lane,
+      curriculum_search: current.curriculum_search || linkedFamily?.curriculumSearch || '',
+      tree_search: current.tree_search || linkedFamily?.treeSearch || ''
+    }));
+  };
+
+  const applyExampleStarterTemplate = (template) => {
+    if (template === 'blank') {
+      setExampleForm((current) => ({
+        ...buildInitialCustomExampleForm(isOwner ? current.visibility : 'private'),
+        visibility: isOwner ? current.visibility : 'private'
+      }));
+      setShowExampleAdvancedFields(false);
+      return;
+    }
+
+    if (template === 'coach-note-only') {
+      setExampleForm((current) => ({
+        ...current,
+        setup_nodes_input: '',
+        next_attacks_input: '',
+        example_sequence_steps: buildSequenceStepArray([]),
+        curriculum_search: '',
+        tree_search: ''
+      }));
+      setShowExampleAdvancedFields(true);
+      return;
+    }
+
+    if (template === 'built-in-family') {
+      applyLinkedFamilyDefaults();
+    }
+  };
+
+  const updateExampleSequenceStep = (index, value) => {
+    setExampleForm((current) => ({
+      ...current,
+      example_sequence_steps: current.example_sequence_steps.map((step, stepIndex) => (
+        stepIndex === index ? value : step
+      ))
+    }));
+  };
+
+  const addExampleSequenceStep = () => {
+    setExampleForm((current) => ({
+      ...current,
+      example_sequence_steps: [...current.example_sequence_steps, '']
+    }));
+  };
+
+  const removeExampleSequenceStep = (index) => {
+    setExampleForm((current) => {
+      if (current.example_sequence_steps.length <= 2) {
+        return current;
+      }
+
+      const nextSteps = current.example_sequence_steps.filter((_, stepIndex) => stepIndex !== index);
+
+      return {
+        ...current,
+        example_sequence_steps: nextSteps
+      };
+    });
+  };
+
   const updateExampleFormValue = (field, value) => {
     setExampleForm((current) => ({
       ...current,
@@ -362,6 +598,9 @@ export default function EntrySetupsPage() {
     event.preventDefault();
 
     const linkedFamily = getLinkedFamily(exampleForm.linked_family_title);
+    const exampleSequence = exampleForm.example_sequence_steps
+      .map((step) => String(step || '').trim())
+      .filter(Boolean);
     const payload = {
       title: exampleForm.title,
       lane: exampleForm.lane,
@@ -370,7 +609,7 @@ export default function EntrySetupsPage() {
       description: exampleForm.description || null,
       setup_nodes: parseCommaSeparatedList(exampleForm.setup_nodes_input),
       next_attacks: parseCommaSeparatedList(exampleForm.next_attacks_input),
-      example_sequence: parseSequenceList(exampleForm.example_sequence_input),
+      example_sequence: exampleSequence,
       curriculum_search: exampleForm.curriculum_search || linkedFamily?.curriculumSearch || exampleForm.title,
       tree_search: exampleForm.tree_search || linkedFamily?.treeSearch || exampleForm.title,
       visibility: isOwner ? exampleForm.visibility : 'private'
@@ -461,11 +700,58 @@ export default function EntrySetupsPage() {
     </div>
   );
 
+  const renderSequenceStepBuilder = () => (
+    <div className="entry-setup-sequence-builder">
+      <div className="entry-setup-sequence-builder-header">
+        <label>Example sequence</label>
+        <button type="button" className="secondary-button" onClick={addExampleSequenceStep}>
+          Add step
+        </button>
+      </div>
+      <div className="entry-setup-sequence-builder-list">
+        {exampleForm.example_sequence_steps.map((step, index) => (
+          <div key={`example-sequence-step-${index}`} className="entry-setup-sequence-builder-row">
+            <div className="entry-setup-sequence-builder-meta">
+              <span className="entry-setup-sequence-builder-kicker">
+                {getSequenceStepLabel(index, exampleForm.example_sequence_steps.length)}
+              </span>
+              {index > 0 ? <span className="entry-setup-sequence-builder-arrow" aria-hidden="true">→</span> : null}
+            </div>
+            <input
+              value={step}
+              onChange={(event) => updateExampleSequenceStep(index, event.target.value)}
+              placeholder={
+                index === 0
+                  ? 'Head touch + level change'
+                  : (index === exampleForm.example_sequence_steps.length - 1
+                    ? 'Single leg / front headlock finish'
+                    : 'They step / ankle pick / they sprawl')
+              }
+            />
+            {exampleForm.example_sequence_steps.length > 2 ? (
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => removeExampleSequenceStep(index)}
+              >
+                Remove
+              </button>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      <p className="section-note entry-setup-sequence-builder-note">
+        Build the chain step by step so the next coach or student can follow the reaction flow without guessing your formatting.
+      </p>
+    </div>
+  );
+
   const renderCustomExampleCard = (example, scopeLabel, canEdit) => {
     const cardKey = `custom-example-${example.id}`;
     const isExpanded = !useSavedCompactCards || Boolean(expandedFamilies[cardKey]);
     const summaryLabel = scopeLabel === 'shared' ? 'Why this helps the gym' : 'Why this helps me';
     const descriptionLabel = scopeLabel === 'shared' ? 'Coach note for the gym' : 'Study note';
+    const exampleFamilyContext = example.linked_family_title || example.title;
 
     return (
       <article
@@ -497,12 +783,20 @@ export default function EntrySetupsPage() {
         </div>
 
         <div className="entry-setup-family-actions entry-setup-family-actions-primary">
-          <Link className="secondary-button" to={buildCurriculumLink(getExampleCurriculumSearch(example))}>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => navigateFromFamily(buildCurriculumLink(getExampleCurriculumSearch(example)), exampleFamilyContext)}
+          >
             Open in Curriculum
-          </Link>
-          <Link className="secondary-button" to={buildDecisionTreeLink(getExampleTreeSearch(example), example.linked_family_title || example.title)}>
+          </button>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => navigateFromFamily(buildDecisionTreeLink(getExampleTreeSearch(example), exampleFamilyContext), exampleFamilyContext)}
+          >
             Continue in Decision Trees
-          </Link>
+          </button>
         </div>
 
         {canEdit ? (
@@ -541,12 +835,20 @@ export default function EntrySetupsPage() {
                 </span>
               </div>
               <div className="entry-setup-family-inline-links">
-                <Link to={buildCurriculumLink(getExampleCurriculumSearch(example))}>
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={() => navigateFromFamily(buildCurriculumLink(getExampleCurriculumSearch(example)), exampleFamilyContext)}
+                >
                   View starting topic
-                </Link>
-                <Link to={buildDecisionTreeLink(getExampleTreeSearch(example), example.linked_family_title || example.title)}>
+                </button>
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={() => navigateFromFamily(buildDecisionTreeLink(getExampleTreeSearch(example), exampleFamilyContext), exampleFamilyContext)}
+                >
                   Use tree handoff
-                </Link>
+                </button>
               </div>
             </div>
             {example.setup_nodes?.length ? (
@@ -663,6 +965,11 @@ export default function EntrySetupsPage() {
               <span className="entry-setup-info-chip">{setupFamilies.length} built-in families</span>
               <span className="entry-setup-info-chip">{sharedExamples.length} shared owner example{sharedExamples.length === 1 ? '' : 's'}</span>
               <span className="entry-setup-info-chip">{privateExamples.length} private example{privateExamples.length === 1 ? '' : 's'}</span>
+              {familySearch && topSavedMatch ? (
+                <span className="entry-setup-info-chip entry-setup-info-chip-accent">
+                  Top saved match: {topSavedMatch.title}
+                </span>
+              ) : null}
             </div>
             <div className="entry-setups-lane-row entry-setups-sort-row">
               <button
@@ -692,23 +999,48 @@ export default function EntrySetupsPage() {
           </div>
 
           {isExampleFormOpen ? (
-            <form className="page-section entry-setup-example-form" onSubmit={submitExampleForm}>
+            <form ref={exampleFormRef} className="page-section entry-setup-example-form" onSubmit={submitExampleForm}>
               <div className="section-header">
                 <div>
                   <h4>{editingExampleId ? 'Edit setup example' : 'Create setup example'}</h4>
-                  <p className="section-note">Keep it practical: short title, clear lane, one useful example sequence, and the search handoff you want people to use.</p>
+                  <p className="section-note">Start with the built-in family if you can, name the version clearly, then keep only the details that actually help the next person use it.</p>
                 </div>
+              </div>
+              <div className="entry-setup-example-quickstart">
+                <span className="entry-setup-info-chip entry-setup-info-chip-accent">1. Pick a lane or family</span>
+                <span className="entry-setup-info-chip entry-setup-info-chip-accent">2. Name the version clearly</span>
+                <span className="entry-setup-info-chip entry-setup-info-chip-accent">3. Save a sequence people can actually study</span>
+              </div>
+              <div className="entry-setup-example-template-row">
+                <span className="meta-text entry-setup-block-label">Start from</span>
+                <button type="button" className="secondary-button" onClick={() => applyExampleStarterTemplate('blank')}>
+                  Blank
+                </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => applyExampleStarterTemplate('built-in-family')}
+                  disabled={!exampleForm.linked_family_title}
+                >
+                  Use linked family
+                </button>
+                <button type="button" className="secondary-button" onClick={() => applyExampleStarterTemplate('coach-note-only')}>
+                  Coach note only
+                </button>
               </div>
               <div className="form-grid">
                 <div>
-                  <label htmlFor="entry-setup-example-title">Title</label>
-                  <input
-                    id="entry-setup-example-title"
-                    value={exampleForm.title}
-                    onChange={(event) => updateExampleFormValue('title', event.target.value)}
-                    placeholder="Single-leg off failed ankle pick"
-                    required
-                  />
+                  <label htmlFor="entry-setup-example-family">Related built-in family</label>
+                  <select
+                    id="entry-setup-example-family"
+                    value={exampleForm.linked_family_title}
+                    onChange={(event) => handleLinkedFamilyChange(event.target.value)}
+                  >
+                    <option value="">No linked family</option>
+                    {setupFamilies.map((family) => (
+                      <option key={family.title} value={family.title}>{family.title}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label htmlFor="entry-setup-example-lane">Lane</label>
@@ -722,18 +1054,15 @@ export default function EntrySetupsPage() {
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label htmlFor="entry-setup-example-family">Related built-in family</label>
-                  <select
-                    id="entry-setup-example-family"
-                    value={exampleForm.linked_family_title}
-                    onChange={(event) => updateExampleFormValue('linked_family_title', event.target.value)}
-                  >
-                    <option value="">No linked family</option>
-                    {setupFamilies.map((family) => (
-                      <option key={family.title} value={family.title}>{family.title}</option>
-                    ))}
-                  </select>
+                <div className="span-2">
+                  <label htmlFor="entry-setup-example-title">Title</label>
+                  <input
+                    id="entry-setup-example-title"
+                    value={exampleForm.title}
+                    onChange={(event) => updateExampleFormValue('title', event.target.value)}
+                    placeholder="Single-leg off failed ankle pick"
+                    required
+                  />
                 </div>
                 {isOwner ? (
                   <div>
@@ -749,25 +1078,6 @@ export default function EntrySetupsPage() {
                   </div>
                 ) : null}
                 <div className="span-2">
-                  <label htmlFor="entry-setup-example-summary">Summary</label>
-                  <input
-                    id="entry-setup-example-summary"
-                    value={exampleForm.summary}
-                    onChange={(event) => updateExampleFormValue('summary', event.target.value)}
-                    placeholder="Use one threat to make the next attack easier."
-                  />
-                </div>
-                <div className="span-2">
-                  <label htmlFor="entry-setup-example-description">Description</label>
-                  <textarea
-                    id="entry-setup-example-description"
-                    rows={3}
-                    value={exampleForm.description}
-                    onChange={(event) => updateExampleFormValue('description', event.target.value)}
-                    placeholder="Add the coaching idea behind the sequence so the next person understands why it works."
-                  />
-                </div>
-                <div className="span-2">
                   <label htmlFor="entry-setup-example-setup-nodes">Setup nodes</label>
                   <input
                     id="entry-setup-example-setup-nodes"
@@ -776,46 +1086,75 @@ export default function EntrySetupsPage() {
                     placeholder="Head touch, level change, wrist pull"
                   />
                 </div>
-                <div className="span-2">
-                  <label htmlFor="entry-setup-example-next-attacks">Common next attacks</label>
-                  <input
-                    id="entry-setup-example-next-attacks"
-                    value={exampleForm.next_attacks_input}
-                    onChange={(event) => updateExampleFormValue('next_attacks_input', event.target.value)}
-                    placeholder="Ankle pick, single leg, front headlock"
-                  />
-                </div>
-                <div className="span-2">
-                  <label htmlFor="entry-setup-example-sequence">Example sequence</label>
-                  <input
-                    id="entry-setup-example-sequence"
-                    value={exampleForm.example_sequence_input}
-                    onChange={(event) => updateExampleFormValue('example_sequence_input', event.target.value)}
-                    placeholder="Head touch -> they step -> ankle pick -> they square up -> single leg"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="entry-setup-example-curriculum-search">Curriculum search handoff</label>
-                  <input
-                    id="entry-setup-example-curriculum-search"
-                    value={exampleForm.curriculum_search}
-                    onChange={(event) => updateExampleFormValue('curriculum_search', event.target.value)}
-                    placeholder="Optional override"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="entry-setup-example-tree-search">Decision Tree handoff</label>
-                  <input
-                    id="entry-setup-example-tree-search"
-                    value={exampleForm.tree_search}
-                    onChange={(event) => updateExampleFormValue('tree_search', event.target.value)}
-                    placeholder="Optional override"
-                  />
-                </div>
               </div>
+              {renderSequenceStepBuilder()}
+              <div className="entry-setup-example-helper-row">
+                {exampleForm.linked_family_title ? (
+                  <button type="button" className="secondary-button" onClick={applyLinkedFamilyDefaults}>
+                    Pull in built-in family details
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className={`secondary-button${showExampleAdvancedFields ? ' is-active' : ''}`}
+                  onClick={() => setShowExampleAdvancedFields((current) => !current)}
+                >
+                  {showExampleAdvancedFields ? 'Hide optional detail fields' : 'Show optional detail fields'}
+                </button>
+              </div>
+              {showExampleAdvancedFields ? (
+                <div className="form-grid entry-setup-example-advanced-grid">
+                  <div className="span-2">
+                    <label htmlFor="entry-setup-example-summary">Quick purpose</label>
+                    <input
+                      id="entry-setup-example-summary"
+                      value={exampleForm.summary}
+                      onChange={(event) => updateExampleFormValue('summary', event.target.value)}
+                      placeholder="Use one threat to make the next attack easier."
+                    />
+                  </div>
+                  <div className="span-2">
+                    <label htmlFor="entry-setup-example-description">Coach or study note</label>
+                    <textarea
+                      id="entry-setup-example-description"
+                      rows={3}
+                      value={exampleForm.description}
+                      onChange={(event) => updateExampleFormValue('description', event.target.value)}
+                      placeholder="Add the coaching idea behind the sequence so the next person understands why it works."
+                    />
+                  </div>
+                  <div className="span-2">
+                    <label htmlFor="entry-setup-example-next-attacks">Optional follow-ups</label>
+                    <input
+                      id="entry-setup-example-next-attacks"
+                      value={exampleForm.next_attacks_input}
+                      onChange={(event) => updateExampleFormValue('next_attacks_input', event.target.value)}
+                      placeholder="Ankle pick, single leg, front headlock"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="entry-setup-example-curriculum-search">Curriculum handoff</label>
+                    <input
+                      id="entry-setup-example-curriculum-search"
+                      value={exampleForm.curriculum_search}
+                      onChange={(event) => updateExampleFormValue('curriculum_search', event.target.value)}
+                      placeholder="Optional override"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="entry-setup-example-tree-search">Decision Tree handoff</label>
+                    <input
+                      id="entry-setup-example-tree-search"
+                      value={exampleForm.tree_search}
+                      onChange={(event) => updateExampleFormValue('tree_search', event.target.value)}
+                      placeholder="Optional override"
+                    />
+                  </div>
+                </div>
+              ) : null}
               <div className="inline-actions">
                 <button type="submit" className="secondary-button">
-                  {editingExampleId ? 'Save changes' : 'Save setup example'}
+                  {editingExampleId ? 'Save changes' : (exampleForm.visibility === 'gym_shared' ? 'Save gym example' : 'Save private example')}
                 </button>
                 <button type="button" className="secondary-button" onClick={closeExampleForm}>
                   Cancel
@@ -949,6 +1288,11 @@ export default function EntrySetupsPage() {
               <span className="entry-setup-info-chip">
                 {setupFamilies.length} total families
               </span>
+              {familySearch && topBuiltInMatch ? (
+                <span className="entry-setup-info-chip entry-setup-info-chip-accent">
+                  Top built-in match: {topBuiltInMatch.title}
+                </span>
+              ) : null}
               {familySearch || activeLane ? (
                 <button
                   type="button"
@@ -962,6 +1306,29 @@ export default function EntrySetupsPage() {
                 </button>
               ) : null}
             </div>
+            <div className="entry-setups-lane-row entry-setups-sort-row">
+              <button
+                type="button"
+                className={`secondary-button${builtInSort === 'recommended' ? ' is-active' : ''}`}
+                onClick={() => setBuiltInSort('recommended')}
+              >
+                Recommended
+              </button>
+              <button
+                type="button"
+                className={`secondary-button${builtInSort === 'a-z' ? ' is-active' : ''}`}
+                onClick={() => setBuiltInSort('a-z')}
+              >
+                A-Z
+              </button>
+              <button
+                type="button"
+                className={`secondary-button${builtInSort === 'lane' ? ' is-active' : ''}`}
+                onClick={() => setBuiltInSort('lane')}
+              >
+                Group by lane
+              </button>
+            </div>
           </div>
 
           <div className="action-grid entry-setups-family-grid">
@@ -971,7 +1338,7 @@ export default function EntrySetupsPage() {
               </div>
             ) : (
               filteredSetupFamilies.map((family) => {
-                const isExpanded = !useBuiltInCompactCards || Boolean(expandedFamilies[family.title]) || selectedFamily === family.title;
+                const isExpanded = !useBuiltInCompactCards || Boolean(expandedFamilies[family.title]);
 
                 return (
                   <article
@@ -983,6 +1350,11 @@ export default function EntrySetupsPage() {
                       <div>
                         <strong>{family.title}</strong>
                         <span className="meta-text">{family.summary}</span>
+                        {family.exampleSequence?.length ? (
+                          <p className="entry-setup-family-best-line">
+                            Best example: {formatExamplePreviewLine(family.exampleSequence)}
+                          </p>
+                        ) : null}
                         <div className="entry-setup-family-lane">
                           <span className="entry-setup-info-chip">{family.lane}</span>
                         </div>
@@ -999,12 +1371,20 @@ export default function EntrySetupsPage() {
                     </div>
 
                     <div className="entry-setup-family-actions">
-                      <Link className="secondary-button" to={buildCurriculumLink(family.curriculumSearch)}>
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => navigateFromFamily(buildCurriculumLink(family.curriculumSearch), family.title)}
+                      >
                         Open in Curriculum
-                      </Link>
-                      <Link className="secondary-button" to={buildDecisionTreeLink(family.treeSearch, family.title)}>
+                      </button>
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => navigateFromFamily(buildDecisionTreeLink(family.treeSearch, family.title), family.title)}
+                      >
                         Continue in Decision Trees
-                      </Link>
+                      </button>
                       <button
                         type="button"
                         className="secondary-button"

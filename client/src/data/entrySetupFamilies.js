@@ -288,6 +288,44 @@ export const setupFamilies = [
     relatedTerms: ['deep half guard', 'deep half waiter sweep', 'basic deep half sweep', 'waiter guard', 'single-leg x']
   },
   {
+    title: 'Reverse De La Riva sweep setups',
+    lane: 'Guard',
+    summary: 'Use the outside hook and angle change to create either a sweep or a wrestle-up lane.',
+    description:
+      'This family is for Reverse De La Riva angles, waiter-style tilts, spin-under looks, and wrestle-up reactions that open the basic sweep, waiter variation, or back-side transitions once the standing player loses balance.',
+    setupNodes: ['RDLR Hook Angle', 'Waiter Tilt', 'Spin-Under Threat', 'Wrestle-Up Read'],
+    nextAttacks: ['Basic Reverse De La Riva Sweep', 'Reverse De La Riva Waiter Sweep', 'Reverse De La Riva Spin Under Sweep', 'RDLR Wrestle-Up Sweep'],
+    exampleSequence: [
+      'RDLR hook angle',
+      'They step heavy',
+      'Basic sweep / waiter lane opens',
+      'They recover posture late',
+      'Spin-under / wrestle-up continuation'
+    ],
+    curriculumSearch: 'reverse de la riva',
+    treeSearch: 'reverse de la riva',
+    relatedTerms: ['reverse de la riva', 'basic reverse de la riva sweep', 'reverse de la riva waiter sweep', 'reverse de la riva spin under sweep', 'rdlr wrestle-up sweep']
+  },
+  {
+    title: 'Dogfight sweep setups',
+    lane: 'Guard',
+    summary: 'Win the underhook battle and hip height before you ask the dogfight to solve itself.',
+    description:
+      'This family is for underhook half-guard entries, coyote-style angles, shoulder height wins, and stand-up reactions that make the dogfight sweep, wrestle-up, or back-take lane open without stalling underneath.',
+    setupNodes: ['Underhook Half Guard', 'Coyote Angle', 'Shoulder Height Win', 'Stand-Up Reaction'],
+    nextAttacks: ['Dogfight Sweep', 'Wrestle-Up To Back', 'Wrestle-Up Single Leg Sweep', 'Single Leg'],
+    exampleSequence: [
+      'Underhook half guard',
+      'You win shoulder height',
+      'Dogfight lane opens',
+      'They square or post wide',
+      'Single leg / back-take continuation'
+    ],
+    curriculumSearch: 'dogfight',
+    treeSearch: 'dogfight',
+    relatedTerms: ['dogfight', 'dogfight sweep', 'wrestle-up to back', 'wrestle-up single leg sweep', 'single leg', 'underhook half guard']
+  },
+  {
     title: 'Passing setup chains',
     lane: 'Passing',
     summary: 'Win the grips or pins that make the pass start cleanly.',
@@ -402,6 +440,63 @@ export const setupFamilies = [
     relatedTerms: ['over-under pass', 'stack pass', 'folding pass', 'north-south pass', 'double under pass']
   },
   {
+    title: 'Headquarters passing setups',
+    lane: 'Passing',
+    summary: 'Use headquarters to split the legs and choose the cleanest pass before the guard reconnects.',
+    description:
+      'This family is for headquarters control, shin staples, hip turns, and leg-lift reactions that open knee-slice, cross-knee, float, or side-smash style passes once the bottom player is stretched out.',
+    setupNodes: ['Headquarters Split', 'Shin Staple', 'Hip Turn Read', 'Leg Lift Reaction'],
+    nextAttacks: ['Headquarters Pass', 'Knee Slice Pass', 'Cross Knee Pass', 'Float Headquarters Pass'],
+    exampleSequence: [
+      'Headquarters split',
+      'Bottom leg gets stretched high',
+      'Knee-slice / float lane opens',
+      'They hip-escape late',
+      'Cross-knee / side-smash continuation'
+    ],
+    curriculumSearch: 'headquarters pass',
+    treeSearch: 'headquarters pass',
+    relatedTerms: ['headquarters pass', 'float headquarters pass', 'knee slice pass', 'cross knee pass', 'shin staple pass']
+  },
+  {
+    title: 'Body-lock passing setups',
+    lane: 'Passing',
+    summary: 'Beat the hip frames first, then let the body-lock pressure decide the pass.',
+    description:
+      'This family is for hip clamps, knee-pinch pressure, shoulder line wins, and folding reactions that make body-lock, folding, float-headquarters, or side-smash passing much cleaner once the legs stop recovering inside.',
+    setupNodes: ['Hip Clamp', 'Knee Pinch Pressure', 'Shoulder-Line Win', 'Folding Reaction'],
+    nextAttacks: ['Body Lock Pass', 'Body Lock Passing', 'Folding Pass', 'Float Headquarters Pass'],
+    exampleSequence: [
+      'Hip clamp',
+      'Frames get pinned inside',
+      'Body-lock / folding lane opens',
+      'They turn the hips late',
+      'Float-headquarters / side-smash continuation'
+    ],
+    curriculumSearch: 'body lock pass',
+    treeSearch: 'body lock pass',
+    relatedTerms: ['body lock pass', 'body lock passing', 'folding pass', 'float headquarters pass', 'side smash pass']
+  },
+  {
+    title: 'Float / side-smash passing setups',
+    lane: 'Passing',
+    summary: 'Make the hips chase one direction, then switch above the frames before they can recover.',
+    description:
+      'This family is for float-pass reactions, side-smash pressure, shoulder-switch timing, and north-south style redirections that keep the passer light until the bottom player loses the frame battle.',
+    setupNodes: ['Float Threat', 'Side-Smash Pressure', 'Shoulder Switch', 'North-South Redirection'],
+    nextAttacks: ['Float Pass', 'Side Smash Pass', 'Float Headquarters Pass', 'North-South Pass'],
+    exampleSequence: [
+      'Float threat',
+      'Frames chase the wrong side',
+      'Side-smash / float lane opens',
+      'They hip-escape late',
+      'North-south / backstep continuation'
+    ],
+    curriculumSearch: 'float pass',
+    treeSearch: 'float pass',
+    relatedTerms: ['float pass', 'side smash pass', 'float headquarters pass', 'north-south pass', 'ghost-style float pass']
+  },
+  {
     title: 'Submission-entry setups',
     lane: 'Submission',
     summary: 'Create the control that makes the finish realistic first.',
@@ -514,6 +609,63 @@ export const setupFamilies = [
     curriculumSearch: 'guillotine',
     treeSearch: 'guillotine',
     relatedTerms: ['guillotine', 'high elbow guillotine', 'arm-in guillotine', 'front headlock', 'front headlock go-behind', 'snap down']
+  },
+  {
+    title: 'Clamp-guard attack setups',
+    lane: 'Submission',
+    summary: 'Use clamp-style shoulder and posture control to open triangles, sweeps, and kimura lanes.',
+    description:
+      'This family is for clamp guard pressure, breaking posture, shoulder crunch-style control, and angle shifts that expose the triangle, clamp-guard sweep, kimura, or back-take chain without rushing the finish.',
+    setupNodes: ['Clamp Pressure', 'Posture Break', 'Shoulder Crunch Tie-Up', 'Angle Shift'],
+    nextAttacks: ['Clamp Guard Sweep', 'Triangle Choke', 'Kimura', 'Back Control'],
+    exampleSequence: [
+      'Clamp pressure',
+      'Posture breaks toward the trapped side',
+      'Triangle / sweep lane opens',
+      'They post or hide the elbow',
+      'Kimura / back-take continuation'
+    ],
+    curriculumSearch: 'clamp guard',
+    treeSearch: 'clamp guard',
+    relatedTerms: ['clamp guard', 'clamp guard sweep', 'triangle choke', 'kimura', 'back control', 'high guard']
+  },
+  {
+    title: 'High-guard attack setups',
+    lane: 'Submission',
+    summary: 'Climb the legs high first, then force the armbar, triangle, or mount-transition lane to appear.',
+    description:
+      'This family is for high-guard climbing, elbow-line isolation, posture-breaking pulls, and shoulder-control reactions that make armbars, triangles, and mounted-triangle-style transitions much easier to finish cleanly.',
+    setupNodes: ['Leg Climb High', 'Elbow-Line Isolation', 'Posture Pull', 'Shoulder Control'],
+    nextAttacks: ['Triangle Choke', 'Armbar Position', 'Mounted Triangle', 'Omoplata'],
+    exampleSequence: [
+      'Leg climb high',
+      'Elbow line gets trapped',
+      'Triangle / armbar lane opens',
+      'They posture awkwardly',
+      'Mounted-triangle / omoplata continuation'
+    ],
+    curriculumSearch: 'high guard',
+    treeSearch: 'high guard',
+    relatedTerms: ['high guard', 'triangle choke', 'armbar position', 'mounted triangle', 'omoplata']
+  },
+  {
+    title: 'Rubber-guard attack setups',
+    lane: 'Submission',
+    summary: 'Use posture-breaking upper-body control to make the shoulder and neck line vulnerable.',
+    description:
+      'This family is for rubber guard, Williams guard, and related upper-body controls that create gogoplata, omoplata, triangle, or back-take lanes once the head and shoulder line get trapped in place.',
+    setupNodes: ['Rubber Guard Clamp', 'Williams Guard Control', 'Crackhead Control', 'Meat Hook Transition'],
+    nextAttacks: ['Gogoplata', 'Omoplata', 'Triangle Choke', 'Back Control'],
+    exampleSequence: [
+      'Rubber guard clamp',
+      'Head and shoulder get pinned',
+      'Gogoplata / omoplata lane opens',
+      'They posture or circle late',
+      'Triangle / back-take continuation'
+    ],
+    curriculumSearch: 'rubber guard',
+    treeSearch: 'rubber guard',
+    relatedTerms: ['rubber guard', 'williams guard', 'gogoplata', 'omoplata', 'triangle choke', 'back control']
   }
 ];
 
