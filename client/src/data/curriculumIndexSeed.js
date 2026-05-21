@@ -7601,6 +7601,21 @@ const curriculumIndexSeed = [
     commonDefenses: ['Leg Pummeling', 'Knee Shield Half Guard', 'Re-Guarding']
   },
   {
+    id: 'guard-passing-headquarters-passing',
+    category: 'Guard Passing',
+    subcategory: 'Passing Platforms',
+    name: 'Headquarters Passing',
+    skillLevel: 'Intermediate',
+    tags: ['passing', 'headquarters', 'inside passing', 'leg pin', 'anti-dlr'],
+    description: 'A headquarters-based passing hub that splits the legs, wins inside position, and uses angle changes to branch into knee-slice, float, leg-pin, split-squat, or smash-style passing lanes before the guard can be rebuilt.',
+    relatedPositions: ['Headquarters', 'Open Guard', 'Top Half Guard'],
+    entriesIntoPosition: ['Standing Passing', 'Open Guard', 'De La Riva', 'Reverse De La Riva'],
+    commonAttacks: ['Headquarters Pass', 'Knee Slice Pass', 'Split Squat Pass', 'Float Headquarters Pass', 'Leg Pin Pass'],
+    commonTransitions: ['Side Smash Headquarters', 'Shin Trap Pass', 'Knee Staple Pass', 'Long Step', 'Top Half Guard'],
+    commonFollowUps: ['Side Control', 'Mount', 'North-South', 'Leg Drag Position', 'Back Exposure'],
+    commonDefenses: ['Inversion', 'Re-Guarding', 'K-Guard', 'Wrestle-Up', 'De La Riva']
+  },
+  {
     id: 'guard-passing-cartwheel-pass',
     category: 'Guard Passing',
     subcategory: 'Guard Passing Techniques',

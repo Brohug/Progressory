@@ -1587,7 +1587,7 @@ export default function ClassesPage() {
                               <div>
                                 <strong>{topic.topic_title}</strong>
                                 <div className="meta-text compact-topic-meta">
-                                  {formatLabel(topic.topic_type)} • {formatLabel(topic.coverage_type)} • {formatLabel(topic.focus_level)}{topic.progress_status ? ` • ${formatLabel(topic.progress_status)} default` : ''}
+                                  {formatLabel(topic.topic_type)} • {formatLabel(topic.coverage_type)} • {formatLabel(topic.focus_level)}{topic.progress_status ? ` • ${formatLabel(topic.progress_status)}` : ''}
                                 </div>
                               </div>
                               <button
@@ -1679,6 +1679,35 @@ export default function ClassesPage() {
                     ) : (
                       <p className="empty-state">No training entries have been logged for this class yet.</p>
                     )}
+
+                    {canApplyClassProgress ? (
+                      <section id={`class-member-progress-${classItem.id}`} className="page-section">
+                        <h4>Member Progress</h4>
+                        <p className="section-note">
+                          Attendance now applies the class topic defaults automatically. Use this only when you need to re-run or backfill progress across the present members in this class.
+                        </p>
+                        <div className="inline-actions">
+                          <button
+                            type="button"
+                            className="secondary-button"
+                            onClick={() => handleApplyClassProgress(classItem)}
+                            disabled={isClassActionActive(classItem.id, 'applyProgress')}
+                          >
+                            {isClassActionActive(classItem.id, 'applyProgress') ? 'Applying progress...' : 'Apply Progress For Present Members'}
+                          </button>
+                        </div>
+                        {classFeedbackMap[classItem.id]?.message ? (
+                          <p className="success-text">
+                            {classFeedbackMap[classItem.id].message}
+                          </p>
+                        ) : null}
+                        {classFeedbackMap[classItem.id]?.error ? (
+                          <p className="error-text">
+                            {classFeedbackMap[classItem.id].error}
+                          </p>
+                        ) : null}
+                      </section>
+                    ) : null}
                   </div>
                 )}
               </li>
@@ -1698,4 +1727,5 @@ export default function ClassesPage() {
     </Layout>
   );
 }
+
 

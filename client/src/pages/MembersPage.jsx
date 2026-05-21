@@ -955,9 +955,6 @@ export default function MembersPage() {
                             </p>
                             {isManagement ? (
                               <div className="inline-actions" style={{ marginTop: '10px' }}>
-                                <Link className="secondary-button" to="/topics?action=create">
-                                  Add missing topic
-                                </Link>
                                 <Link className="secondary-button" to="/topics">
                                   Open Topics
                                 </Link>
@@ -978,6 +975,7 @@ export default function MembersPage() {
                             memberId={member.id}
                             topics={getTopicsForMember(member)}
                             suggestedTopics={getSuggestedTopicsForMember(member)}
+                            existingProgress={memberProgressMap[member.id] || []}
                             defaultProgramId={member.program_id ? String(member.program_id) : ''}
                             onTopicCreated={fetchTopics}
                             onSuccess={() => loadMemberProgress(member.id)}

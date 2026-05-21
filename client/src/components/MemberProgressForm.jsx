@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import api from '../api/axios';
 import { formatSentenceLabel } from '../utils/formatLabel';
 import TopicSearchSelect from './TopicSearchSelect';
@@ -7,6 +7,7 @@ export default function MemberProgressForm({
   memberId,
   topics,
   suggestedTopics = [],
+  existingProgress = [],
   defaultProgramId = '',
   onTopicCreated,
   onSuccess,
@@ -28,6 +29,14 @@ export default function MemberProgressForm({
     topic_type: 'technique'
   });
 
+  const existingProgressByTopicId = useMemo(() => {
+    const nextMap = new Map();
+    existingProgress.forEach((progress) => {
+      nextMap.set(String(progress.curriculum_topic_id), progress);
+    });
+    return nextMap;
+  }, [existingProgress]);
+
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -36,9 +45,13 @@ export default function MemberProgressForm({
   };
 
   const handleTopicChange = (topicId) => {
+    const existingRecord = existingProgressByTopicId.get(String(topicId));
+
     setFormData((prev) => ({
       ...prev,
-      curriculum_topic_id: topicId
+      curriculum_topic_id: topicId,
+      status: existingRecord?.status || 'introduced',
+      notes: existingRecord?.notes || ''
     }));
   };
 
