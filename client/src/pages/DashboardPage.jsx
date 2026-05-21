@@ -357,7 +357,18 @@ export default function DashboardPage() {
         ? `${activeLibraryVideoCount} video resource${activeLibraryVideoCount === 1 ? '' : 's'} already linked.`
         : 'This is a strong next step once your classes, topics, scenarios, members, and attendance are already flowing.',
       to: '/library',
+      cta: 'Open Library',
       complete: activeLibraryVideoCount > 0
+    },
+    {
+      key: 'setupStudy',
+      icon: 'trees',
+      title: 'Explore setups and sequences',
+      description: 'Learn a new setup, follow a sequence, and see how opponents can respond before the next class.',
+      helper: 'Use Entry Setups when you want positional starter ideas, then continue the branch in Decision Trees.',
+      to: '/entry-setups',
+      cta: 'Open Entry Setups',
+      complete: false
     }
   ];
 
@@ -622,59 +633,59 @@ export default function DashboardPage() {
       title: 'Review Attendance',
       icon: 'attendance',
       description: 'Finish today\'s attendance work.',
-      cta: 'Review Attendance',
-      to: '/classes?workflow=attendance-ready',
+      cta: 'Open attendance',
+      to: '/classes?workflow=attendance-ready&focus=review',
       featured: true
     },
     {
       title: 'Plan a Class',
       icon: 'planner',
       description: 'Build the next session.',
-      cta: 'Plan a Class',
-      to: '/planned-classes'
+      cta: 'Open planner',
+      to: '/planned-classes?action=create'
     },
     {
-      title: 'Log Completed Class',
+      title: 'Check / Complete Today\'s Class Logs',
       icon: 'logs',
       description: todayClassCount > 0
-        ? `Finish ${todayClassCount} class${todayClassCount === 1 ? '' : 'es'} from today.`
-        : 'Open today\'s class logs.',
-      cta: 'Log Completed Class',
-      to: `/classes?workflow=today-completed&classDate=${todayIsoDate}`
+        ? `Check and finish ${todayClassCount} class${todayClassCount === 1 ? '' : 'es'} from today.`
+        : 'Open today\'s class logs and finish anything still incomplete.',
+      cta: 'Open class logs',
+      to: `/classes?workflow=today-completed&classDate=${todayIsoDate}&focus=review`
     },
     {
       title: 'Create Scenario',
       icon: 'scenarios',
       description: 'Build reusable class templates.',
-      cta: 'Create Scenario',
-      to: '/training-scenarios?action=create&source=dashboard'
+      cta: 'Open builder',
+      to: '/training-scenarios?action=create&source=dashboard&focus=create'
     },
     {
       title: 'Add Curriculum Topic',
       icon: 'topics',
       description: 'Add the next curriculum topic.',
-      cta: 'Add Curriculum Topic',
+      cta: 'Open topics',
       to: '/topics?action=create'
     },
     {
       title: 'Open Library',
       icon: 'library',
       description: 'Review teaching resources.',
-      cta: 'Open Library',
+      cta: 'Open resources',
       to: '/library'
     },
     {
       title: 'View Members',
       icon: 'members',
       description: 'Check roster and progress.',
-      cta: 'View Members',
+      cta: 'Open members',
       to: '/members'
     },
     {
       title: 'Run Reports',
       icon: 'reports',
       description: 'Review gaps and trends.',
-      cta: 'Run Reports',
+      cta: 'Open reports',
       to: '/reports'
     }
   ] : [
@@ -682,52 +693,52 @@ export default function DashboardPage() {
       title: 'Review Attendance',
       icon: 'attendance',
       description: 'Finish today\'s attendance work.',
-      cta: 'Review Attendance',
-      to: '/classes?workflow=attendance-ready',
+      cta: 'Open attendance',
+      to: '/classes?workflow=attendance-ready&focus=review',
       featured: true
     },
     {
       title: 'Plan a Class',
       icon: 'planner',
       description: 'Build the next session.',
-      cta: 'Plan a Class',
-      to: '/planned-classes'
+      cta: 'Open planner',
+      to: '/planned-classes?action=create'
     },
     {
-      title: 'Log Completed Class',
+      title: 'Check / Complete Today\'s Class Logs',
       icon: 'logs',
       description: todayClassCount > 0
-        ? `Finish ${todayClassCount} class${todayClassCount === 1 ? '' : 'es'} from today.`
-        : 'Open today\'s class logs.',
-      cta: 'Log Completed Class',
-      to: `/classes?workflow=today-completed&classDate=${todayIsoDate}`
+        ? `Check and finish ${todayClassCount} class${todayClassCount === 1 ? '' : 'es'} from today.`
+        : 'Open today\'s class logs and finish anything still incomplete.',
+      cta: 'Open class logs',
+      to: `/classes?workflow=today-completed&classDate=${todayIsoDate}&focus=review`
     },
     {
       title: 'Create Scenario',
       icon: 'scenarios',
       description: 'Reuse class structures faster.',
-      cta: 'Create Scenario',
-      to: '/training-scenarios?action=create&source=dashboard'
+      cta: 'Open builder',
+      to: '/training-scenarios?action=create&source=dashboard&focus=create'
     },
     {
       title: 'Open Curriculum',
       icon: 'curriculum',
       description: 'Review the curriculum map.',
-      cta: 'Open Curriculum',
+      cta: 'Open map',
       to: '/index'
     },
     {
       title: 'Open Library',
       icon: 'library',
       description: 'Review teaching resources.',
-      cta: 'Open Library',
+      cta: 'Open resources',
       to: '/library'
     },
     {
       title: 'View Members',
       icon: 'members',
       description: 'Check roster and progress.',
-      cta: 'View Members',
+      cta: 'Open members',
       to: '/members'
     }
   ];
@@ -740,8 +751,8 @@ export default function DashboardPage() {
       description: todayPlannedCount > 0
         ? `${todayPlannedCount} class${todayPlannedCount === 1 ? '' : 'es'} scheduled today.`
         : 'Nothing planned yet for today.',
-      to: '/planned-classes',
-      cta: 'Plan a Class'
+      to: '/planned-classes?action=create',
+      cta: 'Open planner'
     },
     {
       title: 'Attendance to review',
@@ -750,8 +761,8 @@ export default function DashboardPage() {
       description: attendanceSnapshot.classesNeedingAttendance > 0
         ? `${attendanceSnapshot.classesNeedingAttendance} class${attendanceSnapshot.classesNeedingAttendance === 1 ? '' : 'es'} still need attention.`
         : 'Nothing waiting on attendance right now.',
-      to: '/classes?workflow=attendance-ready',
-      cta: 'Review Attendance',
+      to: '/classes?workflow=attendance-ready&focus=review',
+      cta: 'Open attendance',
       featured: true
     }
   ];
@@ -1098,7 +1109,7 @@ export default function DashboardPage() {
                         <strong>{item.title}</strong>
                       <p className="dashboard-card-copy">{item.description}</p>
                       <div className="dashboard-setup-helper">{item.helper}</div>
-                      <span className="dashboard-card-cta">Open Library</span>
+                      <span className="dashboard-card-cta">{item.cta || 'Open'}</span>
                     </Link>
                   ))}
                 </div>

@@ -1,4 +1,8 @@
 const pool = require('../config/db');
+const {
+  ensureClassProgressColumns,
+  inferDefaultProgressStatus
+} = require('../services/classProgressService');
 
 const completePlannedClassRecord = async ({
   connection,
@@ -27,18 +31,23 @@ const completePlannedClassRecord = async ({
   const completedClassId = classInsert.insertId;
 
   const [plannedTopicRows] = await connection.query(
-    `SELECT curriculum_topic_id, focus_level
+    `SELECT curriculum_topic_id, focus_level, progress_status
      FROM planned_class_topics
      WHERE planned_class_id = ?`,
     [plannedClassId]
   );
 
+  await ensureClassProgressColumns(connection);
+
   for (const plannedTopic of plannedTopicRows) {
+    const finalProgressStatus = plannedTopic.progress_status
+      || inferDefaultProgressStatus('taught', plannedTopic.focus_level);
+
     await connection.query(
       `INSERT INTO class_topics
-       (class_id, curriculum_topic_id, coverage_type, focus_level, notes)
-       VALUES (?, ?, 'taught', ?, NULL)`,
-      [completedClassId, plannedTopic.curriculum_topic_id, plannedTopic.focus_level]
+       (class_id, curriculum_topic_id, coverage_type, focus_level, progress_status, notes)
+       VALUES (?, ?, 'taught', ?, ?, NULL)`,
+      [completedClassId, plannedTopic.curriculum_topic_id, plannedTopic.focus_level, finalProgressStatus]
     );
   }
 
@@ -103,6 +112,7 @@ const getPlannedClasses = async (req, res) => {
     const gymId = req.user.gym_id;
     const isMember = req.user.role === 'member';
     const plannedStatusClause = isMember ? "AND pc.status = 'planned'" : '';
+    await ensureClassProgressColumns();
 
     const [rows] = await pool.query(
       `SELECT
@@ -126,6 +136,7 @@ const getPlannedClasses = async (req, res) => {
         pct.planned_class_id,
         pct.curriculum_topic_id,
         pct.focus_level,
+        pct.progress_status,
         ct.title,
         ct.topic_type
       FROM planned_class_topics pct
@@ -145,6 +156,7 @@ const getPlannedClasses = async (req, res) => {
       acc[row.planned_class_id].push({
         curriculum_topic_id: row.curriculum_topic_id,
         focus_level: row.focus_level,
+        progress_status: row.progress_status,
         title: row.title,
         topic_type: row.topic_type
       });
@@ -238,6 +250,7 @@ const createPlannedClass = async (req, res) => {
     }
 
     const normalizedTopicIds = [...new Set(topic_ids.filter(Boolean).map(Number))];
+    await ensureClassProgressColumns(connection);
 
     if (normalizedTopicIds.length > 0) {
       const [topicRows] = await connection.query(
@@ -277,9 +290,9 @@ const createPlannedClass = async (req, res) => {
     for (const topicId of normalizedTopicIds) {
       await connection.query(
         `INSERT INTO planned_class_topics
-         (planned_class_id, curriculum_topic_id, focus_level)
-         VALUES (?, ?, 'focus')`,
-        [result.insertId, topicId]
+         (planned_class_id, curriculum_topic_id, focus_level, progress_status)
+         VALUES (?, ?, 'focus', ?)`,
+        [result.insertId, topicId, inferDefaultProgressStatus('taught', 'focus')]
       );
     }
 
@@ -393,6 +406,7 @@ const updatePlannedClass = async (req, res) => {
     }
 
     const normalizedTopicIds = [...new Set(topic_ids.filter(Boolean).map(Number))];
+    await ensureClassProgressColumns(connection);
 
     if (normalizedTopicIds.length > 0) {
       const [topicRows] = await connection.query(
@@ -438,9 +452,9 @@ const updatePlannedClass = async (req, res) => {
     for (const topicId of normalizedTopicIds) {
       await connection.query(
         `INSERT INTO planned_class_topics
-         (planned_class_id, curriculum_topic_id, focus_level)
-         VALUES (?, ?, 'focus')`,
-        [id, topicId]
+         (planned_class_id, curriculum_topic_id, focus_level, progress_status)
+         VALUES (?, ?, 'focus', ?)`,
+        [id, topicId, inferDefaultProgressStatus('taught', 'focus')]
       );
     }
 

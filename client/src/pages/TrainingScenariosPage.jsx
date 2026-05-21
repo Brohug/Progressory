@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
@@ -28,6 +28,8 @@ export default function TrainingScenariosPage() {
   const [showInactiveScenarios, setShowInactiveScenarios] = useState(false);
   const [showCreateScenarioForm, setShowCreateScenarioForm] = useState(false);
   const [isCreateSectionOpen, setIsCreateSectionOpen] = useState(false);
+  const createSectionRef = useRef(null);
+  const createFormRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [scenarioSubmitting, setScenarioSubmitting] = useState(false);
   const [activeScenarioId, setActiveScenarioId] = useState(null);
@@ -132,6 +134,25 @@ export default function TrainingScenariosPage() {
         : 'Use the form below to create a reusable scenario.'
     );
   }, [draftScenario.name, searchParams]);
+
+  useEffect(() => {
+    if (searchParams.get('focus') !== 'create') {
+      return;
+    }
+
+    window.setTimeout(() => {
+      const target = createFormRef.current || createSectionRef.current;
+
+      if (!target) {
+        return;
+      }
+
+      target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 140);
+  }, [searchParams, showCreateScenarioForm, isCreateSectionOpen]);
 
   useEffect(() => {
     if (searchParams.get('action') !== 'create' || loading) {
@@ -451,18 +472,19 @@ export default function TrainingScenariosPage() {
 
         {isManagement ? (
           <section className="action-grid" style={{ marginBottom: '1.5rem' }}>
-            <Link to="/topics?action=create" className="action-card dashboard-action-card">
+            <div className="action-card dashboard-action-card">
               <strong>Need a starting topic first?</strong>
               <div className="detail-block">
-                <div className="meta-text">Open Topics and add the position or technique first.</div>
+                <div className="meta-text">
+                  Open Topics to add or review the best starting position, technique, or teaching focus before you build the scenario.
+                </div>
               </div>
-            </Link>
-            <Link to="/topics" className="action-card dashboard-action-card">
-              <strong>Review scenario-ready topics</strong>
-              <div className="detail-block">
-                <div className="meta-text">Search the topic library for the best starting position or teaching focus.</div>
+              <div className="inline-actions">
+                <Link to="/topics" className="secondary-button">
+                  Open Topics
+                </Link>
               </div>
-            </Link>
+            </div>
           </section>
         ) : null}
 
@@ -499,6 +521,7 @@ export default function TrainingScenariosPage() {
           ))}
         </section>
 
+        <div ref={createSectionRef}>
         <ExpandableSection
           title="Create and reuse scenarios"
           note="Build a scenario once, then reuse it later in Class Planner and Class Logs."
@@ -530,7 +553,7 @@ export default function TrainingScenariosPage() {
           </div>
 
           {showCreateScenarioForm ? (
-            <section className="page-section compact-form-shell training-scenario-form-shell" style={{ maxWidth: '760px' }}>
+            <section ref={createFormRef} className="page-section compact-form-shell training-scenario-form-shell" style={{ maxWidth: '760px' }}>
             <h3>Create Training Scenario</h3>
             <p className="section-note">
               Give coaches a reusable setup they can pull into planning or live class logs later.
@@ -686,6 +709,7 @@ export default function TrainingScenariosPage() {
             </section>
           ) : null}
         </ExpandableSection>
+        </div>
 
         <ExpandableSection
           title="Existing Training Scenarios"

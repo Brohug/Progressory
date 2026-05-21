@@ -60,6 +60,8 @@ export default function Layout({ children }) {
   const location = useLocation();
   const locationKey = `${location.pathname}${location.search}`;
   const desktopMoreMenuRef = useRef(null);
+  const userMenuRef = useRef(null);
+  const userMenuButtonRef = useRef(null);
   const mobileMoreSheetRef = useRef(null);
   const mobileMoreButtonRef = useRef(null);
   const mobileTopNavRef = useRef(null);
@@ -167,6 +169,37 @@ export default function Layout({ children }) {
       document.removeEventListener('touchstart', handlePointerDownOutside);
     };
   }, [closeMoreMenu, isMoreMenuOpen]);
+
+  useEffect(() => {
+    if (!isUserMenuOpen) {
+      return undefined;
+    }
+
+    const handlePointerDownOutside = (event) => {
+      const target = event.target;
+
+      if (
+        userMenuRef.current?.contains(target) ||
+        userMenuButtonRef.current?.contains(target)
+      ) {
+        return;
+      }
+
+      setMenuState((prev) => ({
+        ...prev,
+        user: false,
+        routeKey: locationKey
+      }));
+    };
+
+    document.addEventListener('mousedown', handlePointerDownOutside);
+    document.addEventListener('touchstart', handlePointerDownOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDownOutside);
+      document.removeEventListener('touchstart', handlePointerDownOutside);
+    };
+  }, [isUserMenuOpen, locationKey]);
 
   useEffect(() => {
     const navElement = mobileTopNavRef.current;
@@ -477,7 +510,6 @@ export default function Layout({ children }) {
     }
 
     const items = [
-      { label: 'Class Planner', to: '/planned-classes' },
       { label: 'Reports', to: '/reports' },
       { label: 'Library', to: '/library' },
       { label: 'Decision Trees', to: '/decision-tree' },
@@ -498,7 +530,7 @@ export default function Layout({ children }) {
   }, [isManagement, isMember, isOwner, user]);
 
   const mobileMenuItems = useMemo(() => (
-    [...primaryNavItems, ...moreNavItems.filter((item) => item.to !== '/planned-classes')]
+    [...primaryNavItems, ...moreNavItems]
   ), [moreNavItems, primaryNavItems]);
 
   const isMoreRouteActive = moreNavItems.some((item) => item.to === location.pathname);
@@ -529,11 +561,12 @@ export default function Layout({ children }) {
                   <span>Menu</span>
                 </button>
 
-                <div className="app-user-menu-shell">
+                <div className="app-user-menu-shell" ref={userMenuRef}>
                   <button
                     type="button"
                     className="app-user-menu-toggle"
                     onClick={toggleUserMenu}
+                    ref={userMenuButtonRef}
                   >
                     <AppIcon name="account" className="app-nav-icon" />
                     <span>{userMenuLabel}</span>

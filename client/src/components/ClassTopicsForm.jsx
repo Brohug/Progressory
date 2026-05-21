@@ -3,6 +3,14 @@ import api from '../api/axios';
 import { formatSentenceLabel } from '../utils/formatLabel';
 import TopicSearchSelect from './TopicSearchSelect';
 
+const inferDefaultProgressStatus = (focusLevel = 'focus') => {
+  if (focusLevel === 'focus') {
+    return 'developing';
+  }
+
+  return 'introduced';
+};
+
 export default function ClassTopicsForm({
   classId,
   topics,
@@ -15,6 +23,7 @@ export default function ClassTopicsForm({
     curriculum_topic_id: '',
     coverage_type: 'taught',
     focus_level: 'focus',
+    progress_status: '',
     notes: ''
   });
 
@@ -118,16 +127,22 @@ export default function ClassTopicsForm({
         curriculum_topic_id: Number(formData.curriculum_topic_id),
         coverage_type: formData.coverage_type,
         focus_level: formData.focus_level,
+        progress_status: formData.progress_status || null,
         notes: formData.notes || null
       };
 
-      await api.post(`/classes/${classId}/topics`, payload);
+      const response = await api.post(`/classes/${classId}/topics`, payload);
+      const autoProgress = response.data?.auto_progress;
+      const autoProgressMessage = autoProgress?.presentMemberCount
+        ? ` Present members also picked up ${formatSentenceLabel(autoProgress.progressStatus)} progress automatically where needed.`
+        : '';
 
-      setMessage('Topic saved to the class successfully.');
+      setMessage(`Topic saved to the class successfully.${autoProgressMessage}`);
       setFormData({
         curriculum_topic_id: '',
         coverage_type: 'taught',
         focus_level: 'focus',
+        progress_status: '',
         notes: ''
       });
 
@@ -142,9 +157,14 @@ export default function ClassTopicsForm({
     }
   };
 
+  const suggestedProgressStatus = inferDefaultProgressStatus(formData.focus_level);
+
   return (
     <section className="page-section">
       <h4>Add Topic to Class</h4>
+      <p className="section-note">
+        Attendance will use this topic&apos;s default progress outcome unless you override a member manually later.
+      </p>
 
       <form className="form-grid" onSubmit={handleSubmit}>
         {suggestedTopics.length > 0 && (
@@ -247,6 +267,27 @@ export default function ClassTopicsForm({
             <option value="secondary">{formatSentenceLabel('secondary')}</option>
             <option value="review">{formatSentenceLabel('review')}</option>
           </select>
+        </div>
+
+        <div>
+          <label>Default Member Progress</label>
+          <select
+            name="progress_status"
+            value={formData.progress_status}
+            onChange={handleChange}
+          >
+            <option value="">
+              Auto ({formatSentenceLabel(inferDefaultProgressStatus(formData.focus_level))})
+            </option>
+            <option value="introduced">{formatSentenceLabel('introduced')}</option>
+            <option value="developing">{formatSentenceLabel('developing')}</option>
+            <option value="competent">{formatSentenceLabel('competent')}</option>
+          </select>
+          <div className="meta-text">
+            {formData.progress_status
+              ? `This class will default present members to ${formatSentenceLabel(formData.progress_status)} unless they already have a stronger progress record.`
+              : `Auto currently maps to ${formatSentenceLabel(suggestedProgressStatus)} from this topic's teaching emphasis.`}
+          </div>
         </div>
 
         <div>

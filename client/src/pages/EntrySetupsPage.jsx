@@ -55,15 +55,6 @@ const buildSequenceStepArray = (items = [], minimumSteps = 4) => {
   return [...cleaned, ...Array.from({ length: minimumSteps - cleaned.length }, () => '')];
 };
 
-const formatExamplePreviewLine = (steps = [], limit = 4) => {
-  const visible = (Array.isArray(steps) ? steps : [])
-    .map((step) => String(step || '').trim())
-    .filter(Boolean)
-    .slice(0, limit);
-
-  return visible.join(' -> ');
-};
-
 const getSequenceStepLabel = (index, totalSteps) => {
   if (index === 0) {
     return 'Start';
@@ -115,6 +106,7 @@ export default function EntrySetupsPage() {
   const [familySearch, setFamilySearch] = useState('');
   const [activeLane, setActiveLane] = useState('');
   const [expandedFamilies, setExpandedFamilies] = useState({});
+  const [expandedFamilySections, setExpandedFamilySections] = useState({});
   const [customExamples, setCustomExamples] = useState([]);
   const [customExamplesLoading, setCustomExamplesLoading] = useState(true);
   const [customExamplesError, setCustomExamplesError] = useState('');
@@ -130,7 +122,9 @@ export default function EntrySetupsPage() {
   const [isMobileCompactCards, setIsMobileCompactCards] = useState(() => (
     typeof window !== 'undefined' ? window.innerWidth <= 720 : false
   ));
+  const hasHandledInitialFamilySelectionRef = useRef(false);
   const exampleFormRef = useRef(null);
+  const builtInSearchTopRef = useRef(null);
   const quickLanes = useMemo(() => ['Standing', 'Guard', 'Passing', 'Submission'], []);
   const isOwner = user?.role === 'owner';
   const useBuiltInCompactCards = isMobileCompactCards || isBuiltInCompactView;
@@ -169,6 +163,11 @@ export default function EntrySetupsPage() {
           }
     ));
 
+    if (!hasHandledInitialFamilySelectionRef.current) {
+      hasHandledInitialFamilySelectionRef.current = true;
+      return;
+    }
+
     const familyId = `entry-setup-family-${getEntrySetupFamilySlug(selectedFamily)}`;
 
     window.setTimeout(() => {
@@ -178,6 +177,10 @@ export default function EntrySetupsPage() {
       });
     }, 120);
   }, [selectedFamily]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     if (!isExampleFormOpen) {
@@ -286,6 +289,41 @@ export default function EntrySetupsPage() {
 
     return visibleFamilies.map((entry) => entry.family);
   }, [activeLane, builtInSort, familySearch]);
+
+  const searchMatchedBuiltInFamilies = useMemo(() => {
+    const normalizedSearch = normalizeSearchText(familySearch);
+    if (!normalizedSearch) {
+      return setupFamilies;
+    }
+
+    return setupFamilies.filter((family) => (
+      getSearchScore(
+        normalizedSearch,
+        [
+          family.lane,
+          family.title,
+          family.summary,
+          family.description,
+          ...(family.setupNodes || []),
+          ...(family.nextAttacks || []),
+          ...(family.exampleSequence || [])
+        ],
+        [family.title, ...(family.relatedTerms || [])]
+      ) >= 0
+    ));
+  }, [familySearch]);
+
+  const builtInLaneCounts = useMemo(() => {
+    const counts = {
+      all: searchMatchedBuiltInFamilies.length
+    };
+
+    quickLanes.forEach((lane) => {
+      counts[lane] = searchMatchedBuiltInFamilies.filter((family) => family.lane === lane).length;
+    });
+
+    return counts;
+  }, [quickLanes, searchMatchedBuiltInFamilies]);
 
   const filteredCustomExamples = useMemo(() => {
     const normalizedSearch = normalizeSearchText(familySearch);
@@ -406,6 +444,25 @@ export default function EntrySetupsPage() {
     }));
   };
 
+  const toggleFamilySection = (familyTitle, sectionKey) => {
+    const compositeKey = `${familyTitle}::${sectionKey}`;
+
+    setExpandedFamilySections((current) => ({
+      ...current,
+      [compositeKey]: !current[compositeKey]
+    }));
+  };
+
+  const isFamilySectionOpen = (familyTitle, sectionKey) => {
+    const compositeKey = `${familyTitle}::${sectionKey}`;
+
+    if (!(compositeKey in expandedFamilySections)) {
+      return sectionKey === 'overview';
+    }
+
+    return Boolean(expandedFamilySections[compositeKey]);
+  };
+
   const getSequenceStepTone = (index, totalSteps) => {
     if (index === 0) {
       return 'start';
@@ -416,6 +473,73 @@ export default function EntrySetupsPage() {
     }
 
     return 'middle';
+  };
+
+  const getPrimaryExampleLine = (steps = [], limit = 3) => (
+    (Array.isArray(steps) ? steps : [])
+      .map((step) => String(step || '').trim())
+      .filter(Boolean)
+      .slice(0, limit)
+      .join(' -> ')
+  );
+
+  const getEntryLogicLine = (family) => {
+    const description = String(family.description || '').trim();
+
+    if (!description) {
+      return 'Create the reaction first, then attack the opening that appears.';
+    }
+
+    const sentences = description
+      .split(/(?<=[.!?])\s+/)
+      .map((sentence) => sentence.trim())
+      .filter(Boolean);
+
+    return sentences[0] || description;
+  };
+
+  const getAttackWindowLine = (family) => {
+    const reactionStep = (family.exampleSequence || []).find((step) => /^they\b/i.test(String(step || '').trim()));
+
+    if (reactionStep) {
+      return `Enter while "${reactionStep}" is still happening, not after they fully reset.`;
+    }
+
+    return 'Enter while the reaction you forced is still happening, not after the opponent resets their stance or posture.';
+  };
+
+  const getCompactFollowUpLine = (family) => {
+    const steps = (family.exampleSequence || [])
+      .map((step) => String(step || '').trim())
+      .filter(Boolean);
+    const reactionStep = [...steps].reverse().find((step) => /^they\b/i.test(step));
+    const finishStep = steps[steps.length - 1] || '';
+
+    if (reactionStep && finishStep && reactionStep !== finishStep) {
+      return `${reactionStep} -> ${finishStep}`;
+    }
+
+    const attacks = (family.nextAttacks || []).slice(0, 2);
+
+    return attacks.join(' / ');
+  };
+
+  const renderFamilyAccordionSection = (family, sectionKey, title, content) => {
+    const isOpen = isFamilySectionOpen(family.title, sectionKey);
+
+    return (
+      <div key={`${family.title}-${sectionKey}`} className={`entry-setup-accordion-section${isOpen ? ' is-open' : ''}`}>
+        <button
+          type="button"
+          className="entry-setup-accordion-toggle"
+          onClick={() => toggleFamilySection(family.title, sectionKey)}
+        >
+          <span>{title}</span>
+          <span className="entry-setup-accordion-indicator" aria-hidden="true">{isOpen ? '−' : '+'}</span>
+        </button>
+        {isOpen ? <div className="entry-setup-accordion-content">{content}</div> : null}
+      </div>
+    );
   };
 
   const getLinkedFamily = (linkedFamilyTitle) => (
@@ -440,10 +564,17 @@ export default function EntrySetupsPage() {
     setExampleForm(buildInitialCustomExampleForm(isOwner ? 'private' : 'private'));
   };
 
+  const openSavedExamplesSection = ({ showDetail = false } = {}) => {
+    if (showDetail) {
+      setIsSavedCompactView(false);
+    }
+  };
+
   const openCreateExampleForm = () => {
     resetExampleComposer();
     setCustomExamplesFeedback('');
     setCustomExamplesError('');
+    openSavedExamplesSection({ showDetail: true });
     setIsExampleFormOpen(true);
   };
 
@@ -465,6 +596,7 @@ export default function EntrySetupsPage() {
     });
     setCustomExamplesFeedback('');
     setCustomExamplesError('');
+    openSavedExamplesSection({ showDetail: true });
     setIsExampleFormOpen(true);
   };
 
@@ -486,12 +618,17 @@ export default function EntrySetupsPage() {
     });
     setCustomExamplesFeedback('');
     setCustomExamplesError('');
+    openSavedExamplesSection({ showDetail: true });
     setIsExampleFormOpen(true);
   };
 
   const closeExampleForm = () => {
     setIsExampleFormOpen(false);
     resetExampleComposer();
+  };
+
+  const minimizeExampleForm = () => {
+    setIsExampleFormOpen(false);
   };
 
   const applyLinkedFamilyDefaults = () => {
@@ -651,6 +788,13 @@ export default function EntrySetupsPage() {
     }
   };
 
+  const scrollToBuiltInSearchTop = () => {
+    builtInSearchTopRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  };
+
   // eslint-disable-next-line no-unused-vars
   const renderSequenceFlowLegacy = (steps, keyPrefix) => (
     <div className="entry-setup-sequence-row">
@@ -774,10 +918,11 @@ export default function EntrySetupsPage() {
           {useSavedCompactCards ? (
             <button
               type="button"
-              className="secondary-button entry-setup-family-toggle"
+              className="secondary-button entry-setup-family-toggle chevron-toggle-button"
               onClick={() => toggleExpandedCard(cardKey)}
+              aria-label={isExpanded ? 'Collapse saved setup example' : 'Expand saved setup example'}
             >
-              {isExpanded ? 'Hide' : 'Expand'}
+              <span aria-hidden="true">{isExpanded ? '▾' : '▸'}</span>
             </button>
           ) : null}
         </div>
@@ -896,7 +1041,7 @@ export default function EntrySetupsPage() {
           continue the sequence once you choose the branch.
         </p>
 
-        <section className="page-section">
+        <section className="page-section entry-setups-saved-section">
           <div className="section-header">
             <div>
               <h3>What these setups are for</h3>
@@ -914,7 +1059,7 @@ export default function EntrySetupsPage() {
           </p>
         </section>
 
-        <section className="page-section">
+        <section className="page-section entry-setups-builtins-section">
           <div className="section-header">
             <div>
               <h3>How this layer works</h3>
@@ -947,12 +1092,28 @@ export default function EntrySetupsPage() {
               <button
                 type="button"
                 className={`secondary-button${isSavedCompactView ? ' is-active' : ''}`}
-                onClick={() => setIsSavedCompactView((current) => !current)}
+                onClick={() => {
+                  openSavedExamplesSection();
+                  setIsSavedCompactView((current) => !current);
+                }}
               >
-                {isSavedCompactView ? 'Show more detail' : 'Use compact saved view'}
+                {isSavedCompactView ? 'Show more detail' : 'Minimize saved view'}
               </button>
-              <button type="button" className="secondary-button" onClick={openCreateExampleForm}>
-                {editingExampleId ? 'Editing setup example' : 'Create setup example'}
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => {
+                  if (isExampleFormOpen) {
+                    minimizeExampleForm();
+                    return;
+                  }
+
+                  openCreateExampleForm();
+                }}
+              >
+                {isExampleFormOpen
+                  ? (editingExampleId ? 'Minimize editing form' : 'Minimize setup form')
+                  : (editingExampleId ? 'Editing setup example' : 'Create setup example')}
               </button>
             </div>
           </div>
@@ -969,6 +1130,9 @@ export default function EntrySetupsPage() {
                 <span className="entry-setup-info-chip entry-setup-info-chip-accent">
                   Top saved match: {topSavedMatch.title}
                 </span>
+              ) : null}
+              {isExampleFormOpen ? (
+                <span className="entry-setup-info-chip entry-setup-info-chip-accent">Draft form open</span>
               ) : null}
             </div>
             <div className="entry-setups-lane-row entry-setups-sort-row">
@@ -1004,6 +1168,11 @@ export default function EntrySetupsPage() {
                 <div>
                   <h4>{editingExampleId ? 'Edit setup example' : 'Create setup example'}</h4>
                   <p className="section-note">Start with the built-in family if you can, name the version clearly, then keep only the details that actually help the next person use it.</p>
+                </div>
+                <div className="inline-actions">
+                  <button type="button" className="secondary-button" onClick={minimizeExampleForm}>
+                    Minimize form
+                  </button>
                 </div>
               </div>
               <div className="entry-setup-example-quickstart">
@@ -1156,6 +1325,9 @@ export default function EntrySetupsPage() {
                 <button type="submit" className="secondary-button">
                   {editingExampleId ? 'Save changes' : (exampleForm.visibility === 'gym_shared' ? 'Save gym example' : 'Save private example')}
                 </button>
+                <button type="button" className="secondary-button" onClick={minimizeExampleForm}>
+                  Minimize
+                </button>
                 <button type="button" className="secondary-button" onClick={closeExampleForm}>
                   Cancel
                 </button>
@@ -1163,73 +1335,75 @@ export default function EntrySetupsPage() {
             </form>
           ) : null}
 
-          <div className="entry-setups-custom-section-list">
-            {customExamplesLoading ? (
-              <div className="empty-state">
-                <p>Loading saved setup examples...</p>
-              </div>
-            ) : (
-              exampleSort === 'shared-first' ? (
-                <div className="entry-setups-custom-group">
-                  <div className="section-header">
-                    <div>
-                      <h4>All matching examples</h4>
-                      <p className="section-note">Shared owner examples appear first, then private ones beneath them.</p>
-                    </div>
-                  </div>
-                  {sortedCustomExamples.length === 0 ? (
-                    <p className="meta-text entry-setups-inline-empty">No saved setup examples match these filters yet.</p>
-                  ) : (
-                    <div className="action-grid entry-setups-family-grid">
-                      {sortedCustomExamples.map((example) => renderCustomExampleCard(
-                        example,
-                        example.visibility === 'gym_shared' ? 'shared' : 'private',
-                        String(example.created_by_user_id) === String(user?.id)
-                      ))}
-                    </div>
-                  )}
+          {!isSavedCompactView ? (
+            <div className="entry-setups-custom-section-list">
+              {customExamplesLoading ? (
+                <div className="empty-state">
+                  <p>Loading saved setup examples...</p>
                 </div>
               ) : (
-                <>
+                exampleSort === 'shared-first' ? (
                   <div className="entry-setups-custom-group">
                     <div className="section-header">
                       <div>
-                        <h4>Gym owner examples</h4>
-                        <p className="section-note">These are the shared examples your gym owner wants everyone to be able to revisit.</p>
+                        <h4>All matching examples</h4>
+                        <p className="section-note">Shared owner examples appear first, then private ones beneath them.</p>
                       </div>
                     </div>
-                    {sharedExamples.length === 0 ? (
-                      <p className="meta-text entry-setups-inline-empty">No shared owner examples match these filters yet.</p>
+                    {sortedCustomExamples.length === 0 ? (
+                      <p className="meta-text entry-setups-inline-empty">No saved setup examples match these filters yet.</p>
                     ) : (
                       <div className="action-grid entry-setups-family-grid">
-                        {sharedExamples.map((example) => renderCustomExampleCard(
+                        {sortedCustomExamples.map((example) => renderCustomExampleCard(
                           example,
-                          'shared',
+                          example.visibility === 'gym_shared' ? 'shared' : 'private',
                           String(example.created_by_user_id) === String(user?.id)
                         ))}
                       </div>
                     )}
                   </div>
-
-                  <div className="entry-setups-custom-group">
-                    <div className="section-header">
-                      <div>
-                        <h4>My private examples</h4>
-                        <p className="section-note">Only you can see these saved setup examples.</p>
+                ) : (
+                  <>
+                    <div className="entry-setups-custom-group">
+                      <div className="section-header">
+                        <div>
+                          <h4>Gym owner examples</h4>
+                          <p className="section-note">These are the shared examples your gym owner wants everyone to be able to revisit.</p>
+                        </div>
                       </div>
+                      {sharedExamples.length === 0 ? (
+                        <p className="meta-text entry-setups-inline-empty">No shared owner examples match these filters yet.</p>
+                      ) : (
+                        <div className="action-grid entry-setups-family-grid">
+                          {sharedExamples.map((example) => renderCustomExampleCard(
+                            example,
+                            'shared',
+                            String(example.created_by_user_id) === String(user?.id)
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {privateExamples.length === 0 ? (
-                      <p className="meta-text entry-setups-inline-empty">No private saved examples match these filters yet.</p>
-                    ) : (
-                      <div className="action-grid entry-setups-family-grid">
-                        {privateExamples.map((example) => renderCustomExampleCard(example, 'private', true))}
+
+                    <div className="entry-setups-custom-group">
+                      <div className="section-header">
+                        <div>
+                          <h4>My private examples</h4>
+                          <p className="section-note">Only you can see these saved setup examples.</p>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </>
-              )
-            )}
-          </div>
+                      {privateExamples.length === 0 ? (
+                        <p className="meta-text entry-setups-inline-empty">No private saved examples match these filters yet.</p>
+                      ) : (
+                        <div className="action-grid entry-setups-family-grid">
+                          {privateExamples.map((example) => renderCustomExampleCard(example, 'private', true))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )
+              )}
+            </div>
+          ) : null}
         </section>
 
         <section className="page-section">
@@ -1249,7 +1423,17 @@ export default function EntrySetupsPage() {
             </div>
           </div>
 
-          <div className="entry-setups-search-shell">
+          <div ref={builtInSearchTopRef} />
+          <div className="entry-setups-search-shell entry-setups-search-shell-sticky">
+            <div className="entry-setups-search-shell-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={scrollToBuiltInSearchTop}
+              >
+                Back to top
+              </button>
+            </div>
             <div className="entry-setups-search-row">
               <div>
                 <label htmlFor="entry-setup-search">Search setup families</label>
@@ -1268,7 +1452,7 @@ export default function EntrySetupsPage() {
                 className={`secondary-button${!activeLane ? ' is-active' : ''}`}
                 onClick={() => setActiveLane('')}
               >
-                All lanes
+                All lanes ({builtInLaneCounts.all})
               </button>
               {quickLanes.map((lane) => (
                 <button
@@ -1277,7 +1461,7 @@ export default function EntrySetupsPage() {
                   className={`secondary-button${activeLane === lane ? ' is-active' : ''}`}
                   onClick={() => setActiveLane(lane)}
                 >
-                  {lane}
+                  {lane} ({builtInLaneCounts[lane] || 0})
                 </button>
               ))}
             </div>
@@ -1338,7 +1522,7 @@ export default function EntrySetupsPage() {
               </div>
             ) : (
               filteredSetupFamilies.map((family) => {
-                const isExpanded = !useBuiltInCompactCards || Boolean(expandedFamilies[family.title]);
+                const isExpanded = Boolean(expandedFamilies[family.title]);
 
                 return (
                   <article
@@ -1350,24 +1534,18 @@ export default function EntrySetupsPage() {
                       <div>
                         <strong>{family.title}</strong>
                         <span className="meta-text">{family.summary}</span>
-                        {family.exampleSequence?.length ? (
-                          <p className="entry-setup-family-best-line">
-                            Best example: {formatExamplePreviewLine(family.exampleSequence)}
-                          </p>
-                        ) : null}
                         <div className="entry-setup-family-lane">
                           <span className="entry-setup-info-chip">{family.lane}</span>
                         </div>
                       </div>
-                      {useBuiltInCompactCards ? (
                         <button
                           type="button"
-                          className="secondary-button entry-setup-family-toggle"
+                          className="secondary-button entry-setup-family-toggle chevron-toggle-button"
                           onClick={() => toggleFamily(family.title)}
+                          aria-label={isExpanded ? `Collapse ${family.title}` : `Expand ${family.title}`}
                         >
-                          {isExpanded ? 'Hide' : 'Expand'}
+                          <span aria-hidden="true">{isExpanded ? '▾' : '▸'}</span>
                         </button>
-                      ) : null}
                     </div>
 
                     <div className="entry-setup-family-actions">
@@ -1376,56 +1554,118 @@ export default function EntrySetupsPage() {
                         className="secondary-button"
                         onClick={() => navigateFromFamily(buildCurriculumLink(family.curriculumSearch), family.title)}
                       >
-                        Open in Curriculum
+                        Open
                       </button>
                       <button
                         type="button"
                         className="secondary-button"
                         onClick={() => navigateFromFamily(buildDecisionTreeLink(family.treeSearch, family.title), family.title)}
                       >
-                        Continue in Decision Trees
+                        Decision Tree
                       </button>
                       <button
                         type="button"
                         className="secondary-button"
                         onClick={() => openCloneFamilyForm(family)}
                       >
-                        Save to use / study
+                        Save
                       </button>
                     </div>
 
                     {isExpanded ? (
                       <>
-                        <p className="section-note">{family.description}</p>
+                        <div className="entry-setup-family-accordion-list">
+                          {renderFamilyAccordionSection(
+                            family,
+                            'overview',
+                            'Overview',
+                            <div className="entry-setup-family-block-list">
+                              <div className="entry-setup-family-block">
+                                <span className="meta-text entry-setup-block-label">Goal</span>
+                                <p className="section-note">{family.summary}</p>
+                              </div>
+                              <div className="entry-setup-family-block">
+                                <span className="meta-text entry-setup-block-label">Core idea</span>
+                                <p className="section-note">{getEntryLogicLine(family)}</p>
+                              </div>
+                              <div className="entry-setup-family-block">
+                                <span className="meta-text entry-setup-block-label">Attack window</span>
+                                <p className="section-note">{getAttackWindowLine(family)}</p>
+                              </div>
+                            </div>
+                          )}
 
-                        <div className="entry-setup-family-block">
-                          <span className="meta-text entry-setup-block-label">Common setups</span>
-                          <div className="suggestion-chip-row">
-                            {family.setupNodes.map((node) => (
-                              <span key={`${family.title}-${node}`} className="entry-setup-info-chip entry-setup-info-chip-accent">
-                                {node}
-                              </span>
-                            ))}
-                          </div>
+                          {renderFamilyAccordionSection(
+                            family,
+                            'live-chains',
+                            'Live chains',
+                            <div className="entry-setup-family-block-list">
+                              {family.exampleSequence?.length ? (
+                                <div className="entry-setup-family-block">
+                                  <span className="meta-text entry-setup-block-label">Example chain</span>
+                                  {renderSequenceFlow(family.exampleSequence, family.title)}
+                                </div>
+                              ) : null}
+                              {getCompactFollowUpLine(family) ? (
+                                <div className="entry-setup-family-block">
+                                  <span className="meta-text entry-setup-block-label">Live follow-ups</span>
+                                  <p className="section-note">{getCompactFollowUpLine(family)}</p>
+                                </div>
+                              ) : null}
+                            </div>
+                          )}
+
+                          {renderFamilyAccordionSection(
+                            family,
+                            'linked-techniques',
+                            'Linked techniques',
+                            <div className="entry-setup-family-block-list">
+                              {family.setupNodes?.length ? (
+                                <div className="entry-setup-family-block">
+                                  <span className="meta-text entry-setup-block-label">Setups used</span>
+                                  <div className="suggestion-chip-row">
+                                    {family.setupNodes.map((node) => (
+                                      <span key={`${family.title}-${node}`} className="entry-setup-info-chip entry-setup-info-chip-accent">
+                                        {node}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : null}
+                              {family.nextAttacks?.length ? (
+                                <div className="entry-setup-family-block">
+                                  <span className="meta-text entry-setup-block-label">Linked techniques</span>
+                                  <div className="suggestion-chip-row">
+                                    {family.nextAttacks.map((attack) => (
+                                      <span key={`${family.title}-${attack}`} className="entry-setup-info-chip">
+                                        {attack}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
+                          )}
                         </div>
-
-                        {family.exampleSequence?.length ? (
-                          <div className="entry-setup-family-block">
-                            <span className="meta-text entry-setup-block-label">Example sequence</span>
-                            {renderSequenceFlow(family.exampleSequence, family.title)}
-                          </div>
-                        ) : null}
                       </>
                     ) : (
                       <div className="entry-setup-family-collapsed-preview">
-                        <span className="meta-text entry-setup-block-label">Common setups</span>
-                        <div className="suggestion-chip-row">
-                          {family.setupNodes.slice(0, 3).map((node) => (
-                            <span key={`${family.title}-preview-${node}`} className="entry-setup-info-chip entry-setup-info-chip-accent">
-                              {node}
-                            </span>
-                          ))}
+                        <div className="entry-setup-family-compact-line">
+                          <span className="meta-text entry-setup-block-label">Entry logic</span>
+                          <p className="section-note">{getEntryLogicLine(family)}</p>
                         </div>
+                        {family.exampleSequence?.length ? (
+                          <div className="entry-setup-family-compact-line">
+                            <span className="meta-text entry-setup-block-label">Example</span>
+                            <p className="section-note">{getPrimaryExampleLine(family.exampleSequence)}</p>
+                          </div>
+                        ) : null}
+                        {getCompactFollowUpLine(family) ? (
+                          <div className="entry-setup-family-compact-line">
+                            <span className="meta-text entry-setup-block-label">Live follow-ups</span>
+                            <p className="section-note">{getCompactFollowUpLine(family)}</p>
+                          </div>
+                        ) : null}
                       </div>
                     )}
                   </article>
@@ -1452,3 +1692,4 @@ export default function EntrySetupsPage() {
     </Layout>
   );
 }
+

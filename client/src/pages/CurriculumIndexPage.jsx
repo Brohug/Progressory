@@ -275,6 +275,22 @@ export default function CurriculumIndexPage() {
   const isMember = user?.role === 'member';
   const [searchParams, setSearchParams] = useSearchParams();
   const resultsSectionRef = useRef(null);
+  const entryCardRefs = useRef({});
+  const scrollToResultsSectionTop = () => {
+    window.requestAnimationFrame(() => {
+      const target = resultsSectionRef.current;
+
+      if (!target) {
+        return;
+      }
+
+      const targetTop = target.getBoundingClientRect().top + window.scrollY - 96;
+      window.scrollTo({
+        top: Math.max(targetTop, 0),
+        behavior: 'smooth'
+      });
+    });
+  };
   const [selectedEntryId, setSelectedEntryId] = useState(searchParams.get('entryId') || '');
   const [topics, setTopics] = useState([]);
   const [programs, setPrograms] = useState([]);
@@ -305,6 +321,7 @@ export default function CurriculumIndexPage() {
   const [isResultsSectionOpen, setIsResultsSectionOpen] = useState(
     Boolean(searchParams.get('search') || searchParams.get('entryId'))
   );
+  const focusEntryOnLoad = searchParams.get('focusEntry') === '1';
 
   useEffect(() => {
     const loadIndexSignals = async () => {
@@ -568,6 +585,33 @@ export default function CurriculumIndexPage() {
     });
   }, [categoryFilter, debouncedSearch, enrichedEntries, guidedSearchScope, selectedEntryId, skillLevelFilter]);
 
+  useEffect(() => {
+    if (!focusEntryOnLoad || selectedEntryId || !search.trim()) {
+      return;
+    }
+
+    const normalizedSearch = normalizeValue(search);
+    const exactMatches = enrichedEntries
+      .filter((entry) => normalizeValue(entry.name) === normalizedSearch)
+      .sort((a, b) => {
+        const scoreDifference = getSearchRelevanceScore(b, normalizedSearch) - getSearchRelevanceScore(a, normalizedSearch);
+
+        if (scoreDifference !== 0) {
+          return scoreDifference;
+        }
+
+        return a.name.localeCompare(b.name);
+      });
+
+    if (exactMatches.length === 0) {
+      return;
+    }
+
+    setSelectedEntryId(exactMatches[0].id);
+    setIsResultsSectionOpen(true);
+    setExpandedSearchEntryIds([exactMatches[0].id]);
+  }, [enrichedEntries, focusEntryOnLoad, search, selectedEntryId]);
+
   const groupedEntries = useMemo(() => {
     const categoryGroups = filteredEntries.reduce((acc, entry) => {
       if (!acc[entry.category]) {
@@ -817,6 +861,25 @@ export default function CurriculumIndexPage() {
     });
   };
 
+  useEffect(() => {
+    if (!selectedEntryId || !isResultsSectionOpen) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      const target = entryCardRefs.current[selectedEntryId];
+
+      if (!target) {
+        return;
+      }
+
+      target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }, 140);
+  }, [filteredEntries.length, isResultsSectionOpen, selectedEntryId]);
+
   return (
     <Layout>
         <div className="curriculum-index-page">
@@ -923,6 +986,15 @@ export default function CurriculumIndexPage() {
             stickyHeader
             isOpen={isResultsSectionOpen}
             onToggle={setIsResultsSectionOpen}
+            actionsAfterToggle={(
+              <button
+                className="secondary-button"
+                onClick={scrollToResultsSectionTop}
+                type="button"
+              >
+                Back to top
+              </button>
+            )}
           >
             {isCompactResultView ? (
               <p className="section-note">Broad search matches stay compact until you open the ones you want.</p>
@@ -973,6 +1045,11 @@ export default function CurriculumIndexPage() {
                       return (
                         <article
                           key={entry.id}
+                          ref={(node) => {
+                            if (node) {
+                              entryCardRefs.current[entry.id] = node;
+                            }
+                          }}
                           className={`card-item curriculum-index-card${isCompactResultView && !showEntryDetails ? ' is-compact-collapsed' : ''}`}
                         >
                           <div className="curriculum-index-card-header">

@@ -2,7 +2,7 @@ const curriculumIndexSeed = [
   {
     id: 'fundamentals-base',
     category: 'Fundamentals',
-    subcategory: null,
+    subcategory: 'DLR Footlock Variants',
     name: 'Base',
     skillLevel: 'Beginner',
     tags: ['fundamental', 'structure', 'balance'],
@@ -9214,7 +9214,7 @@ const curriculumIndexSeed = [
     subcategory: null,
     name: 'Belly-Down Ankle Lock',
     skillLevel: 'Intermediate',
-    tags: ['leg lock', 'submission', 'ankle lock'],
+    tags: ['leg lock', 'submission', 'ankle lock', 'footlock', 'dlr'],
     description: 'A finishing variation of the straight ankle lock that turns belly-down to add hip extension, pressure, and urgency to the breaking line.',
     relatedPositions: ['Ashi Garami', 'Outside Ashi', 'Straight Ankle Lock'],
     entriesIntoPosition: ['Straight Ankle Lock', 'Ashi Garami', 'Outside Ashi', '50/50'],
@@ -9371,6 +9371,21 @@ const curriculumIndexSeed = [
     commonTransitions: ['Straight Ankle Lock', 'Aoki Lock', 'Outside Heel Hook', 'Backside 50/50'],
     commonFollowUps: ['Side Control', 'Backside 50/50', 'Outside Heel Hook', 'Crab Ride'],
     commonDefenses: ['Tren Lock Escape', 'Straight Ankle Lock Boot Defense', 'Hand Fighting']
+  },
+  {
+    id: 'leg-locks-caio-terra-lock',
+    category: 'Leg Locks',
+    subcategory: null,
+    name: 'Caio Terra Lock',
+    skillLevel: 'Advanced',
+    tags: ['leg lock', 'submission', 'ankle lock'],
+    description: 'A DLR-style footlock variation most commonly entered from De La Riva and other open-guard one-leg attachments. It lives closest to the straight-ankle family, but the angle is usually built through outside-hook control first rather than from a classic straight-ashi finish line. It can also appear after Single-Leg X sweeps if the foot remains exposed and the same finishing angle can be recreated.',
+    relatedPositions: ['De La Riva', 'Open Guard', 'Single-Leg X', 'Straight Ankle Lock'],
+    entriesIntoPosition: ['De La Riva', 'Open Guard', 'Single-Leg X', 'Ashi Garami'],
+    commonAttacks: ['Straight Ankle Lock', 'Aoki Lock', 'Basic De La Riva Off-Balance Sweep'],
+    commonTransitions: ['Straight Ankle Lock', 'Single-Leg X', 'Ashi Garami', 'Leg Drag'],
+    commonFollowUps: ['Side Control', 'Leg Drag', 'Top Half Guard', 'Single-Leg X'],
+    commonDefenses: ['Straight Ankle Lock Boot Defense', 'Hand Fighting', 'Heel Hook Line Defense', 'Posting']
   },
   {
     id: 'leg-locks-toe-hold',

@@ -10,6 +10,7 @@ export default function ExpandableSection({
   className = '',
   children,
   actions = null,
+  actionsAfterToggle = null,
   onToggle = null,
   stickyHeader = false
 }) {
@@ -38,6 +39,7 @@ export default function ExpandableSection({
           <button className="secondary-button" type="button" onClick={handleToggle}>
             {isOpen ? `Hide ${title}` : `Open ${title}`}
           </button>
+          {actionsAfterToggle}
         </div>
       </div>
 

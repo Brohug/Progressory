@@ -15,6 +15,8 @@ const emptyMemberForm = {
   belt_rank: ''
 };
 
+const normalizeSearchValue = (value) => String(value || '').trim().toLowerCase();
+
 export default function MembersPage() {
   const { user } = useAuth();
   const isOwner = user?.role === 'owner';
@@ -91,19 +93,40 @@ export default function MembersPage() {
   ), [orderedMembers]);
 
   const filteredMembers = useMemo(() => {
-    const normalizedSearch = memberSearch.trim().toLowerCase();
+    const normalizedSearch = normalizeSearchValue(memberSearch);
+    const isShortSearch = normalizedSearch.length > 0 && normalizedSearch.length <= 2;
 
     return orderedMembers.filter((member) => {
-      const matchesSearch = !normalizedSearch || [
-        member.first_name,
-        member.last_name,
-        member.email,
-        member.login_email,
-        member.program_name,
-        member.belt_rank
-      ]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(normalizedSearch));
+      const firstName = normalizeSearchValue(member.first_name);
+      const lastName = normalizeSearchValue(member.last_name);
+      const email = normalizeSearchValue(member.email);
+      const loginEmail = normalizeSearchValue(member.login_email);
+      const programName = normalizeSearchValue(member.program_name);
+      const beltRank = normalizeSearchValue(member.belt_rank);
+
+      const matchesSearch = !normalizedSearch || (
+        isShortSearch
+          ? [
+            firstName,
+            lastName,
+            email,
+            loginEmail,
+            programName,
+            beltRank
+          ]
+            .filter(Boolean)
+            .some((value) => value.startsWith(normalizedSearch))
+          : [
+            firstName,
+            lastName,
+            email,
+            loginEmail,
+            programName,
+            beltRank
+          ]
+            .filter(Boolean)
+            .some((value) => value.includes(normalizedSearch))
+      );
 
       const matchesProgram = !memberProgramFilter || member.program_name === memberProgramFilter;
 
@@ -683,13 +706,13 @@ export default function MembersPage() {
 
                   <div className="inline-actions member-card-actions">
                       <button className="secondary-button" onClick={() => toggleMemberDetails(member.id)}>
-                        {expandedMemberDetails[member.id] ? 'Hide roster' : 'Roster'}
+                        {expandedMemberDetails[member.id] ? 'Hide details' : 'Details'}
                       </button>
                     <button className="secondary-button" onClick={() => toggleMemberProgress(member.id)}>
                       {expandedMembers[member.id] ? 'Hide progress' : 'Progress'}
                     </button>
                     <button className="secondary-button" onClick={() => toggleEditMember(member)}>
-                      {editingMembers[member.id] ? 'Close editor' : 'Edit roster'}
+                      {editingMembers[member.id] ? 'Close editor' : 'Edit member'}
                     </button>
                     {isOwner ? (
                       <button className="secondary-button" onClick={() => toggleMemberAccessForm(member)}>

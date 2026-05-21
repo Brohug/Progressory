@@ -3,6 +3,26 @@ import api from '../api/axios';
 import { formatSentenceLabel } from '../utils/formatLabel';
 import MemberSearchSelect from './MemberSearchSelect';
 
+const buildAutoProgressMessage = (autoProgress) => {
+  const topicCount = autoProgress?.topicCount || 0;
+  const insertedCount = autoProgress?.insertedCount || 0;
+  const reviewedCount = autoProgress?.reviewedCount || 0;
+
+  if (topicCount === 0 || (insertedCount === 0 && reviewedCount === 0)) {
+    return '';
+  }
+
+  if (insertedCount > 0 && reviewedCount > 0) {
+    return ` Progress also updated ${insertedCount} new and ${reviewedCount} existing topic records automatically.`;
+  }
+
+  if (insertedCount > 0) {
+    return ` Progress also added ${insertedCount} topic record${insertedCount === 1 ? '' : 's'} automatically.`;
+  }
+
+  return ` Progress also reviewed ${reviewedCount} existing topic record${reviewedCount === 1 ? '' : 's'} automatically.`;
+};
+
 export default function ClassAttendanceForm({
   classId,
   members,
@@ -77,9 +97,9 @@ export default function ClassAttendanceForm({
 
       setPendingRecordedMemberIds((prev) => [...new Set([...prev, String(memberId)])]);
 
-      await api.post(`/classes/${classId}/members`, payload);
+      const response = await api.post(`/classes/${classId}/members`, payload);
 
-      setMessage(`Attendance saved as ${formatSentenceLabel(attendanceStatus)}.`);
+      setMessage(`Attendance saved as ${formatSentenceLabel(attendanceStatus)}.${attendanceStatus === 'present' ? buildAutoProgressMessage(response.data?.auto_progress) : ''}`);
       setFormData({
         member_id: '',
         attendance_status: 'present'
@@ -126,13 +146,16 @@ export default function ClassAttendanceForm({
 
       const addedCount = response.data?.addedCount || 0;
       const skippedCount = response.data?.skippedCount || 0;
+      const autoProgressMessage = attendanceStatus === 'present'
+        ? buildAutoProgressMessage(response.data?.auto_progress)
+        : '';
 
       if (addedCount > 0 && skippedCount > 0) {
         setMessage(
-          `${addedCount} members marked ${formatSentenceLabel(attendanceStatus)}. ${skippedCount} already had attendance recorded.`
+          `${addedCount} members marked ${formatSentenceLabel(attendanceStatus)}. ${skippedCount} already had attendance recorded.${autoProgressMessage}`
         );
       } else if (addedCount > 0) {
-        setMessage(`${addedCount} members marked ${formatSentenceLabel(attendanceStatus)}.`);
+        setMessage(`${addedCount} members marked ${formatSentenceLabel(attendanceStatus)}.${autoProgressMessage}`);
       } else {
         setMessage('Attendance was already recorded for those members.');
       }
@@ -159,6 +182,9 @@ export default function ClassAttendanceForm({
   return (
     <section className="page-section">
       <h4>Add Attendance</h4>
+      <p className="section-note">
+        Present members now inherit topic progress automatically from the topics already logged in this class.
+      </p>
       <div className="class-flow-summary-grid">
         <div className="class-flow-summary-card">
           <span className="meta-text">Still to mark</span>

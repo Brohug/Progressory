@@ -3223,9 +3223,17 @@ export default function DecisionTreePage() {
               : 'Search Curriculum and choose the position, attack, defense, or concept you want the tree to start from.'}
           </p>
           {setupFamily ? (
-            <p className="section-note">
-              Continuing from setup family: <strong>{setupFamily}</strong>
-            </p>
+            <div className="decision-tree-handoff-banner" role="status" aria-live="polite">
+              <div className="decision-tree-handoff-copy">
+                <span className="meta-text decision-tree-handoff-kicker">Entry Setups handoff</span>
+                <p className="section-note">
+                  Continuing from <strong>{setupFamily}</strong>. Use this tree to keep building from that setup family instead of starting from scratch.
+                </p>
+              </div>
+              <Link to={`/entry-setups?family=${encodeURIComponent(setupFamily)}`} className="secondary-button decision-tree-handoff-link">
+                Open setup family
+              </Link>
+            </div>
           ) : null}
           <label htmlFor="decision-tree-search">Search Curriculum</label>
           <input
@@ -3399,8 +3407,9 @@ export default function DecisionTreePage() {
                             {isMobileScenarioCards ? (
                               <button
                                 type="button"
-                                className="secondary-button decision-tree-scenario-toggle"
+                                className="secondary-button decision-tree-scenario-toggle chevron-toggle-button"
                                 onClick={() => toggleScenarioCard(scenario.label)}
+                                aria-label={isExpanded ? `Collapse ${scenario.label}` : `Expand ${scenario.label}`}
                               >
                                 {isExpanded ? 'Hide' : 'Expand'}
                               </button>

@@ -1,4 +1,12 @@
 const pool = require('../config/db');
+const {
+  validProgressStatuses,
+  ensureClassProgressColumns,
+  normalizeProgressStatus,
+  getPresentMemberIdsForClass,
+  getProgressTopicSpecsForClass,
+  applyProgressToMembersAndTopics
+} = require('../services/classProgressService');
 
 const createClass = async (req, res) => {
   try {
@@ -296,12 +304,17 @@ const deleteClass = async (req, res) => {
   }
 };
 const addClassTopic = async (req, res) => {
+  const connection = await pool.getConnection();
+  let transactionStarted = false;
+
   try {
     const gymId = req.user.gym_id;
+    const updatedByUserId = req.user.id;
     const { id } = req.params;
-    const { curriculum_topic_id, coverage_type, focus_level, notes } = req.body;
+    const { curriculum_topic_id, coverage_type, focus_level, progress_status, notes } = req.body;
 
     if (!curriculum_topic_id) {
+      connection.release();
       return res.status(400).json({
         message: 'curriculum_topic_id is required'
       });
@@ -314,47 +327,82 @@ const addClassTopic = async (req, res) => {
     const finalFocusLevel = focus_level || 'focus';
 
     if (!validCoverageTypes.includes(finalCoverageType)) {
+      connection.release();
       return res.status(400).json({
         message: 'Invalid coverage_type'
       });
     }
 
     if (!validFocusLevels.includes(finalFocusLevel)) {
+      connection.release();
       return res.status(400).json({
         message: 'Invalid focus_level'
       });
     }
 
-    const [classRows] = await pool.query(
+    if (progress_status && !validProgressStatuses.includes(progress_status)) {
+      connection.release();
+      return res.status(400).json({
+        message: 'Invalid progress_status'
+      });
+    }
+
+    const [classRows] = await connection.query(
       'SELECT id FROM classes WHERE id = ? AND gym_id = ?',
       [id, gymId]
     );
 
     if (classRows.length === 0) {
+      connection.release();
       return res.status(404).json({
         message: 'Class not found'
       });
     }
 
-    const [topicRows] = await pool.query(
+    const [topicRows] = await connection.query(
       'SELECT id, title FROM curriculum_topics WHERE id = ? AND gym_id = ?',
       [curriculum_topic_id, gymId]
     );
 
     if (topicRows.length === 0) {
+      connection.release();
       return res.status(400).json({
         message: 'Curriculum topic not found for this gym'
       });
     }
 
-    const [result] = await pool.query(
-      `INSERT INTO class_topics
-       (class_id, curriculum_topic_id, coverage_type, focus_level, notes)
-       VALUES (?, ?, ?, ?, ?)`,
-      [id, curriculum_topic_id, finalCoverageType, finalFocusLevel, notes || null]
+    await connection.beginTransaction();
+    transactionStarted = true;
+    await ensureClassProgressColumns(connection);
+
+    const finalProgressStatus = normalizeProgressStatus(
+      progress_status,
+      finalCoverageType,
+      finalFocusLevel
     );
 
-    const [rows] = await pool.query(
+    const [result] = await connection.query(
+      `INSERT INTO class_topics
+       (class_id, curriculum_topic_id, coverage_type, focus_level, progress_status, notes)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, curriculum_topic_id, finalCoverageType, finalFocusLevel, finalProgressStatus, notes || null]
+    );
+
+    const presentMemberIds = await getPresentMemberIdsForClass(connection, gymId, id);
+    const autoProgress = presentMemberIds.length > 0
+      ? await applyProgressToMembersAndTopics(connection, {
+        memberIds: presentMemberIds,
+        topicProgressSpecs: [{
+          topicId: Number(curriculum_topic_id),
+          progressStatus: finalProgressStatus,
+          coverageType: finalCoverageType,
+          focusLevel: finalFocusLevel
+        }],
+        updatedByUserId
+      })
+      : { insertedCount: 0, reviewedCount: 0 };
+
+    const [rows] = await connection.query(
       `SELECT ct.*,
               topic.title AS topic_title,
               topic.topic_type
@@ -364,11 +412,24 @@ const addClassTopic = async (req, res) => {
       [result.insertId]
     );
 
+    await connection.commit();
+    connection.release();
+
     return res.status(201).json({
       message: 'Class topic added successfully',
-      class_topic: rows[0]
+      class_topic: rows[0],
+      auto_progress: {
+        presentMemberCount: presentMemberIds.length,
+        progressStatus: finalProgressStatus,
+        insertedCount: autoProgress.insertedCount,
+        reviewedCount: autoProgress.reviewedCount
+      }
     });
   } catch (error) {
+    if (transactionStarted) {
+      await connection.rollback();
+    }
+    connection.release();
     console.error('Add class topic error:', error.message);
 
     return res.status(500).json({
@@ -382,6 +443,7 @@ const getClassTopics = async (req, res) => {
   try {
     const gymId = req.user.gym_id;
     const { id } = req.params;
+    await ensureClassProgressColumns();
 
     const [classRows] = await pool.query(
       'SELECT id FROM classes WHERE id = ? AND gym_id = ?',
@@ -667,13 +729,6 @@ const deleteClassTrainingEntry = async (req, res) => {
   }
 };
 
-const progressStatusRank = {
-  not_started: 0,
-  introduced: 1,
-  developing: 2,
-  competent: 3
-};
-
 const applyClassProgress = async (req, res) => {
   const connection = await pool.getConnection();
   let transactionStarted = false;
@@ -695,33 +750,18 @@ const applyClassProgress = async (req, res) => {
       });
     }
 
-    const [presentMemberRows] = await connection.query(
-      `SELECT DISTINCT cm.member_id
-       FROM class_members cm
-       JOIN members m ON cm.member_id = m.id
-       WHERE cm.class_id = ?
-         AND m.gym_id = ?
-         AND cm.attendance_status = 'present'`,
-      [id, gymId]
-    );
+    const presentMemberIds = await getPresentMemberIdsForClass(connection, gymId, id);
 
-    if (presentMemberRows.length === 0) {
+    if (presentMemberIds.length === 0) {
       connection.release();
       return res.status(400).json({
         message: 'No present members are available for this class yet.'
       });
     }
 
-    const [topicRows] = await connection.query(
-      `SELECT DISTINCT ct.curriculum_topic_id
-       FROM class_topics ct
-       JOIN curriculum_topics ctopic ON ct.curriculum_topic_id = ctopic.id
-       WHERE ct.class_id = ?
-         AND ctopic.gym_id = ?`,
-      [id, gymId]
-    );
+    const topicProgressSpecs = await getProgressTopicSpecsForClass(connection, gymId, id);
 
-    if (topicRows.length === 0) {
+    if (topicProgressSpecs.length === 0) {
       connection.release();
       return res.status(400).json({
         message: 'No class topics have been logged yet.'
@@ -731,56 +771,19 @@ const applyClassProgress = async (req, res) => {
     await connection.beginTransaction();
     transactionStarted = true;
 
-    let insertedCount = 0;
-    let reviewedCount = 0;
-
-    for (const memberRow of presentMemberRows) {
-      for (const topicRow of topicRows) {
-        const memberId = memberRow.member_id;
-        const topicId = topicRow.curriculum_topic_id;
-
-        const [existingRows] = await connection.query(
-          `SELECT status
-           FROM member_topic_progress
-           WHERE member_id = ? AND curriculum_topic_id = ?`,
-          [memberId, topicId]
-        );
-
-        if (existingRows.length > 0) {
-          const existingStatus = existingRows[0].status;
-          const nextStatus =
-            progressStatusRank[existingStatus] >= progressStatusRank.introduced
-              ? existingStatus
-              : 'introduced';
-
-          await connection.query(
-            `UPDATE member_topic_progress
-             SET status = ?, last_reviewed_at = CURRENT_TIMESTAMP, updated_by_user_id = ?
-             WHERE member_id = ? AND curriculum_topic_id = ?`,
-            [nextStatus, updatedByUserId, memberId, topicId]
-          );
-
-          reviewedCount += 1;
-        } else {
-          await connection.query(
-            `INSERT INTO member_topic_progress
-             (member_id, curriculum_topic_id, status, last_reviewed_at, notes, updated_by_user_id)
-             VALUES (?, ?, 'introduced', CURRENT_TIMESTAMP, NULL, ?)`,
-            [memberId, topicId, updatedByUserId]
-          );
-
-          insertedCount += 1;
-        }
-      }
-    }
+    const { insertedCount, reviewedCount } = await applyProgressToMembersAndTopics(connection, {
+      memberIds: presentMemberIds,
+      topicProgressSpecs,
+      updatedByUserId
+    });
 
     await connection.commit();
     connection.release();
 
     return res.status(200).json({
       message: 'Class progress applied successfully',
-      presentMemberCount: presentMemberRows.length,
-      topicCount: topicRows.length,
+      presentMemberCount: presentMemberIds.length,
+      topicCount: topicProgressSpecs.length,
       insertedCount,
       reviewedCount
     });

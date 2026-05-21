@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
@@ -32,9 +32,12 @@ export default function LibraryPage() {
   const isMember = user?.role === 'member';
   const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const [searchParams, setSearchParams] = useSearchParams();
+  const libraryFiltersTopRef = useRef(null);
+  const libraryEntriesTopRef = useRef(null);
   const librarySource = searchParams.get('source') || '';
   const cameFromTree = librarySource === 'tree';
   const cameFromPlannedClasses = librarySource === 'planned-classes';
+  const [focusEntriesOnLoad] = useState(searchParams.get('focusEntries') === '1');
   const treeFocusName = searchParams.get('focus') || '';
   const treePathLabel = searchParams.get('path') || '';
   const [entries, setEntries] = useState([]);
@@ -84,6 +87,38 @@ export default function LibraryPage() {
   );
   const openFiltersByDefault = Boolean(cameFromTree);
   const openEntriesByDefault = Boolean(hasCoachingFocus);
+
+  const scrollToLibraryFiltersTop = () => {
+    window.requestAnimationFrame(() => {
+      const target = libraryFiltersTopRef.current;
+
+      if (!target) {
+        return;
+      }
+
+      const targetTop = target.getBoundingClientRect().top + window.scrollY - 96;
+      window.scrollTo({
+        top: Math.max(targetTop, 0),
+        behavior: 'smooth'
+      });
+    });
+  };
+
+  const scrollToLibraryEntriesTop = () => {
+    window.requestAnimationFrame(() => {
+      const target = libraryEntriesTopRef.current;
+
+      if (!target) {
+        return;
+      }
+
+      const targetTop = target.getBoundingClientRect().top + window.scrollY - 96;
+      window.scrollTo({
+        top: Math.max(targetTop, 0),
+        behavior: 'smooth'
+      });
+    });
+  };
 
   const entryTypes = ['technique', 'concept', 'drill', 'cla_game', 'video_note'];
   const visibilityOptions = ['coach_only', 'member_visible'];
@@ -312,6 +347,26 @@ export default function LibraryPage() {
     () => topics.find((topic) => String(topic.id) === topicFilter) || null,
     [topics, topicFilter]
   );
+
+  useEffect(() => {
+    if (loading || (!focusEntriesOnLoad && !topicFilter)) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      const target = libraryEntriesTopRef.current;
+
+      if (!target) {
+        return;
+      }
+
+      const targetTop = target.getBoundingClientRect().top + window.scrollY - 24;
+      window.scrollTo({
+        top: Math.max(targetTop, 0),
+        behavior: 'smooth'
+      });
+    }, 140);
+  }, [filteredEntries.length, focusEntriesOnLoad, loading, topicFilter]);
 
   const selectedProgram = useMemo(
     () => programs.find((program) => String(program.id) === programFilter) || null,
@@ -742,6 +797,7 @@ export default function LibraryPage() {
           </div>
         </section>
 
+        <div ref={libraryFiltersTopRef} />
         <ExpandableSection
           title="Find Library Resources"
           note="Search by title, topic, or resource type."
@@ -754,6 +810,15 @@ export default function LibraryPage() {
           className="library-filters-section"
           defaultOpen
           stickyHeader
+          actionsAfterToggle={(
+            <button
+              className="secondary-button"
+              onClick={scrollToLibraryFiltersTop}
+              type="button"
+            >
+              Back to top
+            </button>
+          )}
         >
           <div className="sticky-action-bar">
           <div className="form-grid">
@@ -807,6 +872,7 @@ export default function LibraryPage() {
           </div>
         </ExpandableSection>
 
+          <div ref={libraryEntriesTopRef} />
           <ExpandableSection
             title="Library Entries"
             note="Open the resources your gym has shared with members."
@@ -819,6 +885,15 @@ export default function LibraryPage() {
             className="library-entries-section"
             defaultOpen
             stickyHeader
+            actionsAfterToggle={(
+              <button
+                className="secondary-button"
+                onClick={scrollToLibraryEntriesTop}
+                type="button"
+              >
+                Back to top
+              </button>
+            )}
           >
             {loading ? (
               <p className="empty-state">Loading library...</p>
@@ -1111,6 +1186,7 @@ export default function LibraryPage() {
 
       {error && <p className="error-text">{error}</p>}
 
+      <div ref={libraryFiltersTopRef} />
       <ExpandableSection
         title="Find the right resource fast"
         note="Search by title, topic, program, description, or resource type."
@@ -1123,6 +1199,15 @@ export default function LibraryPage() {
         className="library-filters-section"
         defaultOpen={openFiltersByDefault}
         stickyHeader
+        actionsAfterToggle={(
+          <button
+            className="secondary-button"
+            onClick={scrollToLibraryFiltersTop}
+            type="button"
+          >
+            Back to top
+          </button>
+        )}
       >
           <div className="sticky-action-bar">
           <div className="summary-grid" style={{ marginBottom: '16px' }}>
@@ -1325,6 +1410,7 @@ export default function LibraryPage() {
           </div>
       </ExpandableSection>
 
+      <div ref={libraryEntriesTopRef} />
       <ExpandableSection
         title="Library Entries"
         note="Review saved resources, edit them, or work through inactive entries."
@@ -1344,6 +1430,15 @@ export default function LibraryPage() {
             type="button"
           >
             {showInactive ? 'Hide Inactive Entries' : 'Show Inactive Entries'}
+          </button>
+        )}
+        actionsAfterToggle={(
+          <button
+            className="secondary-button"
+            onClick={scrollToLibraryEntriesTop}
+            type="button"
+          >
+            Back to top
           </button>
         )}
       >

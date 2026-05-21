@@ -503,6 +503,30 @@ export default function PlannedClassesPage() {
     setSearchParams(nextParams, { replace: true });
   }, [isMember, topics, searchParams, setSearchParams]);
 
+  useEffect(() => {
+    if (isMember || searchParams.get('action') !== 'create') {
+      return;
+    }
+
+    setShowPlanForm(true);
+    setActiveView('list');
+    setMessage('Use the planning form below to map out the next class.');
+    setError('');
+
+    window.setTimeout(() => {
+      if (!formSectionRef.current) {
+        return;
+      }
+
+      const targetTop = formSectionRef.current.getBoundingClientRect().top + window.scrollY - 24;
+      window.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' });
+    }, 120);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('action');
+    setSearchParams(nextParams, { replace: true });
+  }, [isMember, searchParams, setSearchParams]);
+
   const groupedPlannedClasses = useMemo(() => {
     const todayKey = formatDateKey(new Date());
     const sorted = sortPlannedClassesForPlanner(plannedClasses, todayKey);
@@ -1443,6 +1467,9 @@ export default function PlannedClassesPage() {
                 {formData.program_id
                   ? `${availableTopics.length} matching topic${availableTopics.length === 1 ? '' : 's'} available for this program.`
                   : 'Choose a program to narrow the topic list, or search across all active topics if this plan crosses categories.'}
+              </p>
+              <p className="section-note planned-classes-inline-note">
+                Planned topics currently default to a Developing progress outcome when attendance is recorded, and coaches can fine-tune member progress later if needed.
               </p>
 
               {selectedTopics.length > 0 ? (

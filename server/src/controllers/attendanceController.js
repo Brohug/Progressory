@@ -1,12 +1,21 @@
 const pool = require('../config/db');
+const {
+  getProgressTopicSpecsForClass,
+  applyProgressToMembersAndTopics
+} = require('../services/classProgressService');
 
 const addMemberToClass = async (req, res) => {
+  const connection = await pool.getConnection();
+  let transactionStarted = false;
+
   try {
     const gymId = req.user.gym_id;
+    const updatedByUserId = req.user.id;
     const { id } = req.params;
     const { member_id, attendance_status } = req.body;
 
     if (!member_id) {
+      connection.release();
       return res.status(400).json({
         message: 'member_id is required'
       });
@@ -16,51 +25,69 @@ const addMemberToClass = async (req, res) => {
     const validStatuses = ['present', 'absent', 'excused'];
 
     if (!validStatuses.includes(finalAttendanceStatus)) {
+      connection.release();
       return res.status(400).json({
         message: 'Invalid attendance_status'
       });
     }
 
-    const [classRows] = await pool.query(
+    const [classRows] = await connection.query(
       'SELECT id FROM classes WHERE id = ? AND gym_id = ?',
       [id, gymId]
     );
 
     if (classRows.length === 0) {
+      connection.release();
       return res.status(404).json({
         message: 'Class not found'
       });
     }
 
-    const [memberRows] = await pool.query(
+    const [memberRows] = await connection.query(
       'SELECT id FROM members WHERE id = ? AND gym_id = ?',
       [member_id, gymId]
     );
 
     if (memberRows.length === 0) {
+      connection.release();
       return res.status(400).json({
         message: 'Member not found for this gym'
       });
     }
 
-    const [existingRows] = await pool.query(
+    const [existingRows] = await connection.query(
       'SELECT id FROM class_members WHERE class_id = ? AND member_id = ?',
       [id, member_id]
     );
 
     if (existingRows.length > 0) {
+      connection.release();
       return res.status(400).json({
         message: 'Member is already attached to this class'
       });
     }
 
-    const [result] = await pool.query(
+    await connection.beginTransaction();
+    transactionStarted = true;
+
+    const [result] = await connection.query(
       `INSERT INTO class_members (class_id, member_id, attendance_status)
        VALUES (?, ?, ?)`,
       [id, member_id, finalAttendanceStatus]
     );
 
-    const [rows] = await pool.query(
+    const topicProgressSpecs = finalAttendanceStatus === 'present'
+      ? await getProgressTopicSpecsForClass(connection, gymId, id)
+      : [];
+    const autoProgress = topicProgressSpecs.length > 0
+      ? await applyProgressToMembersAndTopics(connection, {
+        memberIds: [Number(member_id)],
+        topicProgressSpecs,
+        updatedByUserId
+      })
+      : { insertedCount: 0, reviewedCount: 0 };
+
+    const [rows] = await connection.query(
       `SELECT cm.*, m.first_name, m.last_name, m.email, m.belt_rank
        FROM class_members cm
        JOIN members m ON cm.member_id = m.id
@@ -68,11 +95,23 @@ const addMemberToClass = async (req, res) => {
       [result.insertId]
     );
 
+    await connection.commit();
+    connection.release();
+
     return res.status(201).json({
       message: 'Member attendance added successfully',
-      class_member: rows[0]
+      class_member: rows[0],
+      auto_progress: {
+        topicCount: topicProgressSpecs.length,
+        insertedCount: autoProgress.insertedCount,
+        reviewedCount: autoProgress.reviewedCount
+      }
     });
   } catch (error) {
+    if (transactionStarted) {
+      await connection.rollback();
+    }
+    connection.release();
     console.error('Add member to class error:', error.message);
 
     return res.status(500).json({
@@ -169,13 +208,29 @@ const addMembersToClassBulk = async (req, res) => {
       );
     }
 
+    const topicProgressSpecs = finalAttendanceStatus === 'present'
+      ? await getProgressTopicSpecsForClass(connection, gymId, id)
+      : [];
+    const autoProgress = topicProgressSpecs.length > 0
+      ? await applyProgressToMembersAndTopics(connection, {
+        memberIds: insertableMemberIds,
+        topicProgressSpecs,
+        updatedByUserId: req.user.id
+      })
+      : { insertedCount: 0, reviewedCount: 0 };
+
     await connection.commit();
     connection.release();
 
     return res.status(201).json({
       message: 'Bulk attendance saved successfully',
       addedCount: insertableMemberIds.length,
-      skippedCount: normalizedMemberIds.length - insertableMemberIds.length
+      skippedCount: normalizedMemberIds.length - insertableMemberIds.length,
+      auto_progress: {
+        topicCount: topicProgressSpecs.length,
+        insertedCount: autoProgress.insertedCount,
+        reviewedCount: autoProgress.reviewedCount
+      }
     });
   } catch (error) {
     if (transactionStarted) {

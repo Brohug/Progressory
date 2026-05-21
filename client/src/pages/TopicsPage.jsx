@@ -11,6 +11,7 @@ export default function TopicsPage() {
   const { user } = useAuth();
   const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const [searchParams] = useSearchParams();
+  const topicListTopRef = useRef(null);
   const topicListSectionRef = useRef(null);
   const topicItemRefs = useRef({});
   const [topics, setTopics] = useState([]);
@@ -44,6 +45,22 @@ export default function TopicsPage() {
     'takedown',
     'drill_theme'
   ];
+
+  const scrollToTopicListTop = () => {
+    window.requestAnimationFrame(() => {
+      const target = topicListTopRef.current || topicListSectionRef.current;
+
+      if (!target) {
+        return;
+      }
+
+      const targetTop = target.getBoundingClientRect().top + window.scrollY - 96;
+      window.scrollTo({
+        top: Math.max(targetTop, 0),
+        behavior: 'smooth'
+      });
+    });
+  };
 
   const fetchTopics = async () => {
     try {
@@ -385,6 +402,7 @@ export default function TopicsPage() {
 
       {error && <p className="error-text">{error}</p>}
 
+      <div ref={topicListTopRef} />
       <ExpandableSection
         isOpen={isTopicListOpen}
         onToggle={setIsTopicListOpen}
@@ -403,6 +421,14 @@ export default function TopicsPage() {
             onClick={() => setShowInactive((prev) => !prev)}
           >
             {showInactive ? 'Hide Inactive Topics' : 'Show Inactive Topics'}
+          </button>
+        )}
+        actionsAfterToggle={(
+          <button
+            className="secondary-button"
+            onClick={scrollToTopicListTop}
+          >
+            Back to top
           </button>
         )}
       >
@@ -494,10 +520,10 @@ export default function TopicsPage() {
                 </div>
 
                 <div className="inline-actions">
-                  <Link className="secondary-button" to={`/index?search=${encodeURIComponent(topic.title)}`}>
+                  <Link className="secondary-button" to={`/index?search=${encodeURIComponent(topic.title)}&focusEntry=1`}>
                     Open Curriculum
                   </Link>
-                  <Link className="secondary-button" to={`/library?topicId=${topic.id}`}>
+                  <Link className="secondary-button" to={`/library?topicId=${topic.id}&focusEntries=1`}>
                     Open Library
                   </Link>
                   {isManagement ? (

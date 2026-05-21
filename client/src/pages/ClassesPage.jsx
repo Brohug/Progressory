@@ -84,11 +84,13 @@ export default function ClassesPage() {
 
   const workflowParams = useMemo(() => {
     const params = new URLSearchParams(location.search);
+    const focus = params.get('focus') || '';
     return {
       workflow: params.get('workflow') || '',
       classDate: params.get('classDate') || '',
       openClassId: params.get('openClassId'),
-      shouldGuideAttendance: params.get('focus') === 'attendance'
+      focus,
+      shouldGuideAttendance: focus === 'attendance'
     };
   }, [location.search]);
 
@@ -575,6 +577,16 @@ export default function ClassesPage() {
       setClassMessage('Showing classes that still need attendance or final class details.');
     }
   }, [workflowParams]);
+
+  useEffect(() => {
+    if (workflowParams.workflow !== 'attendance-ready' && workflowParams.workflow !== 'today-completed') {
+      return;
+    }
+
+    window.setTimeout(() => {
+      scrollToClassListTop();
+    }, 140);
+  }, [scrollToClassListTop, visibleClasses.length, workflowParams.workflow, workflowParams.focus]);
 
   useEffect(() => {
     if (workflowParams.openClassId) {
@@ -1501,35 +1513,6 @@ export default function ClassesPage() {
                       />
                     </div>
 
-                    {canApplyClassProgress ? (
-                      <section id={`class-member-progress-${classItem.id}`} className="page-section">
-                        <h4>Member Progress</h4>
-                        <p className="section-note">
-                          Apply progress for present members across the topics logged in this class.
-                        </p>
-                        <div className="inline-actions">
-                          <button
-                            type="button"
-                            className="secondary-button"
-                            onClick={() => handleApplyClassProgress(classItem)}
-                            disabled={isClassActionActive(classItem.id, 'applyProgress')}
-                          >
-                            {isClassActionActive(classItem.id, 'applyProgress') ? 'Applying progress...' : 'Apply Progress For Present Members'}
-                          </button>
-                        </div>
-                        {classFeedbackMap[classItem.id]?.message ? (
-                          <p className="success-text">
-                            {classFeedbackMap[classItem.id].message}
-                          </p>
-                        ) : null}
-                        {classFeedbackMap[classItem.id]?.error ? (
-                          <p className="error-text">
-                            {classFeedbackMap[classItem.id].error}
-                          </p>
-                        ) : null}
-                      </section>
-                    ) : null}
-
                     <div id={`class-topics-${classItem.id}`} className="page-section compact-form-shell">
                       <div className="compact-form-header">
                         <div>
@@ -1604,7 +1587,7 @@ export default function ClassesPage() {
                               <div>
                                 <strong>{topic.topic_title}</strong>
                                 <div className="meta-text compact-topic-meta">
-                                  {formatLabel(topic.topic_type)} • {formatLabel(topic.coverage_type)} • {formatLabel(topic.focus_level)}
+                                  {formatLabel(topic.topic_type)} • {formatLabel(topic.coverage_type)} • {formatLabel(topic.focus_level)}{topic.progress_status ? ` • ${formatLabel(topic.progress_status)} default` : ''}
                                 </div>
                               </div>
                               <button
