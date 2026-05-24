@@ -27,6 +27,24 @@ const {
 
 const app = express();
 
+const normalizeBooleanEnv = (value) => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalizedValue = value.trim().toLowerCase();
+
+  if (['true', '1', 'yes', 'on'].includes(normalizedValue)) {
+    return true;
+  }
+
+  if (['false', '0', 'no', 'off'].includes(normalizedValue)) {
+    return false;
+  }
+
+  return null;
+};
+
 const stripeRuntimeSummary = getStripeRuntimeSummary();
 
 if (isStripeConfigured() || stripeRuntimeSummary.stripeMode === 'live' || stripeRuntimeSummary.invalidMode) {
@@ -44,6 +62,11 @@ if (isStripeConfigured() || stripeRuntimeSummary.stripeMode === 'live' || stripe
 }
 
 const isProduction = process.env.NODE_ENV === 'production';
+const trustProxyOverride = normalizeBooleanEnv(process.env.TRUST_PROXY);
+const trustProxyEnabled = trustProxyOverride === null ? isProduction : trustProxyOverride;
+
+app.set('trust proxy', trustProxyEnabled ? 1 : false);
+
 const configuredOrigins = (
   process.env.ALLOWED_ORIGINS
   || process.env.CORS_ORIGIN
