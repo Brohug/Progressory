@@ -36,6 +36,12 @@ const isStripeConfigError = (error) => Boolean(error?.isStripeConfigError || err
 const isStripeApiError = (error) => Boolean(error?.type && String(error.type).startsWith('Stripe'));
 const isStripeSignatureError = (error) => error?.type === 'StripeSignatureVerificationError';
 const hasField = (object, propertyName) => Boolean(object) && propertyName in Object(object);
+const isBillingEventDuplicateError = (error) => (
+  error?.code === 'ER_DUP_ENTRY'
+  && /billing_events|stripe_event_id|uq_billing_events_stripe_event/i.test(
+    error?.sqlMessage || error?.message || ''
+  )
+);
 
 const getSubscriptionPriceId = (subscriptionObject) => (
   subscriptionObject?.items?.data?.[0]?.price?.id
@@ -125,6 +131,11 @@ const getStripeWebhookCustomerId = (value) => {
   }
 
   return null;
+};
+
+const getSelectedDatabaseName = async (connection) => {
+  const [rows] = await connection.query('SELECT DATABASE() AS db_name');
+  return rows[0]?.db_name || null;
 };
 
 const handleBillingError = (res, label, error) => {
@@ -561,16 +572,36 @@ const createCustomerPortalSession = async (req, res) => {
 
 const handleBillingWebhook = async (req, res) => {
   let connection;
+  let webhookEventId = null;
+  let webhookEventType = null;
 
   try {
     const signature = req.headers['stripe-signature'];
     const event = constructWebhookEvent(req.body, signature);
+    webhookEventId = event.id;
+    webhookEventType = event.type;
     const stripe = getStripeClient();
 
     connection = await pool.getConnection();
     await connection.beginTransaction();
+    const selectedDatabase = await getSelectedDatabaseName(connection);
+
+    console.info('Billing webhook received:', {
+      eventId: event.id,
+      eventType: event.type,
+      database: selectedDatabase
+    });
 
     const existingEvent = await getBillingEventByStripeEventId(event.id, connection);
+
+    console.info('Billing webhook duplicate lookup:', {
+      eventId: event.id,
+      eventType: event.type,
+      database: selectedDatabase,
+      duplicateLookupCount: existingEvent ? 1 : 0,
+      duplicateRowId: existingEvent?.id || null,
+      duplicateSource: existingEvent ? 'getBillingEventByStripeEventId' : null
+    });
 
     if (existingEvent) {
       await connection.rollback();
@@ -583,11 +614,24 @@ const handleBillingWebhook = async (req, res) => {
       });
     }
 
-    await processStripeWebhookEvent(connection, stripe, event);
+    const subscriptionSyncPerformed = await processStripeWebhookEvent(connection, stripe, event);
+    console.info('Billing webhook processing result:', {
+      eventId: event.id,
+      eventType: event.type,
+      database: selectedDatabase,
+      subscriptionSyncSkipped: !subscriptionSyncPerformed
+    });
+
     await recordBillingEventProcessed({
       stripeEventId: event.id,
       eventType: event.type
     }, connection);
+    console.info('Billing webhook event insert:', {
+      eventId: event.id,
+      eventType: event.type,
+      database: selectedDatabase,
+      inserted: true
+    });
 
     await connection.commit();
     connection.release();
@@ -606,7 +650,13 @@ const handleBillingWebhook = async (req, res) => {
       connection.release();
     }
 
-    if (error?.code === 'ER_DUP_ENTRY') {
+    if (isBillingEventDuplicateError(error)) {
+      console.info('Billing webhook duplicate insert fallback:', {
+        eventId: webhookEventId,
+        eventType: webhookEventType,
+        duplicateSource: 'recordBillingEventProcessed',
+        errorCode: error.code
+      });
       return res.status(200).json({
         received: true,
         duplicate: true
