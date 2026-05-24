@@ -35,6 +35,7 @@ const isStripeConfigError = (error) => Boolean(error?.isStripeConfigError || err
 
 const isStripeApiError = (error) => Boolean(error?.type && String(error.type).startsWith('Stripe'));
 const isStripeSignatureError = (error) => error?.type === 'StripeSignatureVerificationError';
+const hasOwnProperty = (object, propertyName) => Object.prototype.hasOwnProperty.call(object || {}, propertyName);
 
 const getSubscriptionPriceId = (subscriptionObject) => (
   subscriptionObject?.items?.data?.[0]?.price?.id
@@ -50,19 +51,65 @@ const getSubscriptionPlanCode = (subscriptionObject, fallbackPlanCode = PLAN_COD
   }
 
   const inferredPlanCode = inferPlanCodeFromPriceId(getSubscriptionPriceId(subscriptionObject));
-  return inferredPlanCode === PLAN_CODES.NONE ? fallbackPlanCode : inferredPlanCode;
+  if (inferredPlanCode !== PLAN_CODES.NONE) {
+    return inferredPlanCode;
+  }
+
+  if ([PLAN_CODES.FOUNDER, PLAN_CODES.REGULAR, PLAN_CODES.DEMO].includes(fallbackPlanCode)) {
+    return fallbackPlanCode;
+  }
+
+  return undefined;
 };
 
-const buildSubscriptionUpdateFields = (subscriptionObject, fallbackPlanCode = PLAN_CODES.NONE) => ({
-  stripe_customer_id: subscriptionObject?.customer ? String(subscriptionObject.customer) : null,
-  stripe_subscription_id: subscriptionObject?.id ? String(subscriptionObject.id) : null,
-  plan_code: getSubscriptionPlanCode(subscriptionObject, fallbackPlanCode),
-  price_id: getSubscriptionPriceId(subscriptionObject),
-  billing_status: mapStripeStatusToBillingStatus(subscriptionObject?.status),
-  current_period_end: toNullableDate(subscriptionObject?.current_period_end),
-  cancel_at_period_end: Boolean(subscriptionObject?.cancel_at_period_end),
-  trial_ends_at: toNullableDate(subscriptionObject?.trial_end)
-});
+const buildSubscriptionUpdateFields = (
+  subscriptionObject,
+  {
+    fallbackPlanCode = PLAN_CODES.NONE,
+    fallbackBillingStatus
+  } = {}
+) => {
+  const updateFields = {};
+  const stripeCustomerId = getStripeWebhookCustomerId(subscriptionObject?.customer);
+  const resolvedPlanCode = getSubscriptionPlanCode(subscriptionObject, fallbackPlanCode);
+  const priceId = getSubscriptionPriceId(subscriptionObject);
+
+  if (hasOwnProperty(subscriptionObject, 'customer') && stripeCustomerId) {
+    updateFields.stripe_customer_id = stripeCustomerId;
+  }
+
+  if (hasOwnProperty(subscriptionObject, 'id') && subscriptionObject?.id) {
+    updateFields.stripe_subscription_id = String(subscriptionObject.id);
+  }
+
+  if (resolvedPlanCode) {
+    updateFields.plan_code = resolvedPlanCode;
+  }
+
+  if (priceId) {
+    updateFields.price_id = priceId;
+  }
+
+  if (hasOwnProperty(subscriptionObject, 'status')) {
+    updateFields.billing_status = mapStripeStatusToBillingStatus(subscriptionObject?.status);
+  } else if (fallbackBillingStatus) {
+    updateFields.billing_status = fallbackBillingStatus;
+  }
+
+  if (hasOwnProperty(subscriptionObject, 'current_period_end')) {
+    updateFields.current_period_end = toNullableDate(subscriptionObject?.current_period_end);
+  }
+
+  if (hasOwnProperty(subscriptionObject, 'cancel_at_period_end')) {
+    updateFields.cancel_at_period_end = Boolean(subscriptionObject?.cancel_at_period_end);
+  }
+
+  if (hasOwnProperty(subscriptionObject, 'trial_end')) {
+    updateFields.trial_ends_at = toNullableDate(subscriptionObject?.trial_end);
+  }
+
+  return updateFields;
+};
 
 const getStripeWebhookCustomerId = (value) => {
   if (!value) {
@@ -155,6 +202,7 @@ const syncFromStripeSubscription = async ({
   connection,
   subscriptionObject,
   fallbackPlanCode = PLAN_CODES.NONE,
+  fallbackBillingStatus = undefined,
   fallbackGymId = null,
   fallbackCustomerId = null
 }) => {
@@ -173,7 +221,10 @@ const syncFromStripeSubscription = async ({
     return false;
   }
 
-  await updateGymSubscription(localSubscription.gym_id, buildSubscriptionUpdateFields(subscriptionObject, fallbackPlanCode), connection);
+  await updateGymSubscription(localSubscription.gym_id, buildSubscriptionUpdateFields(subscriptionObject, {
+    fallbackPlanCode,
+    fallbackBillingStatus
+  }), connection);
   return true;
 };
 
@@ -214,16 +265,28 @@ const processCheckoutSessionCompleted = async (connection, stripe, event) => {
   }
 
   const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
-  await updateGymSubscription(gymId, buildSubscriptionUpdateFields(stripeSubscription, fallbackPlanCode), connection);
+  await updateGymSubscription(gymId, buildSubscriptionUpdateFields(stripeSubscription, {
+    fallbackPlanCode
+  }), connection);
   return true;
 };
 
-const processSubscriptionEvent = async (connection, event) => {
-  const subscriptionObject = event.data.object || {};
+const processSubscriptionEvent = async (connection, stripe, event) => {
+  const eventSubscriptionObject = event.data.object || {};
+  const stripeSubscriptionId = eventSubscriptionObject?.id ? String(eventSubscriptionObject.id) : null;
+  const subscriptionObject = (
+    stripeSubscriptionId
+    && event.type !== 'customer.subscription.deleted'
+  )
+    ? await stripe.subscriptions.retrieve(stripeSubscriptionId)
+    : eventSubscriptionObject;
 
   return syncFromStripeSubscription({
     connection,
-    subscriptionObject
+    subscriptionObject,
+    fallbackBillingStatus: event.type === 'customer.subscription.deleted'
+      ? BILLING_STATUSES.CANCELED
+      : undefined
   });
 };
 
@@ -299,7 +362,7 @@ const processStripeWebhookEvent = async (connection, stripe, event) => {
     case 'customer.subscription.created':
     case 'customer.subscription.updated':
     case 'customer.subscription.deleted':
-      return processSubscriptionEvent(connection, event);
+      return processSubscriptionEvent(connection, stripe, event);
     case 'invoice.paid':
       return processInvoicePaid(connection, stripe, event);
     case 'invoice.payment_failed':
