@@ -146,20 +146,28 @@ const updateGymSubscription = async (gymId, fields, connection = null) => {
   const fieldEntries = Object.entries(fields || {}).filter(([, value]) => value !== undefined);
 
   if (fieldEntries.length === 0) {
-    return getSubscriptionByGymId(gymId, connection);
+    return {
+      subscription: await getSubscriptionByGymId(gymId, connection),
+      affectedRows: 0,
+      updatedKeys: []
+    };
   }
 
   const assignments = fieldEntries.map(([key]) => `${key} = ?`).join(', ');
   const params = fieldEntries.map(([, value]) => value);
 
-  await queryable.query(
+  const [result] = await queryable.query(
     `UPDATE gym_subscriptions
      SET ${assignments}
      WHERE gym_id = ?`,
     [...params, gymId]
   );
 
-  return getSubscriptionByGymId(gymId, connection);
+  return {
+    subscription: await getSubscriptionByGymId(gymId, connection),
+    affectedRows: Number(result?.affectedRows || 0),
+    updatedKeys: fieldEntries.map(([key]) => key)
+  };
 };
 
 const findSubscriptionByGymId = async (gymId, connection = null) => {

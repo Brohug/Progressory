@@ -35,7 +35,7 @@ const isStripeConfigError = (error) => Boolean(error?.isStripeConfigError || err
 
 const isStripeApiError = (error) => Boolean(error?.type && String(error.type).startsWith('Stripe'));
 const isStripeSignatureError = (error) => error?.type === 'StripeSignatureVerificationError';
-const hasOwnProperty = (object, propertyName) => Object.prototype.hasOwnProperty.call(object || {}, propertyName);
+const hasField = (object, propertyName) => Boolean(object) && propertyName in Object(object);
 
 const getSubscriptionPriceId = (subscriptionObject) => (
   subscriptionObject?.items?.data?.[0]?.price?.id
@@ -74,11 +74,11 @@ const buildSubscriptionUpdateFields = (
   const resolvedPlanCode = getSubscriptionPlanCode(subscriptionObject, fallbackPlanCode);
   const priceId = getSubscriptionPriceId(subscriptionObject);
 
-  if (hasOwnProperty(subscriptionObject, 'customer') && stripeCustomerId) {
+  if (hasField(subscriptionObject, 'customer') && stripeCustomerId) {
     updateFields.stripe_customer_id = stripeCustomerId;
   }
 
-  if (hasOwnProperty(subscriptionObject, 'id') && subscriptionObject?.id) {
+  if (hasField(subscriptionObject, 'id') && subscriptionObject?.id) {
     updateFields.stripe_subscription_id = String(subscriptionObject.id);
   }
 
@@ -90,21 +90,21 @@ const buildSubscriptionUpdateFields = (
     updateFields.price_id = priceId;
   }
 
-  if (hasOwnProperty(subscriptionObject, 'status')) {
+  if (hasField(subscriptionObject, 'status')) {
     updateFields.billing_status = mapStripeStatusToBillingStatus(subscriptionObject?.status);
   } else if (fallbackBillingStatus) {
     updateFields.billing_status = fallbackBillingStatus;
   }
 
-  if (hasOwnProperty(subscriptionObject, 'current_period_end')) {
+  if (hasField(subscriptionObject, 'current_period_end')) {
     updateFields.current_period_end = toNullableDate(subscriptionObject?.current_period_end);
   }
 
-  if (hasOwnProperty(subscriptionObject, 'cancel_at_period_end')) {
+  if (hasField(subscriptionObject, 'cancel_at_period_end')) {
     updateFields.cancel_at_period_end = Boolean(subscriptionObject?.cancel_at_period_end);
   }
 
-  if (hasOwnProperty(subscriptionObject, 'trial_end')) {
+  if (hasField(subscriptionObject, 'trial_end')) {
     updateFields.trial_ends_at = toNullableDate(subscriptionObject?.trial_end);
   }
 
@@ -204,7 +204,8 @@ const syncFromStripeSubscription = async ({
   fallbackPlanCode = PLAN_CODES.NONE,
   fallbackBillingStatus = undefined,
   fallbackGymId = null,
-  fallbackCustomerId = null
+  fallbackCustomerId = null,
+  logContext = null
 }) => {
   const stripeSubscriptionId = subscriptionObject?.id ? String(subscriptionObject.id) : null;
   const stripeCustomerId = getStripeWebhookCustomerId(subscriptionObject?.customer) || fallbackCustomerId;
@@ -218,13 +219,47 @@ const syncFromStripeSubscription = async ({
   });
 
   if (!localSubscription) {
+    if (logContext?.eventType === 'customer.subscription.updated') {
+      console.info('Billing webhook subscription update trace:', {
+        eventId: logContext.eventId,
+        stripeSubscriptionId,
+        stripeCustomerId,
+        stripeStatus: subscriptionObject?.status || null,
+        stripeCancelAtPeriodEnd: hasField(subscriptionObject, 'cancel_at_period_end')
+          ? Boolean(subscriptionObject?.cancel_at_period_end)
+          : 'missing',
+        stripeCurrentPeriodEndPresent: hasField(subscriptionObject, 'current_period_end'),
+        updateKeys: [],
+        gymSubscriptionFound: false,
+        affectedRows: 0
+      });
+    }
+
     return false;
   }
 
-  await updateGymSubscription(localSubscription.gym_id, buildSubscriptionUpdateFields(subscriptionObject, {
+  const updatePayload = buildSubscriptionUpdateFields(subscriptionObject, {
     fallbackPlanCode,
     fallbackBillingStatus
-  }), connection);
+  });
+  const updateResult = await updateGymSubscription(localSubscription.gym_id, updatePayload, connection);
+
+  if (logContext?.eventType === 'customer.subscription.updated') {
+    console.info('Billing webhook subscription update trace:', {
+      eventId: logContext.eventId,
+      stripeSubscriptionId,
+      stripeCustomerId,
+      stripeStatus: subscriptionObject?.status || null,
+      stripeCancelAtPeriodEnd: hasField(subscriptionObject, 'cancel_at_period_end')
+        ? Boolean(subscriptionObject?.cancel_at_period_end)
+        : 'missing',
+      stripeCurrentPeriodEndPresent: hasField(subscriptionObject, 'current_period_end'),
+      updateKeys: updateResult.updatedKeys,
+      gymSubscriptionFound: true,
+      affectedRows: updateResult.affectedRows
+    });
+  }
+
   return true;
 };
 
@@ -286,7 +321,11 @@ const processSubscriptionEvent = async (connection, stripe, event) => {
     subscriptionObject,
     fallbackBillingStatus: event.type === 'customer.subscription.deleted'
       ? BILLING_STATUSES.CANCELED
-      : undefined
+      : undefined,
+    logContext: {
+      eventType: event.type,
+      eventId: event.id
+    }
   });
 };
 
