@@ -40,8 +40,7 @@ const createTrainingMethod = async (req, res) => {
     console.error('Create training method error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -60,8 +59,7 @@ const getTrainingMethods = async (req, res) => {
     console.error('Get training methods error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -87,8 +85,7 @@ const getTrainingMethodById = async (req, res) => {
     console.error('Get training method by ID error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -153,8 +150,7 @@ const updateTrainingMethod = async (req, res) => {
     console.error('Update training method error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -187,8 +183,7 @@ const deleteTrainingMethod = async (req, res) => {
     console.error('Delete training method error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };

@@ -288,18 +288,18 @@ export default function StaffPage() {
               ) : users.length === 0 ? (
                 <p className="empty-state">No staff users found.</p>
               ) : (
-                <>
-                  {hasHiddenStaff ? (
-                    <div className="inline-actions" style={{ marginBottom: '0.75rem' }}>
-                      <button
-                        type="button"
-                        className="secondary-button"
-                        onClick={() => setShowAllStaff((prev) => !prev)}
-                      >
-                        {showAllStaff ? 'Show fewer staff' : `Show all staff (${users.length})`}
-                      </button>
-                    </div>
-                  ) : null}
+                  <>
+                    {hasHiddenStaff ? (
+                      <div className="inline-actions staff-list-toggle-row" style={{ marginBottom: '0.75rem' }}>
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => setShowAllStaff((prev) => !prev)}
+                        >
+                          {showAllStaff ? 'Hide extra staff' : `Show staff (${users.length})`}
+                        </button>
+                      </div>
+                    ) : null}
 
                   <ul className="card-list">
                     {visibleUsers.map((staffUser) => (

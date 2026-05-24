@@ -1330,6 +1330,42 @@ ul {
   gap: 14px;
 }
 
+.topics-create-quickstart {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(11, 18, 32, 0.96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.topics-create-quickstart strong {
+  color: #f8fafc;
+  font-size: 15px;
+}
+
+.topics-create-quickstart .meta-text {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.topics-create-quickstart-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.field-helper-text {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .filter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -2631,6 +2667,10 @@ a.dashboard-setup-item {
     grid-template-columns: 1fr;
   }
 
+  .page-quickstart-card {
+    grid-template-columns: 1fr;
+  }
+
   .entry-setups-family-grid {
     grid-template-columns: 1fr;
   }
@@ -2646,6 +2686,82 @@ a.dashboard-setup-item {
 
 .planned-classes-form-section {
   margin-bottom: 26px;
+}
+
+.planned-classes-quickstart {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  gap: 16px;
+  margin: 0 0 18px;
+  padding: 18px;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 30%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(11, 18, 32, 0.96));
+}
+
+.planned-classes-quickstart-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.planned-classes-quickstart-copy strong {
+  font-size: 1.05rem;
+  line-height: 1.45;
+}
+
+.planned-classes-quickstart-copy .meta-text {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.planned-classes-quickstart-steps {
+  display: grid;
+  gap: 10px;
+}
+
+.planned-classes-quickstart-step {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(51, 65, 85, 0.72);
+  background: rgba(11, 18, 32, 0.66);
+}
+
+.planned-classes-quickstart-step span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.page-quickstart-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  gap: 16px;
+  margin: 0 0 18px;
+  padding: 18px;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 30%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(11, 18, 32, 0.96));
+}
+
+.scenarios-topic-helper {
+  margin-top: -2px;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border-color: rgba(56, 189, 248, 0.18);
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.08), transparent 26%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.78), rgba(11, 18, 32, 0.94));
+}
+
+.staff-list-toggle-row .secondary-button {
+  min-height: 38px;
+  padding: 8px 14px;
 }
 
 .planned-classes-readiness-grid {
@@ -4913,6 +5029,7 @@ a.dashboard-setup-item {
   .dashboard-guide-grid,
   .dashboard-guide-mini-expanded,
   .dashboard-setup-grid,
+  .page-quickstart-card,
   .dashboard-setup-list,
   .planned-classes-readiness-grid,
   .decision-tree-scenario-groups {
@@ -4930,6 +5047,7 @@ a.dashboard-setup-item {
   .dashboard-guide-steps,
   .dashboard-setup-progress,
   .dashboard-setup-card,
+  .page-quickstart-card,
   .dashboard-setup-upcoming {
     padding: 14px;
   }

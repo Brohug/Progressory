@@ -18,11 +18,29 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error?.response?.status;
+    const billingRequired = error?.response?.data?.billing_required === true;
     const requestUrl = error?.config?.url || '';
     const isAuthSetupRequest =
       requestUrl.includes('/auth/login')
       || requestUrl.includes('/auth/register')
       || requestUrl.includes('/auth/member-access');
+
+    if (billingRequired && (status === 402 || status === 403)) {
+      try {
+        const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+        const isOwner = storedUser?.role === 'owner';
+
+        if (
+          isOwner
+          && typeof window !== 'undefined'
+          && window.location.pathname !== '/billing'
+        ) {
+          window.location.href = '/billing';
+        }
+      } catch {
+        // Ignore localStorage parsing issues and fall through to the caller.
+      }
+    }
 
     if (status === 401 && !isAuthSetupRequest) {
       localStorage.removeItem('token');

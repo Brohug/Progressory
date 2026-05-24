@@ -1000,6 +1000,31 @@ export default function ClassesPage() {
         <div className="classes-page">
         <h2 className="page-title">Class Logs</h2>
 
+        <section className="page-quickstart-card classes-quickstart">
+          <div className="planned-classes-quickstart-copy">
+            <span className="eyebrow">What this page is for</span>
+            <strong>Class Logs is where you finish what actually happened in class.</strong>
+            <p className="meta-text">
+              Use this page after class to confirm the class details, add the topics that were taught, record
+              attendance, log training entries, and let member progress follow through.
+            </p>
+          </div>
+          <div className="planned-classes-quickstart-steps">
+            <div className="planned-classes-quickstart-step">
+              <strong>1. Open the class</strong>
+              <span>Start with the completed class that needs follow-through.</span>
+            </div>
+            <div className="planned-classes-quickstart-step">
+              <strong>2. Finish the log</strong>
+              <span>Add topics, attendance, and training entries.</span>
+            </div>
+            <div className="planned-classes-quickstart-step">
+              <strong>3. Let progress update</strong>
+              <span>Present members can pick up progress from the topics you taught.</span>
+            </div>
+          </div>
+        </section>
+
         <section className="page-section" style={{ maxWidth: '760px' }}>
           <p className="section-note" style={{ marginBottom: '14px' }}>
             Use this page for completed classes and any unplanned sessions you need to log after the fact.

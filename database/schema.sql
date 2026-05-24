@@ -145,6 +145,7 @@ CREATE TABLE planned_class_topics (
     planned_class_id INT NOT NULL,
     curriculum_topic_id INT NOT NULL,
     focus_level ENUM('focus', 'secondary', 'review') NOT NULL DEFAULT 'focus',
+    progress_status ENUM('not_started', 'introduced', 'developing', 'competent') NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_planned_class_topics_planned_class
         FOREIGN KEY (planned_class_id) REFERENCES planned_classes(id)
@@ -167,6 +168,7 @@ CREATE TABLE classes (
     head_coach_user_id INT NOT NULL,
     logged_by_user_id INT NOT NULL,
     notes TEXT NULL,
+    archived_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_classes_gym
@@ -189,7 +191,9 @@ CREATE TABLE class_topics (
     curriculum_topic_id INT NOT NULL,
     coverage_type ENUM('taught', 'reviewed') NOT NULL DEFAULT 'taught',
     focus_level ENUM('focus', 'secondary', 'review') NOT NULL DEFAULT 'focus',
+    progress_status ENUM('not_started', 'introduced', 'developing', 'competent') NULL,
     notes TEXT NULL,
+    archived_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_class_topics_class
         FOREIGN KEY (class_id) REFERENCES classes(id)
@@ -212,6 +216,7 @@ CREATE TABLE class_training_entries (
     win_condition_top VARCHAR(255) NULL,
     win_condition_bottom VARCHAR(255) NULL,
     notes TEXT NULL,
+    archived_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_class_training_entries_class
         FOREIGN KEY (class_id) REFERENCES classes(id)
@@ -285,6 +290,7 @@ CREATE TABLE class_members (
     class_id INT NOT NULL,
     member_id INT NOT NULL,
     attendance_status ENUM('present', 'absent', 'excused') NOT NULL DEFAULT 'present',
+    archived_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_class_members_class
         FOREIGN KEY (class_id) REFERENCES classes(id)
@@ -345,4 +351,66 @@ CREATE TABLE member_access_invites (
         ON DELETE CASCADE,
     CONSTRAINT uq_member_access_invites_token_hash
         UNIQUE (token_hash)
+);
+
+CREATE TABLE gym_subscriptions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    gym_id INT NOT NULL,
+    stripe_customer_id VARCHAR(255) NULL,
+    stripe_subscription_id VARCHAR(255) NULL,
+    plan_code VARCHAR(50) NOT NULL DEFAULT 'none',
+    billing_status VARCHAR(50) NOT NULL DEFAULT 'none',
+    price_id VARCHAR(255) NULL,
+    current_period_end DATETIME NULL,
+    cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE,
+    trial_ends_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_gym_subscriptions_gym
+        FOREIGN KEY (gym_id) REFERENCES gyms(id)
+        ON DELETE CASCADE,
+    CONSTRAINT uq_gym_subscriptions_gym
+        UNIQUE (gym_id),
+    CONSTRAINT uq_gym_subscriptions_customer
+        UNIQUE (stripe_customer_id),
+    CONSTRAINT uq_gym_subscriptions_subscription
+        UNIQUE (stripe_subscription_id)
+);
+
+CREATE TABLE billing_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    stripe_event_id VARCHAR(255) NOT NULL,
+    event_type VARCHAR(150) NOT NULL,
+    processed_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_billing_events_stripe_event
+        UNIQUE (stripe_event_id)
+);
+
+CREATE TABLE entry_setup_examples (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    gym_id INT NOT NULL,
+    created_by_user_id INT NOT NULL,
+    linked_family_title VARCHAR(255) NULL,
+    title VARCHAR(255) NOT NULL,
+    lane VARCHAR(50) NOT NULL,
+    summary TEXT NULL,
+    description TEXT NULL,
+    setup_nodes_json LONGTEXT NULL,
+    next_attacks_json LONGTEXT NULL,
+    example_sequence_json LONGTEXT NULL,
+    curriculum_search VARCHAR(255) NULL,
+    tree_search VARCHAR(255) NULL,
+    visibility ENUM('private', 'gym_shared') NOT NULL DEFAULT 'private',
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_entry_setup_examples_gym
+        FOREIGN KEY (gym_id) REFERENCES gyms(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_entry_setup_examples_created_by
+        FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+        ON DELETE RESTRICT,
+    INDEX idx_entry_setup_examples_gym_visibility (gym_id, visibility),
+    INDEX idx_entry_setup_examples_creator (created_by_user_id)
 );

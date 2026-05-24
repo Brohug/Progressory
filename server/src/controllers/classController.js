@@ -1,12 +1,18 @@
 const pool = require('../config/db');
 const {
   validProgressStatuses,
-  ensureClassProgressColumns,
+  isMissingClassProgressSchemaError,
   normalizeProgressStatus,
   getPresentMemberIdsForClass,
   getProgressTopicSpecsForClass,
   applyProgressToMembersAndTopics
 } = require('../services/classProgressService');
+
+const isMissingClassArchiveSchemaError = (error) => (
+  Boolean(error)
+  && error.code === 'ER_BAD_FIELD_ERROR'
+  && /archived_at/i.test(error.sqlMessage || error.message || '')
+);
 
 const createClass = async (req, res) => {
   try {
@@ -91,8 +97,7 @@ const createClass = async (req, res) => {
     console.error('Create class error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -113,17 +118,23 @@ const getClasses = async (req, res) => {
        JOIN users hc ON c.head_coach_user_id = hc.id
        JOIN users lu ON c.logged_by_user_id = lu.id
        WHERE c.gym_id = ?
+         AND c.archived_at IS NULL
        ORDER BY c.class_date DESC, c.created_at DESC`,
       [gymId]
     );
 
     return res.status(200).json(rows);
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Get classes error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -159,8 +170,7 @@ const getClassById = async (req, res) => {
     console.error('Get class by ID error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -181,7 +191,7 @@ const updateClass = async (req, res) => {
     } = req.body;
 
     const [existingRows] = await pool.query(
-      'SELECT * FROM classes WHERE id = ? AND gym_id = ?',
+      'SELECT * FROM classes WHERE id = ? AND gym_id = ? AND archived_at IS NULL',
       [id, gymId]
     );
 
@@ -261,11 +271,16 @@ const updateClass = async (req, res) => {
       class: updatedRows[0]
     });
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Update class error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -276,7 +291,18 @@ const deleteClass = async (req, res) => {
     const { id } = req.params;
 
     const [existingRows] = await pool.query(
-      'SELECT * FROM classes WHERE id = ? AND gym_id = ?',
+      `SELECT c.*,
+              EXISTS(
+                SELECT 1 FROM class_topics ct WHERE ct.class_id = c.id
+              ) AS has_class_topics,
+              EXISTS(
+                SELECT 1 FROM class_training_entries cte WHERE cte.class_id = c.id
+              ) AS has_training_entries,
+              EXISTS(
+                SELECT 1 FROM class_members cm WHERE cm.class_id = c.id
+              ) AS has_attendance
+       FROM classes c
+       WHERE c.id = ? AND c.gym_id = ? AND c.archived_at IS NULL`,
       [id, gymId]
     );
 
@@ -286,20 +312,41 @@ const deleteClass = async (req, res) => {
       });
     }
 
-    await pool.query(
-      'DELETE FROM classes WHERE id = ? AND gym_id = ?',
-      [id, gymId]
+    const classRecord = existingRows[0];
+    const hasHistoricalData = Boolean(
+      classRecord.has_class_topics
+      || classRecord.has_training_entries
+      || classRecord.has_attendance
     );
+
+    if (hasHistoricalData) {
+      await pool.query(
+        `UPDATE classes
+         SET archived_at = COALESCE(archived_at, CURRENT_TIMESTAMP)
+         WHERE id = ? AND gym_id = ?`,
+        [id, gymId]
+      );
+    } else {
+      await pool.query(
+        'DELETE FROM classes WHERE id = ? AND gym_id = ?',
+        [id, gymId]
+      );
+    }
 
     return res.status(200).json({
       message: 'Class deleted successfully'
     });
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Delete class error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -348,7 +395,7 @@ const addClassTopic = async (req, res) => {
     }
 
     const [classRows] = await connection.query(
-      'SELECT id FROM classes WHERE id = ? AND gym_id = ?',
+      'SELECT id FROM classes WHERE id = ? AND gym_id = ? AND archived_at IS NULL',
       [id, gymId]
     );
 
@@ -360,7 +407,7 @@ const addClassTopic = async (req, res) => {
     }
 
     const [topicRows] = await connection.query(
-      'SELECT id, title FROM curriculum_topics WHERE id = ? AND gym_id = ?',
+      'SELECT id, title FROM curriculum_topics WHERE id = ? AND gym_id = ? AND is_active = TRUE',
       [curriculum_topic_id, gymId]
     );
 
@@ -373,8 +420,6 @@ const addClassTopic = async (req, res) => {
 
     await connection.beginTransaction();
     transactionStarted = true;
-    await ensureClassProgressColumns(connection);
-
     const finalProgressStatus = normalizeProgressStatus(
       progress_status,
       finalCoverageType,
@@ -426,6 +471,22 @@ const addClassTopic = async (req, res) => {
       }
     });
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
+    if (isMissingClassProgressSchemaError(error)) {
+      if (transactionStarted) {
+        await connection.rollback();
+      }
+      connection.release();
+      return res.status(500).json({
+        message: 'Class progress schema is missing. Run database migrations and try again.'
+      });
+    }
+
     if (transactionStarted) {
       await connection.rollback();
     }
@@ -433,8 +494,7 @@ const addClassTopic = async (req, res) => {
     console.error('Add class topic error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -443,10 +503,8 @@ const getClassTopics = async (req, res) => {
   try {
     const gymId = req.user.gym_id;
     const { id } = req.params;
-    await ensureClassProgressColumns();
-
     const [classRows] = await pool.query(
-      'SELECT id FROM classes WHERE id = ? AND gym_id = ?',
+      'SELECT id FROM classes WHERE id = ? AND gym_id = ? AND archived_at IS NULL',
       [id, gymId]
     );
 
@@ -464,17 +522,29 @@ const getClassTopics = async (req, res) => {
        FROM class_topics ct
        JOIN curriculum_topics topic ON ct.curriculum_topic_id = topic.id
        WHERE ct.class_id = ?
+         AND ct.archived_at IS NULL
        ORDER BY ct.created_at ASC`,
       [id]
     );
 
     return res.status(200).json(rows);
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
+    if (isMissingClassProgressSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class progress schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Get class topics error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -485,7 +555,7 @@ const deleteClassTopic = async (req, res) => {
     const { id, topicEntryId } = req.params;
 
     const [classRows] = await pool.query(
-      'SELECT id FROM classes WHERE id = ? AND gym_id = ?',
+      'SELECT id FROM classes WHERE id = ? AND gym_id = ? AND archived_at IS NULL',
       [id, gymId]
     );
 
@@ -496,7 +566,7 @@ const deleteClassTopic = async (req, res) => {
     }
 
     const [entryRows] = await pool.query(
-      'SELECT id FROM class_topics WHERE id = ? AND class_id = ?',
+      'SELECT id FROM class_topics WHERE id = ? AND class_id = ? AND archived_at IS NULL',
       [topicEntryId, id]
     );
 
@@ -507,7 +577,9 @@ const deleteClassTopic = async (req, res) => {
     }
 
     await pool.query(
-      'DELETE FROM class_topics WHERE id = ? AND class_id = ?',
+      `UPDATE class_topics
+       SET archived_at = COALESCE(archived_at, CURRENT_TIMESTAMP)
+       WHERE id = ? AND class_id = ?`,
       [topicEntryId, id]
     );
 
@@ -515,11 +587,16 @@ const deleteClassTopic = async (req, res) => {
       message: 'Class topic deleted successfully'
     });
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Delete class topic error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -583,7 +660,7 @@ const addClassTrainingEntry = async (req, res) => {
 
     if (curriculum_topic_id !== undefined && curriculum_topic_id !== null) {
       const [topicRows] = await pool.query(
-        'SELECT id FROM curriculum_topics WHERE id = ? AND gym_id = ?',
+        'SELECT id FROM curriculum_topics WHERE id = ? AND gym_id = ? AND is_active = TRUE',
         [curriculum_topic_id, gymId]
       );
 
@@ -634,11 +711,16 @@ const addClassTrainingEntry = async (req, res) => {
       training_entry: rows[0]
     });
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Add class training entry error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -649,7 +731,7 @@ const getClassTrainingEntries = async (req, res) => {
     const { id } = req.params;
 
     const [classRows] = await pool.query(
-      'SELECT id FROM classes WHERE id = ? AND gym_id = ?',
+      'SELECT id FROM classes WHERE id = ? AND gym_id = ? AND archived_at IS NULL',
       [id, gymId]
     );
 
@@ -669,17 +751,23 @@ const getClassTrainingEntries = async (req, res) => {
        LEFT JOIN training_scenarios ts ON cte.training_scenario_id = ts.id
        LEFT JOIN curriculum_topics ct ON cte.curriculum_topic_id = ct.id
        WHERE cte.class_id = ?
+         AND cte.archived_at IS NULL
        ORDER BY cte.segment_order ASC, cte.created_at ASC`,
       [id]
     );
 
     return res.status(200).json(rows);
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Get class training entries error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -690,7 +778,7 @@ const deleteClassTrainingEntry = async (req, res) => {
     const { id, entryId } = req.params;
 
     const [classRows] = await pool.query(
-      'SELECT id FROM classes WHERE id = ? AND gym_id = ?',
+      'SELECT id FROM classes WHERE id = ? AND gym_id = ? AND archived_at IS NULL',
       [id, gymId]
     );
 
@@ -701,7 +789,7 @@ const deleteClassTrainingEntry = async (req, res) => {
     }
 
     const [entryRows] = await pool.query(
-      'SELECT id FROM class_training_entries WHERE id = ? AND class_id = ?',
+      'SELECT id FROM class_training_entries WHERE id = ? AND class_id = ? AND archived_at IS NULL',
       [entryId, id]
     );
 
@@ -712,7 +800,9 @@ const deleteClassTrainingEntry = async (req, res) => {
     }
 
     await pool.query(
-      'DELETE FROM class_training_entries WHERE id = ? AND class_id = ?',
+      `UPDATE class_training_entries
+       SET archived_at = COALESCE(archived_at, CURRENT_TIMESTAMP)
+       WHERE id = ? AND class_id = ?`,
       [entryId, id]
     );
 
@@ -720,11 +810,16 @@ const deleteClassTrainingEntry = async (req, res) => {
       message: 'Class training entry deleted successfully'
     });
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Delete class training entry error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -739,7 +834,7 @@ const applyClassProgress = async (req, res) => {
     const { id } = req.params;
 
     const [classRows] = await connection.query(
-      'SELECT id FROM classes WHERE id = ? AND gym_id = ?',
+      'SELECT id FROM classes WHERE id = ? AND gym_id = ? AND archived_at IS NULL',
       [id, gymId]
     );
 
@@ -788,6 +883,16 @@ const applyClassProgress = async (req, res) => {
       reviewedCount
     });
   } catch (error) {
+    if (isMissingClassProgressSchemaError(error)) {
+      if (transactionStarted) {
+        await connection.rollback();
+      }
+      connection.release();
+      return res.status(500).json({
+        message: 'Class progress schema is missing. Run database migrations and try again.'
+      });
+    }
+
     if (transactionStarted) {
       await connection.rollback();
     }
@@ -795,8 +900,7 @@ const applyClassProgress = async (req, res) => {
     console.error('Apply class progress error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };

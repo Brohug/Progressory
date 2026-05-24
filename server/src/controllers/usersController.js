@@ -215,8 +215,7 @@ const createUser = async (req, res) => {
     console.error('Create user error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -377,8 +376,7 @@ const createMemberAccessInvite = async (req, res) => {
     console.error('Create member access invite error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   } finally {
     connection.release();
@@ -560,8 +558,7 @@ const createStaffAccessInvite = async (req, res) => {
     console.error('Create staff access invite error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   } finally {
     connection.release();
@@ -587,8 +584,7 @@ const getUsers = async (req, res) => {
     console.error('Get users error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -618,8 +614,7 @@ const getUserById = async (req, res) => {
     console.error('Get user by ID error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -808,8 +803,7 @@ const updateUser = async (req, res) => {
     console.error('Update user error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -859,8 +853,7 @@ const deactivateUser = async (req, res) => {
     console.error('Deactivate user error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -895,8 +888,7 @@ const activateUser = async (req, res) => {
     console.error('Activate user error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };

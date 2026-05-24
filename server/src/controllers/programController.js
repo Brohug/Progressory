@@ -42,8 +42,7 @@ const createProgram = async (req, res) => {
     console.error('Create program error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -62,8 +61,7 @@ const getPrograms = async (req, res) => {
     console.error('Get programs error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -89,8 +87,7 @@ const getProgramById = async (req, res) => {
     console.error('Get program by ID error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -158,8 +155,7 @@ const updateProgram = async (req, res) => {
     console.error('Update program error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -194,8 +190,7 @@ const deactivateProgram = async (req, res) => {
     console.error('Deactivate program error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };

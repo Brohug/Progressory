@@ -185,7 +185,7 @@ export default function App() {
             <Route
               path="/billing"
               element={
-                <ProtectedRoute allowedRoles={['owner']}>
+                <ProtectedRoute allowedRoles={['owner', ...STAFF_ROLES.slice(1), 'member']}>
                   <BillingPage />
                 </ProtectedRoute>
               }

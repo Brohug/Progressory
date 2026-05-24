@@ -64,7 +64,7 @@ export default function TopicsPage() {
 
   const fetchTopics = async () => {
     try {
-      const response = await api.get('/topics');
+      const response = await api.get('/topics?includeInactive=true');
       setTopics(response.data);
     } catch (err) {
       console.error('Fetch topics error:', err);
@@ -305,42 +305,83 @@ export default function TopicsPage() {
     <Layout>
       <h2 className="page-title">Topics</h2>
 
+      <section className="page-quickstart-card topics-page-quickstart">
+        <div className="planned-classes-quickstart-copy">
+          <span className="eyebrow">What this page is for</span>
+          <strong>Topics are the real curriculum items your gym uses across the app.</strong>
+          <p className="meta-text">
+            Use this page to create the positions, techniques, concepts, and submissions your gym actually teaches.
+            Topics connect classes, member progress, Library resources, and study tools.
+          </p>
+        </div>
+        <div className="planned-classes-quickstart-steps">
+          <div className="planned-classes-quickstart-step">
+            <strong>1. Add the topic</strong>
+            <span>Start with a title and topic type. Program and parent topic can come later.</span>
+          </div>
+          <div className="planned-classes-quickstart-step">
+            <strong>2. Use it in classes</strong>
+            <span>Add the topic to Class Planner or Class Logs when it is actually taught.</span>
+          </div>
+          <div className="planned-classes-quickstart-step">
+            <strong>3. Support it elsewhere</strong>
+            <span>Link Library resources and let member progress build around the same topic.</span>
+          </div>
+        </div>
+      </section>
+
       {isManagement ? (
       <ExpandableSection
         isOpen={isCreateTopicOpen}
         onToggle={setIsCreateTopicOpen}
         title="Create Topic"
-        note="Add new topics only when you are ready to build out more of the curriculum."
-        summary="Keep this collapsed until you want to add a new topic to the curriculum."
+        note="Most first topics can be created with just a title and topic type."
+        summary="Start simple. Program and parent topic are optional, and you can organize them later."
         className="topics-create-section"
       >
 
+        <div className="topics-create-quickstart">
+          <strong>Quick start for new users</strong>
+          <p className="meta-text">
+            If you are just getting started, create a top-level topic first. You do not need a parent topic or
+            program before adding something like <em>Half Guard</em>, <em>Butterfly Guard</em>, <em>X-Guard</em>, or
+            <em> Lasso Guard</em>.
+          </p>
+          <div className="topics-create-quickstart-pills">
+            <span className="member-card-summary-pill">Required: Title</span>
+            <span className="member-card-summary-pill">Required: Topic type</span>
+            <span className="member-card-summary-pill">Optional: Program</span>
+            <span className="member-card-summary-pill">Optional: Parent topic</span>
+          </div>
+        </div>
+
         <form className="form-grid" onSubmit={handleSubmit}>
           <div>
-            <label>Program</label>
+            <label>Program (Optional)</label>
             <select
               name="program_id"
               value={formData.program_id}
               onChange={handleChange}
             >
-              <option value="">No program</option>
+              <option value="">No program yet</option>
               {programs.map((program) => (
                 <option key={program.id} value={program.id}>
                   {program.name}
                 </option>
               ))}
             </select>
+            <p className="field-helper-text">Leave this blank if you just want to add the topic first.</p>
           </div>
 
           <div>
-            <label>Parent Topic</label>
+            <label>Parent Topic (Optional)</label>
             <TopicSearchSelect
               topics={availableParentTopics}
               value={formData.parent_topic_id}
               onChange={handleParentTopicChange}
-              placeholder="Search parent topics..."
-              emptySelectionLabel="No parent topic selected"
-              helperText="Search and select a parent topic if this topic belongs under another one."
+              placeholder="Search parent topics if needed..."
+              emptySelectionLabel="Leave blank for a top-level topic"
+              helperText="Only choose a parent if this topic clearly sits under another one. Otherwise leave it blank."
             />
           </div>
 
@@ -351,7 +392,9 @@ export default function TopicsPage() {
               name="title"
               value={formData.title}
               onChange={handleChange}
+              placeholder="Example: Half Guard"
             />
+            <p className="field-helper-text">This is the main thing most new users should fill out first.</p>
           </div>
 
           <div>
@@ -376,7 +419,9 @@ export default function TopicsPage() {
               value={formData.description}
               onChange={handleChange}
               rows="4"
+              placeholder="Optional note about what this topic is, when you teach it, or where it fits."
             />
+            <p className="field-helper-text">Helpful, but not required to save the topic.</p>
           </div>
 
           <div>

@@ -86,8 +86,7 @@ const createTopic = async (req, res) => {
     console.error('Create topic error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -95,6 +94,7 @@ const createTopic = async (req, res) => {
 const getTopics = async (req, res) => {
   try {
     const gymId = req.user.gym_id;
+    const includeInactive = req.query.includeInactive === 'true' && req.user.role !== 'member';
 
     const [rows] = await pool.query(
       `SELECT ct.*,
@@ -104,8 +104,9 @@ const getTopics = async (req, res) => {
        LEFT JOIN programs p ON ct.program_id = p.id
        LEFT JOIN curriculum_topics parent ON ct.parent_topic_id = parent.id
        WHERE ct.gym_id = ?
+         AND (? = TRUE OR ct.is_active = TRUE)
        ORDER BY ct.created_at DESC`,
-      [gymId]
+      [gymId, includeInactive]
     );
 
     return res.status(200).json(rows);
@@ -113,8 +114,7 @@ const getTopics = async (req, res) => {
     console.error('Get topics error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -146,8 +146,7 @@ const getTopicById = async (req, res) => {
     console.error('Get topic by ID error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -264,8 +263,7 @@ const updateTopic = async (req, res) => {
     console.error('Update topic error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -287,7 +285,9 @@ const deleteTopic = async (req, res) => {
     }
 
     await pool.query(
-      'DELETE FROM curriculum_topics WHERE id = ? AND gym_id = ?',
+      `UPDATE curriculum_topics
+       SET is_active = FALSE
+       WHERE id = ? AND gym_id = ?`,
       [id, gymId]
     );
 
@@ -298,8 +298,7 @@ const deleteTopic = async (req, res) => {
     console.error('Delete topic error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };

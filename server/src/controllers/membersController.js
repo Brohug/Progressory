@@ -65,8 +65,7 @@ const createMember = async (req, res) => {
     console.error('Create member error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -94,8 +93,7 @@ const getMembers = async (req, res) => {
     console.error('Get members error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -129,8 +127,7 @@ const getMemberById = async (req, res) => {
     console.error('Get member by ID error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -234,8 +231,7 @@ const updateMember = async (req, res) => {
     console.error('Update member error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -257,7 +253,9 @@ const deleteMember = async (req, res) => {
     }
 
     await pool.query(
-      'DELETE FROM members WHERE id = ? AND gym_id = ?',
+      `UPDATE members
+       SET is_active = FALSE
+       WHERE id = ? AND gym_id = ?`,
       [id, gymId]
     );
 
@@ -268,8 +266,7 @@ const deleteMember = async (req, res) => {
     console.error('Delete member error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };

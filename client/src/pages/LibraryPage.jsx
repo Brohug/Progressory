@@ -18,6 +18,34 @@ const normalizeValue = (value) => (
     .replace(/\s+/g, ' ')
 );
 
+const getSafeExternalUrl = (value) => {
+  const trimmedValue = String(value || '').trim();
+
+  if (!trimmedValue) {
+    return '';
+  }
+
+  try {
+    const parsedUrl = new URL(trimmedValue);
+
+    if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+      return parsedUrl.toString();
+    }
+  } catch {
+    return '';
+  }
+
+  return '';
+};
+
+const getExternalUrlValidationMessage = (value) => {
+  if (!String(value || '').trim()) {
+    return '';
+  }
+
+  return getSafeExternalUrl(value) ? '' : 'Use a full http:// or https:// URL.';
+};
+
 const topicTypeCategoryHints = {
   position: ['Positions'],
   submission: ['Submissions', 'Leg Locks'],
@@ -465,6 +493,9 @@ export default function LibraryPage() {
     setSortBy('updated_desc');
   };
 
+  const createVideoUrlError = getExternalUrlValidationMessage(formData.video_url);
+  const editVideoUrlError = getExternalUrlValidationMessage(editFormData.video_url);
+
   const handleFocusTopic = (topicId) => {
     setTopicFilter(String(topicId));
   };
@@ -536,6 +567,12 @@ export default function LibraryPage() {
     setSuccessMessage('');
     setLastSavedTopicId('');
     setLastSavedTopicTitle('');
+
+    if (createVideoUrlError) {
+      setError(createVideoUrlError);
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const payload = {
@@ -642,6 +679,12 @@ export default function LibraryPage() {
     setError('');
     setSuccessMessage('');
 
+    if (editVideoUrlError) {
+      setError(editVideoUrlError);
+      setSubmitting(false);
+      return;
+    }
+
     try {
       await api.put(`/library/${entry.id}`, {
         program_id: editFormData.program_id ? Number(editFormData.program_id) : null,
@@ -736,9 +779,9 @@ export default function LibraryPage() {
                     </div>
                       <RelatedSetupFamilies families={getRelatedSetupFamiliesForEntry(latestMemberEntry)} />
                       <div className="inline-actions">
-                        {latestMemberEntry.video_url ? (
+                        {getSafeExternalUrl(latestMemberEntry.video_url) ? (
                           <a
-                            href={latestMemberEntry.video_url}
+                            href={getSafeExternalUrl(latestMemberEntry.video_url)}
                             target="_blank"
                           rel="noreferrer"
                           className="secondary-button"
@@ -935,10 +978,12 @@ export default function LibraryPage() {
                     <RelatedSetupFamilies families={getRelatedSetupFamiliesForEntry(entry)} />
                   </div>
                     <div className="inline-actions">
-                      {entry.video_url ? (
-                        <a className="library-resource-link" href={entry.video_url} target="_blank" rel="noreferrer">
+                      {getSafeExternalUrl(entry.video_url) ? (
+                        <a className="library-resource-link" href={getSafeExternalUrl(entry.video_url)} target="_blank" rel="noreferrer">
                           Open resource
                         </a>
+                    ) : entry.video_url ? (
+                      <span className="meta-text">Unsafe resource URL blocked</span>
                     ) : null}
                     {entry.topic_title ? (
                       <Link
@@ -1129,7 +1174,9 @@ export default function LibraryPage() {
                   name="video_url"
                   value={formData.video_url}
                   onChange={handleChange}
+                  placeholder="https://example.com/resource"
                 />
+                {createVideoUrlError ? <div className="form-helper error-text">{createVideoUrlError}</div> : null}
               </div>
 
               <div>
@@ -1640,7 +1687,9 @@ export default function LibraryPage() {
                         name="video_url"
                         value={editFormData.video_url}
                         onChange={handleEditChange}
+                        placeholder="https://example.com/resource"
                       />
+                      {editVideoUrlError ? <div className="form-helper error-text">{editVideoUrlError}</div> : null}
                     </div>
 
                     <div>
@@ -1715,11 +1764,13 @@ export default function LibraryPage() {
                   >
                     {editingEntryId === entry.id ? 'Close edit' : 'Edit entry'}
                   </button>
-                  {entry.video_url && (
-                    <a className="library-resource-link" href={entry.video_url} target="_blank" rel="noreferrer">
+                  {getSafeExternalUrl(entry.video_url) ? (
+                    <a className="library-resource-link" href={getSafeExternalUrl(entry.video_url)} target="_blank" rel="noreferrer">
                       Open resource
                     </a>
-                  )}
+                  ) : entry.video_url ? (
+                    <span className="meta-text">Unsafe resource URL blocked</span>
+                  ) : null}
                   {entry.curriculum_topic_id ? (
                     <>
                       <Link

@@ -464,55 +464,56 @@ export default function TrainingScenariosPage() {
 
   return (
     <Layout>
-      <div className="training-scenarios-page">
-        <h2 className="page-title">Scenarios</h2>
-        <p className="page-intro">
-          Create reusable scenarios here, then pull them into class planning and class logs when they fit.
-        </p>
+        <div className="training-scenarios-page">
+          <h2 className="page-title">Scenarios</h2>
+          <p className="page-intro">
+            Create reusable scenarios here, then pull them into class planning and class logs when they fit.
+          </p>
 
-        {isManagement ? (
-          <section className="action-grid" style={{ marginBottom: '1.5rem' }}>
-            <div className="action-card dashboard-action-card">
-              <strong>Need a starting topic first?</strong>
-              <div className="detail-block">
-                <div className="meta-text">
-                  Open Topics to add or review the best starting position, technique, or teaching focus before you build the scenario.
-                </div>
+          <section className="page-quickstart-card scenarios-quickstart">
+            <div className="planned-classes-quickstart-copy">
+              <span className="eyebrow">What this page is for</span>
+              <strong>Scenarios help you reuse good class structures instead of rebuilding them every time.</strong>
+              <p className="meta-text">
+                Use scenarios when you already know a format you like: the training method, the starting topic,
+                the goals, and the constraints. Save it once, then pull it into planning and class logs later.
+              </p>
+            </div>
+            <div className="planned-classes-quickstart-steps">
+              <div className="planned-classes-quickstart-step">
+                <strong>1. Build it once</strong>
+                <span>Set the method, starting topic, and objectives once.</span>
               </div>
-              <div className="inline-actions">
-                <Link to="/topics" className="secondary-button">
-                  Open Topics
-                </Link>
+              <div className="planned-classes-quickstart-step">
+                <strong>2. Use it in planned classes</strong>
+                <span>Pull scenarios straight into Class Planner when mapping out the week.</span>
+              </div>
+              <div className="planned-classes-quickstart-step">
+                <strong>3. Reuse it in class logs</strong>
+                <span>Use the same scenario again when logging live classes.</span>
               </div>
             </div>
           </section>
-        ) : null}
 
-        <section className="action-grid">
-          <div className="action-card">
-            <span className="eyebrow">Build Once</span>
-            <strong>Create reusable scenarios</strong>
-            <p>
-              Set the method, starting topic, and objectives once.
-            </p>
-          </div>
-          <div className="action-card">
-            <span className="eyebrow">Plan Faster</span>
-            <strong>Use them in planned classes</strong>
-            <p>
-              Pull scenarios straight into Class Planner when mapping out the week.
-            </p>
-          </div>
-          <div className="action-card">
-            <span className="eyebrow">Reuse Later</span>
-            <strong>Use them in completed classes</strong>
-            <p>
-              Reuse the same scenarios when logging live classes.
-            </p>
-          </div>
-        </section>
+          {isManagement ? (
+            <section className="page-section scenarios-topic-helper">
+              <div className="section-header">
+                <div>
+                  <h3>Do you need to add a topic first?</h3>
+                  <p className="section-note">
+                    Open Topics if you still need the starting position, technique, or teaching focus before you build the scenario.
+                  </p>
+                </div>
+                <div className="inline-actions">
+                  <Link to="/topics" className="secondary-button">
+                    Open Topics
+                  </Link>
+                </div>
+              </div>
+            </section>
+          ) : null}
 
-        <section className="stats-grid">
+          <section className="stats-grid">
           {scenarioSummaryCards.map((card) => (
             <div key={card.label} className="stat-card">
               <div className="stat-label">{card.label}</div>

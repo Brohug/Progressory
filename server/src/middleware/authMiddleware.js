@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
+const { sendClientError } = require('./errorHandler');
+const { enforceBillingAccess } = require('./billingMiddleware');
 
 const STAFF_ROLES = ['owner', 'admin', 'coach'];
 const MANAGEMENT_ROLES = ['owner', 'admin'];
@@ -12,7 +14,8 @@ const protect = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
+      return sendClientError(res, {
+        status: 401,
         message: 'Not authorized, no token provided'
       });
     }
@@ -31,7 +34,8 @@ const protect = async (req, res, next) => {
     );
 
     if (rows.length === 0) {
-      return res.status(401).json({
+      return sendClientError(res, {
+        status: 401,
         message: 'Not authorized, account no longer exists'
       });
     }
@@ -39,7 +43,8 @@ const protect = async (req, res, next) => {
     const currentUser = rows[0];
 
     if (!currentUser.is_active) {
-      return res.status(401).json({
+      return sendClientError(res, {
+        status: 401,
         message: 'Not authorized, this account is inactive'
       });
     }
@@ -51,9 +56,10 @@ const protect = async (req, res, next) => {
       member_id: currentUser.member_id || null
     };
 
-    next();
+    return enforceBillingAccess(req, res, next);
   } catch (error) {
-    return res.status(401).json({
+    return sendClientError(res, {
+      status: 401,
       message: 'Not authorized, invalid token'
     });
   }
@@ -65,13 +71,15 @@ module.exports = {
   isManagementRole,
   requireRoles: (...allowedRoles) => (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({
+      return sendClientError(res, {
+        status: 401,
         message: 'Not authorized'
       });
     }
 
     if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({
+      return sendClientError(res, {
+        status: 403,
         message: 'You do not have permission to access this resource'
       });
     }
@@ -80,13 +88,15 @@ module.exports = {
   },
   requireStaff: (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({
+      return sendClientError(res, {
+        status: 401,
         message: 'Not authorized'
       });
     }
 
     if (!isStaffRole(req.user.role)) {
-      return res.status(403).json({
+      return sendClientError(res, {
+        status: 403,
         message: 'Only staff accounts can access this resource'
       });
     }
@@ -95,13 +105,15 @@ module.exports = {
   },
   requireManagement: (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({
+      return sendClientError(res, {
+        status: 401,
         message: 'Not authorized'
       });
     }
 
     if (!isManagementRole(req.user.role)) {
-      return res.status(403).json({
+      return sendClientError(res, {
+        status: 403,
         message: 'Only owner or admin accounts can access this resource'
       });
     }
@@ -110,13 +122,15 @@ module.exports = {
   },
   requireOwner: (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({
+      return sendClientError(res, {
+        status: 401,
         message: 'Not authorized'
       });
     }
 
     if (req.user.role !== 'owner') {
-      return res.status(403).json({
+      return sendClientError(res, {
+        status: 403,
         message: 'Only the owner can access this resource'
       });
     }

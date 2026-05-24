@@ -151,7 +151,7 @@ export default function DashboardPage() {
     {
       key: 'planned',
       title: 'Plan your first class',
-      description: 'Start in Class Planner so coaches know what is supposed to happen before class starts.',
+      description: 'Build the next session in Class Planner before class starts.',
       helper: 'This gives the gym a usable day-to-day workflow right away.',
       to: '/planned-classes',
       complete: plannedClasses.length > 0
@@ -159,32 +159,32 @@ export default function DashboardPage() {
     {
       key: 'topics',
       title: 'Add topics for your curriculum',
-      description: 'Build the topic structure first so classes, Library, and Decision Trees all connect cleanly.',
-      helper: 'Without topics, the rest of the app feels much more disconnected.',
+      description: 'Add the positions, techniques, and concepts your gym actually teaches.',
+      helper: 'Topics are the glue between classes, member progress, Library, and study tools.',
       to: '/index',
       complete: topics.length > 0
     },
     {
       key: 'scenarios',
       title: 'Add reusable training scenarios',
-      description: 'Save common class ideas so planning gets faster after the first few sessions.',
-      helper: 'This helps coaches reuse good class structures instead of rebuilding from scratch.',
+      description: 'Save class templates once you know the style of session you repeat a lot.',
+      helper: 'Useful later, but not required before the main workflow is already working.',
       to: '/training-scenarios',
       complete: activeTrainingScenarioCount > 0
     },
     {
       key: 'members',
       title: 'Add your members',
-      description: 'Get members in the system so attendance and progress can start being useful.',
-      helper: 'The coach workflow becomes much better once people can actually be checked in.',
+      description: 'Add members so attendance and progress tracking become real instead of just structure.',
+      helper: 'Once members exist, class logs and attendance start doing useful work for the gym.',
       to: '/members',
       complete: activeMemberCount > 0
     },
     {
       key: 'attendance',
       title: 'Record attendance for a class',
-      description: 'Once a class and members exist, record attendance so the app starts tracking real gym activity.',
-      helper: 'This is the point where the setup becomes a working coaching system instead of just structure.',
+      description: 'Take attendance after class so the class log, member records, and progress all stay connected.',
+      helper: 'This is where Progressory starts feeling like a live coaching workflow instead of setup.',
       to: '/classes?workflow=attendance-ready',
       complete: attendanceSnapshot.classesWithAttendance > 0
     }
@@ -398,8 +398,8 @@ export default function DashboardPage() {
   ];
 
   const staffPageIntro = isManagement
-    ? 'Start with today’s job, then jump straight into the next one.'
-    : 'Start with today’s class work, then jump into planning, logs, members, or study support.';
+    ? 'New to Progressory? Use the setup guide once, then come back to Today and Quick Actions for the normal daily workflow.'
+    : 'Start with today\'s class work, then jump into planning, logs, members, or study support.';
 
   useEffect(() => {
     if (!isMember) {
@@ -793,9 +793,9 @@ export default function DashboardPage() {
               <section className="page-section dashboard-guide-section">
                 <div className="section-header">
                   <div>
-                    <h3>Want a walkthrough of the application?</h3>
+                    <h3>New to Progressory?</h3>
                     <p className="section-note">
-                      Get a quick owner setup tour and keep the rest of the page quieter while you follow it.
+                      Use this once to understand how the app flows, then come back to Today and Quick Actions for normal use.
                     </p>
                   </div>
                   <div className="inline-actions">
@@ -817,26 +817,30 @@ export default function DashboardPage() {
                 </div>
                 <div className="dashboard-guide-grid">
                   <div className="dashboard-guide-highlight">
-                    <span className="eyebrow">Core setup leads the app</span>
+                    <span className="eyebrow">How the app works</span>
                     <strong>
-                      Build your structure first, then let the daily coaching workflow take over.
+                      Set up the basics once, then run the gym from planning, class logs, and attendance.
                     </strong>
                     <p className="meta-text">
-                      Start with programs, curriculum topics, reusable scenarios, and members. Then plan classes, finish class admin, record attendance, and add Library resources when you are ready to support coaches and members even more.
+                      Progressory works best when you first add the topics and people your gym cares about. After that, most daily work happens through Class Planner, Class Logs, and attendance, while Library and study tools support the workflow later.
                     </p>
                   </div>
                   <div className="dashboard-guide-steps">
                     <div className="dashboard-guide-step">
-                      <strong>1. Build the structure</strong>
-                      <span>Add programs, curriculum topics, scenarios, and members.</span>
+                      <strong>1. Add your gym basics</strong>
+                      <span>Create curriculum topics, add members, and set up programs only if you actually use them.</span>
                     </div>
                     <div className="dashboard-guide-step">
-                      <strong>2. Run the class workflow</strong>
-                      <span>Plan classes first, then finish attendance, topics, and training entries after class.</span>
+                      <strong>2. Plan the next class</strong>
+                      <span>Use Class Planner to build the session before class starts.</span>
                     </div>
                     <div className="dashboard-guide-step">
-                      <strong>3. Add the extras later</strong>
-                      <span>Library, Decision Trees, and progress become much stronger once the gym workflow is already moving.</span>
+                      <strong>3. Finish the class workflow</strong>
+                      <span>After class, complete the log, take attendance, and let member progress update from the topics taught.</span>
+                    </div>
+                    <div className="dashboard-guide-step">
+                      <strong>4. Add support tools later</strong>
+                      <span>Library, Entry Setups, Decision Trees, and scenarios help more once the main workflow is already moving.</span>
                     </div>
                   </div>
                 </div>
@@ -847,7 +851,7 @@ export default function DashboardPage() {
               <section className="page-section dashboard-guide-mini">
                 <div className="section-header">
                   <div>
-                    <h3>Want a walkthrough later?</h3>
+                    <h3>Want the app guide later?</h3>
                     <p className="section-note">
                       Keep this tucked away for now and bring it back whenever you want the guided owner walkthrough again.
                     </p>
@@ -867,26 +871,30 @@ export default function DashboardPage() {
                   <div className="dashboard-guide-mini-expanded">
                     <div className="dashboard-guide-grid">
                       <div className="dashboard-guide-highlight">
-                        <span className="eyebrow">Core setup leads the app</span>
+                        <span className="eyebrow">How the app works</span>
                         <strong>
-                          Build your structure first, then let the daily coaching workflow take over.
+                          Set up the basics once, then run the gym from planning, class logs, and attendance.
                         </strong>
                         <p className="meta-text">
-                          Start with programs, curriculum topics, reusable scenarios, and members. Then plan classes, finish class admin, record attendance, and add Library resources when you are ready to support coaches and members even more.
+                          Progressory works best when you first add the topics and people your gym cares about. After that, most daily work happens through Class Planner, Class Logs, and attendance, while Library and study tools support the workflow later.
                         </p>
                       </div>
                       <div className="dashboard-guide-steps">
                         <div className="dashboard-guide-step">
-                          <strong>1. Build the structure</strong>
-                          <span>Add programs, curriculum topics, scenarios, and members.</span>
+                          <strong>1. Add your gym basics</strong>
+                          <span>Create curriculum topics, add members, and set up programs only if you actually use them.</span>
                         </div>
                         <div className="dashboard-guide-step">
-                          <strong>2. Run the class workflow</strong>
-                          <span>Plan classes first, then finish attendance, topics, and training entries after class.</span>
+                          <strong>2. Plan the next class</strong>
+                          <span>Use Class Planner to build the session before class starts.</span>
                         </div>
                         <div className="dashboard-guide-step">
-                          <strong>3. Add the extras later</strong>
-                          <span>Library, Decision Trees, and progress become much stronger once the gym workflow is already moving.</span>
+                          <strong>3. Finish the class workflow</strong>
+                          <span>After class, complete the log, take attendance, and let member progress update from the topics taught.</span>
+                        </div>
+                        <div className="dashboard-guide-step">
+                          <strong>4. Add support tools later</strong>
+                          <span>Library, Entry Setups, Decision Trees, and scenarios help more once the main workflow is already moving.</span>
                         </div>
                       </div>
                     </div>
@@ -1200,3 +1208,6 @@ export default function DashboardPage() {
     </Layout>
   );
 }
+
+
+

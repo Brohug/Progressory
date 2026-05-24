@@ -1236,13 +1236,38 @@ export default function PlannedClassesPage() {
 
   return (
     <Layout>
-      <div className="planned-classes-page">
-        <h2 className="page-title">Class Planner</h2>
-        <p className="page-intro">
-          Plan the next class, tie it to topics or scenarios, then finish it later in Class Logs.
-        </p>
+        <div className="planned-classes-page">
+          <h2 className="page-title">Class Planner</h2>
+          <p className="page-intro">
+            Plan the next class, tie it to topics or scenarios, then finish it later in Class Logs.
+          </p>
 
-        <section className="stats-grid planned-classes-stats-grid">
+          <section className="planned-classes-quickstart page-quickstart-card">
+            <div className="planned-classes-quickstart-copy">
+              <span className="eyebrow">What this page is for</span>
+              <strong>Class Planner is where you build the session before class starts.</strong>
+              <p className="meta-text">
+                The usual workflow is: choose the program and date, add the topics you plan to teach, save the class,
+                then complete it later in Class Logs where attendance, training entries, and member progress can follow through.
+              </p>
+            </div>
+            <div className="planned-classes-quickstart-steps">
+              <div className="planned-classes-quickstart-step">
+                <strong>1. Plan the class</strong>
+                <span>Set the date, title, program, and topics.</span>
+              </div>
+              <div className="planned-classes-quickstart-step">
+                <strong>2. Teach it</strong>
+                <span>Run the class using the plan as the reference.</span>
+              </div>
+              <div className="planned-classes-quickstart-step">
+                <strong>3. Finish it in Class Logs</strong>
+                <span>Record attendance, training entries, and let member progress update from the topics taught.</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="stats-grid planned-classes-stats-grid">
           {planSummaryCards.map((card) => (
             <div key={card.label} className="stat-card">
               <div className="stat-label">{card.label}</div>

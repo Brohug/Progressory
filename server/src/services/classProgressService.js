@@ -1,5 +1,3 @@
-const pool = require('../config/db');
-
 const validProgressStatuses = ['not_started', 'introduced', 'developing', 'competent'];
 
 const progressStatusRank = {
@@ -9,45 +7,20 @@ const progressStatusRank = {
   competent: 3
 };
 
-let ensureClassProgressColumnsPromise = null;
-
-const ensureColumnExists = async (connection, tableName, columnName, definitionSql) => {
-  const [rows] = await connection.query(`SHOW COLUMNS FROM ${tableName} LIKE ?`, [columnName]);
-
-  if (rows.length === 0) {
-    await connection.query(`ALTER TABLE ${tableName} ADD COLUMN ${definitionSql}`);
-  }
-};
-
-const ensureClassProgressColumns = async (connection = null) => {
-  if (connection) {
-    await ensureColumnExists(
-      connection,
-      'class_topics',
-      'progress_status',
-      "progress_status VARCHAR(32) NULL AFTER focus_level"
-    );
-    await ensureColumnExists(
-      connection,
-      'planned_class_topics',
-      'progress_status',
-      "progress_status VARCHAR(32) NULL AFTER focus_level"
-    );
-    return;
+const isMissingClassProgressSchemaError = (error) => {
+  if (!error) {
+    return false;
   }
 
-  if (!ensureClassProgressColumnsPromise) {
-    ensureClassProgressColumnsPromise = (async () => {
-      const pooledConnection = await pool.getConnection();
-      try {
-        await ensureClassProgressColumns(pooledConnection);
-      } finally {
-        pooledConnection.release();
-      }
-    })();
+  if (error.code === 'ER_NO_SUCH_TABLE') {
+    return /class_topics|planned_class_topics/i.test(error.sqlMessage || error.message || '');
   }
 
-  await ensureClassProgressColumnsPromise;
+  if (error.code === 'ER_BAD_FIELD_ERROR') {
+    return /progress_status/i.test(error.sqlMessage || error.message || '');
+  }
+
+  return false;
 };
 
 const inferDefaultProgressStatus = (coverageType = 'taught', focusLevel = 'focus') => {
@@ -77,6 +50,7 @@ const getPresentMemberIdsForClass = async (connection, gymId, classId) => {
      JOIN members m ON cm.member_id = m.id
      WHERE cm.class_id = ?
        AND m.gym_id = ?
+       AND cm.archived_at IS NULL
        AND cm.attendance_status = 'present'`,
     [classId, gymId]
   );
@@ -85,8 +59,6 @@ const getPresentMemberIdsForClass = async (connection, gymId, classId) => {
 };
 
 const getProgressTopicSpecsForClass = async (connection, gymId, classId) => {
-  await ensureClassProgressColumns(connection);
-
   const [rows] = await connection.query(
     `SELECT DISTINCT
         ct.curriculum_topic_id,
@@ -96,7 +68,8 @@ const getProgressTopicSpecsForClass = async (connection, gymId, classId) => {
      FROM class_topics ct
      JOIN curriculum_topics ctopic ON ct.curriculum_topic_id = ctopic.id
      WHERE ct.class_id = ?
-       AND ctopic.gym_id = ?`,
+       AND ctopic.gym_id = ?
+       AND ct.archived_at IS NULL`,
     [classId, gymId]
   );
 
@@ -170,7 +143,7 @@ const applyProgressToMembersAndTopics = async (
 module.exports = {
   validProgressStatuses,
   progressStatusRank,
-  ensureClassProgressColumns,
+  isMissingClassProgressSchemaError,
   inferDefaultProgressStatus,
   normalizeProgressStatus,
   getPresentMemberIdsForClass,

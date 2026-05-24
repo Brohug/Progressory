@@ -890,7 +890,32 @@ export default function CurriculumIndexPage() {
               : 'Search the curriculum map, then see whether each item already exists in Topics, class logs, or Library.'}
           </p>
 
-        {error && <p className="error-text">{error}</p>}
+          <section className="page-quickstart-card curriculum-quickstart">
+            <div className="planned-classes-quickstart-copy">
+              <span className="eyebrow">What this page is for</span>
+              <strong>Curriculum is the big-picture map of what your gym teaches.</strong>
+              <p className="meta-text">
+                Use this page to search the full curriculum, understand where a position or technique fits, and decide
+                whether it still needs a real Topic, Library support, or class usage.
+              </p>
+            </div>
+            <div className="planned-classes-quickstart-steps">
+              <div className="planned-classes-quickstart-step">
+                <strong>1. Search the idea</strong>
+                <span>Look up the position, technique, or concept you care about.</span>
+              </div>
+              <div className="planned-classes-quickstart-step">
+                <strong>2. Check the app links</strong>
+                <span>See whether it already exists in Topics, class logs, or Library.</span>
+              </div>
+              <div className="planned-classes-quickstart-step">
+                <strong>3. Build from there</strong>
+                <span>Create the missing topic or open the connected page that already supports it.</span>
+              </div>
+            </div>
+          </section>
+
+          {error && <p className="error-text">{error}</p>}
 
         <section className="page-section">
             <div className="section-header">

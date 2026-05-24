@@ -1,5 +1,11 @@
 const pool = require('../config/db');
 
+const isMissingClassArchiveSchemaError = (error) => (
+  Boolean(error)
+  && error.code === 'ER_BAD_FIELD_ERROR'
+  && /archived_at/i.test(error.sqlMessage || error.message || '')
+);
+
 const getRecentClasses = async (req, res) => {
   try {
     const gymId = req.user.gym_id;
@@ -19,6 +25,7 @@ const getRecentClasses = async (req, res) => {
        JOIN programs p ON c.program_id = p.id
        JOIN users hc ON c.head_coach_user_id = hc.id
        WHERE c.gym_id = ?
+         AND c.archived_at IS NULL
        ORDER BY c.class_date DESC, c.created_at DESC
        LIMIT ?`,
       [gymId, limit]
@@ -26,11 +33,16 @@ const getRecentClasses = async (req, res) => {
 
     return res.status(200).json(rows);
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Get recent classes report error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -52,8 +64,10 @@ const getTopicCoverage = async (req, res) => {
               SUM(CASE WHEN class_topic.focus_level = 'review' THEN 1 ELSE 0 END) AS review_focus_count
        FROM curriculum_topics ct
        LEFT JOIN programs p ON ct.program_id = p.id
-       LEFT JOIN class_topics class_topic ON ct.id = class_topic.curriculum_topic_id
-       LEFT JOIN classes c ON class_topic.class_id = c.id
+       LEFT JOIN class_topics class_topic
+         ON ct.id = class_topic.curriculum_topic_id
+        AND class_topic.archived_at IS NULL
+       LEFT JOIN classes c ON class_topic.class_id = c.id AND c.archived_at IS NULL
        WHERE ct.gym_id = ?
        GROUP BY ct.id, ct.title, ct.topic_type, p.name
        ORDER BY total_times_used DESC, ct.title ASC`,
@@ -62,11 +76,16 @@ const getTopicCoverage = async (req, res) => {
 
     return res.status(200).json(rows);
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Get topic coverage report error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -84,8 +103,10 @@ const getNeglectedTopics = async (req, res) => {
               MAX(c.class_date) AS last_used_date
        FROM curriculum_topics ct
        LEFT JOIN programs p ON ct.program_id = p.id
-       LEFT JOIN class_topics class_topic ON ct.id = class_topic.curriculum_topic_id
-       LEFT JOIN classes c ON class_topic.class_id = c.id
+       LEFT JOIN class_topics class_topic
+         ON ct.id = class_topic.curriculum_topic_id
+        AND class_topic.archived_at IS NULL
+       LEFT JOIN classes c ON class_topic.class_id = c.id AND c.archived_at IS NULL
        WHERE ct.gym_id = ?
        GROUP BY ct.id, ct.title, ct.topic_type, p.name
        HAVING last_used_date IS NULL
@@ -96,11 +117,16 @@ const getNeglectedTopics = async (req, res) => {
 
     return res.status(200).json(rows);
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Get neglected topics report error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -116,8 +142,10 @@ const getTrainingMethodUsage = async (req, res) => {
               COUNT(cte.id) AS total_segments,
               COALESCE(SUM(cte.duration_minutes), 0) AS total_duration_minutes
        FROM training_methods tm
-       LEFT JOIN class_training_entries cte ON tm.id = cte.training_method_id
-       LEFT JOIN classes c ON cte.class_id = c.id
+       LEFT JOIN class_training_entries cte
+         ON tm.id = cte.training_method_id
+        AND cte.archived_at IS NULL
+       LEFT JOIN classes c ON cte.class_id = c.id AND c.archived_at IS NULL
        WHERE tm.gym_id = ?
        GROUP BY tm.id, tm.name, tm.description
        ORDER BY total_segments DESC, tm.name ASC`,
@@ -126,11 +154,16 @@ const getTrainingMethodUsage = async (req, res) => {
 
     return res.status(200).json(rows);
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Get training method usage report error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -152,10 +185,13 @@ const getRecentTopicSignals = async (req, res) => {
               class_topic.focus_level,
               class_topic.coverage_type
        FROM classes c
-       JOIN class_topics class_topic ON c.id = class_topic.class_id
+       JOIN class_topics class_topic
+         ON c.id = class_topic.class_id
+        AND class_topic.archived_at IS NULL
        JOIN curriculum_topics ct ON class_topic.curriculum_topic_id = ct.id
        LEFT JOIN programs p ON ct.program_id = p.id
        WHERE c.gym_id = ?
+         AND c.archived_at IS NULL
        ORDER BY c.class_date DESC, c.created_at DESC, class_topic.id DESC
        LIMIT ?`,
       [gymId, limit]
@@ -163,11 +199,16 @@ const getRecentTopicSignals = async (req, res) => {
 
     return res.status(200).json(rows);
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Get recent topic signals report error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };

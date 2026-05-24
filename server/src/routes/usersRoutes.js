@@ -13,11 +13,12 @@ const {
 } = require('../controllers/usersController');
 
 const { protect, requireOwner } = require('../middleware/authMiddleware');
+const { ownerInviteLimiter } = require('../middleware/rateLimit');
 
 router.use(protect, requireOwner);
 
-router.post('/member-access', createMemberAccessInvite);
-router.post('/staff-access', createStaffAccessInvite);
+router.post('/member-access', ownerInviteLimiter, createMemberAccessInvite);
+router.post('/staff-access', ownerInviteLimiter, createStaffAccessInvite);
 router.post('/', createUser);
 router.get('/', getUsers);
 router.get('/:id', getUserById);

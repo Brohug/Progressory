@@ -27,7 +27,7 @@ Set these on the hosted API service:
 ```text
 PORT=4000
 CLIENT_URL=https://your-demo-frontend-url
-CORS_ORIGIN=https://your-demo-frontend-url
+ALLOWED_ORIGINS=https://your-demo-frontend-url,https://preview-demo-frontend-url
 DB_HOST=your-demo-mysql-host
 DB_PORT=3306
 DB_USER=your-demo-mysql-user
@@ -36,9 +36,12 @@ DB_NAME=your-demo-mysql-database
 JWT_SECRET=use-a-long-random-secret
 JWT_EXPIRES_IN=8h
 DEMO_PASSWORD=choose-a-customer-safe-demo-password
+BILLING_STRIPE_MODE=test
 ```
 
-`CORS_ORIGIN` can be a comma-separated list if you need both a preview URL and a production demo URL.
+`ALLOWED_ORIGINS` should be a comma-separated list if you need both a preview URL and a production demo URL.
+For demo environments, keep Stripe in test mode only and do not set live Stripe keys.
+If the demo gym should stay permanently demo-only, you can leave Stripe billing vars unset entirely because the seeded demo gym uses `plan_code=demo` / `billing_status=demo`.
 
 ## Frontend environment variables
 
@@ -95,7 +98,8 @@ Password: the DEMO_PASSWORD you set
 
 - Use a demo database or demo tenant only.
 - Confirm the frontend URL is public and the backend URL is not your local machine.
-- Confirm `CORS_ORIGIN` points to the demo frontend URL.
+- Confirm `ALLOWED_ORIGINS` includes the demo frontend URL.
+- Confirm `BILLING_STRIPE_MODE=test` for any demo environment using Stripe.
 - Confirm login shows `Gem State Jiu Jitsu`.
 - Do not include real members, real customer data, or your owner account.
 - Change `DEMO_PASSWORD` after the customer trial if needed.

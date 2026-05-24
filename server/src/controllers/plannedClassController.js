@@ -1,7 +1,8 @@
 const pool = require('../config/db');
+const { sendClientError } = require('../middleware/errorHandler');
 const {
-  ensureClassProgressColumns,
-  inferDefaultProgressStatus
+  inferDefaultProgressStatus,
+  isMissingClassProgressSchemaError
 } = require('../services/classProgressService');
 
 const completePlannedClassRecord = async ({
@@ -31,13 +32,27 @@ const completePlannedClassRecord = async ({
   const completedClassId = classInsert.insertId;
 
   const [plannedTopicRows] = await connection.query(
-    `SELECT curriculum_topic_id, focus_level, progress_status
+    `SELECT pct.curriculum_topic_id, pct.focus_level, pct.progress_status
+     FROM planned_class_topics pct
+     JOIN curriculum_topics ct ON pct.curriculum_topic_id = ct.id
+     WHERE pct.planned_class_id = ?
+       AND ct.gym_id = ?
+       AND ct.is_active = TRUE`,
+    [plannedClassId, gymId]
+  );
+
+  const [plannedTopicCountRows] = await connection.query(
+    `SELECT COUNT(*) AS total
      FROM planned_class_topics
      WHERE planned_class_id = ?`,
     [plannedClassId]
   );
 
-  await ensureClassProgressColumns(connection);
+  if (plannedTopicRows.length !== Number(plannedTopicCountRows[0]?.total || 0)) {
+    const error = new Error('One or more planned topics are inactive and can no longer be used.');
+    error.statusCode = 400;
+    throw error;
+  }
 
   for (const plannedTopic of plannedTopicRows) {
     const finalProgressStatus = plannedTopic.progress_status
@@ -51,8 +66,8 @@ const completePlannedClassRecord = async ({
     );
   }
 
-  if (plannedClass.training_scenario_id) {
-    const [scenarioRows] = await connection.query(
+    if (plannedClass.training_scenario_id) {
+      const [scenarioRows] = await connection.query(
       `SELECT *
        FROM training_scenarios
        WHERE id = ? AND gym_id = ?`,
@@ -61,6 +76,21 @@ const completePlannedClassRecord = async ({
 
     if (scenarioRows.length > 0) {
       const scenario = scenarioRows[0];
+      if (scenario.starting_position_topic_id) {
+        const [activeStartingTopicRows] = await connection.query(
+          `SELECT id
+           FROM curriculum_topics
+           WHERE id = ? AND gym_id = ? AND is_active = TRUE`,
+          [scenario.starting_position_topic_id, gymId]
+        );
+
+        if (activeStartingTopicRows.length === 0) {
+          const error = new Error('One or more planned topics are inactive and can no longer be used.');
+          error.statusCode = 400;
+          throw error;
+        }
+      }
+
       const durationMinutes = scenario.round_duration_seconds
         ? Math.max(1, Math.round(scenario.round_duration_seconds / 60))
         : null;
@@ -112,7 +142,6 @@ const getPlannedClasses = async (req, res) => {
     const gymId = req.user.gym_id;
     const isMember = req.user.role === 'member';
     const plannedStatusClause = isMember ? "AND pc.status = 'planned'" : '';
-    await ensureClassProgressColumns();
 
     const [rows] = await pool.query(
       `SELECT
@@ -171,11 +200,16 @@ const getPlannedClasses = async (req, res) => {
 
     return res.status(200).json(plannedClasses);
   } catch (error) {
+    if (isMissingClassProgressSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class progress schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Get planned classes error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -250,13 +284,13 @@ const createPlannedClass = async (req, res) => {
     }
 
     const normalizedTopicIds = [...new Set(topic_ids.filter(Boolean).map(Number))];
-    await ensureClassProgressColumns(connection);
 
     if (normalizedTopicIds.length > 0) {
       const [topicRows] = await connection.query(
         `SELECT id
          FROM curriculum_topics
          WHERE gym_id = ?
+           AND is_active = TRUE
            AND id IN (${normalizedTopicIds.map(() => '?').join(', ')})`,
         [gymId, ...normalizedTopicIds]
       );
@@ -303,6 +337,27 @@ const createPlannedClass = async (req, res) => {
       message: 'Planned class created successfully'
     });
   } catch (error) {
+    if (error.statusCode) {
+      if (transactionStarted) {
+        await connection.rollback();
+      }
+      connection.release();
+      return sendClientError(res, {
+        status: error.statusCode,
+        message: error.message || 'Request failed'
+      });
+    }
+
+    if (isMissingClassProgressSchemaError(error)) {
+      if (transactionStarted) {
+        await connection.rollback();
+      }
+      connection.release();
+      return res.status(500).json({
+        message: 'Class progress schema is missing. Run database migrations and try again.'
+      });
+    }
+
     if (transactionStarted) {
       await connection.rollback();
     }
@@ -310,8 +365,7 @@ const createPlannedClass = async (req, res) => {
     console.error('Create planned class error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -406,13 +460,13 @@ const updatePlannedClass = async (req, res) => {
     }
 
     const normalizedTopicIds = [...new Set(topic_ids.filter(Boolean).map(Number))];
-    await ensureClassProgressColumns(connection);
 
     if (normalizedTopicIds.length > 0) {
       const [topicRows] = await connection.query(
         `SELECT id
          FROM curriculum_topics
          WHERE gym_id = ?
+           AND is_active = TRUE
            AND id IN (${normalizedTopicIds.map(() => '?').join(', ')})`,
         [gymId, ...normalizedTopicIds]
       );
@@ -465,6 +519,27 @@ const updatePlannedClass = async (req, res) => {
       message: 'Planned class updated successfully'
     });
   } catch (error) {
+    if (error.statusCode) {
+      if (transactionStarted) {
+        await connection.rollback();
+      }
+      connection.release();
+      return sendClientError(res, {
+        status: error.statusCode,
+        message: error.message || 'Request failed'
+      });
+    }
+
+    if (isMissingClassProgressSchemaError(error)) {
+      if (transactionStarted) {
+        await connection.rollback();
+      }
+      connection.release();
+      return res.status(500).json({
+        message: 'Class progress schema is missing. Run database migrations and try again.'
+      });
+    }
+
     if (transactionStarted) {
       await connection.rollback();
     }
@@ -472,8 +547,7 @@ const updatePlannedClass = async (req, res) => {
     console.error('Update planned class error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -512,8 +586,7 @@ const deletePlannedClass = async (req, res) => {
     console.error('Delete planned class error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -569,6 +642,16 @@ const processDuePlannedClasses = async (req, res) => {
       processed
     });
   } catch (error) {
+    if (isMissingClassProgressSchemaError(error)) {
+      if (transactionStarted) {
+        await connection.rollback();
+      }
+      connection.release();
+      return res.status(500).json({
+        message: 'Class progress schema is missing. Run database migrations and try again.'
+      });
+    }
+
     if (transactionStarted) {
       await connection.rollback();
     }
@@ -576,8 +659,7 @@ const processDuePlannedClasses = async (req, res) => {
     console.error('Process due planned classes error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -636,6 +718,16 @@ const completePlannedClass = async (req, res) => {
       classId: completedClassId
     });
   } catch (error) {
+    if (isMissingClassProgressSchemaError(error)) {
+      if (transactionStarted) {
+        await connection.rollback();
+      }
+      connection.release();
+      return res.status(500).json({
+        message: 'Class progress schema is missing. Run database migrations and try again.'
+      });
+    }
+
     if (transactionStarted) {
       await connection.rollback();
     }
@@ -643,8 +735,7 @@ const completePlannedClass = async (req, res) => {
     console.error('Complete planned class error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };

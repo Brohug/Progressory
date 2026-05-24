@@ -1,4 +1,76 @@
 const pool = require('../config/db');
+const { sendClientError } = require('../middleware/errorHandler');
+
+const ensureGymScopedForeignKey = async ({
+  gymId,
+  value,
+  table,
+  message,
+  extraWhere = '',
+  extraParams = []
+}) => {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+
+  const normalizedValue = Number(value);
+
+  if (!Number.isInteger(normalizedValue) || normalizedValue <= 0) {
+    const error = new Error(message);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const [rows] = await pool.query(
+    `SELECT id FROM ${table} WHERE id = ? AND gym_id = ?${extraWhere}`,
+    [normalizedValue, gymId, ...extraParams]
+  );
+
+  if (rows.length === 0) {
+    const error = new Error(message);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return normalizedValue;
+};
+
+const getTrainingScenarioByIdForGym = async ({ scenarioId, gymId }) => {
+  const [rows] = await pool.query(
+    `SELECT
+      ts.id,
+      ts.gym_id,
+      ts.program_id,
+      ts.training_method_id,
+      ts.name,
+      ts.description,
+      ts.starting_position_topic_id,
+      ts.top_objective,
+      ts.bottom_objective,
+      ts.constraints_text,
+      ts.round_duration_seconds,
+      ts.is_active,
+      ts.created_at,
+      ts.updated_at,
+      p.name AS program_name,
+      tm.name AS training_method_name,
+      ct.title AS starting_position_title
+    FROM training_scenarios ts
+    LEFT JOIN programs p
+      ON ts.program_id = p.id
+     AND p.gym_id = ts.gym_id
+    INNER JOIN training_methods tm
+      ON ts.training_method_id = tm.id
+     AND tm.gym_id = ts.gym_id
+    LEFT JOIN curriculum_topics ct
+      ON ts.starting_position_topic_id = ct.id
+     AND ct.gym_id = ts.gym_id
+    WHERE ts.id = ? AND ts.gym_id = ?`,
+    [scenarioId, gymId]
+  );
+
+  return rows[0] || null;
+};
 
 const getTrainingScenarios = async (req, res) => {
   try {
@@ -24,9 +96,15 @@ const getTrainingScenarios = async (req, res) => {
         tm.name AS training_method_name,
         ct.title AS starting_position_title
       FROM training_scenarios ts
-      LEFT JOIN programs p ON ts.program_id = p.id
-      INNER JOIN training_methods tm ON ts.training_method_id = tm.id
-      LEFT JOIN curriculum_topics ct ON ts.starting_position_topic_id = ct.id
+      LEFT JOIN programs p
+        ON ts.program_id = p.id
+       AND p.gym_id = ts.gym_id
+      INNER JOIN training_methods tm
+        ON ts.training_method_id = tm.id
+       AND tm.gym_id = ts.gym_id
+      LEFT JOIN curriculum_topics ct
+        ON ts.starting_position_topic_id = ct.id
+       AND ct.gym_id = ts.gym_id
       WHERE ts.gym_id = ?
       ORDER BY ts.is_active DESC, ts.created_at DESC`,
       [gymId]
@@ -37,8 +115,7 @@ const getTrainingScenarios = async (req, res) => {
     console.error('Get training scenarios error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -65,6 +142,25 @@ const createTrainingScenario = async (req, res) => {
     }
 
     const trimmedName = name.trim();
+    const validatedMethodId = await ensureGymScopedForeignKey({
+      gymId,
+      value: training_method_id,
+      table: 'training_methods',
+      message: 'Training method not found for this gym'
+    });
+    const validatedProgramId = await ensureGymScopedForeignKey({
+      gymId,
+      value: program_id,
+      table: 'programs',
+      message: 'Program not found for this gym'
+    });
+    const validatedStartingTopicId = await ensureGymScopedForeignKey({
+      gymId,
+      value: starting_position_topic_id,
+      table: 'curriculum_topics',
+      extraWhere: ' AND is_active = TRUE',
+      message: 'Starting position topic not found for this gym'
+    });
 
     const [duplicateRows] = await pool.query(
       `SELECT id
@@ -74,7 +170,7 @@ const createTrainingScenario = async (req, res) => {
          AND COALESCE(program_id, 0) = COALESCE(?, 0)
          AND LOWER(name) = LOWER(?)
          AND is_active = TRUE`,
-      [gymId, training_method_id, program_id || null, trimmedName]
+      [gymId, validatedMethodId, validatedProgramId, trimmedName]
     );
 
     if (duplicateRows.length > 0) {
@@ -102,11 +198,11 @@ const createTrainingScenario = async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
       [
         gymId,
-        program_id || null,
-        training_method_id,
+        validatedProgramId,
+        validatedMethodId,
         trimmedName,
         description || null,
-        starting_position_topic_id || null,
+        validatedStartingTopicId,
         top_objective || null,
         bottom_objective || null,
         constraints_text || null,
@@ -114,43 +210,27 @@ const createTrainingScenario = async (req, res) => {
       ]
     );
 
-    const [rows] = await pool.query(
-      `SELECT
-        ts.id,
-        ts.gym_id,
-        ts.program_id,
-        ts.training_method_id,
-        ts.name,
-        ts.description,
-        ts.starting_position_topic_id,
-        ts.top_objective,
-        ts.bottom_objective,
-        ts.constraints_text,
-        ts.round_duration_seconds,
-        ts.is_active,
-        ts.created_at,
-        ts.updated_at,
-        p.name AS program_name,
-        tm.name AS training_method_name,
-        ct.title AS starting_position_title
-      FROM training_scenarios ts
-      LEFT JOIN programs p ON ts.program_id = p.id
-      INNER JOIN training_methods tm ON ts.training_method_id = tm.id
-      LEFT JOIN curriculum_topics ct ON ts.starting_position_topic_id = ct.id
-      WHERE ts.id = ? AND ts.gym_id = ?`,
-      [result.insertId, gymId]
-    );
+    const trainingScenario = await getTrainingScenarioByIdForGym({
+      scenarioId: result.insertId,
+      gymId
+    });
 
     return res.status(201).json({
       message: 'Training scenario created successfully',
-      trainingScenario: rows[0]
+      trainingScenario
     });
   } catch (error) {
+    if (error.statusCode) {
+      return sendClientError(res, {
+        status: error.statusCode,
+        message: error.message || 'Request failed'
+      });
+    }
+
     console.error('Create training scenario error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -214,9 +294,29 @@ const updateTrainingScenario = async (req, res) => {
       });
     }
 
+    const validatedMethodId = await ensureGymScopedForeignKey({
+      gymId,
+      value: nextMethodId,
+      table: 'training_methods',
+      message: 'Training method not found for this gym'
+    });
+    const validatedProgramId = await ensureGymScopedForeignKey({
+      gymId,
+      value: nextProgramId,
+      table: 'programs',
+      message: 'Program not found for this gym'
+    });
+    const validatedStartingTopicId = await ensureGymScopedForeignKey({
+      gymId,
+      value: nextStartingTopicId,
+      table: 'curriculum_topics',
+      extraWhere: ' AND is_active = TRUE',
+      message: 'Starting position topic not found for this gym'
+    });
+
     const identityUnchanged =
-      String(current.program_id ?? '') === String(nextProgramId ?? '') &&
-      String(current.training_method_id) === String(nextMethodId) &&
+      String(current.program_id ?? '') === String(validatedProgramId ?? '') &&
+      String(current.training_method_id) === String(validatedMethodId) &&
       String(current.name).trim().toLowerCase() === String(nextName).trim().toLowerCase();
 
     if (!identityUnchanged) {
@@ -228,7 +328,7 @@ const updateTrainingScenario = async (req, res) => {
            AND COALESCE(program_id, 0) = COALESCE(?, 0)
            AND LOWER(name) = LOWER(?)
            AND id <> ?`,
-        [gymId, nextMethodId, nextProgramId, nextName, id]
+        [gymId, validatedMethodId, validatedProgramId, nextName, id]
       );
 
       if (duplicateRows.length > 0) {
@@ -254,11 +354,11 @@ const updateTrainingScenario = async (req, res) => {
          is_active = ?
        WHERE id = ? AND gym_id = ?`,
       [
-        nextProgramId,
-        nextMethodId,
+        validatedProgramId,
+        validatedMethodId,
         nextName,
         nextDescription,
-        nextStartingTopicId,
+        validatedStartingTopicId,
         nextTopObjective,
         nextBottomObjective,
         nextConstraints,
@@ -269,43 +369,27 @@ const updateTrainingScenario = async (req, res) => {
       ]
     );
 
-    const [rows] = await pool.query(
-      `SELECT
-        ts.id,
-        ts.gym_id,
-        ts.program_id,
-        ts.training_method_id,
-        ts.name,
-        ts.description,
-        ts.starting_position_topic_id,
-        ts.top_objective,
-        ts.bottom_objective,
-        ts.constraints_text,
-        ts.round_duration_seconds,
-        ts.is_active,
-        ts.created_at,
-        ts.updated_at,
-        p.name AS program_name,
-        tm.name AS training_method_name,
-        ct.title AS starting_position_title
-      FROM training_scenarios ts
-      LEFT JOIN programs p ON ts.program_id = p.id
-      INNER JOIN training_methods tm ON ts.training_method_id = tm.id
-      LEFT JOIN curriculum_topics ct ON ts.starting_position_topic_id = ct.id
-      WHERE ts.id = ? AND ts.gym_id = ?`,
-      [id, gymId]
-    );
+    const trainingScenario = await getTrainingScenarioByIdForGym({
+      scenarioId: id,
+      gymId
+    });
 
     return res.status(200).json({
       message: 'Training scenario updated successfully',
-      trainingScenario: rows[0]
+      trainingScenario
     });
   } catch (error) {
+    if (error.statusCode) {
+      return sendClientError(res, {
+        status: error.statusCode,
+        message: error.message || 'Request failed'
+      });
+    }
+
     console.error('Update training scenario error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -340,8 +424,7 @@ const deactivateTrainingScenario = async (req, res) => {
     console.error('Deactivate training scenario error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -363,7 +446,9 @@ const deleteTrainingScenario = async (req, res) => {
     }
 
     await pool.query(
-      'DELETE FROM training_scenarios WHERE id = ? AND gym_id = ?',
+      `UPDATE training_scenarios
+       SET is_active = FALSE
+       WHERE id = ? AND gym_id = ?`,
       [id, gymId]
     );
 
@@ -374,8 +459,7 @@ const deleteTrainingScenario = async (req, res) => {
     console.error('Delete training scenario error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };

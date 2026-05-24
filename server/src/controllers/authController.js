@@ -102,8 +102,7 @@ const register = async (req, res) => {
     console.error('Register error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   } finally {
     connection.release();
@@ -177,8 +176,7 @@ const login = async (req, res) => {
     console.error('Login error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -266,8 +264,7 @@ const getMemberAccessInvite = async (req, res) => {
     console.error('Get member access invite error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -351,8 +348,7 @@ const setMemberAccessPassword = async (req, res) => {
     console.error('Set member access password error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   } finally {
     connection.release();
@@ -398,8 +394,7 @@ const getStaffAccessInvite = async (req, res) => {
     console.error('Get staff access invite error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -495,8 +490,7 @@ const setStaffAccessPassword = async (req, res) => {
     console.error('Set staff access password error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   } finally {
     connection.release();
@@ -528,8 +522,7 @@ const getMe = async (req, res) => {
     console.error('Get me error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -584,8 +577,7 @@ const updateProfile = async (req, res) => {
     console.error('Update profile error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -652,8 +644,7 @@ const changePassword = async (req, res) => {
     console.error('Change password error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };

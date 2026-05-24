@@ -9,6 +9,33 @@ const allowedEntryTypes = [
 ];
 
 const allowedVisibility = ['coach_only', 'member_visible'];
+const allowedUrlProtocols = new Set(['http:', 'https:']);
+
+const normalizeVideoUrl = (value) => {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  const trimmedValue = String(value).trim();
+
+  if (!trimmedValue) {
+    return null;
+  }
+
+  let parsedUrl;
+
+  try {
+    parsedUrl = new URL(trimmedValue);
+  } catch (error) {
+    return { error: 'Video URL must be a valid http:// or https:// URL' };
+  }
+
+  if (!allowedUrlProtocols.has(parsedUrl.protocol)) {
+    return { error: 'Video URL must use http:// or https://' };
+  }
+
+  return { value: parsedUrl.toString() };
+};
 
 const createLibraryEntry = async (req, res) => {
   try {
@@ -45,6 +72,14 @@ const createLibraryEntry = async (req, res) => {
       });
     }
 
+    const normalizedVideoUrlResult = normalizeVideoUrl(video_url);
+
+    if (normalizedVideoUrlResult?.error) {
+      return res.status(400).json({
+        message: normalizedVideoUrlResult.error
+      });
+    }
+
     if (program_id !== undefined && program_id !== null) {
       const [programRows] = await pool.query(
         'SELECT id FROM programs WHERE id = ? AND gym_id = ?',
@@ -60,7 +95,7 @@ const createLibraryEntry = async (req, res) => {
 
     if (curriculum_topic_id !== undefined && curriculum_topic_id !== null) {
       const [topicRows] = await pool.query(
-        'SELECT id FROM curriculum_topics WHERE id = ? AND gym_id = ?',
+        'SELECT id FROM curriculum_topics WHERE id = ? AND gym_id = ? AND is_active = TRUE',
         [curriculum_topic_id, gymId]
       );
 
@@ -83,7 +118,7 @@ const createLibraryEntry = async (req, res) => {
         title.trim(),
         entry_type,
         description || null,
-        video_url || null,
+        normalizedVideoUrlResult?.value ?? null,
         finalVisibility
       ]
     );
@@ -110,8 +145,7 @@ const createLibraryEntry = async (req, res) => {
     console.error('Create library entry error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -142,8 +176,7 @@ const getLibraryEntries = async (req, res) => {
     console.error('Get library entries error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -180,8 +213,7 @@ const getLibraryEntryById = async (req, res) => {
     console.error('Get library entry by ID error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -246,6 +278,14 @@ const updateLibraryEntry = async (req, res) => {
       });
     }
 
+    const normalizedVideoUrlResult = normalizeVideoUrl(updatedVideoUrl);
+
+    if (normalizedVideoUrlResult?.error) {
+      return res.status(400).json({
+        message: normalizedVideoUrlResult.error
+      });
+    }
+
     if (updatedProgramId !== null) {
       const [programRows] = await pool.query(
         'SELECT id FROM programs WHERE id = ? AND gym_id = ?',
@@ -261,7 +301,7 @@ const updateLibraryEntry = async (req, res) => {
 
     if (updatedTopicId !== null) {
       const [topicRows] = await pool.query(
-        'SELECT id FROM curriculum_topics WHERE id = ? AND gym_id = ?',
+        'SELECT id FROM curriculum_topics WHERE id = ? AND gym_id = ? AND is_active = TRUE',
         [updatedTopicId, gymId]
       );
 
@@ -282,7 +322,7 @@ const updateLibraryEntry = async (req, res) => {
         updatedTitle,
         updatedEntryType,
         updatedDescription,
-        updatedVideoUrl,
+        normalizedVideoUrlResult?.value ?? null,
         updatedVisibility,
         updatedIsActive,
         id,
@@ -312,8 +352,7 @@ const updateLibraryEntry = async (req, res) => {
     console.error('Update library entry error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -335,7 +374,9 @@ const deleteLibraryEntry = async (req, res) => {
     }
 
     await pool.query(
-      'DELETE FROM library_entries WHERE id = ? AND gym_id = ?',
+      `UPDATE library_entries
+       SET is_active = FALSE
+       WHERE id = ? AND gym_id = ?`,
       [id, gymId]
     );
 
@@ -346,8 +387,7 @@ const deleteLibraryEntry = async (req, res) => {
     console.error('Delete library entry error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };

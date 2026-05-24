@@ -1033,16 +1033,41 @@ export default function EntrySetupsPage() {
 
   return (
     <Layout>
-      <div className="entry-setups-page">
-        <h2 className="page-title">Entry Setups</h2>
-        <p className="page-intro">
-          Use this page for the reactions and opening moves that create the attack before the actual takedown,
-          submission, sweep, or back take begins. Curriculum holds the full map, and Decision Trees help you
-          continue the sequence once you choose the branch.
-        </p>
+        <div className="entry-setups-page">
+          <h2 className="page-title">Entry Setups</h2>
+          <p className="page-intro">
+            Use this page for the reactions and opening moves that create the attack before the actual takedown,
+            submission, sweep, or back take begins. Curriculum holds the full map, and Decision Trees help you
+            continue the sequence once you choose the branch.
+          </p>
 
-        <section className="page-section entry-setups-saved-section">
-          <div className="section-header">
+          <section className="page-quickstart-card entry-setups-quickstart">
+            <div className="planned-classes-quickstart-copy">
+              <span className="eyebrow">What this page is for</span>
+              <strong>Entry Setups helps you study how to create the opening before the main attack.</strong>
+              <p className="meta-text">
+                Use this page when you want starter ideas for setups, reactions, and continuations. It is meant to
+                help coaches and students think in sequences without pretending to cover every possible path.
+              </p>
+            </div>
+            <div className="planned-classes-quickstart-steps">
+              <div className="planned-classes-quickstart-step">
+                <strong>1. Pick a position or lane</strong>
+                <span>Start with standing, guard, passing, or submission-focused setup families.</span>
+              </div>
+              <div className="planned-classes-quickstart-step">
+                <strong>2. Study the opening</strong>
+                <span>Use the setup logic and example chain to see how the attack gets created.</span>
+              </div>
+              <div className="planned-classes-quickstart-step">
+                <strong>3. Continue the sequence</strong>
+                <span>Open Curriculum for the big map or jump into Decision Trees for the next branch.</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="page-section entry-setups-saved-section">
+            <div className="section-header">
             <div>
               <h3>What these setups are for</h3>
               <p className="section-note">These are strong starter chains, not an all-encompassing list of every possible route.</p>

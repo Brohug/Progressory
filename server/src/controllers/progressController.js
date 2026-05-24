@@ -35,7 +35,7 @@ const createOrUpdateMemberProgress = async (req, res) => {
     }
 
     const [topicRows] = await pool.query(
-      'SELECT id FROM curriculum_topics WHERE id = ? AND gym_id = ?',
+      'SELECT id FROM curriculum_topics WHERE id = ? AND gym_id = ? AND is_active = TRUE',
       [curriculum_topic_id, gymId]
     );
 
@@ -84,8 +84,7 @@ const createOrUpdateMemberProgress = async (req, res) => {
     console.error('Create/update member progress error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -141,8 +140,7 @@ const getMemberProgress = async (req, res) => {
     console.error('Get member progress error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -187,8 +185,7 @@ const getMyProgress = async (req, res) => {
     console.error('Get my progress error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };

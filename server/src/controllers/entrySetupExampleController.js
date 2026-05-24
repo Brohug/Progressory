@@ -1,36 +1,13 @@
 const pool = require('../config/db');
 
-let ensureEntrySetupExamplesTablePromise = null;
-
-const ensureEntrySetupExamplesTable = async () => {
-  if (!ensureEntrySetupExamplesTablePromise) {
-    ensureEntrySetupExamplesTablePromise = pool.query(`
-      CREATE TABLE IF NOT EXISTS entry_setup_examples (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        gym_id INT NOT NULL,
-        created_by_user_id INT NOT NULL,
-        linked_family_title VARCHAR(255) NULL,
-        title VARCHAR(255) NOT NULL,
-        lane VARCHAR(50) NOT NULL,
-        summary TEXT NULL,
-        description TEXT NULL,
-        setup_nodes_json LONGTEXT NULL,
-        next_attacks_json LONGTEXT NULL,
-        example_sequence_json LONGTEXT NULL,
-        curriculum_search VARCHAR(255) NULL,
-        tree_search VARCHAR(255) NULL,
-        visibility ENUM('private', 'gym_shared') NOT NULL DEFAULT 'private',
-        is_active BOOLEAN NOT NULL DEFAULT TRUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_entry_setup_examples_gym_visibility (gym_id, visibility),
-        INDEX idx_entry_setup_examples_creator (created_by_user_id)
-      )
-    `);
-  }
-
-  await ensureEntrySetupExamplesTablePromise;
-};
+const isMissingEntrySetupExamplesSchemaError = (error) => (
+  Boolean(error)
+  && (
+    error.code === 'ER_NO_SUCH_TABLE'
+    || error.code === 'ER_BAD_FIELD_ERROR'
+  )
+  && /entry_setup_examples/i.test(error.sqlMessage || error.message || '')
+);
 
 const normalizeString = (value) => {
   if (value === undefined || value === null) {
@@ -92,8 +69,6 @@ const serializeExampleRow = (row) => ({
 
 const getEntrySetupExamples = async (req, res) => {
   try {
-    await ensureEntrySetupExamplesTable();
-
     const [rows] = await pool.query(
       `SELECT
         ese.id,
@@ -130,19 +105,22 @@ const getEntrySetupExamples = async (req, res) => {
 
     return res.status(200).json(rows.map(serializeExampleRow));
   } catch (error) {
+    if (isMissingEntrySetupExamplesSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Entry setup examples schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Get entry setup examples error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
 
 const createEntrySetupExample = async (req, res) => {
   try {
-    await ensureEntrySetupExamplesTable();
-
     const title = normalizeString(req.body.title);
     const lane = normalizeString(req.body.lane);
 
@@ -246,19 +224,22 @@ const createEntrySetupExample = async (req, res) => {
       entrySetupExample: serializeExampleRow(rows[0])
     });
   } catch (error) {
+    if (isMissingEntrySetupExamplesSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Entry setup examples schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Create entry setup example error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
 
 const updateEntrySetupExample = async (req, res) => {
   try {
-    await ensureEntrySetupExamplesTable();
-
     const { id } = req.params;
 
     const [existingRows] = await pool.query(
@@ -392,19 +373,22 @@ const updateEntrySetupExample = async (req, res) => {
       entrySetupExample: serializeExampleRow(rows[0])
     });
   } catch (error) {
+    if (isMissingEntrySetupExamplesSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Entry setup examples schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Update entry setup example error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
 
 const deleteEntrySetupExample = async (req, res) => {
   try {
-    await ensureEntrySetupExamplesTable();
-
     const { id } = req.params;
 
     const [existingRows] = await pool.query(
@@ -436,11 +420,16 @@ const deleteEntrySetupExample = async (req, res) => {
       message: 'Setup example deleted successfully'
     });
   } catch (error) {
+    if (isMissingEntrySetupExamplesSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Entry setup examples schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Delete entry setup example error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };

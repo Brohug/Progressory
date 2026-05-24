@@ -4,6 +4,12 @@ const {
   applyProgressToMembersAndTopics
 } = require('../services/classProgressService');
 
+const isMissingClassArchiveSchemaError = (error) => (
+  Boolean(error)
+  && error.code === 'ER_BAD_FIELD_ERROR'
+  && /archived_at/i.test(error.sqlMessage || error.message || '')
+);
+
 const addMemberToClass = async (req, res) => {
   const connection = await pool.getConnection();
   let transactionStarted = false;
@@ -32,7 +38,7 @@ const addMemberToClass = async (req, res) => {
     }
 
     const [classRows] = await connection.query(
-      'SELECT id FROM classes WHERE id = ? AND gym_id = ?',
+      'SELECT id FROM classes WHERE id = ? AND gym_id = ? AND archived_at IS NULL',
       [id, gymId]
     );
 
@@ -56,11 +62,13 @@ const addMemberToClass = async (req, res) => {
     }
 
     const [existingRows] = await connection.query(
-      'SELECT id FROM class_members WHERE class_id = ? AND member_id = ?',
+      'SELECT id, archived_at FROM class_members WHERE class_id = ? AND member_id = ?',
       [id, member_id]
     );
 
-    if (existingRows.length > 0) {
+    const activeExistingRow = existingRows.find((row) => row.archived_at === null);
+
+    if (activeExistingRow) {
       connection.release();
       return res.status(400).json({
         message: 'Member is already attached to this class'
@@ -70,11 +78,25 @@ const addMemberToClass = async (req, res) => {
     await connection.beginTransaction();
     transactionStarted = true;
 
-    const [result] = await connection.query(
-      `INSERT INTO class_members (class_id, member_id, attendance_status)
-       VALUES (?, ?, ?)`,
-      [id, member_id, finalAttendanceStatus]
-    );
+    let classMemberId;
+
+    if (existingRows.length > 0) {
+      classMemberId = existingRows[0].id;
+
+      await connection.query(
+        `UPDATE class_members
+         SET attendance_status = ?, archived_at = NULL
+         WHERE id = ?`,
+        [finalAttendanceStatus, classMemberId]
+      );
+    } else {
+      const [result] = await connection.query(
+        `INSERT INTO class_members (class_id, member_id, attendance_status)
+         VALUES (?, ?, ?)`,
+        [id, member_id, finalAttendanceStatus]
+      );
+      classMemberId = result.insertId;
+    }
 
     const topicProgressSpecs = finalAttendanceStatus === 'present'
       ? await getProgressTopicSpecsForClass(connection, gymId, id)
@@ -92,7 +114,7 @@ const addMemberToClass = async (req, res) => {
        FROM class_members cm
        JOIN members m ON cm.member_id = m.id
        WHERE cm.id = ?`,
-      [result.insertId]
+      [classMemberId]
     );
 
     await connection.commit();
@@ -112,11 +134,16 @@ const addMemberToClass = async (req, res) => {
       await connection.rollback();
     }
     connection.release();
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Add member to class error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -149,7 +176,7 @@ const addMembersToClassBulk = async (req, res) => {
     }
 
     const [classRows] = await connection.query(
-      'SELECT id FROM classes WHERE id = ? AND gym_id = ?',
+      'SELECT id FROM classes WHERE id = ? AND gym_id = ? AND archived_at IS NULL',
       [id, gymId]
     );
 
@@ -179,6 +206,7 @@ const addMembersToClassBulk = async (req, res) => {
       `SELECT member_id
        FROM class_members
        WHERE class_id = ?
+         AND archived_at IS NULL
          AND member_id IN (${normalizedMemberIds.map(() => '?').join(', ')})`,
       [id, ...normalizedMemberIds]
     );
@@ -200,12 +228,36 @@ const addMembersToClassBulk = async (req, res) => {
     await connection.beginTransaction();
     transactionStarted = true;
 
+    const [archivedRows] = await connection.query(
+      `SELECT id, member_id
+       FROM class_members
+       WHERE class_id = ?
+         AND archived_at IS NOT NULL
+         AND member_id IN (${insertableMemberIds.map(() => '?').join(', ')})`,
+      [id, ...insertableMemberIds]
+    );
+
+    const archivedByMemberId = new Map(
+      archivedRows.map((row) => [Number(row.member_id), row.id])
+    );
+
     for (const memberId of insertableMemberIds) {
-      await connection.query(
-        `INSERT INTO class_members (class_id, member_id, attendance_status)
-         VALUES (?, ?, ?)`,
-        [id, memberId, finalAttendanceStatus]
-      );
+      const archivedId = archivedByMemberId.get(Number(memberId));
+
+      if (archivedId) {
+        await connection.query(
+          `UPDATE class_members
+           SET attendance_status = ?, archived_at = NULL
+           WHERE id = ?`,
+          [finalAttendanceStatus, archivedId]
+        );
+      } else {
+        await connection.query(
+          `INSERT INTO class_members (class_id, member_id, attendance_status)
+           VALUES (?, ?, ?)`,
+          [id, memberId, finalAttendanceStatus]
+        );
+      }
     }
 
     const topicProgressSpecs = finalAttendanceStatus === 'present'
@@ -237,11 +289,16 @@ const addMembersToClassBulk = async (req, res) => {
       await connection.rollback();
     }
     connection.release();
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Bulk add members to class error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -267,17 +324,23 @@ const getClassMembers = async (req, res) => {
        FROM class_members cm
        JOIN members m ON cm.member_id = m.id
        WHERE cm.class_id = ?
+         AND cm.archived_at IS NULL
        ORDER BY m.last_name ASC, m.first_name ASC`,
       [id]
     );
 
     return res.status(200).json(rows);
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Get class members error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
@@ -288,7 +351,7 @@ const removeMemberFromClass = async (req, res) => {
     const { id, classMemberId } = req.params;
 
     const [classRows] = await pool.query(
-      'SELECT id FROM classes WHERE id = ? AND gym_id = ?',
+      'SELECT id FROM classes WHERE id = ? AND gym_id = ? AND archived_at IS NULL',
       [id, gymId]
     );
 
@@ -299,7 +362,7 @@ const removeMemberFromClass = async (req, res) => {
     }
 
     const [existingRows] = await pool.query(
-      'SELECT id FROM class_members WHERE id = ? AND class_id = ?',
+      'SELECT id FROM class_members WHERE id = ? AND class_id = ? AND archived_at IS NULL',
       [classMemberId, id]
     );
 
@@ -310,7 +373,9 @@ const removeMemberFromClass = async (req, res) => {
     }
 
     await pool.query(
-      'DELETE FROM class_members WHERE id = ? AND class_id = ?',
+      `UPDATE class_members
+       SET archived_at = COALESCE(archived_at, CURRENT_TIMESTAMP)
+       WHERE id = ? AND class_id = ?`,
       [classMemberId, id]
     );
 
@@ -318,11 +383,16 @@ const removeMemberFromClass = async (req, res) => {
       message: 'Member removed from class successfully'
     });
   } catch (error) {
+    if (isMissingClassArchiveSchemaError(error)) {
+      return res.status(500).json({
+        message: 'Class archive schema is missing. Run database migrations and try again.'
+      });
+    }
+
     console.error('Remove member from class error:', error.message);
 
     return res.status(500).json({
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 };
