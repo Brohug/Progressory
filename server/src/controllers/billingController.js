@@ -35,7 +35,6 @@ const isStripeConfigError = (error) => Boolean(error?.isStripeConfigError || err
 
 const isStripeApiError = (error) => Boolean(error?.type && String(error.type).startsWith('Stripe'));
 const isStripeSignatureError = (error) => error?.type === 'StripeSignatureVerificationError';
-const hasField = (object, propertyName) => Boolean(object) && propertyName in Object(object);
 const isBillingEventDuplicateError = (error) => (
   error?.code === 'ER_DUP_ENTRY'
   && /billing_events|stripe_event_id|uq_billing_events_stripe_event/i.test(
@@ -48,6 +47,48 @@ const getSubscriptionPriceId = (subscriptionObject) => (
   || subscriptionObject?.plan?.id
   || null
 );
+
+const getSubscriptionCancelAtPeriodEnd = (subscriptionObject) => {
+  const cancelAtPeriodEnd = subscriptionObject?.cancel_at_period_end;
+  return typeof cancelAtPeriodEnd === 'boolean' ? cancelAtPeriodEnd : undefined;
+};
+
+const resolveSubscriptionCurrentPeriodEnd = (subscriptionObject) => {
+  const subscriptionCurrentPeriodEnd = subscriptionObject?.current_period_end;
+  if (typeof subscriptionCurrentPeriodEnd === 'number') {
+    return {
+      value: subscriptionCurrentPeriodEnd,
+      source: 'subscription'
+    };
+  }
+
+  const itemCurrentPeriodEnd = subscriptionObject?.items?.data?.[0]?.current_period_end;
+  if (typeof itemCurrentPeriodEnd === 'number') {
+    return {
+      value: itemCurrentPeriodEnd,
+      source: 'item'
+    };
+  }
+
+  const cancelAtPeriodEnd = getSubscriptionCancelAtPeriodEnd(subscriptionObject);
+  const cancelAt = subscriptionObject?.cancel_at;
+  if (cancelAtPeriodEnd === true && typeof cancelAt === 'number') {
+    return {
+      value: cancelAt,
+      source: 'cancel_at'
+    };
+  }
+
+  return {
+    value: undefined,
+    source: 'none'
+  };
+};
+
+const getSubscriptionTrialEnd = (subscriptionObject) => {
+  const trialEnd = subscriptionObject?.trial_end;
+  return typeof trialEnd === 'number' ? trialEnd : undefined;
+};
 
 const getSubscriptionPlanCode = (subscriptionObject, fallbackPlanCode = PLAN_CODES.NONE) => {
   const metadataPlanCode = String(subscriptionObject?.metadata?.plan_code || '').trim().toLowerCase();
@@ -79,12 +120,15 @@ const buildSubscriptionUpdateFields = (
   const stripeCustomerId = getStripeWebhookCustomerId(subscriptionObject?.customer);
   const resolvedPlanCode = getSubscriptionPlanCode(subscriptionObject, fallbackPlanCode);
   const priceId = getSubscriptionPriceId(subscriptionObject);
+  const cancelAtPeriodEnd = getSubscriptionCancelAtPeriodEnd(subscriptionObject);
+  const currentPeriodEnd = resolveSubscriptionCurrentPeriodEnd(subscriptionObject);
+  const trialEnd = getSubscriptionTrialEnd(subscriptionObject);
 
-  if (hasField(subscriptionObject, 'customer') && stripeCustomerId) {
+  if (stripeCustomerId) {
     updateFields.stripe_customer_id = stripeCustomerId;
   }
 
-  if (hasField(subscriptionObject, 'id') && subscriptionObject?.id) {
+  if (subscriptionObject?.id) {
     updateFields.stripe_subscription_id = String(subscriptionObject.id);
   }
 
@@ -96,22 +140,22 @@ const buildSubscriptionUpdateFields = (
     updateFields.price_id = priceId;
   }
 
-  if (hasField(subscriptionObject, 'status')) {
+  if (typeof subscriptionObject?.status === 'string') {
     updateFields.billing_status = mapStripeStatusToBillingStatus(subscriptionObject?.status);
   } else if (fallbackBillingStatus) {
     updateFields.billing_status = fallbackBillingStatus;
   }
 
-  if (hasField(subscriptionObject, 'current_period_end')) {
-    updateFields.current_period_end = toNullableDate(subscriptionObject?.current_period_end);
+  if (typeof currentPeriodEnd.value === 'number') {
+    updateFields.current_period_end = toNullableDate(currentPeriodEnd.value);
   }
 
-  if (hasField(subscriptionObject, 'cancel_at_period_end')) {
-    updateFields.cancel_at_period_end = Boolean(subscriptionObject?.cancel_at_period_end);
+  if (typeof cancelAtPeriodEnd === 'boolean') {
+    updateFields.cancel_at_period_end = cancelAtPeriodEnd;
   }
 
-  if (hasField(subscriptionObject, 'trial_end')) {
-    updateFields.trial_ends_at = toNullableDate(subscriptionObject?.trial_end);
+  if (typeof trialEnd === 'number') {
+    updateFields.trial_ends_at = toNullableDate(trialEnd);
   }
 
   return updateFields;
@@ -236,10 +280,13 @@ const syncFromStripeSubscription = async ({
         stripeSubscriptionId,
         stripeCustomerId,
         stripeStatus: subscriptionObject?.status || null,
-        stripeCancelAtPeriodEnd: hasField(subscriptionObject, 'cancel_at_period_end')
-          ? Boolean(subscriptionObject?.cancel_at_period_end)
-          : 'missing',
-        stripeCurrentPeriodEndPresent: hasField(subscriptionObject, 'current_period_end'),
+        stripeCancelAtPeriodEndRaw: subscriptionObject?.cancel_at_period_end,
+        stripeCurrentPeriodEndType: typeof subscriptionObject?.current_period_end,
+        stripeCurrentPeriodEndPresent: typeof subscriptionObject?.current_period_end === 'number',
+        stripeItemCurrentPeriodEndType: typeof subscriptionObject?.items?.data?.[0]?.current_period_end,
+        stripeItemCurrentPeriodEndPresent:
+          typeof subscriptionObject?.items?.data?.[0]?.current_period_end === 'number',
+        mappedCurrentPeriodEndSource: resolveSubscriptionCurrentPeriodEnd(subscriptionObject).source,
         updateKeys: [],
         gymSubscriptionFound: false,
         affectedRows: 0
@@ -256,15 +303,19 @@ const syncFromStripeSubscription = async ({
   const updateResult = await updateGymSubscription(localSubscription.gym_id, updatePayload, connection);
 
   if (logContext?.eventType === 'customer.subscription.updated') {
+    const currentPeriodEnd = resolveSubscriptionCurrentPeriodEnd(subscriptionObject);
     console.info('Billing webhook subscription update trace:', {
       eventId: logContext.eventId,
       stripeSubscriptionId,
       stripeCustomerId,
       stripeStatus: subscriptionObject?.status || null,
-      stripeCancelAtPeriodEnd: hasField(subscriptionObject, 'cancel_at_period_end')
-        ? Boolean(subscriptionObject?.cancel_at_period_end)
-        : 'missing',
-      stripeCurrentPeriodEndPresent: hasField(subscriptionObject, 'current_period_end'),
+      stripeCancelAtPeriodEndRaw: subscriptionObject?.cancel_at_period_end,
+      stripeCurrentPeriodEndType: typeof subscriptionObject?.current_period_end,
+      stripeCurrentPeriodEndPresent: typeof subscriptionObject?.current_period_end === 'number',
+      stripeItemCurrentPeriodEndType: typeof subscriptionObject?.items?.data?.[0]?.current_period_end,
+      stripeItemCurrentPeriodEndPresent:
+        typeof subscriptionObject?.items?.data?.[0]?.current_period_end === 'number',
+      mappedCurrentPeriodEndSource: currentPeriodEnd.source,
       updateKeys: updateResult.updatedKeys,
       gymSubscriptionFound: true,
       affectedRows: updateResult.affectedRows
