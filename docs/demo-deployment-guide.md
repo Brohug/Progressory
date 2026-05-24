@@ -55,7 +55,8 @@ VITE_API_BASE_URL=https://your-demo-api-url/api
 
 1. Create a fresh demo MySQL database.
 2. Apply the schema from `database/schema.sql`.
-3. Apply any needed migrations from `database/migrations`.
+3. Apply any needed migrations with `cd server && npm run db:migrate`.
+   The migration runner prefers `server/database/migrations` in hosted server-root deploys and also supports local repo-level fallbacks.
 4. Run the demo seed against the demo database:
 
 ```powershell

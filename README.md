@@ -79,6 +79,7 @@ Progressory is a full-stack SaaS-style web application built for Brazilian Jiu-J
 - For an existing environment, run the server migration runner before starting the app:
   - `cd server`
   - `npm run db:migrate`
+- The migration runner prefers `server/database/migrations` for hosted server-only deploys such as Railway service roots, and falls back to the repo-level `database/migrations` path for local workspace runs.
 - Production/runtime API requests should not need database `CREATE` or `ALTER` permissions once migrations are applied.
 
 ## Backend Environment Notes
