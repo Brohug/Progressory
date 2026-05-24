@@ -3,7 +3,24 @@ const path = require('path');
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-const migrationsDir = path.resolve(__dirname, '..', '..', 'database', 'migrations');
+const DEFAULT_MIGRATIONS_DIR_CANDIDATES = [
+  process.env.MIGRATIONS_DIR ? path.resolve(process.env.MIGRATIONS_DIR) : null,
+  path.resolve(__dirname, '..', 'database', 'migrations'),
+  path.resolve(__dirname, '..', '..', 'database', 'migrations')
+].filter(Boolean);
+
+const resolveMigrationsDir = () => {
+  for (const candidatePath of DEFAULT_MIGRATIONS_DIR_CANDIDATES) {
+    if (fs.existsSync(candidatePath)) {
+      return candidatePath;
+    }
+  }
+
+  const searchedPaths = DEFAULT_MIGRATIONS_DIR_CANDIDATES.join(', ');
+  throw new Error(`Migrations directory not found. Checked: ${searchedPaths}`);
+};
+
+const migrationsDir = resolveMigrationsDir();
 
 const getConnectionConfig = () => {
   const connectionUrl = process.env.DATABASE_URL || process.env.MYSQL_PUBLIC_URL || process.env.MYSQL_URL;
@@ -41,9 +58,7 @@ const getAppliedMigrationSet = async (connection) => {
 };
 
 const getMigrationFiles = () => {
-  if (!fs.existsSync(migrationsDir)) {
-    throw new Error(`Migrations directory not found at ${migrationsDir}`);
-  }
+  console.log(`Resolved migrations directory: ${migrationsDir}`);
 
   return fs
     .readdirSync(migrationsDir)
