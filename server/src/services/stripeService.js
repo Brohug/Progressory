@@ -174,6 +174,16 @@ const getCustomerPortalReturnUrl = () => {
   return returnUrl;
 };
 
+const getBillingTrialDays = () => {
+  const parsedValue = Number.parseInt(process.env.BILLING_TRIAL_DAYS || '30', 10);
+
+  if (!Number.isInteger(parsedValue) || parsedValue < 0) {
+    return 30;
+  }
+
+  return parsedValue;
+};
+
 module.exports = {
   isStripeConfigured,
   getStripeConfigError,
@@ -185,5 +195,6 @@ module.exports = {
   constructWebhookEvent,
   getStripePriceIdForPlan,
   getCheckoutUrls,
-  getCustomerPortalReturnUrl
+  getCustomerPortalReturnUrl,
+  getBillingTrialDays
 };

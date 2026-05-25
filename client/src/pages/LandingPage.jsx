@@ -289,7 +289,7 @@ export default function LandingPage() {
               ))}
             </div>
             <p className="landing-cta-note">
-              Demos are 20 minutes. Founder access is $50/month for the first 5-10 gyms, Standard access is $99.99/month, both include a 30-day free trial, and founder access comes with personal onboarding.
+              Demos are 20 minutes. Founder access is $50/month for the first 5-10 gyms and includes a 30-day free trial. Standard access is $99.99/month, and founder access comes with personal onboarding.
             </p>
             <p className="landing-cta-note">
               Prefer email? Send demo or founder requests to {CONTACT_EMAIL} with your name, gym and for more information.

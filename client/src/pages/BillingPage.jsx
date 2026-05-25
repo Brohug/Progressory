@@ -73,8 +73,9 @@ export default function BillingPage() {
               access_granted: Boolean(response.data?.access_granted),
               stripe_customer_id_present: false,
               stripe_subscription_id_present: false,
-              current_period_end: null,
-              cancel_at_period_end: false
+              current_period_end: response.data?.current_period_end || null,
+              cancel_at_period_end: Boolean(response.data?.cancel_at_period_end),
+              trial_ends_at: response.data?.trial_ends_at || null
             };
 
         setBillingState(nextBillingState);
@@ -200,6 +201,10 @@ export default function BillingPage() {
                 <strong>{formatDateLabel(billingState.current_period_end)}</strong>
               </div>
               <div className="account-billing-status-card">
+                <span className="meta-text">Trial ends</span>
+                <strong>{formatDateLabel(billingState.trial_ends_at)}</strong>
+              </div>
+              <div className="account-billing-status-card">
                 <span className="meta-text">Cancel at period end</span>
                 <strong>{billingState.cancel_at_period_end ? 'Yes' : 'No'}</strong>
               </div>
@@ -284,7 +289,7 @@ export default function BillingPage() {
             </div>
           </div>
 
-          <div className="account-billing-card">
+            <div className="account-billing-card">
             <div className="account-summary-heading">
               <span className="dashboard-card-icon"><AppIcon name="reports" /></span>
               <div>
@@ -299,6 +304,12 @@ export default function BillingPage() {
 
             {actionState.error ? (
               <p className="error-text account-form-feedback">{actionState.error}</p>
+            ) : null}
+
+            {billingState?.billing_status === 'trialing' && billingState?.trial_ends_at ? (
+              <p className="success-text account-form-feedback">
+                Trial ends: {formatDateLabel(billingState.trial_ends_at)}
+              </p>
             ) : null}
 
             {isOwner ? (

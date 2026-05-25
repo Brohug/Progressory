@@ -108,6 +108,8 @@ Progressory is a full-stack SaaS-style web application built for Brazilian Jiu-J
   - `STRIPE_CANCEL_URL`
   - `STRIPE_CUSTOMER_PORTAL_RETURN_URL`
   - `BILLING_TRIAL_DAYS`
+- Founder checkout uses `BILLING_TRIAL_DAYS` and collects a payment method up front without charging immediately.
+- Regular checkout does not apply a trial by default and bills immediately through Stripe.
 - Billing 8B uses Stripe test mode only.
 - `BILLING_STRIPE_MODE` defaults to `test` when unset.
 - Test mode requires `STRIPE_SECRET_KEY` to use `sk_test_...`.
@@ -160,6 +162,7 @@ STRIPE_REGULAR_PRICE_ID=price_...
 STRIPE_SUCCESS_URL=http://localhost:5173/billing?checkout=success
 STRIPE_CANCEL_URL=http://localhost:5173/billing?checkout=cancel
 STRIPE_CUSTOMER_PORTAL_RETURN_URL=http://localhost:5173/billing
+BILLING_TRIAL_DAYS=30
 ```
 
 Stripe CLI example:

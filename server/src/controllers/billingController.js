@@ -22,7 +22,8 @@ const {
   constructWebhookEvent,
   getStripePriceIdForPlan,
   getCheckoutUrls,
-  getCustomerPortalReturnUrl
+  getCustomerPortalReturnUrl,
+  getBillingTrialDays
 } = require('../services/stripeService');
 
 const isMissingBillingSchemaError = (error) => (
@@ -536,7 +537,10 @@ const getBillingAccessStatus = async (req, res) => {
       gym_id: safePayload.gym_id,
       access_granted: safePayload.access_granted,
       plan_code: safePayload.plan_code,
-      billing_status: safePayload.billing_status
+      billing_status: safePayload.billing_status,
+      current_period_end: safePayload.current_period_end,
+      cancel_at_period_end: safePayload.cancel_at_period_end,
+      trial_ends_at: safePayload.trial_ends_at
     });
   } catch (error) {
     return handleBillingError(res, 'Get billing access status error:', error);
@@ -545,7 +549,10 @@ const getBillingAccessStatus = async (req, res) => {
 
 const createCheckoutSession = async (req, res) => {
   try {
-    const requestedPlanCode = String(req.body?.plan_code || '').trim().toLowerCase();
+    const rawPlanCode = String(req.body?.plan_code || '').trim().toLowerCase();
+    const requestedPlanCode = rawPlanCode === 'standard'
+      ? PLAN_CODES.REGULAR
+      : rawPlanCode;
 
     if (![PLAN_CODES.FOUNDER, PLAN_CODES.REGULAR].includes(requestedPlanCode)) {
       return sendClientError(res, {
@@ -572,6 +579,7 @@ const createCheckoutSession = async (req, res) => {
     const { successUrl, cancelUrl } = getCheckoutUrls();
     const stripe = getStripeClient();
     const gymContext = await getGymBillingContext(req.user.gym_id);
+    const founderTrialDays = getBillingTrialDays();
 
     if (!gymContext) {
       return sendClientError(res, {
@@ -599,9 +607,22 @@ const createCheckoutSession = async (req, res) => {
       });
     }
 
+    const subscriptionData = {
+      metadata: {
+        gym_id: String(req.user.gym_id),
+        owner_user_id: String(req.user.id),
+        plan_code: requestedPlanCode
+      }
+    };
+
+    if (requestedPlanCode === PLAN_CODES.FOUNDER && founderTrialDays > 0) {
+      subscriptionData.trial_period_days = founderTrialDays;
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: stripeCustomerId,
+      payment_method_collection: 'always',
       line_items: [
         {
           price: priceId,
@@ -615,13 +636,7 @@ const createCheckoutSession = async (req, res) => {
         owner_user_id: String(req.user.id),
         plan_code: requestedPlanCode
       },
-      subscription_data: {
-        metadata: {
-          gym_id: String(req.user.gym_id),
-          owner_user_id: String(req.user.id),
-          plan_code: requestedPlanCode
-        }
-      }
+      subscription_data: subscriptionData
     });
 
     return res.status(200).json({
