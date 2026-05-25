@@ -18,6 +18,7 @@ const meRoutes = require('./routes/meRoutes');
 const entrySetupExampleRoutes = require('./routes/entrySetupExampleRoutes');
 const billingRoutes = require('./routes/billingRoutes');
 const billingWebhookRoutes = require('./routes/billingWebhookRoutes');
+const publicInquiryRoutes = require('./routes/publicInquiryRoutes');
 const { logServerError, sendClientError, sendServerError } = require('./middleware/errorHandler');
 const {
   isStripeConfigured,
@@ -120,6 +121,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/public-inquiries', publicInquiryRoutes);
 app.use('/api/programs', programRoutes);
 app.use('/api/topics', topicRoutes);
 app.use('/api/training-methods', trainingMethodRoutes);

@@ -1,9 +1,34 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import api from '../api/axios';
 import AppIcon from '../components/AppIcon';
 
-const demoRequestHref = 'mailto:owner.progressory@gmail.com?subject=Progressory%20Demo%20Request';
-const founderAccessHref = 'mailto:owner.progressory@gmail.com?subject=Progressory%20Founder%20Access';
+const CONTACT_EMAIL = 'owner.progressory@gmail.com';
+
+const emptyRequestForm = {
+  first_name: '',
+  last_name: '',
+  email: '',
+  phone: '',
+  gym_name: ''
+};
+
+const ctaActions = [
+  {
+    key: 'demo',
+    requestType: 'demo',
+    className: 'secondary-button',
+    icon: 'reports',
+    label: 'Book a 20-minute demo'
+  },
+  {
+    key: 'founder',
+    requestType: 'founder',
+    className: 'secondary-button is-attention',
+    icon: 'account',
+    label: 'Apply for founder access'
+  }
+];
 
 const whoItHelps = [
   {
@@ -51,6 +76,19 @@ const featureItems = [
 export default function LandingPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const submitActionsRef = useRef(null);
+  const [requestState, setRequestState] = useState({
+    open: false,
+    requestType: 'demo',
+    form: { ...emptyRequestForm },
+    slots: [],
+    timezone: '',
+    selectedSlot: '',
+    loadingSlots: false,
+    submitting: false,
+    error: '',
+    success: ''
+  });
 
   useEffect(() => {
     const memberAccessToken = searchParams.get('memberAccessToken');
@@ -65,6 +103,141 @@ export default function LandingPage() {
       navigate(`/staff-access/${staffAccessToken}`, { replace: true });
     }
   }, [navigate, searchParams]);
+
+  const groupedDemoSlots = useMemo(() => {
+    const groups = new Map();
+
+    requestState.slots.forEach((slot) => {
+      if (!groups.has(slot.date_label)) {
+        groups.set(slot.date_label, {
+          dateLabel: slot.date_label,
+          timezone: slot.timezone,
+          slots: []
+        });
+      }
+
+      groups.get(slot.date_label).slots.push(slot);
+    });
+
+    return Array.from(groups.values());
+  }, [requestState.slots]);
+
+  const openRequestModal = async (requestType) => {
+    setRequestState({
+      open: true,
+      requestType,
+      form: { ...emptyRequestForm },
+      slots: [],
+      timezone: '',
+      selectedSlot: '',
+      loadingSlots: requestType === 'demo',
+      submitting: false,
+      error: '',
+      success: ''
+    });
+
+    if (requestType !== 'demo') {
+      return;
+    }
+
+    try {
+      const response = await api.get('/public-inquiries/demo-slots');
+      setRequestState((current) => ({
+        ...current,
+        slots: response.data?.slots || [],
+        timezone: response.data?.timezone || '',
+        loadingSlots: false
+      }));
+    } catch (error) {
+      setRequestState((current) => ({
+        ...current,
+        loadingSlots: false,
+        error: error.response?.data?.message || 'Could not load demo times right now. Please try again.'
+      }));
+    }
+  };
+
+  const closeRequestModal = () => {
+    setRequestState({
+      open: false,
+      requestType: 'demo',
+      form: { ...emptyRequestForm },
+      slots: [],
+      timezone: '',
+      selectedSlot: '',
+      loadingSlots: false,
+      submitting: false,
+      error: '',
+      success: ''
+    });
+  };
+
+  const handleRequestFieldChange = (event) => {
+    const { name, value } = event.target;
+    setRequestState((current) => ({
+      ...current,
+      form: {
+        ...current.form,
+        [name]: value
+      }
+    }));
+  };
+
+  const handleDemoSlotSelect = (slotStart) => {
+    setRequestState((current) => ({
+      ...current,
+      selectedSlot: slotStart,
+      error: ''
+    }));
+
+    window.setTimeout(() => {
+      submitActionsRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+    }, 80);
+  };
+
+  const handleRequestSubmit = async (event) => {
+    event.preventDefault();
+
+    if (requestState.requestType === 'demo' && !requestState.selectedSlot) {
+      setRequestState((current) => ({
+        ...current,
+        error: 'Choose one of the available demo times before submitting.'
+      }));
+      return;
+    }
+
+    setRequestState((current) => ({
+      ...current,
+      submitting: true,
+      error: ''
+    }));
+
+    try {
+      await api.post('/public-inquiries', {
+        request_type: requestState.requestType,
+        ...requestState.form,
+        demo_slot_start: requestState.requestType === 'demo' ? requestState.selectedSlot : undefined
+      });
+
+      setRequestState((current) => ({
+        ...current,
+        submitting: false,
+        success: current.requestType === 'demo'
+          ? 'Thank you, you will get a confirmation email after it is approved.'
+          : 'Thank you, I will reach out soon with the information you gave.',
+        error: ''
+      }));
+    } catch (error) {
+      setRequestState((current) => ({
+        ...current,
+        submitting: false,
+        error: error.response?.data?.message || 'Failed to submit your request. Please try again.'
+      }));
+    }
+  };
 
   return (
     <div className="landing-page">
@@ -102,17 +275,24 @@ export default function LandingPage() {
             </div>
 
             <div className="landing-cta-row">
-              <a href={demoRequestHref} className="secondary-button">
-                <AppIcon name="reports" />
-                <span>Book a 20-minute demo</span>
-              </a>
-              <a href={founderAccessHref} className="secondary-button is-attention">
-                <AppIcon name="account" />
-                <span>Apply for founder access</span>
-              </a>
+              {ctaActions.map((action) => (
+                <button
+                  key={action.key}
+                  type="button"
+                  className={action.className}
+                  aria-label={action.label}
+                  onClick={() => openRequestModal(action.requestType)}
+                >
+                  <AppIcon name={action.icon} />
+                  <span>{action.label}</span>
+                </button>
+              ))}
             </div>
             <p className="landing-cta-note">
               Demos are 20 minutes. Founder access is $50/month for the first 5-10 gyms, Standard access is $99.99/month, both include a 30-day free trial, and founder access comes with personal onboarding.
+            </p>
+            <p className="landing-cta-note">
+              Prefer email? Send demo or founder requests to {CONTACT_EMAIL} with your name, gym and for more information.
             </p>
           </div>
 
@@ -160,7 +340,7 @@ export default function LandingPage() {
         <section className="page-section landing-section">
           <div className="section-header">
             <div>
-              <h3>What's included</h3>
+              <h3>What&apos;s included</h3>
               <p className="section-note">
                 Enough structure to organize coaching, planning, and student tracking from one system.
               </p>
@@ -257,20 +437,201 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="landing-cta-row">
-            <a href={demoRequestHref} className="secondary-button">
-              <AppIcon name="reports" />
-              <span>Book a 20-minute demo</span>
-            </a>
-            <a href={founderAccessHref} className="secondary-button is-attention">
-              <AppIcon name="account" />
-              <span>Apply for founder access</span>
-            </a>
+            {ctaActions.map((action) => (
+              <button
+                key={action.key}
+                type="button"
+                className={action.className}
+                aria-label={action.label}
+                onClick={() => openRequestModal(action.requestType)}
+              >
+                <AppIcon name={action.icon} />
+                <span>{action.label}</span>
+              </button>
+            ))}
           </div>
           <p className="landing-cta-note">
             Founder access means paid access to the founder plan, not just a waitlist. Demos stay short and focused so gym owners can quickly see whether the system fits.
           </p>
+          <p className="landing-cta-note">
+            Prefer email? Send demo or founder requests to {CONTACT_EMAIL} with your name, gym and for more information.
+          </p>
         </section>
       </main>
+
+      {requestState.open ? (
+        <div
+          className="landing-request-overlay"
+          role="presentation"
+          onClick={closeRequestModal}
+        >
+          <div
+            className="landing-request-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="landingRequestTitle"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="landing-request-header">
+              <div>
+                <span className="eyebrow">{requestState.requestType === 'demo' ? 'Book Demo' : 'Founder Access'}</span>
+                <h3 id="landingRequestTitle">
+                  {requestState.requestType === 'demo'
+                    ? 'Book a 20-minute demo'
+                    : 'Apply for founder access'}
+                </h3>
+                <p className="section-note">
+                  {requestState.success
+                    ? requestState.requestType === 'demo'
+                      ? 'Your demo request was submitted.'
+                      : 'Your founder access request was submitted.'
+                    : requestState.requestType === 'demo'
+                      ? 'Choose an open time, then share the basics so I can confirm the demo.'
+                      : 'Share your contact details and gym so I can email you back about founder access.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="secondary-button landing-request-close"
+                onClick={closeRequestModal}
+              >
+                Close
+              </button>
+            </div>
+
+            {requestState.success ? (
+              <div className="landing-request-success">
+                <p className="success-text account-form-feedback">{requestState.success}</p>
+                <div className="inline-actions">
+                  <button type="button" className="secondary-button" onClick={closeRequestModal}>
+                    Done
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form className="form-grid landing-request-form" onSubmit={handleRequestSubmit}>
+                <div className="form-grid landing-request-grid">
+                  <div>
+                    <label htmlFor="landingFirstName">First name</label>
+                    <input
+                      id="landingFirstName"
+                      name="first_name"
+                      value={requestState.form.first_name}
+                      onChange={handleRequestFieldChange}
+                      autoComplete="given-name"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="landingLastName">Last name</label>
+                    <input
+                      id="landingLastName"
+                      name="last_name"
+                      value={requestState.form.last_name}
+                      onChange={handleRequestFieldChange}
+                      autoComplete="family-name"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="landingEmail">Email</label>
+                    <input
+                      id="landingEmail"
+                      type="email"
+                      name="email"
+                      value={requestState.form.email}
+                      onChange={handleRequestFieldChange}
+                      autoComplete="email"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="landingPhone">Phone number</label>
+                    <input
+                      id="landingPhone"
+                      type="tel"
+                      name="phone"
+                      value={requestState.form.phone}
+                      onChange={handleRequestFieldChange}
+                      autoComplete="tel"
+                      required
+                    />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label htmlFor="landingGym">Gym</label>
+                    <input
+                      id="landingGym"
+                      name="gym_name"
+                      value={requestState.form.gym_name}
+                      onChange={handleRequestFieldChange}
+                      autoComplete="organization"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {requestState.requestType === 'demo' ? (
+                  <div className="landing-request-slots">
+                    <div>
+                      <strong>Available demo times</strong>
+                      <div className="meta-text">
+                        {requestState.timezone
+                          ? `These times are shown from the current booking schedule in ${requestState.timezone}.`
+                          : 'Choose an open time before submitting your request.'}
+                      </div>
+                    </div>
+
+                    {requestState.loadingSlots ? (
+                      <p className="meta-text">Loading available demo times...</p>
+                    ) : groupedDemoSlots.length > 0 ? (
+                      <div className="landing-request-slot-groups">
+                        {groupedDemoSlots.map((group) => (
+                          <div key={group.dateLabel} className="landing-request-slot-group">
+                            <strong>{group.dateLabel}</strong>
+                            <div className="landing-request-slot-row">
+                              {group.slots.map((slot) => (
+                                <button
+                                  key={slot.starts_at}
+                                  type="button"
+                                  className={`secondary-button landing-request-slot-button${requestState.selectedSlot === slot.starts_at ? ' is-selected' : ''}`}
+                                  onClick={() => handleDemoSlotSelect(slot.starts_at)}
+                                >
+                                  {slot.time_label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="meta-text">
+                        No open demo times are available right now. Please email {CONTACT_EMAIL} and I&apos;ll coordinate directly.
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+
+                {requestState.error ? (
+                  <p className="error-text account-form-feedback">{requestState.error}</p>
+                ) : null}
+
+                <div className="inline-actions" ref={submitActionsRef}>
+                  <button type="submit" disabled={requestState.submitting || requestState.loadingSlots}>
+                    {requestState.submitting
+                      ? 'Submitting...'
+                      : requestState.requestType === 'demo'
+                        ? 'Submit demo request'
+                        : 'Submit founder request'}
+                  </button>
+                  <button type="button" className="secondary-button" onClick={closeRequestModal}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
