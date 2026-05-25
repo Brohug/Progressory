@@ -49,8 +49,30 @@ const getSubscriptionPriceId = (subscriptionObject) => (
 );
 
 const getSubscriptionCancelAtPeriodEnd = (subscriptionObject) => {
-  const cancelAtPeriodEnd = subscriptionObject?.cancel_at_period_end;
-  return typeof cancelAtPeriodEnd === 'boolean' ? cancelAtPeriodEnd : undefined;
+  const rawCancelAtPeriodEnd = subscriptionObject?.cancel_at_period_end;
+  if (typeof rawCancelAtPeriodEnd === 'boolean') {
+    return {
+      value: rawCancelAtPeriodEnd,
+      source: 'subscription'
+    };
+  }
+
+  const cancelAt = subscriptionObject?.cancel_at;
+  const normalizedStatus = String(subscriptionObject?.status || '').trim().toLowerCase();
+  if (
+    typeof cancelAt === 'number'
+    && ['active', 'trialing'].includes(normalizedStatus)
+  ) {
+    return {
+      value: true,
+      source: 'cancel_at'
+    };
+  }
+
+  return {
+    value: undefined,
+    source: 'none'
+  };
 };
 
 const resolveSubscriptionCurrentPeriodEnd = (subscriptionObject) => {
@@ -72,7 +94,7 @@ const resolveSubscriptionCurrentPeriodEnd = (subscriptionObject) => {
 
   const cancelAtPeriodEnd = getSubscriptionCancelAtPeriodEnd(subscriptionObject);
   const cancelAt = subscriptionObject?.cancel_at;
-  if (cancelAtPeriodEnd === true && typeof cancelAt === 'number') {
+  if (cancelAtPeriodEnd.value === true && typeof cancelAt === 'number') {
     return {
       value: cancelAt,
       source: 'cancel_at'
@@ -150,8 +172,8 @@ const buildSubscriptionUpdateFields = (
     updateFields.current_period_end = toNullableDate(currentPeriodEnd.value);
   }
 
-  if (typeof cancelAtPeriodEnd === 'boolean') {
-    updateFields.cancel_at_period_end = cancelAtPeriodEnd;
+  if (typeof cancelAtPeriodEnd.value === 'boolean') {
+    updateFields.cancel_at_period_end = cancelAtPeriodEnd.value;
   }
 
   if (typeof trialEnd === 'number') {
@@ -281,12 +303,26 @@ const syncFromStripeSubscription = async ({
         stripeCustomerId,
         stripeStatus: subscriptionObject?.status || null,
         stripeCancelAtPeriodEndRaw: subscriptionObject?.cancel_at_period_end,
+        stripeCancelAtRaw: subscriptionObject?.cancel_at ?? null,
+        stripeCancelAtType: typeof subscriptionObject?.cancel_at,
+        stripeCanceledAtRaw: subscriptionObject?.canceled_at ?? null,
+        stripeCanceledAtType: typeof subscriptionObject?.canceled_at,
+        stripeCancellationDetails: subscriptionObject?.cancellation_details
+          ? {
+              reason: subscriptionObject.cancellation_details.reason || null,
+              feedback: subscriptionObject.cancellation_details.feedback || null,
+              commentPresent: Boolean(subscriptionObject.cancellation_details.comment)
+            }
+          : null,
         stripeCurrentPeriodEndType: typeof subscriptionObject?.current_period_end,
         stripeCurrentPeriodEndPresent: typeof subscriptionObject?.current_period_end === 'number',
         stripeItemCurrentPeriodEndType: typeof subscriptionObject?.items?.data?.[0]?.current_period_end,
         stripeItemCurrentPeriodEndPresent:
           typeof subscriptionObject?.items?.data?.[0]?.current_period_end === 'number',
+        mappedCancelAtPeriodEndSource: getSubscriptionCancelAtPeriodEnd(subscriptionObject).source,
+        mappedCancelAtPeriodEndValue: getSubscriptionCancelAtPeriodEnd(subscriptionObject).value,
         mappedCurrentPeriodEndSource: resolveSubscriptionCurrentPeriodEnd(subscriptionObject).source,
+        mappedCurrentPeriodEndValue: toNullableDate(resolveSubscriptionCurrentPeriodEnd(subscriptionObject).value),
         updateKeys: [],
         gymSubscriptionFound: false,
         affectedRows: 0
@@ -303,6 +339,7 @@ const syncFromStripeSubscription = async ({
   const updateResult = await updateGymSubscription(localSubscription.gym_id, updatePayload, connection);
 
   if (logContext?.eventType === 'customer.subscription.updated') {
+    const cancelAtPeriodEnd = getSubscriptionCancelAtPeriodEnd(subscriptionObject);
     const currentPeriodEnd = resolveSubscriptionCurrentPeriodEnd(subscriptionObject);
     console.info('Billing webhook subscription update trace:', {
       eventId: logContext.eventId,
@@ -310,12 +347,26 @@ const syncFromStripeSubscription = async ({
       stripeCustomerId,
       stripeStatus: subscriptionObject?.status || null,
       stripeCancelAtPeriodEndRaw: subscriptionObject?.cancel_at_period_end,
+      stripeCancelAtRaw: subscriptionObject?.cancel_at ?? null,
+      stripeCancelAtType: typeof subscriptionObject?.cancel_at,
+      stripeCanceledAtRaw: subscriptionObject?.canceled_at ?? null,
+      stripeCanceledAtType: typeof subscriptionObject?.canceled_at,
+      stripeCancellationDetails: subscriptionObject?.cancellation_details
+        ? {
+            reason: subscriptionObject.cancellation_details.reason || null,
+            feedback: subscriptionObject.cancellation_details.feedback || null,
+            commentPresent: Boolean(subscriptionObject.cancellation_details.comment)
+          }
+        : null,
       stripeCurrentPeriodEndType: typeof subscriptionObject?.current_period_end,
       stripeCurrentPeriodEndPresent: typeof subscriptionObject?.current_period_end === 'number',
       stripeItemCurrentPeriodEndType: typeof subscriptionObject?.items?.data?.[0]?.current_period_end,
       stripeItemCurrentPeriodEndPresent:
         typeof subscriptionObject?.items?.data?.[0]?.current_period_end === 'number',
+      mappedCancelAtPeriodEndSource: cancelAtPeriodEnd.source,
+      mappedCancelAtPeriodEndValue: cancelAtPeriodEnd.value,
       mappedCurrentPeriodEndSource: currentPeriodEnd.source,
+      mappedCurrentPeriodEndValue: toNullableDate(currentPeriodEnd.value),
       updateKeys: updateResult.updatedKeys,
       gymSubscriptionFound: true,
       affectedRows: updateResult.affectedRows
