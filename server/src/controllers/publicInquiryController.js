@@ -22,6 +22,36 @@ const DEFAULT_DAYS_AHEAD = (() => {
 
 const safeTrim = (value) => String(value || '').trim();
 
+let publicInquiriesTableReady = false;
+
+const ensurePublicInquiriesTable = async () => {
+  if (publicInquiriesTableReady) {
+    return;
+  }
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS public_inquiries (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      request_type ENUM('demo', 'founder') NOT NULL,
+      first_name VARCHAR(100) NOT NULL,
+      last_name VARCHAR(100) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      phone VARCHAR(50) NOT NULL,
+      gym_name VARCHAR(255) NOT NULL,
+      demo_slot_start DATETIME NULL,
+      status VARCHAR(32) NOT NULL DEFAULT 'new',
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_public_inquiries_demo_slot_start (demo_slot_start),
+      KEY idx_public_inquiries_request_type (request_type),
+      KEY idx_public_inquiries_status (status),
+      KEY idx_public_inquiries_demo_slot_start (demo_slot_start)
+    )
+  `);
+
+  publicInquiriesTableReady = true;
+};
+
 const getZonedParts = (date, timeZone) => {
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone,
@@ -129,6 +159,8 @@ const formatSlotLabels = (date, timeZone) => {
 };
 
 const getBookedDemoSlotTimes = async () => {
+  await ensurePublicInquiriesTable();
+
   const [rows] = await pool.query(
     `SELECT demo_slot_start
      FROM public_inquiries
@@ -205,6 +237,8 @@ const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 const createPublicInquiry = async (req, res) => {
   try {
+    await ensurePublicInquiriesTable();
+
     const requestType = safeTrim(req.body?.request_type).toLowerCase();
     const firstName = safeTrim(req.body?.first_name);
     const lastName = safeTrim(req.body?.last_name);

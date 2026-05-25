@@ -1,7 +1,23 @@
 import axios from 'axios';
 
+const normalizeApiBaseUrl = (value) => {
+  if (!value || typeof value !== 'string') {
+    return 'http://localhost:4000/api';
+  }
+
+  const trimmedValue = value.trim().replace(/\/+$/, '');
+
+  if (!trimmedValue) {
+    return 'http://localhost:4000/api';
+  }
+
+  return trimmedValue.endsWith('/api')
+    ? trimmedValue
+    : `${trimmedValue}/api`;
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'
+  baseURL: normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL)
 });
 
 api.interceptors.request.use((config) => {
