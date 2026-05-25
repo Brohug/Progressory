@@ -73,9 +73,9 @@ const resolveSubscriptionCurrentPeriodEnd = (subscriptionObject) => {
 
 const resolveScheduledCancel = (subscriptionObject) => {
   const rawCancelAtPeriodEnd = subscriptionObject?.cancel_at_period_end;
-  if (typeof rawCancelAtPeriodEnd === 'boolean') {
+  if (rawCancelAtPeriodEnd === true) {
     return {
-      value: rawCancelAtPeriodEnd,
+      value: true,
       source: 'subscription'
     };
   }
@@ -110,7 +110,7 @@ const resolveScheduledCancel = (subscriptionObject) => {
 
   return {
     value: false,
-    source: 'default_false'
+    source: typeof rawCancelAtPeriodEnd === 'boolean' ? 'subscription_false' : 'default_false'
   };
 };
 
