@@ -112,14 +112,14 @@ export default function LandingPage() {
               </a>
             </div>
             <p className="landing-cta-note">
-              Demos are 20 minutes. Founder access is $49/month for the first 5-10 gyms, includes a 30-day free trial, and comes with personal onboarding.
+              Demos are 20 minutes. Founder access is $50/month for the first 5-10 gyms, Standard access is $99.99/month, both include a 30-day free trial, and founder access comes with personal onboarding.
             </p>
           </div>
 
           <aside className="landing-plan-card">
             <span className="eyebrow">Founder Plan</span>
             <div className="landing-plan-price">
-              <strong>$49/month</strong>
+              <strong>$50/month</strong>
               <span>for first 5-10 gyms</span>
             </div>
             <div className="landing-plan-list">
