@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const { sendClientError, handleServerError } = require('../middleware/errorHandler');
+const { sendOwnerInquiryNotification } = require('../services/notificationService');
 
 const REQUEST_TYPES = Object.freeze({
   DEMO: 'demo',
@@ -40,12 +41,20 @@ const ensurePublicInquiriesTable = async () => {
       gym_name VARCHAR(255) NOT NULL,
       demo_slot_start DATETIME NULL,
       status VARCHAR(32) NOT NULL DEFAULT 'new',
+      linked_gym_id INT NULL,
+      linked_owner_user_id INT NULL,
+      owner_contacted_at DATETIME NULL,
+      provisioned_at DATETIME NULL,
+      converted_at DATETIME NULL,
+      internal_notes TEXT NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       UNIQUE KEY uq_public_inquiries_demo_slot_start (demo_slot_start),
       KEY idx_public_inquiries_request_type (request_type),
       KEY idx_public_inquiries_status (status),
-      KEY idx_public_inquiries_demo_slot_start (demo_slot_start)
+      KEY idx_public_inquiries_demo_slot_start (demo_slot_start),
+      KEY idx_public_inquiries_linked_gym_id (linked_gym_id),
+      KEY idx_public_inquiries_linked_owner_user_id (linked_owner_user_id)
     )
   `);
 
@@ -312,6 +321,27 @@ const createPublicInquiry = async (req, res) => {
         requestType === REQUEST_TYPES.DEMO ? 'scheduled' : 'new'
       ]
     );
+
+    try {
+      await sendOwnerInquiryNotification({
+        inquiryId: result.insertId,
+        requestType,
+        firstName,
+        lastName,
+        email,
+        phone,
+        gymName,
+        demoSlotStart: demoSlotStart ? demoSlotStart.toISOString() : null
+      });
+    } catch (notificationError) {
+      console.warn('Public inquiry notification warning:', {
+        inquiryId: result.insertId,
+        requestType,
+        gymName,
+        message: notificationError.message,
+        statusCode: notificationError.statusCode || null
+      });
+    }
 
     return res.status(201).json({
       message: requestType === REQUEST_TYPES.DEMO

@@ -245,6 +245,79 @@ const buildSubscriptionDebugSnapshot = (subscriptionObject, eventId, updateResul
   };
 };
 
+const shouldAttemptStripeReconciliation = (subscription) => (
+  Boolean(subscription?.stripe_customer_id)
+  && (
+    !subscription?.stripe_subscription_id
+    || [BILLING_STATUSES.NONE, BILLING_STATUSES.INCOMPLETE].includes(subscription?.billing_status)
+    || (
+      subscription?.billing_status === BILLING_STATUSES.TRIALING
+      && !subscription?.trial_ends_at
+    )
+    || (
+      subscription?.billing_status === BILLING_STATUSES.ACTIVE
+      && !subscription?.current_period_end
+    )
+  )
+);
+
+const selectMostRelevantStripeSubscription = (subscriptions = []) => {
+  if (!Array.isArray(subscriptions) || subscriptions.length === 0) {
+    return null;
+  }
+
+  const statusPriority = new Map([
+    ['trialing', 0],
+    ['active', 1],
+    ['past_due', 2],
+    ['incomplete', 3],
+    ['unpaid', 4],
+    ['canceled', 5]
+  ]);
+
+  const rankedSubscriptions = [...subscriptions].sort((left, right) => {
+    const leftPriority = statusPriority.get(String(left?.status || '').toLowerCase()) ?? 99;
+    const rightPriority = statusPriority.get(String(right?.status || '').toLowerCase()) ?? 99;
+
+    if (leftPriority !== rightPriority) {
+      return leftPriority - rightPriority;
+    }
+
+    return Number(right?.created || 0) - Number(left?.created || 0);
+  });
+
+  return rankedSubscriptions[0] || null;
+};
+
+const reconcileGymSubscriptionFromStripeIfNeeded = async (subscription) => {
+  if (!shouldAttemptStripeReconciliation(subscription)) {
+    return subscription;
+  }
+
+  const stripe = getStripeClient();
+  const stripeSubscriptions = await stripe.subscriptions.list({
+    customer: subscription.stripe_customer_id,
+    status: 'all',
+    limit: 10,
+    expand: ['data.items.data.price']
+  });
+  const selectedSubscription = selectMostRelevantStripeSubscription(stripeSubscriptions?.data || []);
+
+  if (!selectedSubscription) {
+    return subscription;
+  }
+
+  await syncFromStripeSubscription({
+    connection: null,
+    subscriptionObject: selectedSubscription,
+    fallbackPlanCode: subscription.plan_code,
+    fallbackGymId: subscription.gym_id,
+    fallbackCustomerId: subscription.stripe_customer_id
+  });
+
+  return getSubscriptionByGymId(subscription.gym_id);
+};
+
 const getSelectedDatabaseName = async (connection) => {
   const [rows] = await connection.query('SELECT DATABASE() AS db_name');
   return rows[0]?.db_name || null;
@@ -518,7 +591,9 @@ const processStripeWebhookEvent = async (connection, stripe, event) => {
 
 const getBillingSubscription = async (req, res) => {
   try {
-    const subscription = await getSubscriptionByGymId(req.user.gym_id);
+    const subscription = await reconcileGymSubscriptionFromStripeIfNeeded(
+      await getSubscriptionByGymId(req.user.gym_id)
+    );
 
     return res.status(200).json({
       subscription: buildSafeBillingPayload(subscription)
@@ -530,7 +605,9 @@ const getBillingSubscription = async (req, res) => {
 
 const getBillingAccessStatus = async (req, res) => {
   try {
-    const subscription = await getSubscriptionByGymId(req.user.gym_id);
+    const subscription = await reconcileGymSubscriptionFromStripeIfNeeded(
+      await getSubscriptionByGymId(req.user.gym_id)
+    );
     const safePayload = buildSafeBillingPayload(subscription);
 
     return res.status(200).json({

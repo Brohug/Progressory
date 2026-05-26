@@ -119,14 +119,21 @@ export default function MyAccountPage() {
       : 'Not available';
 
     return [
-      { label: 'Account status', value: 'Active' },
+      {
+        label: 'Account status',
+        value: user?.gym_is_platform_suspended ? 'Suspended' : 'Active'
+      },
+      {
+        label: 'Gym access',
+        value: user?.gym_is_platform_suspended ? 'Temporarily suspended' : 'Normal access'
+      },
       { label: 'Login email', value: user?.email || 'No email on file' },
       {
         label: 'Last updated',
         value: formattedLastUpdated
       }
     ];
-  }, [user?.created_at, user?.email, user?.updated_at]);
+  }, [user?.created_at, user?.email, user?.gym_is_platform_suspended, user?.updated_at]);
 
   const accountActivityItems = useMemo(() => {
     const formatDate = (value) => (

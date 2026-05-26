@@ -90,6 +90,14 @@ Progressory is a full-stack SaaS-style web application built for Brazilian Jiu-J
 - In local development, if `ALLOWED_ORIGINS` is unset, the API remains permissive enough for browser testing.
 - In production, if `ALLOWED_ORIGINS` is missing or empty, browser-origin requests are rejected while no-origin requests like `curl`, Postman, and server-to-server checks can still work.
 - Public auth and invite endpoints are rate-limited.
+- Public demo and founder requests are stored in `public_inquiries`.
+- Optional owner notification env vars:
+  - `OWNER_NOTIFICATION_EMAIL`
+  - `RESEND_API_KEY`
+  - `NOTIFICATION_FROM_EMAIL`
+- Optional platform operator env var:
+  - `PLATFORM_ADMIN_EMAILS`
+    - comma-separated allowlist for internal operator accounts that can access `/platform-admin`
 - Optional tuning variables:
   - `RATE_LIMIT_WINDOW_MS`
   - `RATE_LIMIT_LOGIN_MAX`
@@ -241,6 +249,51 @@ If billing live mode is misconfigured:
 3. If needed, temporarily set `BILLING_ENFORCEMENT_ENABLED=false` in non-production only while diagnosing.
 4. Re-deploy and verify `/api/billing/subscription` and `/api/billing/access-status`.
 5. Re-enable correct production enforcement once Stripe configuration is fixed.
+
+## Founder Lead Workflow
+
+Recommended founder process:
+1. A gym owner submits `Apply for founder access` or books a demo from the landing page.
+2. The request is stored in `public_inquiries`.
+3. If Resend notification env vars are configured, the request is also emailed to `OWNER_NOTIFICATION_EMAIL`.
+4. You review the lead, talk with them, and decide whether to move forward.
+5. Once approved, provision their gym owner invite manually:
+
+```powershell
+cd server
+npm run leads:list
+npm run leads:provision-founder -- <public_inquiry_id>
+```
+
+The provisioning script:
+- creates the gym
+- creates an inactive owner account
+- creates a staff setup invite URL for that owner
+- marks the founder inquiry as `provisioned`
+
+Next:
+1. Send the returned invite URL to the founder.
+2. They set their password and log in.
+3. They go to Billing and start founder checkout.
+4. Stripe trial checkout and webhook sync grant access.
+5. You onboard their first workflow manually inside their own gym environment.
+
+## Platform Admin
+
+Phase 1 adds a private operator view at `/platform-admin` for founder lead handling and gym oversight.
+
+Access rules:
+- users still authenticate through the normal login flow
+- the backend adds `is_platform_admin` only when the user email is listed in `PLATFORM_ADMIN_EMAILS`
+- non-allowlisted users cannot see or use the route, even if they try to visit it directly
+
+Phase 1 actions:
+- review all founder requests
+- mark a founder request as contacted
+- provision a founder gym and owner invite
+- resend the latest founder invite
+- review gym-level billing summary data
+- deactivate a gym when needed
 
 ---
 

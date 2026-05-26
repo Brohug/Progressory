@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const pool = require('../config/db');
+const { isPlatformAdminEmail } = require('../services/platformAdminService');
 
 const generateSlug = (name) => {
   return name
@@ -24,6 +25,14 @@ const generateToken = (user) => {
     { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
   );
 };
+
+const attachUserRuntimeFlags = (user) => ({
+  ...user,
+  is_platform_admin: isPlatformAdminEmail(user?.email),
+  gym_is_platform_suspended: Boolean(user?.is_platform_suspended),
+  gym_platform_suspended_at: user?.platform_suspended_at || null,
+  gym_platform_suspension_reason: user?.platform_suspension_reason || ''
+});
 
 const register = async (req, res) => {
   const connection = await pool.getConnection();
@@ -82,7 +91,7 @@ const register = async (req, res) => {
 
     const [rows] = await connection.query(
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.created_at, u.updated_at,
-              g.name AS gym_name, g.slug
+              g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
        FROM users u
        JOIN gyms g ON u.gym_id = g.id
        WHERE u.id = ?`,
@@ -95,7 +104,7 @@ const register = async (req, res) => {
     return res.status(201).json({
       message: 'Registration successful',
       token,
-      user
+      user: attachUserRuntimeFlags(user)
     });
   } catch (error) {
     await connection.rollback();
@@ -123,7 +132,7 @@ const login = async (req, res) => {
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.password_hash, u.role, u.is_active,
               u.created_at, u.updated_at,
               m.id AS member_id,
-              g.name AS gym_name, g.slug
+              g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
        FROM users u
        JOIN gyms g ON u.gym_id = g.id
        LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
@@ -158,7 +167,7 @@ const login = async (req, res) => {
     return res.status(200).json({
       message: 'Login successful',
       token,
-      user: {
+      user: attachUserRuntimeFlags({
         id: user.id,
         gym_id: user.gym_id,
         first_name: user.first_name,
@@ -169,8 +178,11 @@ const login = async (req, res) => {
         created_at: user.created_at,
         updated_at: user.updated_at,
         gym_name: user.gym_name,
-        slug: user.slug
-      }
+        slug: user.slug,
+        is_platform_suspended: user.is_platform_suspended,
+        platform_suspended_at: user.platform_suspended_at,
+        platform_suspension_reason: user.platform_suspension_reason
+      })
     });
   } catch (error) {
     console.error('Login error:', error.message);
@@ -327,7 +339,7 @@ const setMemberAccessPassword = async (req, res) => {
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
               u.created_at, u.updated_at,
               m.id AS member_id,
-              g.name AS gym_name, g.slug
+              g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
        FROM users u
        JOIN gyms g ON u.gym_id = g.id
        LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
@@ -341,7 +353,7 @@ const setMemberAccessPassword = async (req, res) => {
     return res.status(200).json({
       message: 'Password set successfully',
       token: authToken,
-      user
+      user: attachUserRuntimeFlags(user)
     });
   } catch (error) {
     await connection.rollback();
@@ -457,7 +469,7 @@ const setStaffAccessPassword = async (req, res) => {
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
               u.created_at, u.updated_at,
               m.id AS member_id,
-              g.name AS gym_name, g.slug
+              g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
        FROM users u
        JOIN gyms g ON u.gym_id = g.id
        LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
@@ -471,7 +483,7 @@ const setStaffAccessPassword = async (req, res) => {
     return res.status(200).json({
       message: 'Password set successfully',
       token: authToken,
-      user: {
+      user: attachUserRuntimeFlags({
         id: user.id,
         gym_id: user.gym_id,
         first_name: user.first_name,
@@ -482,8 +494,11 @@ const setStaffAccessPassword = async (req, res) => {
         created_at: user.created_at,
         updated_at: user.updated_at,
         gym_name: user.gym_name,
-        slug: user.slug
-      }
+        slug: user.slug,
+        is_platform_suspended: user.is_platform_suspended,
+        platform_suspended_at: user.platform_suspended_at,
+        platform_suspension_reason: user.platform_suspension_reason
+      })
     });
   } catch (error) {
     await connection.rollback();
@@ -503,7 +518,7 @@ const getMe = async (req, res) => {
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
               u.created_at, u.updated_at,
               m.id AS member_id,
-              g.name AS gym_name, g.slug
+              g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
        FROM users u
        JOIN gyms g ON u.gym_id = g.id
        LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
@@ -517,7 +532,7 @@ const getMe = async (req, res) => {
       });
     }
 
-    return res.status(200).json(rows[0]);
+    return res.status(200).json(attachUserRuntimeFlags(rows[0]));
   } catch (error) {
     console.error('Get me error:', error.message);
 
@@ -561,7 +576,7 @@ const updateProfile = async (req, res) => {
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
               u.created_at, u.updated_at,
               m.id AS member_id,
-              g.name AS gym_name, g.slug
+              g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
        FROM users u
        JOIN gyms g ON u.gym_id = g.id
        LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
@@ -571,7 +586,7 @@ const updateProfile = async (req, res) => {
 
     return res.status(200).json({
       message: 'Profile updated successfully',
-      user: rows[0]
+      user: attachUserRuntimeFlags(rows[0])
     });
   } catch (error) {
     console.error('Update profile error:', error.message);

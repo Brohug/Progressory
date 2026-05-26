@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AuthContext } from './AuthContext';
 import api from '../api/axios';
 
@@ -9,21 +9,21 @@ export function AuthProvider({ children }) {
   );
   const [isAuthReady, setIsAuthReady] = useState(!localStorage.getItem('token'));
 
-  const login = (tokenValue, userValue) => {
+  const login = useCallback((tokenValue, userValue) => {
     setToken(tokenValue);
     setUser(userValue);
     setIsAuthReady(true);
     localStorage.setItem('token', tokenValue);
     localStorage.setItem('user', JSON.stringify(userValue));
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setToken('');
     setUser(null);
     setIsAuthReady(true);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-  };
+  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -50,7 +50,7 @@ export function AuthProvider({ children }) {
     return undefined;
   }, [token]);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     if (!token) {
       return null;
     }
@@ -59,7 +59,27 @@ export function AuthProvider({ children }) {
     setUser(response.data);
     localStorage.setItem('user', JSON.stringify(response.data));
     return response.data;
-  };
+  }, [token]);
+
+  useEffect(() => {
+    const handleStorage = (event) => {
+      if (event.key !== 'token' && event.key !== 'user') {
+        return;
+      }
+
+      const nextToken = localStorage.getItem('token') || '';
+      const nextUser = JSON.parse(localStorage.getItem('user') || 'null');
+
+      setToken(nextToken);
+      setUser(nextUser);
+      setIsAuthReady(true);
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ token, user, login, logout, refreshUser, isAuthReady }}>

@@ -35,6 +35,7 @@ api.interceptors.response.use(
   (error) => {
     const status = error?.response?.status;
     const billingRequired = error?.response?.data?.billing_required === true;
+    const gymSuspended = error?.response?.data?.gym_suspended === true;
     const requestUrl = error?.config?.url || '';
     const isAuthSetupRequest =
       requestUrl.includes('/auth/login')
@@ -52,6 +53,22 @@ api.interceptors.response.use(
           && window.location.pathname !== '/billing'
         ) {
           window.location.href = '/billing';
+        }
+      } catch {
+        // Ignore localStorage parsing issues and fall through to the caller.
+      }
+    }
+
+    if (gymSuspended && status === 403) {
+      try {
+        const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+
+        if (
+          !storedUser?.is_platform_admin
+          && typeof window !== 'undefined'
+          && !['/suspended', '/billing', '/account'].includes(window.location.pathname)
+        ) {
+          window.location.href = '/suspended';
         }
       } catch {
         // Ignore localStorage parsing issues and fall through to the caller.

@@ -2,6 +2,9 @@ CREATE TABLE gyms (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
     slug VARCHAR(150) NOT NULL UNIQUE,
+    is_platform_suspended BOOLEAN NOT NULL DEFAULT FALSE,
+    platform_suspended_at DATETIME NULL,
+    platform_suspension_reason TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -353,6 +356,30 @@ CREATE TABLE member_access_invites (
         UNIQUE (token_hash)
 );
 
+CREATE TABLE staff_access_invites (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    gym_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_by_user_id INT NOT NULL,
+    invite_type ENUM('activation', 'reset_password') NOT NULL DEFAULT 'activation',
+    token_hash VARCHAR(255) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_staff_access_invites_gym
+        FOREIGN KEY (gym_id) REFERENCES gyms(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_staff_access_invites_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_staff_access_invites_created_by
+        FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+        ON DELETE CASCADE,
+    CONSTRAINT uq_staff_access_invites_token_hash
+        UNIQUE (token_hash)
+);
+
 CREATE TABLE gym_subscriptions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     gym_id INT NOT NULL,
@@ -413,4 +440,30 @@ CREATE TABLE entry_setup_examples (
         ON DELETE RESTRICT,
     INDEX idx_entry_setup_examples_gym_visibility (gym_id, visibility),
     INDEX idx_entry_setup_examples_creator (created_by_user_id)
+);
+
+CREATE TABLE public_inquiries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    request_type ENUM('demo', 'founder') NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(50) NOT NULL,
+    gym_name VARCHAR(255) NOT NULL,
+    demo_slot_start DATETIME NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'new',
+    linked_gym_id INT NULL,
+    linked_owner_user_id INT NULL,
+    owner_contacted_at DATETIME NULL,
+    provisioned_at DATETIME NULL,
+    converted_at DATETIME NULL,
+    internal_notes TEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_public_inquiries_demo_slot_start (demo_slot_start),
+    KEY idx_public_inquiries_request_type (request_type),
+    KEY idx_public_inquiries_status (status),
+    KEY idx_public_inquiries_demo_slot_start (demo_slot_start),
+    KEY idx_public_inquiries_linked_gym_id (linked_gym_id),
+    KEY idx_public_inquiries_linked_owner_user_id (linked_owner_user_id)
 );

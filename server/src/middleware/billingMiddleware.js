@@ -8,7 +8,8 @@ const ALLOWED_BILLING_PATH_PATTERNS = [
   /^\/api\/billing\/subscription$/i,
   /^\/api\/billing\/access-status$/i,
   /^\/api\/billing\/checkout-session$/i,
-  /^\/api\/billing\/customer-portal$/i
+  /^\/api\/billing\/customer-portal$/i,
+  /^\/api\/platform-admin(?:\/.*)?$/i
 ];
 
 const normalizeBooleanEnv = (value) => {
@@ -46,6 +47,10 @@ const isBillingAllowedPath = (originalUrl = '') => {
 
 const enforceBillingAccess = async (req, res, next) => {
   if (!req.user?.gym_id) {
+    return next();
+  }
+
+  if (req.user?.is_platform_admin) {
     return next();
   }
 

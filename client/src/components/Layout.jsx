@@ -43,6 +43,8 @@ const getIconNameForPath = (path) => {
       return 'progress';
     case '/account':
       return 'account';
+    case '/platform-admin':
+      return 'reports';
     default:
       return 'dashboard';
   }
@@ -80,6 +82,7 @@ export default function Layout({ children }) {
   const isOwner = user?.role === 'owner';
   const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const isMember = user?.role === 'member';
+  const isPlatformAdmin = user?.is_platform_admin === true;
   const searchParams = new URLSearchParams(location.search);
   const workflow = searchParams.get('workflow') || '';
   const guideStorageKey = user?.id ? `progressory-layout-guide-collapsed-v1-${user.id}` : '';
@@ -583,6 +586,12 @@ export default function Layout({ children }) {
                           <AppIcon name="account" />
                           <span>My Account</span>
                         </Link>
+                        {isPlatformAdmin ? (
+                          <Link className="secondary-button" to="/platform-admin" onClick={closeMenus}>
+                            <AppIcon name="reports" />
+                            <span>Platform Admin</span>
+                          </Link>
+                        ) : null}
                         {isOwner ? (
                           <Link className="secondary-button" to="/billing" onClick={closeMenus}>
                             <AppIcon name="reports" />
@@ -728,6 +737,12 @@ export default function Layout({ children }) {
                       <AppIcon name="account" />
                       <span>My Account</span>
                     </Link>
+                    {isPlatformAdmin ? (
+                      <Link to="/platform-admin" className="secondary-button" onClick={closeMenus}>
+                        <AppIcon name="reports" />
+                        <span>Platform Admin</span>
+                      </Link>
+                    ) : null}
                     {isOwner ? (
                       <Link to="/billing" className="secondary-button" onClick={closeMenus}>
                         <AppIcon name="reports" />

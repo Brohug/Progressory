@@ -23,6 +23,8 @@ const EntrySetupsPage = lazy(() => import('./pages/EntrySetupsPage'));
 const MyProgressPage = lazy(() => import('./pages/MyProgressPage'));
 const MyAccountPage = lazy(() => import('./pages/MyAccountPage'));
 const BillingPage = lazy(() => import('./pages/BillingPage'));
+const PlatformAdminPage = lazy(() => import('./pages/PlatformAdminPage'));
+const SuspendedPage = lazy(() => import('./pages/SuspendedPage'));
 
 const STAFF_ROLES = ['owner', 'admin', 'coach'];
 const MANAGEMENT_ROLES = ['owner', 'admin'];
@@ -187,6 +189,22 @@ export default function App() {
               element={
                 <ProtectedRoute allowedRoles={['owner', ...STAFF_ROLES.slice(1), 'member']}>
                   <BillingPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/platform-admin"
+              element={
+                <ProtectedRoute requirePlatformAdmin>
+                  <PlatformAdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/suspended"
+              element={
+                <ProtectedRoute allowedRoles={['owner', ...STAFF_ROLES.slice(1), 'member']}>
+                  <SuspendedPage />
                 </ProtectedRoute>
               }
             />

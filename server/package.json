@@ -9,7 +9,9 @@
     "db:schema": "node scripts/applySchema.js",
     "db:migrate": "node scripts/applyMigrations.js",
     "seed:demo": "node scripts/seedDemoTenant.js",
-    "debug:stripe-subscription": "node scripts/debugStripeSubscription.js"
+    "debug:stripe-subscription": "node scripts/debugStripeSubscription.js",
+    "leads:list": "node scripts/listPublicInquiries.js",
+    "leads:provision-founder": "node scripts/provisionFounderInquiry.js"
   },
   "keywords": [],
   "author": "",
