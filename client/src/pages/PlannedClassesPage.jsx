@@ -5,6 +5,7 @@ import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 import TopicSearchSelect from '../components/TopicSearchSelect';
 import { useAuth } from '../hooks/useAuth';
+import { useFounderOnboarding } from '../hooks/useFounderOnboarding';
 import curriculumIndexSeed from '../data/curriculumIndexSeed';
 import { formatLabel } from '../utils/formatLabel';
 
@@ -185,6 +186,7 @@ const sortPlannedClassesForPlanner = (plannedClasses, todayKey) => {
 
 export default function PlannedClassesPage() {
   const { user } = useAuth();
+  const { beginnerPhaseActive, refreshFounderOnboarding } = useFounderOnboarding();
   const isMember = user?.role === 'member';
   const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const navigate = useNavigate();
@@ -1052,6 +1054,12 @@ export default function PlannedClassesPage() {
             ? 'Planned class saved and moved into Completed classes because its scheduled end time is already in the past.'
             : `${processedResult.processedCount} planned classes were moved into Completed classes because their scheduled end times are already in the past.`
         );
+      }
+
+      const onboardingSnapshot = await refreshFounderOnboarding();
+
+      if (beginnerPhaseActive && onboardingSnapshot?.nextTask) {
+        navigate(onboardingSnapshot.nextTask.to);
       }
     } catch (err) {
       console.error('Save planned class error:', err);

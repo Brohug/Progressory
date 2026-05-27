@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { FounderOnboardingProvider } from './context/FounderOnboardingContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -56,10 +57,11 @@ function ScrollToTop() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <Suspense fallback={<RouteFallback />}>
-          <Routes>
+      <FounderOnboardingProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/member-access/:token" element={<MemberAccessPage />} />
@@ -208,9 +210,10 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </FounderOnboardingProvider>
     </AuthProvider>
   );
 }

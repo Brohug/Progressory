@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 import { useAuth } from '../hooks/useAuth';
+import { useFounderOnboarding } from '../hooks/useFounderOnboarding';
 import ClassTopicsForm from '../components/ClassTopicsForm';
 import ClassTrainingEntriesForm from '../components/ClassTrainingEntriesForm';
 import ClassAttendanceForm from '../components/ClassAttendanceForm';
@@ -37,8 +38,10 @@ const storeReadyForAttendanceIds = (classIds) => {
 
 export default function ClassesPage() {
   const { user } = useAuth();
+  const { beginnerPhaseActive, refreshFounderOnboarding } = useFounderOnboarding();
   const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const location = useLocation();
+  const navigate = useNavigate();
   const classListSectionRef = useRef(null);
 
   const [classes, setClasses] = useState([]);
@@ -632,6 +635,11 @@ export default function ClassesPage() {
 
       await fetchClasses();
       setClassMessage('Class saved successfully.');
+      const onboardingSnapshot = await refreshFounderOnboarding();
+
+      if (beginnerPhaseActive && onboardingSnapshot?.nextTask) {
+        navigate(onboardingSnapshot.nextTask.to);
+      }
     } catch (err) {
       console.error('Create class error:', err);
       setError(err.response?.data?.message || 'Couldn\'t create that class just now.');
@@ -1533,7 +1541,11 @@ export default function ClassesPage() {
                         recordedMemberIds={(classMembersMap[classItem.id] || []).map((member) => member.member_id)}
                         onSuccess={async () => {
                           await loadClassDetails(classItem.id);
+                          const onboardingSnapshot = await refreshFounderOnboarding();
                           scrollToClassListTop();
+                          if (beginnerPhaseActive && onboardingSnapshot?.setupComplete) {
+                            navigate('/dashboard');
+                          }
                         }}
                       />
                     </div>

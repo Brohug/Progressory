@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 import MemberProgressForm from '../components/MemberProgressForm';
 import { useAuth } from '../hooks/useAuth';
+import { useFounderOnboarding } from '../hooks/useFounderOnboarding';
 import { formatLabel } from '../utils/formatLabel';
 
 const emptyMemberForm = {
@@ -19,8 +20,10 @@ const normalizeSearchValue = (value) => String(value || '').trim().toLowerCase()
 
 export default function MembersPage() {
   const { user } = useAuth();
+  const { beginnerPhaseActive, refreshFounderOnboarding } = useFounderOnboarding();
   const isOwner = user?.role === 'owner';
   const isManagement = user?.role === 'owner' || user?.role === 'admin';
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const memberListSectionRef = useRef(null);
   const memberItemRefs = useRef({});
@@ -173,10 +176,17 @@ export default function MembersPage() {
 
       setMemberForm(emptyMemberForm);
       await fetchMembers();
+      const onboardingSnapshot = await refreshFounderOnboarding();
+
+      if (beginnerPhaseActive && onboardingSnapshot?.nextTask) {
+        navigate(onboardingSnapshot.nextTask.to);
+        return;
+      }
+
       setMemberMessage('Member saved successfully.');
       setMemberMessageAction({
-        label: 'Next: Record attendance',
-        to: '/classes?workflow=attendance-ready'
+        label: 'Next: Plan your first class',
+        to: '/planned-classes?action=create&onboarding=1'
       });
     } catch (err) {
       console.error('Create member error:', err);
@@ -459,6 +469,7 @@ export default function MembersPage() {
   useEffect(() => {
     const searchValue = searchParams.get('search');
     const programValue = searchParams.get('program');
+    const actionValue = searchParams.get('action');
 
     if (searchValue !== null) {
       setMemberSearch(searchValue);
@@ -466,6 +477,13 @@ export default function MembersPage() {
 
     if (programValue !== null) {
       setMemberProgramFilter(programValue);
+    }
+
+    if (actionValue === 'create') {
+      setShowCreateMemberForm(true);
+      window.setTimeout(() => {
+        memberListSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 120);
     }
   }, [searchParams]);
 

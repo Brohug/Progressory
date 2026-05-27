@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
 import GuidedSearchPrompt from '../components/GuidedSearchPrompt';
@@ -9,6 +9,7 @@ import TopicSearchSelect from '../components/TopicSearchSelect';
 import curriculumIndexSeed from '../data/curriculumIndexSeed';
 import { findRelatedSetupFamilies } from '../data/entrySetupFamilies';
 import { useAuth } from '../hooks/useAuth';
+import { useFounderOnboarding } from '../hooks/useFounderOnboarding';
 import { findGuidedSearchPrompt } from '../utils/guidedSearchPrompts';
 
 const skillLevelOrder = ['Beginner', 'Intermediate', 'Advanced'];
@@ -272,10 +273,13 @@ const getCollapsedSearchResults = (entries, normalizedSearch, categoryFilter) =>
 
 export default function CurriculumIndexPage() {
   const { user } = useAuth();
+  const { beginnerPhaseActive, refreshFounderOnboarding } = useFounderOnboarding();
   const isMember = user?.role === 'member';
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const resultsSectionRef = useRef(null);
   const entryCardRefs = useRef({});
+  const createPanelRefs = useRef({});
   const scrollToResultsSectionTop = () => {
     window.requestAnimationFrame(() => {
       const target = resultsSectionRef.current;
@@ -319,9 +323,10 @@ export default function CurriculumIndexPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isResultsSectionOpen, setIsResultsSectionOpen] = useState(
-    Boolean(searchParams.get('search') || searchParams.get('entryId'))
+    Boolean(searchParams.get('search') || searchParams.get('entryId') || searchParams.get('focusResults') === '1')
   );
   const focusEntryOnLoad = searchParams.get('focusEntry') === '1';
+  const focusResultsOnLoad = searchParams.get('focusResults') === '1';
 
   useEffect(() => {
     const loadIndexSignals = async () => {
@@ -383,11 +388,12 @@ export default function CurriculumIndexPage() {
     if (categoryFilter) nextParams.set('category', categoryFilter);
     if (skillLevelFilter) nextParams.set('skillLevel', skillLevelFilter);
     if (selectedEntryId) nextParams.set('entryId', selectedEntryId);
+    if (focusResultsOnLoad) nextParams.set('focusResults', '1');
 
     if (nextParams.toString() !== searchParams.toString()) {
       setSearchParams(nextParams, { replace: true });
     }
-  }, [debouncedSearch, categoryFilter, skillLevelFilter, selectedEntryId, searchParams, setSearchParams]);
+  }, [categoryFilter, debouncedSearch, focusResultsOnLoad, searchParams, selectedEntryId, setSearchParams, skillLevelFilter]);
 
   const fetchTopics = async () => {
     const response = await api.get('/topics');
@@ -586,6 +592,14 @@ export default function CurriculumIndexPage() {
   }, [categoryFilter, debouncedSearch, enrichedEntries, guidedSearchScope, selectedEntryId, skillLevelFilter]);
 
   useEffect(() => {
+    if (!focusResultsOnLoad) {
+      return;
+    }
+
+    setIsResultsSectionOpen(true);
+  }, [focusResultsOnLoad]);
+
+  useEffect(() => {
     if (!focusEntryOnLoad || selectedEntryId || !search.trim()) {
       return;
     }
@@ -771,10 +785,15 @@ export default function CurriculumIndexPage() {
 
       await fetchTopics();
       setCreatingEntryId(null);
+      const onboardingSnapshot = await refreshFounderOnboarding();
       setEntryNoticeMap((prev) => ({
         ...prev,
         [entry.id]: 'Topic created successfully. This item is now available in Topics and other curriculum workflows.'
       }));
+
+      if (beginnerPhaseActive && onboardingSnapshot?.nextTask) {
+        navigate(onboardingSnapshot.nextTask.to);
+      }
     } catch (err) {
       console.error('Create topic from curriculum index error:', err);
       setEntryNoticeMap((prev) => ({
@@ -879,6 +898,36 @@ export default function CurriculumIndexPage() {
       });
     }, 140);
   }, [filteredEntries.length, isResultsSectionOpen, selectedEntryId]);
+
+  useEffect(() => {
+    if (!focusResultsOnLoad || loading || !isResultsSectionOpen || selectedEntryId) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      scrollToResultsSectionTop();
+    }, 120);
+  }, [focusResultsOnLoad, isResultsSectionOpen, loading, selectedEntryId]);
+
+  useEffect(() => {
+    if (!creatingEntryId) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      const target = createPanelRefs.current[creatingEntryId];
+
+      if (!target) {
+        return;
+      }
+
+      const targetTop = target.getBoundingClientRect().top + window.scrollY - 120;
+      window.scrollTo({
+        top: Math.max(targetTop, 0),
+        behavior: 'smooth'
+      });
+    }, 100);
+  }, [creatingEntryId]);
 
   return (
     <Layout>
@@ -1082,7 +1131,18 @@ export default function CurriculumIndexPage() {
                               <span className="eyebrow">{entry.category}</span>
                               <strong>{entry.name}</strong>
                             </div>
-                            <span className="curriculum-index-skill-level">{entry.skillLevel}</span>
+                            <div className="curriculum-index-header-actions">
+                              {!isMember && !entry.topic ? (
+                                <button
+                                  type="button"
+                                  className="secondary-button curriculum-index-header-button"
+                                  onClick={() => handleOpenCreateTopic(entry)}
+                                >
+                                  Add topic
+                                </button>
+                              ) : null}
+                              <span className="curriculum-index-skill-level">{entry.skillLevel}</span>
+                            </div>
                           </div>
 
                           {isCompactResultView ? (
@@ -1220,20 +1280,7 @@ export default function CurriculumIndexPage() {
 
                           {!isMember && showEntryDetails ? (
                           <div className="inline-actions curriculum-index-actions">
-                            {!entry.topic ? (
-                              <span
-                                className="ui-tooltip-trigger"
-                                data-tooltip="Add this item to your gym Topics first so classes, Library, and progress tracking can link to it."
-                              >
-                                <button
-                                  type="button"
-                                  className="secondary-button"
-                                  onClick={() => handleOpenCreateTopic(entry)}
-                                >
-                                  Add topic
-                                </button>
-                              </span>
-                            ) : (
+                            {entry.topic ? (
                               <>
                                 {usageCount > 0 ? (
                                   <Link className="secondary-button curriculum-index-action-link" to="/reports">
@@ -1249,12 +1296,17 @@ export default function CurriculumIndexPage() {
                                   </button>
                                 )}
                               </>
-                            )}
+                            ) : null}
                           </div>
                           ) : null}
 
                           {!isMember && showEntryDetails && creatingEntryId === entry.id ? (
-                            <div className="quick-add-panel curriculum-index-create-panel">
+                            <div
+                              ref={(element) => {
+                                createPanelRefs.current[entry.id] = element;
+                              }}
+                              className="quick-add-panel curriculum-index-create-panel"
+                            >
                               <label>Topic title</label>
                               <input
                                 type="text"
@@ -1284,7 +1336,7 @@ export default function CurriculumIndexPage() {
                                 value={createTopicData.program_id}
                                 onChange={handleCreateTopicChange}
                               >
-                                <option value="">No program</option>
+                                <option value="">No program yet (use everywhere)</option>
                                 {activePrograms.map((program) => (
                                   <option key={program.id} value={program.id}>
                                     {program.name}
@@ -1314,7 +1366,7 @@ export default function CurriculumIndexPage() {
                               />
 
                               <p className="section-note curriculum-index-inline-note">
-                                Add it with the right hierarchy from the start.
+                                No program yet is okay here. Unassigned topics still show up across class planning and can be sorted into a program later.
                               </p>
 
                               <div className="inline-actions">

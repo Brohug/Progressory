@@ -5,6 +5,7 @@ import AppIcon from '../components/AppIcon';
 import Layout from '../components/Layout';
 import ExpandableSection from '../components/ExpandableSection';
 import { useAuth } from '../hooks/useAuth';
+import { useFounderOnboarding } from '../hooks/useFounderOnboarding';
 import { formatLabel } from '../utils/formatLabel';
 
 const getLocalIsoDate = () => {
@@ -17,16 +18,21 @@ const getLocalIsoDate = () => {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const {
+    tasks: setupTasks,
+    nextTask: nextSetupTask,
+    completedCount: completedSetupCount,
+    setupComplete,
+    progressPercent: setupProgressPercent
+  } = useFounderOnboarding();
   const isMember = user?.role === 'member';
   const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const [recentClasses, setRecentClasses] = useState([]);
   const [topicCoverage, setTopicCoverage] = useState([]);
   const [trainingMethodUsage, setTrainingMethodUsage] = useState([]);
-  const [topics, setTopics] = useState([]);
   const [classes, setClasses] = useState([]);
   const [plannedClasses, setPlannedClasses] = useState([]);
   const [libraryEntries, setLibraryEntries] = useState([]);
-  const [members, setMembers] = useState([]);
   const [memberProgress, setMemberProgress] = useState([]);
   const [attendanceSnapshot, setAttendanceSnapshot] = useState({
     classesNeedingAttendance: 0,
@@ -39,7 +45,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const tutorialStorageKey = user?.id ? `progressory-dashboard-tutorial-state-v7-${user.id}` : '';
+  const tutorialStorageKey = user?.id ? `progressory-dashboard-tutorial-state-v8-${user.id}` : '';
   const setupStorageKey = user?.id ? `progressory-dashboard-setup-hidden-v2-${user.id}` : '';
 
   const loadDashboardData = useCallback(async () => {
@@ -55,7 +61,6 @@ export default function DashboardPage() {
         recentClassesRes,
         topicCoverageRes,
         trainingMethodUsageRes,
-        topicsRes,
         classesRes,
         plannedClassesRes,
         libraryEntriesRes,
@@ -64,7 +69,6 @@ export default function DashboardPage() {
         api.get('/reports/recent-classes?limit=5'),
         api.get('/reports/topic-coverage'),
         api.get('/reports/training-method-usage'),
-        api.get('/topics'),
         api.get('/classes'),
         api.get('/planned-classes'),
         api.get('/library'),
@@ -113,11 +117,9 @@ export default function DashboardPage() {
       setRecentClasses(recentClassesRes.data);
       setTopicCoverage(topicCoverageRes.data);
       setTrainingMethodUsage(trainingMethodUsageRes.data);
-      setTopics(topicsRes.data);
       setClasses(allClasses);
       setPlannedClasses(plannedClassesRes.data);
       setLibraryEntries(libraryEntriesRes.data);
-      setMembers(allMembers);
       setAttendanceSnapshot({
         classesNeedingAttendance,
         classesWithAttendance
@@ -139,65 +141,11 @@ export default function DashboardPage() {
   const todayIsoDate = getLocalIsoDate();
   const todayClassCount = classes.filter((classItem) => classItem.class_date === todayIsoDate).length;
   const todayPlannedCount = plannedClasses.filter((classItem) => classItem.class_date === todayIsoDate).length;
-  const activeMemberCount = members.filter((member) => member.is_active).length;
   const activeLibraryVideoCount = libraryEntries.filter((entry) => entry.is_active && entry.video_url).length;
 
-  const setupTasks = useMemo(() => ([
-    {
-      key: 'topics',
-      title: 'Add topics for your curriculum',
-      description: 'Add the positions, techniques, and concepts your gym actually teaches.',
-      helper: 'Topics are the glue between classes, member progress, Library, and study tools.',
-      to: '/index',
-      complete: topics.length > 0
-    },
-    {
-      key: 'members',
-      title: 'Add your members',
-      description: 'Add members so attendance and progress tracking become real instead of just structure.',
-      helper: 'Once members exist, class logs and attendance start doing useful work for the gym.',
-      to: '/members',
-      complete: activeMemberCount > 0
-    },
-    {
-      key: 'planned',
-      title: 'Plan your first class',
-      description: 'Build the next real session in Class Planner before class starts.',
-      helper: 'This is the first live workflow most founder gyms should use right away.',
-      to: '/planned-classes',
-      complete: plannedClasses.length > 0
-    },
-    {
-      key: 'logged-class',
-      title: 'Log your first completed class',
-      description: 'Turn one real class into a class log so planning becomes a repeatable coaching record.',
-      helper: 'This is the moment Progressory stops feeling like setup and starts feeling like a working system.',
-      to: '/classes?workflow=create-class',
-      complete: classes.length > 0
-    },
-    {
-      key: 'attendance',
-      title: 'Record attendance for a class',
-      description: 'Take attendance after class so the class log, member records, and progress all stay connected.',
-      helper: 'This is where Progressory starts feeling like a live coaching workflow instead of setup.',
-      to: '/classes?workflow=attendance-ready',
-      complete: attendanceSnapshot.classesWithAttendance > 0
-    }
-  ]), [
-    activeMemberCount,
-    attendanceSnapshot.classesWithAttendance,
-    classes.length,
-    plannedClasses.length,
-    topics.length
-  ]);
-
-  const nextSetupTask = setupTasks.find((task) => !task.complete) || null;
   const upcomingSetupTasks = nextSetupTask
     ? setupTasks.filter((task) => !task.complete && task.key !== nextSetupTask.key).slice(0, 3)
     : [];
-  const setupComplete = !nextSetupTask;
-  const completedSetupCount = setupTasks.filter((task) => task.complete).length;
-  const setupProgressPercent = Math.round((completedSetupCount / setupTasks.length) * 100);
 
   const tutorialSteps = useMemo(() => {
     const steps = [
@@ -207,14 +155,14 @@ export default function DashboardPage() {
         description: 'Start here when you already know the coaching job you need to handle right now.'
       },
       {
-        key: 'dashboard-start-here',
-        title: 'Start Here',
-        description: 'This checklist is the founder week-one flow: set up the minimum, then get one real gym workflow moving.'
-      },
-      {
         key: 'dashboard-coaching-queue',
         title: 'Today',
         description: 'Use this to spot the classes or library items that still need follow-through.'
+      },
+      {
+        key: 'dashboard-start-here',
+        title: 'Start Here',
+        description: 'This checklist is the founder week-one flow: set up the minimum, then get one real gym workflow moving.'
       }
     ];
 

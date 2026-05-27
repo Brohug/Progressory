@@ -3794,6 +3794,22 @@ a.dashboard-setup-item {
 .curriculum-index-title-block {
   display: grid;
   gap: 6px;
+  min-width: 0;
+  flex: 1 1 260px;
+}
+
+.curriculum-index-header-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.curriculum-index-header-button {
+  min-height: 34px;
+  padding: 7px 12px;
+  white-space: nowrap;
 }
 
 .curriculum-index-relationship-grid {
@@ -6220,6 +6236,11 @@ a.dashboard-setup-item {
   .decision-tree-search-result-header,
   .decision-tree-top-card-header {
     gap: 10px;
+  }
+
+  .curriculum-index-header-actions {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .curriculum-index-title-block strong,

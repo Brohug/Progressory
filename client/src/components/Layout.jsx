@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useFounderOnboarding } from '../hooks/useFounderOnboarding';
 import AppIcon from './AppIcon';
 
 const getLinkClassName = ({ isActive }) => (
@@ -59,6 +60,7 @@ const renderNavLabel = (label, iconName) => (
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
+  const { beginnerPhaseActive, nextTask, completedCount, tasks } = useFounderOnboarding();
   const location = useLocation();
   const locationKey = `${location.pathname}${location.search}`;
   const desktopMoreMenuRef = useRef(null);
@@ -270,7 +272,7 @@ export default function Layout({ children }) {
     }
   };
 
-  const coachGuide = (() => {
+  const baseCoachGuide = (() => {
     if (isMember && location.pathname === '/dashboard') {
       return {
         eyebrow: 'Member guide',
@@ -475,6 +477,18 @@ export default function Layout({ children }) {
       secondary: null
     };
   })();
+
+  const coachGuide = beginnerPhaseActive && nextTask && location.pathname !== '/billing'
+    ? {
+        eyebrow: 'Beginner Phase Active',
+        title: location.pathname === nextTask.to.split('?')[0]
+          ? `Finish this founder step: ${nextTask.title}.`
+          : `Next founder step: ${nextTask.title}.`,
+        description: `Keep the first workflow moving one checkpoint at a time. ${completedCount} of ${tasks.length} founder steps are complete so far.`,
+        primary: { label: location.pathname === nextTask.to.split('?')[0] ? 'Finish this step' : 'Open next step', to: nextTask.to, variant: 'attention' },
+        secondary: { label: 'View dashboard checklist', to: '/dashboard' }
+      }
+    : baseCoachGuide;
 
   const primaryNavItems = useMemo(() => {
     if (!user) {
