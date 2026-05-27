@@ -95,6 +95,8 @@ Progressory is a full-stack SaaS-style web application built for Brazilian Jiu-J
   - `OWNER_NOTIFICATION_EMAIL`
   - `RESEND_API_KEY`
   - `NOTIFICATION_FROM_EMAIL`
+    - when configured, new demo/founder requests are emailed to the owner inbox
+    - the same Resend configuration also lets `/platform-admin` email founder setup invites directly after provisioning or resend
 - Optional platform operator env var:
   - `PLATFORM_ADMIN_EMAILS`
     - comma-separated allowlist for internal operator accounts that can access `/platform-admin`
@@ -290,10 +292,17 @@ Access rules:
 Phase 1 actions:
 - review all founder requests
 - mark a founder request as contacted
-- provision a founder gym and owner invite
-- resend the latest founder invite
-- review gym-level billing summary data
-- deactivate a gym when needed
+  - provision a founder gym and owner invite
+  - send a fresh founder invite email from the dashboard when Resend is configured
+  - copy the raw invite URL manually when email delivery is not configured
+  - review gym-level billing summary data
+  - deactivate a gym when needed
+
+## Internal Playbooks
+
+- Founder operating playbook:
+  - `docs/founder-operating-playbook.md`
+  - use this for founder calls, approval decisions, follow-up messaging, onboarding, and first-week success tracking
 
 ---
 

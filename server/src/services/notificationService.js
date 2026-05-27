@@ -45,6 +45,34 @@ const buildInquiryNotificationBody = ({
   return lines.join('\n');
 };
 
+const buildFounderInviteEmailBody = ({
+  firstName,
+  gymName,
+  inviteUrl,
+  inviteExpiresAt
+}) => {
+  const lines = [
+    `Hi ${firstName || 'there'},`,
+    '',
+    `Your Progressory founder setup is ready for ${gymName}.`,
+    '',
+    'Use this invite link to create your owner password and access your gym workspace:',
+    inviteUrl,
+    '',
+    `This invite expires on: ${inviteExpiresAt}`,
+    '',
+    'Recommended next steps:',
+    '1. Open the invite link and finish your owner account setup.',
+    '2. Log in to Progressory.',
+    '3. Open Billing and start the Founder Plan checkout.',
+    '4. Once billing is active or trialing, your gym will have access.',
+    '',
+    `Questions before you jump in? Reply back to ${OWNER_NOTIFICATION_EMAIL}.`
+  ];
+
+  return lines.join('\n');
+};
+
 const sendOwnerInquiryNotification = async (inquiry) => {
   if (!isNotificationConfigured()) {
     return {
@@ -85,8 +113,60 @@ const sendOwnerInquiryNotification = async (inquiry) => {
   };
 };
 
+const sendFounderInviteNotification = async ({
+  firstName,
+  founderEmail,
+  gymName,
+  inviteUrl,
+  inviteExpiresAt
+}) => {
+  if (!isNotificationConfigured()) {
+    return {
+      delivered: false,
+      skipped: true,
+      reason: 'notification_not_configured'
+    };
+  }
+
+  const resendApiKey = String(process.env.RESEND_API_KEY || '').trim();
+  const fromEmail = String(process.env.NOTIFICATION_FROM_EMAIL || '').trim();
+
+  const response = await fetch(RESEND_API_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${resendApiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: fromEmail,
+      to: [String(founderEmail || '').trim().toLowerCase()],
+      reply_to: OWNER_NOTIFICATION_EMAIL,
+      subject: `Your Progressory founder setup invite - ${gymName}`,
+      text: buildFounderInviteEmailBody({
+        firstName,
+        gymName,
+        inviteUrl,
+        inviteExpiresAt
+      })
+    })
+  });
+
+  if (!response.ok) {
+    const error = new Error('Founder invite notification failed.');
+    error.statusCode = response.status;
+    error.isNotificationError = true;
+    throw error;
+  }
+
+  return {
+    delivered: true,
+    skipped: false
+  };
+};
+
 module.exports = {
   OWNER_NOTIFICATION_EMAIL,
   isNotificationConfigured,
-  sendOwnerInquiryNotification
+  sendOwnerInquiryNotification,
+  sendFounderInviteNotification
 };

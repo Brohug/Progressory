@@ -27,7 +27,6 @@ export default function DashboardPage() {
   const [plannedClasses, setPlannedClasses] = useState([]);
   const [libraryEntries, setLibraryEntries] = useState([]);
   const [members, setMembers] = useState([]);
-  const [trainingScenarios, setTrainingScenarios] = useState([]);
   const [memberProgress, setMemberProgress] = useState([]);
   const [attendanceSnapshot, setAttendanceSnapshot] = useState({
     classesNeedingAttendance: 0,
@@ -60,8 +59,7 @@ export default function DashboardPage() {
         classesRes,
         plannedClassesRes,
         libraryEntriesRes,
-        membersRes,
-        trainingScenariosRes
+        membersRes
       ] = await Promise.all([
         api.get('/reports/recent-classes?limit=5'),
         api.get('/reports/topic-coverage'),
@@ -70,8 +68,7 @@ export default function DashboardPage() {
         api.get('/classes'),
         api.get('/planned-classes'),
         api.get('/library'),
-        api.get('/members'),
-        api.get('/training-scenarios')
+        api.get('/members')
       ]);
 
       const allClasses = classesRes.data;
@@ -121,7 +118,6 @@ export default function DashboardPage() {
       setPlannedClasses(plannedClassesRes.data);
       setLibraryEntries(libraryEntriesRes.data);
       setMembers(allMembers);
-      setTrainingScenarios(trainingScenariosRes.data);
       setAttendanceSnapshot({
         classesNeedingAttendance,
         classesWithAttendance
@@ -143,19 +139,10 @@ export default function DashboardPage() {
   const todayIsoDate = getLocalIsoDate();
   const todayClassCount = classes.filter((classItem) => classItem.class_date === todayIsoDate).length;
   const todayPlannedCount = plannedClasses.filter((classItem) => classItem.class_date === todayIsoDate).length;
-  const activeTrainingScenarioCount = trainingScenarios.filter((scenario) => scenario.is_active).length;
   const activeMemberCount = members.filter((member) => member.is_active).length;
   const activeLibraryVideoCount = libraryEntries.filter((entry) => entry.is_active && entry.video_url).length;
 
   const setupTasks = useMemo(() => ([
-    {
-      key: 'planned',
-      title: 'Plan your first class',
-      description: 'Build the next session in Class Planner before class starts.',
-      helper: 'This gives the gym a usable day-to-day workflow right away.',
-      to: '/planned-classes',
-      complete: plannedClasses.length > 0
-    },
     {
       key: 'topics',
       title: 'Add topics for your curriculum',
@@ -165,20 +152,28 @@ export default function DashboardPage() {
       complete: topics.length > 0
     },
     {
-      key: 'scenarios',
-      title: 'Add reusable training scenarios',
-      description: 'Save class templates once you know the style of session you repeat a lot.',
-      helper: 'Useful later, but not required before the main workflow is already working.',
-      to: '/training-scenarios',
-      complete: activeTrainingScenarioCount > 0
-    },
-    {
       key: 'members',
       title: 'Add your members',
       description: 'Add members so attendance and progress tracking become real instead of just structure.',
       helper: 'Once members exist, class logs and attendance start doing useful work for the gym.',
       to: '/members',
       complete: activeMemberCount > 0
+    },
+    {
+      key: 'planned',
+      title: 'Plan your first class',
+      description: 'Build the next real session in Class Planner before class starts.',
+      helper: 'This is the first live workflow most founder gyms should use right away.',
+      to: '/planned-classes',
+      complete: plannedClasses.length > 0
+    },
+    {
+      key: 'logged-class',
+      title: 'Log your first completed class',
+      description: 'Turn one real class into a class log so planning becomes a repeatable coaching record.',
+      helper: 'This is the moment Progressory stops feeling like setup and starts feeling like a working system.',
+      to: '/classes?workflow=create-class',
+      complete: classes.length > 0
     },
     {
       key: 'attendance',
@@ -190,8 +185,8 @@ export default function DashboardPage() {
     }
   ]), [
     activeMemberCount,
-    activeTrainingScenarioCount,
     attendanceSnapshot.classesWithAttendance,
+    classes.length,
     plannedClasses.length,
     topics.length
   ]);
@@ -214,7 +209,7 @@ export default function DashboardPage() {
       {
         key: 'dashboard-start-here',
         title: 'Start Here',
-        description: 'This checklist is the main owner setup flow: structure first, then daily coaching workflow.'
+        description: 'This checklist is the founder week-one flow: set up the minimum, then get one real gym workflow moving.'
       },
       {
         key: 'dashboard-coaching-queue',
@@ -398,7 +393,7 @@ export default function DashboardPage() {
   ];
 
   const staffPageIntro = isManagement
-    ? 'New to Progressory? Use the setup guide once, then come back to Today and Quick Actions for the normal daily workflow.'
+    ? 'New founder gym? Use the setup guide once to get the first real workflow live, then come back to Today and Quick Actions for normal use.'
     : 'Start with today\'s class work, then jump into planning, logs, members, or study support.';
 
   useEffect(() => {
@@ -795,7 +790,7 @@ export default function DashboardPage() {
                   <div>
                     <h3>New to Progressory?</h3>
                     <p className="section-note">
-                      Use this once to understand how the app flows, then come back to Today and Quick Actions for normal use.
+                      Use this once to get your first real workflow live, then come back to Today and Quick Actions for normal use.
                     </p>
                   </div>
                   <div className="inline-actions">
@@ -819,28 +814,28 @@ export default function DashboardPage() {
                   <div className="dashboard-guide-highlight">
                     <span className="eyebrow">How the app works</span>
                     <strong>
-                      Set up the basics once, then run the gym from planning, class logs, and attendance.
+                      Set up the minimum once, then start running the gym from planning, class logs, and attendance.
                     </strong>
                     <p className="meta-text">
-                      Progressory works best when you first add the topics and people your gym cares about. After that, most daily work happens through Class Planner, Class Logs, and attendance, while Library and study tools support the workflow later.
+                      Progressory works best when you first add the topics and people your gym actually need this week. After that, move one real class through planning, logging, and attendance before worrying about extras.
                     </p>
                   </div>
                   <div className="dashboard-guide-steps">
                     <div className="dashboard-guide-step">
-                      <strong>1. Add your gym basics</strong>
-                      <span>Create curriculum topics, add members, and set up programs only if you actually use them.</span>
+                      <strong>1. Add the minimum structure</strong>
+                      <span>Add curriculum topics and members so the first workflow is built on real gym data.</span>
                     </div>
                     <div className="dashboard-guide-step">
-                      <strong>2. Plan the next class</strong>
-                      <span>Use Class Planner to build the session before class starts.</span>
+                      <strong>2. Plan one real class</strong>
+                      <span>Use Class Planner to build the next session you are actually going to teach.</span>
                     </div>
                     <div className="dashboard-guide-step">
                       <strong>3. Finish the class workflow</strong>
-                      <span>After class, complete the log, take attendance, and let member progress update from the topics taught.</span>
+                      <span>After class, log it, take attendance, and let Progressory start connecting what was taught to real people.</span>
                     </div>
                     <div className="dashboard-guide-step">
                       <strong>4. Add support tools later</strong>
-                      <span>Library, Entry Setups, Decision Trees, and scenarios help more once the main workflow is already moving.</span>
+                      <span>Library, Entry Setups, Decision Trees, and scenarios help more once the main workflow is already alive.</span>
                     </div>
                   </div>
                 </div>
@@ -873,28 +868,28 @@ export default function DashboardPage() {
                       <div className="dashboard-guide-highlight">
                         <span className="eyebrow">How the app works</span>
                         <strong>
-                          Set up the basics once, then run the gym from planning, class logs, and attendance.
+                          Set up the minimum once, then start running the gym from planning, class logs, and attendance.
                         </strong>
                         <p className="meta-text">
-                          Progressory works best when you first add the topics and people your gym cares about. After that, most daily work happens through Class Planner, Class Logs, and attendance, while Library and study tools support the workflow later.
+                          Progressory works best when you first add the topics and people your gym actually need this week. After that, move one real class through planning, logging, and attendance before worrying about extras.
                         </p>
                       </div>
                       <div className="dashboard-guide-steps">
                         <div className="dashboard-guide-step">
-                          <strong>1. Add your gym basics</strong>
-                          <span>Create curriculum topics, add members, and set up programs only if you actually use them.</span>
+                          <strong>1. Add the minimum structure</strong>
+                          <span>Add curriculum topics and members so the first workflow is built on real gym data.</span>
                         </div>
                         <div className="dashboard-guide-step">
-                          <strong>2. Plan the next class</strong>
-                          <span>Use Class Planner to build the session before class starts.</span>
+                          <strong>2. Plan one real class</strong>
+                          <span>Use Class Planner to build the next session you are actually going to teach.</span>
                         </div>
                         <div className="dashboard-guide-step">
                           <strong>3. Finish the class workflow</strong>
-                          <span>After class, complete the log, take attendance, and let member progress update from the topics taught.</span>
+                          <span>After class, log it, take attendance, and let Progressory start connecting what was taught to real people.</span>
                         </div>
                         <div className="dashboard-guide-step">
                           <strong>4. Add support tools later</strong>
-                          <span>Library, Entry Setups, Decision Trees, and scenarios help more once the main workflow is already moving.</span>
+                          <span>Library, Entry Setups, Decision Trees, and scenarios help more once the main workflow is already alive.</span>
                         </div>
                       </div>
                     </div>
@@ -1023,8 +1018,8 @@ export default function DashboardPage() {
 
                 <div className="dashboard-setup-progress">
                   <div className="dashboard-setup-progress-header">
-                    <strong>Setup progress</strong>
-                    <span className="meta-text">{completedSetupCount} of {setupTasks.length} complete</span>
+                    <strong>Week-one founder flow</strong>
+                    <span className="meta-text">{completedSetupCount} of {setupTasks.length} steps complete</span>
                   </div>
                   <div className="dashboard-setup-progress-bar" aria-hidden="true">
                     <span style={{ width: `${setupProgressPercent}%` }} />
@@ -1051,14 +1046,14 @@ export default function DashboardPage() {
                         <div className="dashboard-setup-helper">{nextSetupTask.helper}</div>
                         <div className="inline-actions">
                           <Link to={nextSetupTask.to} className="secondary-button">
-                            Open next step
+                            Open this step
                           </Link>
                         </div>
                       </>
                     ) : (
                       <>
-                        <strong>Setup is in a good place</strong>
-                        <p className="dashboard-card-copy">Your core workflow is already active, so you can focus on class planning, attendance, and refinement.</p>
+                        <strong>Your first workflow is live</strong>
+                        <p className="dashboard-card-copy">The gym has enough structure to keep using Progressory this week. Focus on repeating the class workflow and refining from there.</p>
                       </>
                     )}
                   </div>

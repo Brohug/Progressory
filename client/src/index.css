@@ -504,6 +504,19 @@ ul {
   gap: 16px;
 }
 
+.platform-admin-feature-card {
+  border-color: rgba(56, 189, 248, 0.28);
+  background:
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 32%),
+    linear-gradient(180deg, rgba(10, 18, 35, 0.92), rgba(15, 23, 42, 0.94));
+}
+
+.platform-admin-reporting-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
 .platform-admin-filter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -511,9 +524,62 @@ ul {
   margin-bottom: 18px;
 }
 
+.platform-admin-pipeline-row,
+.platform-admin-record-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.platform-admin-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 12px;
+  border: 1px solid rgba(71, 85, 105, 0.74);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.56);
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.platform-admin-funnel-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.platform-admin-funnel-step {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid rgba(71, 85, 105, 0.68);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.platform-admin-funnel-step strong {
+  font-size: 28px;
+  line-height: 1;
+  color: #f8fafc;
+}
+
+.platform-admin-funnel-rate {
+  color: #7dd3fc;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .platform-admin-record-card {
   gap: 14px;
   padding: 18px;
+  background:
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.06), transparent 30%),
+    linear-gradient(180deg, rgba(13, 21, 39, 0.92), rgba(11, 18, 32, 0.96));
 }
 
 .platform-admin-page .compact-topic-header {
@@ -562,6 +628,207 @@ ul {
 
 .platform-admin-page .danger-button {
   min-width: 168px;
+}
+
+.platform-admin-empty-state {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border: 1px dashed rgba(71, 85, 105, 0.76);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.36);
+}
+
+.platform-admin-empty-state strong {
+  color: #f8fafc;
+}
+
+.platform-admin-empty-state p {
+  margin: 0;
+}
+
+.platform-admin-loading-state {
+  border-style: solid;
+  border-color: rgba(56, 189, 248, 0.26);
+  background:
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.09), transparent 28%),
+    rgba(15, 23, 42, 0.42);
+}
+
+.platform-admin-activity-list {
+  display: grid;
+  gap: 10px;
+}
+
+.platform-admin-activity-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(71, 85, 105, 0.66);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.38);
+}
+
+.platform-admin-activity-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.platform-admin-activity-copy strong {
+  color: #f8fafc;
+}
+
+.platform-admin-activity-copy .section-note {
+  margin: 0;
+}
+
+.platform-admin-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px;
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.platform-admin-detail-modal {
+  width: min(860px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid rgba(71, 85, 105, 0.78);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.1), transparent 28%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(11, 18, 32, 0.98));
+  box-shadow: 0 28px 56px rgba(2, 6, 23, 0.45);
+}
+
+.platform-admin-detail-hero {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 30%),
+    linear-gradient(180deg, rgba(17, 28, 54, 0.72), rgba(11, 18, 32, 0.88));
+}
+
+.platform-admin-detail-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.platform-admin-detail-header > div:first-child {
+  min-width: 0;
+}
+
+.platform-admin-detail-header h3 {
+  margin-bottom: 8px;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.platform-admin-detail-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.platform-admin-detail-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.platform-admin-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 18px;
+}
+
+.platform-admin-timeline {
+  display: grid;
+  gap: 14px;
+}
+
+.platform-admin-timeline-item {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  position: relative;
+}
+
+.platform-admin-timeline-marker {
+  width: 12px;
+  height: 12px;
+  margin-top: 5px;
+  border-radius: 999px;
+  border: 2px solid rgba(100, 116, 139, 0.9);
+  background: rgba(15, 23, 42, 0.95);
+  box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.68);
+}
+
+.platform-admin-timeline-item.is-complete .platform-admin-timeline-marker {
+  border-color: rgba(34, 197, 94, 0.92);
+  background: rgba(34, 197, 94, 0.92);
+}
+
+.platform-admin-timeline-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 22px;
+  bottom: -16px;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.18), rgba(71, 85, 105, 0.18));
+}
+
+.platform-admin-timeline-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.platform-admin-timeline-copy .section-note {
+  margin: 0;
+}
+
+.platform-admin-invite-history {
+  display: grid;
+  gap: 10px;
+}
+
+.platform-admin-invite-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(71, 85, 105, 0.62);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.38);
+}
+
+.platform-admin-invite-row strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.platform-admin-invite-meta {
+  flex: 0 0 auto;
+  text-align: right;
 }
 
 .entry-setups-page .page-intro {
@@ -5553,11 +5820,69 @@ a.dashboard-setup-item {
     max-width: none;
   }
 
+  .platform-admin-detail-overlay {
+    padding: 10px;
+    align-items: flex-end;
+  }
+
+  .platform-admin-detail-modal {
+    width: 100%;
+    max-height: calc(100vh - 20px);
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .platform-admin-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .platform-admin-reporting-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .platform-admin-funnel-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .platform-admin-detail-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .platform-admin-detail-header-actions {
+    justify-content: flex-start;
+  }
+
+  .platform-admin-invite-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .platform-admin-invite-meta {
+    text-align: left;
+  }
+
+  .platform-admin-activity-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .account-overview-grid,
   .account-permissions-grid,
   .account-billing-status-grid {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .platform-admin-pipeline-row,
+  .platform-admin-record-meta {
+    gap: 6px;
+  }
+
+  .platform-admin-pill {
+    width: fit-content;
+    max-width: 100%;
   }
 
   .account-summary-card,

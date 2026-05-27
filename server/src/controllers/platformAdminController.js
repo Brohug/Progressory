@@ -1,17 +1,52 @@
 const pool = require('../config/db');
 const { sendClientError, handleServerError } = require('../middleware/errorHandler');
+const { sendFounderInviteNotification } = require('../services/notificationService');
 const {
   listFounderInquiries,
+  getFounderInquiryDetail,
   listGymOverview,
   getPlatformAdminSummary,
   markFounderInquiryContacted,
   updateFounderInquiryNotes,
   provisionFounderInquiry,
   resendFounderInvite,
+  markFounderInquiryConverted,
   suspendGym,
   reactivateGym,
   deactivateGym
 } = require('../services/platformAdminService');
+
+const parsePositiveId = (value) => {
+  const parsedId = Number.parseInt(value, 10);
+  return Number.isInteger(parsedId) && parsedId > 0 ? parsedId : null;
+};
+
+const buildInviteEmailDelivery = async (result, logLabel) => {
+  try {
+    const delivery = await sendFounderInviteNotification({
+      firstName: result.inquiry?.first_name,
+      founderEmail: result.owner_email || result.inquiry?.email,
+      gymName: result.inquiry?.gym_name,
+      inviteUrl: result.invite_url,
+      inviteExpiresAt: result.invite_expires_at
+    });
+
+    return delivery;
+  } catch (error) {
+    console.warn(logLabel, {
+      inquiryId: result.inquiry?.id || null,
+      gymName: result.inquiry?.gym_name || null,
+      message: error.message,
+      statusCode: error.statusCode || null
+    });
+
+    return {
+      delivered: false,
+      skipped: false,
+      reason: 'notification_failed'
+    };
+  }
+};
 
 const getPlatformAdminDashboard = async (req, res) => {
   try {
@@ -31,11 +66,39 @@ const getPlatformAdminDashboard = async (req, res) => {
   }
 };
 
+const getFounderRequestDetail = async (req, res) => {
+  try {
+    const inquiryId = parsePositiveId(req.params.id);
+
+    if (!inquiryId) {
+      return sendClientError(res, {
+        status: 400,
+        message: 'Founder inquiry id is invalid.'
+      });
+    }
+
+    const inquiry = await getFounderInquiryDetail(inquiryId);
+
+    return res.status(200).json({
+      inquiry
+    });
+  } catch (error) {
+    if (/not found|not a founder/i.test(error.message || '')) {
+      return sendClientError(res, {
+        status: 404,
+        message: error.message
+      });
+    }
+
+    return handleServerError(res, 'Get founder request detail error:', error);
+  }
+};
+
 const markFounderRequestContacted = async (req, res) => {
   try {
-    const inquiryId = Number.parseInt(req.params.id, 10);
+    const inquiryId = parsePositiveId(req.params.id);
 
-    if (!Number.isInteger(inquiryId) || inquiryId <= 0) {
+    if (!inquiryId) {
       return sendClientError(res, {
         status: 400,
         message: 'Founder inquiry id is invalid.'
@@ -65,9 +128,9 @@ const markFounderRequestContacted = async (req, res) => {
 
 const saveFounderRequestNotes = async (req, res) => {
   try {
-    const inquiryId = Number.parseInt(req.params.id, 10);
+    const inquiryId = parsePositiveId(req.params.id);
 
-    if (!Number.isInteger(inquiryId) || inquiryId <= 0) {
+    if (!inquiryId) {
       return sendClientError(res, {
         status: 400,
         message: 'Founder inquiry id is invalid.'
@@ -99,9 +162,9 @@ const provisionFounderRequest = async (req, res) => {
   const connection = await pool.getConnection();
 
   try {
-    const inquiryId = Number.parseInt(req.params.id, 10);
+    const inquiryId = parsePositiveId(req.params.id);
 
-    if (!Number.isInteger(inquiryId) || inquiryId <= 0) {
+    if (!inquiryId) {
       return sendClientError(res, {
         status: 400,
         message: 'Founder inquiry id is invalid.'
@@ -111,10 +174,15 @@ const provisionFounderRequest = async (req, res) => {
     await connection.beginTransaction();
     const result = await provisionFounderInquiry(inquiryId, req.user.id, connection);
     await connection.commit();
+    const emailDelivery = await buildInviteEmailDelivery(
+      result,
+      'Founder provisioning invite email warning:'
+    );
 
     return res.status(201).json({
       message: 'Founder inquiry provisioned successfully.',
-      ...result
+      ...result,
+      email_delivery: emailDelivery
     });
   } catch (error) {
     await connection.rollback();
@@ -136,9 +204,9 @@ const resendFounderRequestInvite = async (req, res) => {
   const connection = await pool.getConnection();
 
   try {
-    const inquiryId = Number.parseInt(req.params.id, 10);
+    const inquiryId = parsePositiveId(req.params.id);
 
-    if (!Number.isInteger(inquiryId) || inquiryId <= 0) {
+    if (!inquiryId) {
       return sendClientError(res, {
         status: 400,
         message: 'Founder inquiry id is invalid.'
@@ -148,10 +216,15 @@ const resendFounderRequestInvite = async (req, res) => {
     await connection.beginTransaction();
     const result = await resendFounderInvite(inquiryId, req.user.id, connection);
     await connection.commit();
+    const emailDelivery = await buildInviteEmailDelivery(
+      result,
+      'Founder resend invite email warning:'
+    );
 
     return res.status(200).json({
       message: 'Founder invite resent successfully.',
-      ...result
+      ...result,
+      email_delivery: emailDelivery
     });
   } catch (error) {
     await connection.rollback();
@@ -169,13 +242,50 @@ const resendFounderRequestInvite = async (req, res) => {
   }
 };
 
+const markFounderRequestConverted = async (req, res) => {
+  const connection = await pool.getConnection();
+
+  try {
+    const inquiryId = parsePositiveId(req.params.id);
+
+    if (!inquiryId) {
+      return sendClientError(res, {
+        status: 400,
+        message: 'Founder inquiry id is invalid.'
+      });
+    }
+
+    await connection.beginTransaction();
+    const inquiry = await markFounderInquiryConverted(inquiryId, connection);
+    await connection.commit();
+
+    return res.status(200).json({
+      message: 'Founder request marked as converted.',
+      inquiry
+    });
+  } catch (error) {
+    await connection.rollback();
+
+    if (/not found|not a founder|Provision this founder inquiry/i.test(error.message || '')) {
+      return sendClientError(res, {
+        status: 400,
+        message: error.message
+      });
+    }
+
+    return handleServerError(res, 'Mark founder request converted error:', error);
+  } finally {
+    connection.release();
+  }
+};
+
 const deactivatePlatformGym = async (req, res) => {
   const connection = await pool.getConnection();
 
   try {
-    const gymId = Number.parseInt(req.params.id, 10);
+    const gymId = parsePositiveId(req.params.id);
 
-    if (!Number.isInteger(gymId) || gymId <= 0) {
+    if (!gymId) {
       return sendClientError(res, {
         status: 400,
         message: 'Gym id is invalid.'
@@ -210,9 +320,9 @@ const suspendPlatformGym = async (req, res) => {
   const connection = await pool.getConnection();
 
   try {
-    const gymId = Number.parseInt(req.params.id, 10);
+    const gymId = parsePositiveId(req.params.id);
 
-    if (!Number.isInteger(gymId) || gymId <= 0) {
+    if (!gymId) {
       return sendClientError(res, {
         status: 400,
         message: 'Gym id is invalid.'
@@ -247,9 +357,9 @@ const reactivatePlatformGym = async (req, res) => {
   const connection = await pool.getConnection();
 
   try {
-    const gymId = Number.parseInt(req.params.id, 10);
+    const gymId = parsePositiveId(req.params.id);
 
-    if (!Number.isInteger(gymId) || gymId <= 0) {
+    if (!gymId) {
       return sendClientError(res, {
         status: 400,
         message: 'Gym id is invalid.'
@@ -282,10 +392,12 @@ const reactivatePlatformGym = async (req, res) => {
 
 module.exports = {
   getPlatformAdminDashboard,
+  getFounderRequestDetail,
   markFounderRequestContacted,
   saveFounderRequestNotes,
   provisionFounderRequest,
   resendFounderRequestInvite,
+  markFounderRequestConverted,
   suspendPlatformGym,
   reactivatePlatformGym,
   deactivatePlatformGym

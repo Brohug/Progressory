@@ -84,6 +84,77 @@ const getFounderInquiryById = async (inquiryId, connection = null) => {
   return rows[0] || null;
 };
 
+const getFounderInviteHistory = async (inquiry, connection = null) => {
+  if (!inquiry?.linked_gym_id || !inquiry?.linked_owner_user_id) {
+    return [];
+  }
+
+  const queryable = getPoolOrConnection(connection);
+  const [rows] = await queryable.query(
+    `SELECT sai.id, sai.invite_type, sai.expires_at, sai.used_at, sai.created_at,
+            sai.created_by_user_id,
+            creator.email AS created_by_email,
+            creator.first_name AS created_by_first_name,
+            creator.last_name AS created_by_last_name
+     FROM staff_access_invites sai
+     LEFT JOIN users creator
+       ON creator.id = sai.created_by_user_id
+     WHERE sai.gym_id = ?
+       AND sai.user_id = ?
+     ORDER BY sai.created_at DESC`,
+    [inquiry.linked_gym_id, inquiry.linked_owner_user_id]
+  );
+
+  return rows;
+};
+
+const getFounderInquiryDetail = async (inquiryId, connection = null) => {
+  const inquiry = await getFounderInquiryById(inquiryId, connection);
+
+  if (!inquiry) {
+    throw new Error('Founder inquiry not found.');
+  }
+
+  if (inquiry.request_type !== 'founder') {
+    throw new Error('This inquiry is not a founder access request.');
+  }
+
+  const queryable = getPoolOrConnection(connection);
+  const [[detailRow]] = await queryable.query(
+    `SELECT pi.id, pi.request_type, pi.first_name, pi.last_name, pi.email, pi.phone, pi.gym_name,
+            pi.status, pi.demo_slot_start, pi.linked_gym_id, pi.linked_owner_user_id,
+            pi.owner_contacted_at, pi.provisioned_at, pi.converted_at, pi.internal_notes,
+            pi.created_at, pi.updated_at,
+            g.name AS linked_gym_name,
+            g.slug AS linked_gym_slug,
+            g.is_platform_suspended,
+            g.platform_suspended_at,
+            g.platform_suspension_reason,
+            owner.email AS linked_owner_email,
+            owner.is_active AS linked_owner_is_active,
+            gs.plan_code,
+            gs.billing_status,
+            gs.trial_ends_at,
+            gs.current_period_end,
+            gs.cancel_at_period_end
+     FROM public_inquiries pi
+     LEFT JOIN gyms g
+       ON g.id = pi.linked_gym_id
+     LEFT JOIN users owner
+       ON owner.id = pi.linked_owner_user_id
+     LEFT JOIN gym_subscriptions gs
+       ON gs.gym_id = pi.linked_gym_id
+     WHERE pi.id = ?
+     LIMIT 1`,
+    [inquiryId]
+  );
+
+  return {
+    ...detailRow,
+    invite_history: await getFounderInviteHistory(detailRow, connection)
+  };
+};
+
 const updateFounderInquiryNotes = async (inquiryId, notes = '', connection = null) => {
   const queryable = getPoolOrConnection(connection);
   const inquiry = await getFounderInquiryById(inquiryId, connection);
@@ -340,6 +411,33 @@ const resendFounderInvite = async (inquiryId, createdByUserId, connection = null
   };
 };
 
+const markFounderInquiryConverted = async (inquiryId, connection = null) => {
+  const queryable = getPoolOrConnection(connection);
+  const inquiry = await getFounderInquiryById(inquiryId, connection);
+
+  if (!inquiry) {
+    throw new Error('Founder inquiry not found.');
+  }
+
+  if (inquiry.request_type !== 'founder') {
+    throw new Error('This inquiry is not a founder access request.');
+  }
+
+  if (!inquiry.linked_gym_id || !inquiry.linked_owner_user_id) {
+    throw new Error('Provision this founder inquiry before marking it converted.');
+  }
+
+  await queryable.query(
+    `UPDATE public_inquiries
+     SET status = 'converted',
+         converted_at = COALESCE(converted_at, NOW())
+     WHERE id = ?`,
+    [inquiryId]
+  );
+
+  return getFounderInquiryDetail(inquiryId, connection);
+};
+
 const deactivateGym = async (gymId, actorUserId, connection = null) => {
   const queryable = getPoolOrConnection(connection);
   const [gymRows] = await queryable.query(
@@ -445,12 +543,14 @@ module.exports = {
   getPlatformAdminEmails,
   isPlatformAdminEmail,
   listFounderInquiries,
+  getFounderInquiryDetail,
   listGymOverview,
   getPlatformAdminSummary,
   markFounderInquiryContacted,
   updateFounderInquiryNotes,
   provisionFounderInquiry,
   resendFounderInvite,
+  markFounderInquiryConverted,
   suspendGym,
   reactivateGym,
   deactivateGym
