@@ -6,6 +6,7 @@ const { isPlatformAdminEmail } = require('../services/platformAdminService');
 const { validatePolicyAcceptance, getAcceptedPolicyVersion } = require('../services/policyService');
 const { logAuditEvent } = require('../services/auditService');
 const { assertCanAddCoach } = require('../services/planLimitsService');
+const { getAuthSchemaSupport, getAuthUserByWhere, buildAuthUserSelectSql } = require('../services/authSchemaService');
 
 const generateSlug = (name) => {
   return name
@@ -87,6 +88,8 @@ const register = async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const acceptedPolicyVersion = getAcceptedPolicyVersion();
+    const schemaSupport = await getAuthSchemaSupport(connection);
 
     await connection.beginTransaction();
 
@@ -97,23 +100,45 @@ const register = async (req, res) => {
 
     const gymId = gymResult.insertId;
 
+    const userColumns = [
+      'gym_id',
+      'first_name',
+      'last_name',
+      'email',
+      'password_hash',
+      'role'
+    ];
+    const userValues = [gymId, first_name, last_name, email, passwordHash, 'owner'];
+    const userPlaceholders = ['?', '?', '?', '?', '?', '?'];
+
+    if (schemaSupport.users.has('can_upload_library_content')) {
+      userColumns.push('can_upload_library_content');
+      userValues.push(true);
+      userPlaceholders.push('?');
+    }
+
+    [
+      'terms_accepted_at',
+      'privacy_accepted_at',
+      'acceptable_use_accepted_at',
+      'child_safety_accepted_at'
+    ].forEach((columnName) => {
+      if (schemaSupport.users.has(columnName)) {
+        userColumns.push(columnName);
+        userPlaceholders.push('NOW()');
+      }
+    });
+
+    if (schemaSupport.users.has('accepted_policy_version')) {
+      userColumns.push('accepted_policy_version');
+      userValues.push(acceptedPolicyVersion);
+      userPlaceholders.push('?');
+    }
+
     const [userResult] = await connection.query(
-      `INSERT INTO users (
-         gym_id,
-         first_name,
-         last_name,
-         email,
-         password_hash,
-         role,
-         can_upload_library_content,
-         terms_accepted_at,
-         privacy_accepted_at,
-         acceptable_use_accepted_at,
-         child_safety_accepted_at,
-         accepted_policy_version
-       )
-       VALUES (?, ?, ?, ?, ?, 'owner', TRUE, NOW(), NOW(), NOW(), NOW(), ?)`,
-      [gymId, first_name, last_name, email, passwordHash, acceptedPolicyVersion]
+      `INSERT INTO users (${userColumns.join(', ')})
+       VALUES (${userPlaceholders.join(', ')})`,
+      userValues
     );
 
     const userId = userResult.insertId;
@@ -133,17 +158,11 @@ const register = async (req, res) => {
 
     await connection.commit();
 
-    const [rows] = await connection.query(
-      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.created_at, u.updated_at,
-              u.can_upload_library_content,
-              g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
-       FROM users u
-       JOIN gyms g ON u.gym_id = g.id
-       WHERE u.id = ?`,
+    const user = await getAuthUserByWhere(
+      connection,
+      'WHERE u.id = ?',
       [userId]
     );
-
-    const user = rows[0];
     const token = generateToken(user);
 
     return res.status(201).json({
@@ -173,15 +192,9 @@ const login = async (req, res) => {
       });
     }
 
+    const schemaSupport = await getAuthSchemaSupport(pool);
     const [rows] = await pool.query(
-      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.password_hash, u.role, u.is_active,
-              u.created_at, u.updated_at, u.can_upload_library_content,
-              m.id AS member_id,
-              g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
-       FROM users u
-       JOIN gyms g ON u.gym_id = g.id
-       LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
-       WHERE u.email = ?`,
+      buildAuthUserSelectSql(schemaSupport, 'WHERE u.email = ?', { includePasswordHash: true }),
       [email]
     );
 
@@ -386,19 +399,11 @@ const setMemberAccessPassword = async (req, res) => {
 
     await connection.commit();
 
-    const [userRows] = await pool.query(
-      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
-              u.created_at, u.updated_at, u.can_upload_library_content,
-              m.id AS member_id,
-              g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
-       FROM users u
-       JOIN gyms g ON u.gym_id = g.id
-       LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
-       WHERE u.id = ? AND u.gym_id = ?`,
+    const user = await getAuthUserByWhere(
+      pool,
+      'WHERE u.id = ? AND u.gym_id = ?',
       [invite.user_id, invite.gym_id]
     );
-
-    const user = userRows[0];
     const authToken = generateToken(user);
 
     return res.status(200).json({
@@ -546,31 +551,54 @@ const setStaffAccessPassword = async (req, res) => {
       }
     }
 
+    const schemaSupport = await getAuthSchemaSupport(connection);
+    const updateFragments = [
+      'password_hash = ?',
+      'is_active = TRUE'
+    ];
+    const updateValues = [passwordHash];
+
+    if (schemaSupport.users.has('can_upload_library_content')) {
+      updateFragments.push(
+        `can_upload_library_content = CASE
+           WHEN role IN ('owner', 'admin') THEN TRUE
+           ELSE can_upload_library_content
+         END`
+      );
+    }
+
+    if (schemaSupport.users.has('terms_accepted_at')) {
+      updateFragments.push('terms_accepted_at = CASE WHEN ? THEN NOW() ELSE terms_accepted_at END');
+      updateValues.push(requiresPolicyAcceptance);
+    }
+
+    if (schemaSupport.users.has('privacy_accepted_at')) {
+      updateFragments.push('privacy_accepted_at = CASE WHEN ? THEN NOW() ELSE privacy_accepted_at END');
+      updateValues.push(requiresPolicyAcceptance);
+    }
+
+    if (schemaSupport.users.has('acceptable_use_accepted_at')) {
+      updateFragments.push('acceptable_use_accepted_at = CASE WHEN ? THEN NOW() ELSE acceptable_use_accepted_at END');
+      updateValues.push(requiresPolicyAcceptance);
+    }
+
+    if (schemaSupport.users.has('child_safety_accepted_at')) {
+      updateFragments.push('child_safety_accepted_at = CASE WHEN ? THEN NOW() ELSE child_safety_accepted_at END');
+      updateValues.push(requiresPolicyAcceptance);
+    }
+
+    if (schemaSupport.users.has('accepted_policy_version')) {
+      updateFragments.push('accepted_policy_version = CASE WHEN ? THEN ? ELSE accepted_policy_version END');
+      updateValues.push(requiresPolicyAcceptance, acceptedPolicyVersion);
+    }
+
+    updateValues.push(invite.user_id, invite.gym_id);
+
     await connection.query(
       `UPDATE users
-       SET password_hash = ?,
-           is_active = TRUE,
-           can_upload_library_content = CASE
-             WHEN role IN ('owner', 'admin') THEN TRUE
-             ELSE can_upload_library_content
-           END,
-           terms_accepted_at = CASE WHEN ? THEN NOW() ELSE terms_accepted_at END,
-           privacy_accepted_at = CASE WHEN ? THEN NOW() ELSE privacy_accepted_at END,
-           acceptable_use_accepted_at = CASE WHEN ? THEN NOW() ELSE acceptable_use_accepted_at END,
-           child_safety_accepted_at = CASE WHEN ? THEN NOW() ELSE child_safety_accepted_at END,
-           accepted_policy_version = CASE WHEN ? THEN ? ELSE accepted_policy_version END
+       SET ${updateFragments.join(',\n           ')}
        WHERE id = ? AND gym_id = ?`,
-      [
-        passwordHash,
-        requiresPolicyAcceptance,
-        requiresPolicyAcceptance,
-        requiresPolicyAcceptance,
-        requiresPolicyAcceptance,
-        requiresPolicyAcceptance,
-        acceptedPolicyVersion,
-        invite.user_id,
-        invite.gym_id
-      ]
+      updateValues
     );
 
     await connection.query(
@@ -597,19 +625,11 @@ const setStaffAccessPassword = async (req, res) => {
 
     await connection.commit();
 
-    const [userRows] = await pool.query(
-      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
-              u.created_at, u.updated_at, u.can_upload_library_content,
-              m.id AS member_id,
-              g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
-       FROM users u
-       JOIN gyms g ON u.gym_id = g.id
-       LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
-       WHERE u.id = ? AND u.gym_id = ?`,
+    const user = await getAuthUserByWhere(
+      pool,
+      'WHERE u.id = ? AND u.gym_id = ?',
       [invite.user_id, invite.gym_id]
     );
-
-    const user = userRows[0];
     const authToken = generateToken(user);
 
     return res.status(200).json({
@@ -647,25 +667,19 @@ const setStaffAccessPassword = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
-              u.created_at, u.updated_at, u.can_upload_library_content,
-              m.id AS member_id,
-              g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
-       FROM users u
-       JOIN gyms g ON u.gym_id = g.id
-       LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
-       WHERE u.id = ?`,
+    const user = await getAuthUserByWhere(
+      pool,
+      'WHERE u.id = ?',
       [req.user.id]
     );
 
-    if (rows.length === 0) {
+    if (!user) {
       return res.status(404).json({
         message: 'User not found'
       });
     }
 
-    return res.status(200).json(attachUserRuntimeFlags(rows[0]));
+    return res.status(200).json(attachUserRuntimeFlags(user));
   } catch (error) {
     console.error('Get me error:', error.message);
 
@@ -705,21 +719,15 @@ const updateProfile = async (req, res) => {
       [firstName, lastName, email, req.user.id, req.user.gym_id]
     );
 
-    const [rows] = await pool.query(
-      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
-              u.created_at, u.updated_at, u.can_upload_library_content,
-              m.id AS member_id,
-              g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
-       FROM users u
-       JOIN gyms g ON u.gym_id = g.id
-       LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
-       WHERE u.id = ?`,
+    const user = await getAuthUserByWhere(
+      pool,
+      'WHERE u.id = ?',
       [req.user.id]
     );
 
     return res.status(200).json({
       message: 'Profile updated successfully',
-      user: attachUserRuntimeFlags(rows[0])
+      user: attachUserRuntimeFlags(user)
     });
   } catch (error) {
     console.error('Update profile error:', error.message);

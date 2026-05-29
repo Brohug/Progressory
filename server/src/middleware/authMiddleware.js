@@ -3,6 +3,7 @@ const pool = require('../config/db');
 const { sendClientError } = require('./errorHandler');
 const { enforceBillingAccess } = require('./billingMiddleware');
 const { isPlatformAdminEmail } = require('../services/platformAdminService');
+const { getAuthSchemaSupport, buildAuthUserSelectSql } = require('../services/authSchemaService');
 
 const STAFF_ROLES = ['owner', 'admin', 'coach'];
 const MANAGEMENT_ROLES = ['owner', 'admin'];
@@ -38,14 +39,9 @@ const protect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    const schemaSupport = await getAuthSchemaSupport(pool);
     const [rows] = await pool.query(
-      `SELECT u.id, u.gym_id, u.email, u.role, u.is_active, u.can_upload_library_content,
-              g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason,
-              m.id AS member_id
-       FROM users u
-       JOIN gyms g ON g.id = u.gym_id
-       LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
-       WHERE u.id = ? AND u.gym_id = ?`,
+      buildAuthUserSelectSql(schemaSupport, 'WHERE u.id = ? AND u.gym_id = ?'),
       [decoded.id, decoded.gym_id]
     );
 
