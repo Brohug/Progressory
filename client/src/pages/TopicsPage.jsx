@@ -597,6 +597,7 @@ export default function TopicsPage() {
           activeTopicFilters.length > 0 ? `${activeTopicFilters.length} filter${activeTopicFilters.length === 1 ? '' : 's'} active` : 'No filters active'
         ]}
         stickyHeader
+        mobileStickyToggleMode="custom"
         actions={(
           <button
             className="secondary-button"

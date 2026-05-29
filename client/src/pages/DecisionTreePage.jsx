@@ -2197,6 +2197,7 @@ const getEscapeContinuationOptions = ({
 const buildLibraryLink = ({ entryName, focusEntry, decisionPathEntries }) => {
   const params = new URLSearchParams();
   params.set('search', entryName);
+  params.set('source', 'tree');
 
   if (focusEntry?.name) {
     params.set('focus', focusEntry.name);
@@ -2204,7 +2205,6 @@ const buildLibraryLink = ({ entryName, focusEntry, decisionPathEntries }) => {
 
   if (decisionPathEntries?.length) {
     params.set('path', decisionPathEntries.map((entry) => entry.name).join(' -> '));
-    params.set('source', 'tree');
   }
 
   return `/library?${params.toString()}`;
@@ -2222,6 +2222,7 @@ const buildCurriculumIndexLink = (entry) => {
   const params = new URLSearchParams();
   params.set('search', entry.name);
   params.set('entryId', entry.id);
+  params.set('source', 'tree');
   return `/index?${params.toString()}`;
 };
 
@@ -2266,6 +2267,7 @@ export default function DecisionTreePage() {
   const querySearch = searchParams.get('search') || '';
   const queryEntryId = searchParams.get('entryId') || '';
   const setupFamily = searchParams.get('setupFamily') || '';
+  const workflowSource = searchParams.get('source') || (setupFamily ? 'entry-setups' : '');
   const initialSetupPrompt = useMemo(() => (
     setupFamily ? getSetupFamilyPrompt(setupFamily) : null
   ), [setupFamily]);
@@ -2812,6 +2814,36 @@ export default function DecisionTreePage() {
   const relatedSetupFamilies = useMemo(() => (
     focusEntry ? findRelatedSetupFamilies(focusEntry.name) : []
   ), [focusEntry]);
+  const workflowSourceMeta = useMemo(() => {
+    const sourceMap = {
+      curriculum: {
+        label: 'Curriculum',
+        body: focusEntry?.name
+          ? `Last action: you came from Curriculum. Use Decision Trees to turn ${focusEntry.name} into a practical sequence and next-branch study path.`
+          : 'Last action: you came from Curriculum. Use Decision Trees to turn the broad map into a practical next-branch path.'
+      },
+      library: {
+        label: 'Library',
+        body: focusEntry?.name
+          ? `Last action: you came from Library. Use Decision Trees to keep moving after ${focusEntry.name} instead of stopping at the static resource.`
+          : 'Last action: you came from Library. Use Decision Trees to keep moving after the resource you just opened.'
+      },
+      'entry-setups': {
+        label: 'Entry Setups',
+        body: setupFamily
+          ? `Last action: you came from Entry Setups. This tree is continuing from ${setupFamily}, so you can follow the next realistic branch instead of restarting cold.`
+          : 'Last action: you came from Entry Setups. This tree is here to continue the setup into the next realistic branch.'
+      },
+      'my-progress': {
+        label: 'My Progress',
+        body: focusEntry?.name
+          ? `Last action: you came from tracked progress. Use Decision Trees to keep moving after ${focusEntry.name} with a clearer next study path.`
+          : 'Last action: you came from tracked progress. Use Decision Trees to keep the next study branch obvious.'
+      }
+    };
+
+    return sourceMap[workflowSource] || null;
+  }, [focusEntry, setupFamily, workflowSource]);
   const focusReactionGroups = useMemo(() => {
     if (!focusDecisionTreeModel?.commonReactions?.length) return [];
     const allowDefensiveBranches = isDefensiveRecommendationContext({ focusEntry, filters });
@@ -3252,7 +3284,7 @@ export default function DecisionTreePage() {
                   ) : null}
                 </div>
               ) : null}
-              {focusEntry ? <RelatedSetupFamilies families={relatedSetupFamilies} /> : null}
+              {focusEntry ? <RelatedSetupFamilies families={relatedSetupFamilies} source="tree" /> : null}
           </div>
           <div className="decision-tree-hero-actions">
             <button className="secondary-button" type="button" onClick={goBack} disabled={!history.length}>
@@ -3263,6 +3295,38 @@ export default function DecisionTreePage() {
             </button>
           </div>
         </section>
+
+        {workflowSourceMeta ? (
+          <section className="page-section workflow-continuity-banner">
+            <div className="workflow-continuity-copy">
+              <span className="eyebrow">Last action: {workflowSourceMeta.label}</span>
+              <strong>Use Decision Trees to keep the sequence moving.</strong>
+              <p className="section-note">{workflowSourceMeta.body}</p>
+            </div>
+            <div className="workflow-continuity-actions">
+              {workflowSource === 'curriculum' ? (
+                <Link className="secondary-button" to={focusEntry ? buildCurriculumIndexLink(focusEntry) : '/index'}>
+                  Back to Curriculum
+                </Link>
+              ) : null}
+              {workflowSource === 'library' ? (
+                <Link className="secondary-button" to={focusEntry ? buildLibraryLink({ entryName: focusEntry.name, focusEntry, decisionPathEntries }) : '/library'}>
+                  Back to Library
+                </Link>
+              ) : null}
+              {workflowSource === 'entry-setups' ? (
+                <Link className="secondary-button" to={setupFamily ? `/entry-setups?family=${encodeURIComponent(setupFamily)}&source=tree` : '/entry-setups'}>
+                  Back to Entry Setups
+                </Link>
+              ) : null}
+              {focusEntry ? (
+                <Link className="secondary-button" to={buildLibraryLink({ entryName: focusEntry.name, focusEntry, decisionPathEntries })}>
+                  Next: Find Library support
+                </Link>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
 
         {focusDecisionTreeModel ? (
           <section className="page-section decision-tree-logic-panel">

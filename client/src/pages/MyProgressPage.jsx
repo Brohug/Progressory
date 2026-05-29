@@ -5,9 +5,9 @@ import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 import { formatLabel } from '../utils/formatLabel';
 
-const buildIndexLink = (topicTitle) => `/index?search=${encodeURIComponent(topicTitle)}`;
-const buildLibraryLink = (topicTitle) => `/library?search=${encodeURIComponent(topicTitle)}`;
-const buildDecisionTreeLink = (topicTitle) => `/decision-tree?search=${encodeURIComponent(topicTitle)}`;
+const buildIndexLink = (topicTitle) => `/index?search=${encodeURIComponent(topicTitle)}&source=my-progress`;
+const buildLibraryLink = (topicTitle) => `/library?search=${encodeURIComponent(topicTitle)}&source=my-progress`;
+const buildDecisionTreeLink = (topicTitle) => `/decision-tree?search=${encodeURIComponent(topicTitle)}&source=my-progress`;
 
 export default function MyProgressPage() {
   const [member, setMember] = useState(null);
@@ -60,6 +60,19 @@ export default function MyProgressPage() {
       .sort((a, b) => new Date(b.updated_at || b.last_reviewed_at || 0) - new Date(a.updated_at || a.last_reviewed_at || 0))
       .slice(0, 3)
   ), [progress]);
+
+  const latestFollowThrough = useMemo(() => {
+    const latestProgressItem = mostRecentProgress[0] || studyNextTopics[0] || null;
+
+    if (!latestProgressItem) {
+      return null;
+    }
+
+    return {
+      title: latestProgressItem.topic_title,
+      status: formatLabel(latestProgressItem.status)
+    };
+  }, [mostRecentProgress, studyNextTopics]);
 
   return (
     <Layout>
@@ -160,6 +173,39 @@ export default function MyProgressPage() {
                 </div>
               )}
             </section>
+
+            {latestFollowThrough ? (
+              <section className="page-section dashboard-recommendation-section">
+                <div className="section-header">
+                  <div>
+                    <h3>Turn the last update into a next step</h3>
+                    <p className="section-note">
+                      Keep the progress loop moving: reopen the topic, find the shared resource, or use the tree while the last update is still fresh.
+                    </p>
+                  </div>
+                </div>
+                <div className="dashboard-next-move-highlight">
+                  <div className="dashboard-next-move-copy">
+                    <span className="eyebrow">Follow-through</span>
+                    <strong>{latestFollowThrough.title}</strong>
+                    <p className="meta-text">
+                      Your latest tracked status is {latestFollowThrough.status}. Use Curriculum for the big picture, Library for review support, or Decision Trees for the next branch.
+                    </p>
+                  </div>
+                  <div className="inline-actions">
+                    <Link className="secondary-button" to={buildIndexLink(latestFollowThrough.title)}>
+                      Open Curriculum
+                    </Link>
+                    <Link className="secondary-button" to={buildLibraryLink(latestFollowThrough.title)}>
+                      Open Library
+                    </Link>
+                    <Link className="secondary-button" to={buildDecisionTreeLink(latestFollowThrough.title)}>
+                      Study in Tree
+                    </Link>
+                  </div>
+                </div>
+              </section>
+            ) : null}
 
             {member ? (
               <ExpandableSection

@@ -4901,6 +4901,47 @@ a.dashboard-setup-item {
   display: none;
 }
 
+.workflow-provenance-grid {
+  margin-top: 8px;
+}
+
+.workflow-continuity-banner {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.08), transparent 30%),
+    linear-gradient(180deg, rgba(11, 18, 32, 0.96), rgba(9, 16, 30, 0.98));
+}
+
+.workflow-continuity-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.workflow-continuity-copy strong {
+  display: block;
+  font-size: 1.02rem;
+}
+
+.workflow-continuity-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.workflow-continuity-actions .secondary-button {
+  white-space: nowrap;
+}
+
+.curriculum-index-provenance-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .decision-tree-summary-chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -5878,6 +5919,52 @@ a.dashboard-setup-item {
     display: none;
   }
 
+  .library-filters-section.is-mobile-controls-collapsed .expandable-section-actions {
+    display: none;
+  }
+
+  .expandable-section.is-mobile-sticky-shell {
+    position: relative;
+  }
+
+  .expandable-section.is-mobile-sticky-shell .compact-form-header.is-mobile-sticky-header {
+    position: relative;
+    padding-right: 72px;
+    padding-bottom: 56px;
+  }
+
+  .expandable-section.is-mobile-sticky-shell .expandable-section-actions.is-mobile-sticky-actions {
+    display: block;
+    min-height: 0;
+  }
+
+  .expandable-section.is-mobile-sticky-shell .mobile-shell-collapsed-note {
+    margin-top: 10px;
+    padding-right: 56px;
+    font-size: 11px;
+    line-height: 1.35;
+    max-width: none;
+    min-height: 0;
+  }
+
+  .expandable-section.is-mobile-sticky-shell .expandable-section-actions.is-mobile-sticky-actions .expandable-mobile-toggle {
+    display: inline-flex;
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    min-width: 44px;
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    font-size: 20px;
+    line-height: 1;
+    z-index: 2;
+    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.24);
+  }
+
   .sticky-action-bar {
     padding-bottom: 56px;
   }
@@ -5902,6 +5989,15 @@ a.dashboard-setup-item {
 
   .entry-setups-search-summary {
     gap: 6px;
+  }
+
+  .workflow-continuity-banner,
+  .workflow-continuity-actions {
+    display: grid;
+  }
+
+  .workflow-continuity-actions .secondary-button {
+    width: 100%;
   }
 
   .entry-setups-lane-row {

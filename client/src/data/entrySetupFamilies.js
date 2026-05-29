@@ -3490,13 +3490,28 @@ export const getEntrySetupFamilySlug = (title) => (
   normalizeValue(title).replace(/\s+/g, '-')
 );
 
-export const buildEntrySetupsLink = (familyTitle) => (
-  `/entry-setups?family=${encodeURIComponent(familyTitle)}`
-);
+export const buildEntrySetupsLink = (familyTitle, source = '') => {
+  const params = new URLSearchParams();
+  params.set('family', familyTitle);
 
-export const buildEntrySetupsDecisionTreeLink = (family) => (
-  `/decision-tree?search=${encodeURIComponent(family.treeSearch)}&setupFamily=${encodeURIComponent(family.title)}`
-);
+  if (source) {
+    params.set('source', source);
+  }
+
+  return `/entry-setups?${params.toString()}`;
+};
+
+export const buildEntrySetupsDecisionTreeLink = (family, source = '') => {
+  const params = new URLSearchParams();
+  params.set('search', family.treeSearch);
+  params.set('setupFamily', family.title);
+
+  if (source) {
+    params.set('source', source);
+  }
+
+  return `/decision-tree?${params.toString()}`;
+};
 
 export const findRelatedSetupFamilies = (entryName) => {
   const normalizedEntryName = normalizeValue(entryName);

@@ -1,7 +1,11 @@
 import { Link } from 'react-router-dom';
 import { buildEntrySetupsDecisionTreeLink, buildEntrySetupsLink } from '../data/entrySetupFamilies';
 
-export default function RelatedSetupFamilies({ families, title = 'Related setup families' }) {
+export default function RelatedSetupFamilies({
+  families,
+  title = 'Related setup families',
+  source = ''
+}) {
   if (!families?.length) {
     return null;
   }
@@ -27,10 +31,10 @@ export default function RelatedSetupFamilies({ families, title = 'Related setup 
               </div>
             ) : null}
             <div className="inline-actions related-setup-family-actions">
-              <Link className="secondary-button" to={buildEntrySetupsLink(family.title)}>
+              <Link className="secondary-button" to={buildEntrySetupsLink(family.title, source)}>
                 Open in Entry Setups
               </Link>
-              <Link className="secondary-button" to={buildEntrySetupsDecisionTreeLink(family)}>
+              <Link className="secondary-button" to={buildEntrySetupsDecisionTreeLink(family, source)}>
                 Continue in Decision Trees
               </Link>
             </div>

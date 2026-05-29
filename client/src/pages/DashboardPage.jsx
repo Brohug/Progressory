@@ -675,6 +675,51 @@ export default function DashboardPage() {
     };
   }, [curriculumSeedByName, memberRecentProgress, memberSuggestedReview]);
 
+  const memberFollowThroughCards = useMemo(() => {
+    const cards = [];
+    const latestProgressItem = memberRecentProgress[0] || null;
+    const latestSharedResource = recentMemberLibraryEntries[0] || null;
+
+    if (latestProgressItem) {
+      cards.push({
+        title: `Reopen ${latestProgressItem.topic_title}`,
+        body: `Your last tracked update was ${formatLabel(latestProgressItem.status)}. Open the topic again, check the bigger map, or follow the next branch while it is still fresh.`,
+        primaryLabel: 'Open my progress',
+        primaryTo: '/my-progress',
+        secondaryLabel: 'Open Curriculum',
+        secondaryTo: `/index?search=${encodeURIComponent(latestProgressItem.topic_title)}&source=dashboard`
+      });
+    }
+
+    if (memberNextStudyPath) {
+      cards.push({
+        title: memberNextStudyPath.nextBranch
+          ? `Next branch: ${memberNextStudyPath.nextBranch}`
+          : `Keep building ${memberNextStudyPath.topicTitle}`,
+        body: memberNextStudyPath.nextBranch
+          ? `${memberNextStudyPath.nextBranch} is the cleanest next study step after ${memberNextStudyPath.topicTitle}.`
+          : `Use Decision Trees and Library to keep ${memberNextStudyPath.topicTitle} moving instead of stopping at the last logged update.`,
+        primaryLabel: 'Study in Tree',
+        primaryTo: `/decision-tree?search=${encodeURIComponent(memberNextStudyPath.topicTitle)}&source=dashboard`,
+        secondaryLabel: 'Open Library',
+        secondaryTo: `/library?search=${encodeURIComponent(memberNextStudyPath.topicTitle)}&source=dashboard`
+      });
+    }
+
+    if (latestSharedResource) {
+      cards.push({
+        title: `Shared resource: ${latestSharedResource.title}`,
+        body: 'A coach already shared something you can review right now. Reopen it before the next class instead of waiting until the last minute.',
+        primaryLabel: 'Open Library',
+        primaryTo: `/library?search=${encodeURIComponent(latestSharedResource.title)}&source=dashboard`,
+        secondaryLabel: 'Open classes',
+        secondaryTo: '/planned-classes'
+      });
+    }
+
+    return cards.slice(0, 3);
+  }, [memberNextStudyPath, memberRecentProgress, recentMemberLibraryEntries]);
+
   const staffPageIntro = isManagement
     ? 'New founder gym? Use the setup guide once to get the first real workflow live, then come back to Today and Quick Actions for normal use.'
     : 'Start with today\'s class work, then jump into planning, logs, members, or study support.';
@@ -757,6 +802,36 @@ export default function DashboardPage() {
                 </div>
               </section>
 
+              {memberFollowThroughCards.length > 0 ? (
+                <section className="page-section dashboard-recommendation-section">
+                  <div className="section-header">
+                    <div>
+                      <h3>Turn the last update into a next step</h3>
+                      <p className="section-note">This is the follow-through layer: take the last thing that moved and turn it into one clear next action.</p>
+                    </div>
+                  </div>
+                  <div className="dashboard-recommendation-grid">
+                    {memberFollowThroughCards.map((card) => (
+                      <article key={card.title} className="dashboard-next-move-highlight">
+                        <div className="dashboard-next-move-copy">
+                          <span className="eyebrow">Follow-through</span>
+                          <strong>{card.title}</strong>
+                          <p className="meta-text">{card.body}</p>
+                        </div>
+                        <div className="inline-actions">
+                          <Link className="secondary-button" to={card.primaryTo}>
+                            {card.primaryLabel}
+                          </Link>
+                          <Link className="secondary-button" to={card.secondaryTo}>
+                            {card.secondaryLabel}
+                          </Link>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
               <section className="page-section dashboard-hero-section">
                 <div className="section-header">
                   <div>
@@ -813,13 +888,13 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="inline-actions">
-                      <Link className="secondary-button" to={`/index?search=${encodeURIComponent(memberNextStudyPath.topicTitle)}`}>
+                      <Link className="secondary-button" to={`/index?search=${encodeURIComponent(memberNextStudyPath.topicTitle)}&source=dashboard`}>
                         Open Curriculum
                       </Link>
-                      <Link className="secondary-button" to={`/decision-tree?search=${encodeURIComponent(memberNextStudyPath.topicTitle)}`}>
+                      <Link className="secondary-button" to={`/decision-tree?search=${encodeURIComponent(memberNextStudyPath.topicTitle)}&source=dashboard`}>
                         Study in Tree
                       </Link>
-                      <Link className="secondary-button" to={`/library?search=${encodeURIComponent(memberNextStudyPath.topicTitle)}`}>
+                      <Link className="secondary-button" to={`/library?search=${encodeURIComponent(memberNextStudyPath.topicTitle)}&source=dashboard`}>
                         Open Library
                       </Link>
                     </div>
@@ -906,7 +981,7 @@ export default function DashboardPage() {
                               {formatLabel(item.topic_type)} | {formatLabel(item.status)}
                             </div>
                           </div>
-                          <Link className="secondary-button" to={`/decision-tree?search=${encodeURIComponent(item.topic_title)}`}>
+                          <Link className="secondary-button" to={`/decision-tree?search=${encodeURIComponent(item.topic_title)}&source=dashboard`}>
                             Study next
                           </Link>
                         </div>

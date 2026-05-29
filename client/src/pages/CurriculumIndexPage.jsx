@@ -277,6 +277,7 @@ export default function CurriculumIndexPage() {
   const isMember = user?.role === 'member';
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const workflowSource = searchParams.get('source') || '';
   const resultsSectionRef = useRef(null);
   const entryCardRefs = useRef({});
   const createPanelRefs = useRef({});
@@ -590,6 +591,37 @@ export default function CurriculumIndexPage() {
       return a.name.localeCompare(b.name);
     });
   }, [categoryFilter, debouncedSearch, enrichedEntries, guidedSearchScope, selectedEntryId, skillLevelFilter]);
+
+  const continuityFocusEntry = useMemo(() => (
+    filteredEntries[0]
+      || (selectedEntryId ? enrichedEntries.find((entry) => entry.id === selectedEntryId) : null)
+      || null
+  ), [enrichedEntries, filteredEntries, selectedEntryId]);
+
+  const continuityFocusLabel = continuityFocusEntry?.name || search.trim() || 'this curriculum idea';
+
+  const workflowSourceMeta = useMemo(() => {
+    const sourceMap = {
+      library: {
+        label: 'Library',
+        body: `Last action: you came from Library. Use Curriculum to confirm whether ${continuityFocusLabel} already lives in your gym map, then reopen the right next tool from there.`
+      },
+      tree: {
+        label: 'Decision Trees',
+        body: `Last action: you came from Decision Trees. Use Curriculum to anchor ${continuityFocusLabel} in the big-picture map before jumping back into the next branch.`
+      },
+      'entry-setups': {
+        label: 'Entry Setups',
+        body: `Last action: you came from Entry Setups. Use Curriculum to see where ${continuityFocusLabel} fits in the full teaching map before you continue the chain.`
+      },
+      'my-progress': {
+        label: 'My Progress',
+        body: `Last action: you came from tracked progress. Use Curriculum to see the bigger picture around ${continuityFocusLabel}, then reopen the best follow-up tool from there.`
+      }
+    };
+
+    return sourceMap[workflowSource] || null;
+  }, [continuityFocusLabel, workflowSource]);
 
   useEffect(() => {
     if (!focusResultsOnLoad) {
@@ -1113,6 +1145,70 @@ export default function CurriculumIndexPage() {
           ))}
         </section>
 
+        <section className="page-section workflow-provenance-section">
+          <div className="section-header">
+            <div>
+              <h3>Reference layer vs gym layer</h3>
+              <p className="section-note">
+                Curriculum Index is the built-in Progressory reference map. Topics, class usage, and Library links are the gym-created layer you build on top of it.
+              </p>
+            </div>
+          </div>
+          <div className="action-grid workflow-provenance-grid">
+            <article className="action-card dashboard-action-card">
+              <span className="eyebrow">Stock reference</span>
+              <strong>Progressory reference entries</strong>
+              <p className="dashboard-card-copy">
+                These entries are seeded into the app so you can search the big-picture map, relationships, and common follow-ups even before your gym creates its own topic layer.
+              </p>
+            </article>
+            <article className="action-card dashboard-action-card">
+              <span className="eyebrow">Gym-created layer</span>
+              <strong>Your gym&apos;s topics, usage, and resources</strong>
+              <p className="dashboard-card-copy">
+                Topics, class logs, Library resources, and member review support are all your gym&apos;s own layer. That is what turns the reference map into a live coaching system.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        {workflowSourceMeta ? (
+          <section className="page-section workflow-continuity-banner">
+            <div className="workflow-continuity-copy">
+              <span className="eyebrow">Last action: {workflowSourceMeta.label}</span>
+              <strong>Use Curriculum to anchor the next move.</strong>
+              <p className="section-note">{workflowSourceMeta.body}</p>
+            </div>
+            <div className="workflow-continuity-actions">
+              {workflowSource === 'library' ? (
+                <Link className="secondary-button" to={`/library?search=${encodeURIComponent(continuityFocusLabel)}&source=curriculum`}>
+                  Back to Library
+                </Link>
+              ) : null}
+              {workflowSource === 'tree' ? (
+                <Link className="secondary-button" to={`/decision-tree?search=${encodeURIComponent(continuityFocusLabel)}&source=curriculum`}>
+                  Back to Decision Trees
+                </Link>
+              ) : null}
+              {workflowSource === 'entry-setups' ? (
+                <Link className="secondary-button" to="/entry-setups?source=curriculum">
+                  Back to Entry Setups
+                </Link>
+              ) : null}
+              {continuityFocusLabel ? (
+                <Link className="secondary-button" to={`/library?search=${encodeURIComponent(continuityFocusLabel)}&source=curriculum`}>
+                  Next: Open Library
+                </Link>
+              ) : null}
+              {continuityFocusLabel ? (
+                <Link className="secondary-button" to={`/decision-tree?search=${encodeURIComponent(continuityFocusLabel)}&source=curriculum`}>
+                  Next: Study in Tree
+                </Link>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
+
         <section className="page-section dashboard-recommendation-section">
           <div className="section-header">
             <div>
@@ -1290,7 +1386,15 @@ export default function CurriculumIndexPage() {
                               </div>
                             ) : null}
 
-                            <RelatedSetupFamilies families={entry.relatedSetupFamilies} />
+                            <div className="curriculum-index-provenance-row">
+                              <span className="member-card-summary-pill">Progressory reference</span>
+                              <span className="member-card-summary-pill">{entry.topic ? 'Gym topic linked' : 'No gym topic yet'}</span>
+                              <span className="member-card-summary-pill">
+                                {entry.linkedLibraryCount > 0 ? `${entry.linkedLibraryCount} gym resource${entry.linkedLibraryCount === 1 ? '' : 's'}` : 'No gym resources yet'}
+                              </span>
+                            </div>
+
+                            <RelatedSetupFamilies families={entry.relatedSetupFamilies} source="curriculum" />
 
                             {relationshipGroups.some((group) => entry[group.key]?.length) ? (
                               <div className="detail-block">
@@ -1359,8 +1463,8 @@ export default function CurriculumIndexPage() {
                                     className="secondary-button curriculum-index-action-link"
                                     to={
                                       entry.topic
-                                        ? `/library?topicId=${entry.topic.id}`
-                                        : `/library?search=${encodeURIComponent(entry.name)}`
+                                        ? `/library?topicId=${entry.topic.id}&source=curriculum`
+                                        : `/library?search=${encodeURIComponent(entry.name)}&source=curriculum`
                                     }
                                   >
                                     Open Library

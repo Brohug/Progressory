@@ -5,9 +5,11 @@ import Layout from '../components/Layout';
 import { getEntrySetupFamilySlug, setupFamilies } from '../data/entrySetupFamilies';
 import { useAuth } from '../hooks/useAuth';
 
-const buildCurriculumLink = (search) => `/index?search=${encodeURIComponent(search)}`;
+const buildCurriculumLink = (search, source = 'entry-setups') => (
+  `/index?search=${encodeURIComponent(search)}&source=${encodeURIComponent(source)}`
+);
 const buildDecisionTreeLink = (search, setupFamily) => (
-  `/decision-tree?search=${encodeURIComponent(search)}&setupFamily=${encodeURIComponent(setupFamily)}`
+  `/decision-tree?search=${encodeURIComponent(search)}&setupFamily=${encodeURIComponent(setupFamily)}&source=entry-setups`
 );
 
 const buildInitialCustomExampleForm = (visibility = 'private') => ({
@@ -103,6 +105,7 @@ export default function EntrySetupsPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const selectedFamily = searchParams.get('family') || '';
+  const workflowSource = searchParams.get('source') || '';
   const [familySearch, setFamilySearch] = useState('');
   const [activeLane, setActiveLane] = useState('');
   const [expandedFamilies, setExpandedFamilies] = useState({});
@@ -130,6 +133,31 @@ export default function EntrySetupsPage() {
   const isOwner = user?.role === 'owner';
   const useBuiltInCompactCards = isMobileCompactCards || isBuiltInCompactView;
   const useSavedCompactCards = isMobileCompactCards || isSavedCompactView;
+
+  const workflowSourceMeta = useMemo(() => {
+    const sourceMap = {
+      curriculum: {
+        label: 'Curriculum',
+        body: selectedFamily
+          ? `Last action: you came from Curriculum. Use ${selectedFamily} as the bridge between the reference map and the next live sequence.`
+          : 'Last action: you came from Curriculum. Use Entry Setups to turn the big-picture topic map into a more teachable opening sequence.'
+      },
+      library: {
+        label: 'Library',
+        body: selectedFamily
+          ? `Last action: you came from Library. Use ${selectedFamily} to understand the setup logic behind the resource you were just reviewing.`
+          : 'Last action: you came from Library. Use Entry Setups to trace the opening that creates the resource you were just reviewing.'
+      },
+      tree: {
+        label: 'Decision Trees',
+        body: selectedFamily
+          ? `Last action: you came from Decision Trees. Use ${selectedFamily} to step back from the branch and see the setup pattern that usually creates it.`
+          : 'Last action: you came from Decision Trees. Use Entry Setups to step back from the branch and find the setup family that usually creates it.'
+      }
+    };
+
+    return sourceMap[workflowSource] || null;
+  }, [selectedFamily, workflowSource]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -396,6 +424,9 @@ export default function EntrySetupsPage() {
   }, [exampleSort, familySearch, filteredCustomExamples, user?.id]);
 
   const topBuiltInMatch = filteredSetupFamilies[0] || null;
+  const selectedBuiltInFamily = useMemo(() => (
+    selectedFamily ? setupFamilies.find((family) => family.title === selectedFamily) || null : null
+  ), [selectedFamily]);
   const topSavedMatch = sortedCustomExamples[0] || null;
   const nextMoveSuggestions = useMemo(() => {
     const suggestions = [];
@@ -1154,6 +1185,63 @@ export default function EntrySetupsPage() {
             </div>
           </div>
         </section>
+
+        <section className="page-section workflow-provenance-section">
+          <div className="section-header">
+            <div>
+              <h3>Built-in vs gym-created setup layers</h3>
+              <p className="section-note">
+                Built-in setup families are the stock Progressory reference layer. Saved setup examples are the gym-created layer you refine for your own team.
+              </p>
+            </div>
+          </div>
+          <div className="action-grid workflow-provenance-grid">
+            <article className="action-card dashboard-action-card">
+              <span className="eyebrow">Stock reference</span>
+              <strong>Built-in setup families</strong>
+              <p className="dashboard-card-copy">
+                These starter families help coaches and members see common openings, reactions, and continuations without pretending to replace every gym&apos;s real style.
+              </p>
+            </article>
+            <article className="action-card dashboard-action-card">
+              <span className="eyebrow">Gym-created layer</span>
+              <strong>Saved examples from your gym</strong>
+              <p className="dashboard-card-copy">
+                Shared owner examples and private coach examples are your gym&apos;s own layer. That is where your exact version of the setup becomes reusable.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        {workflowSourceMeta ? (
+          <section className="page-section workflow-continuity-banner">
+            <div className="workflow-continuity-copy">
+              <span className="eyebrow">Last action: {workflowSourceMeta.label}</span>
+              <strong>Use Entry Setups to turn the idea into a sequence.</strong>
+              <p className="section-note">{workflowSourceMeta.body}</p>
+            </div>
+            <div className="workflow-continuity-actions">
+              {workflowSource === 'curriculum' ? (
+                <Link className="secondary-button" to={buildCurriculumLink(selectedBuiltInFamily?.curriculumSearch || familySearch || 'closed guard', 'entry-setups')}>
+                  Back to Curriculum
+                </Link>
+              ) : null}
+              {workflowSource === 'library' ? (
+                <Link className="secondary-button" to={`/library?search=${encodeURIComponent(selectedFamily || familySearch || '')}`}>
+                  Back to Library
+                </Link>
+              ) : null}
+              {workflowSource === 'tree' ? (
+                <Link className="secondary-button" to={`/decision-tree?search=${encodeURIComponent(selectedFamily || familySearch || '')}&source=entry-setups`}>
+                  Back to Decision Trees
+                </Link>
+              ) : null}
+              <Link className="secondary-button" to={buildDecisionTreeLink(selectedBuiltInFamily?.treeSearch || familySearch || 'single leg', selectedFamily || 'Standing hand-fight setups')}>
+                Next: Continue in Tree
+              </Link>
+            </div>
+          </section>
+        ) : null}
 
         <section className="page-section dashboard-recommendation-section">
           <div className="section-header">

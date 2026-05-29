@@ -126,6 +126,11 @@ export default function LibraryPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [lastSavedTopicId, setLastSavedTopicId] = useState('');
   const [lastSavedTopicTitle, setLastSavedTopicTitle] = useState('');
+  const [isMobileLayout, setIsMobileLayout] = useState(() => (
+    typeof window !== 'undefined' ? window.innerWidth <= 640 : false
+  ));
+  const [isMemberFiltersCollapsed, setIsMemberFiltersCollapsed] = useState(false);
+  const [isManagementFiltersCollapsed, setIsManagementFiltersCollapsed] = useState(false);
   const hasCoachingFocus = Boolean(
     cameFromTree ||
     cameFromPlannedClasses ||
@@ -134,6 +139,32 @@ export default function LibraryPage() {
   );
   const openFiltersByDefault = Boolean(cameFromTree);
   const openEntriesByDefault = Boolean(hasCoachingFocus);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 640px)');
+    const syncMobileState = (event) => {
+      setIsMobileLayout(event.matches);
+    };
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', syncMobileState);
+      return () => mediaQuery.removeEventListener('change', syncMobileState);
+    }
+
+    mediaQuery.addListener(syncMobileState);
+    return () => mediaQuery.removeListener(syncMobileState);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobileLayout) {
+      setIsMemberFiltersCollapsed(false);
+      setIsManagementFiltersCollapsed(false);
+    }
+  }, [isMobileLayout]);
 
   const scrollToLibraryFiltersTop = () => {
     window.requestAnimationFrame(() => {
@@ -246,6 +277,7 @@ export default function LibraryPage() {
   const buildCurriculumIndexLink = ({ title, topicId = '', topicDescription = '', topicType = '' }) => {
     const params = new URLSearchParams();
     params.set('search', title);
+    params.set('source', 'library');
 
     const normalizedTitle = normalizeValue(title);
     const linkedTopic = topicId ? topicById.get(String(topicId)) : null;
@@ -280,6 +312,7 @@ export default function LibraryPage() {
 
     return `/index?${params.toString()}`;
   };
+
 
   useEffect(() => {
     const loadPageData = async () => {
@@ -470,6 +503,29 @@ export default function LibraryPage() {
     () => topics.find((topic) => String(topic.id) === topicFilter) || null,
     [topics, topicFilter]
   );
+  const workflowSourceMeta = useMemo(() => {
+    const focusLabel = selectedTopic?.title || treeFocusName || search || 'this topic';
+    const sourceMap = {
+      curriculum: {
+        label: 'Curriculum',
+        body: `Last action: you came from Curriculum. Use Library to see whether ${focusLabel} already has gym-created support instead of assuming it exists.`
+      },
+      'entry-setups': {
+        label: 'Entry Setups',
+        body: `Last action: you came from Entry Setups. Use Library to find the review resource that supports ${focusLabel} once the setup is already clear.`
+      },
+      'my-progress': {
+        label: 'My Progress',
+        body: `Last action: you came from tracked progress. Use Library to reopen the safest review resource around ${focusLabel}.`
+      },
+      dashboard: {
+        label: 'Dashboard',
+        body: `Last action: you came from Dashboard. Use Library to find the review resource that best supports ${focusLabel} right now.`
+      }
+    };
+
+    return sourceMap[librarySource] || null;
+  }, [librarySource, search, selectedTopic, treeFocusName]);
 
   useEffect(() => {
     if (loading || (!focusEntriesOnLoad && !topicFilter)) {
@@ -929,6 +985,54 @@ export default function LibraryPage() {
           </p>
         </section>
 
+        <section className="page-section workflow-provenance-section">
+          <div className="section-header">
+            <div>
+              <h3>Gym-created review resources only</h3>
+              <p className="section-note">
+                Library only shows resources your gym created or linked. Progressory does not auto-publish stock Library media into this page.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {workflowSourceMeta ? (
+          <section className="page-section workflow-continuity-banner">
+            <div className="workflow-continuity-copy">
+              <span className="eyebrow">Last action: {workflowSourceMeta.label}</span>
+              <strong>Use Library to support the next study move.</strong>
+              <p className="section-note">{workflowSourceMeta.body}</p>
+            </div>
+            <div className="workflow-continuity-actions">
+              {librarySource === 'my-progress' ? (
+                <Link className="secondary-button" to="/my-progress">
+                  Back to My Progress
+                </Link>
+              ) : null}
+              {librarySource === 'curriculum' ? (
+                <Link className="secondary-button" to={selectedTopic ? buildCurriculumIndexLink({
+                  title: selectedTopic.title,
+                  topicId: selectedTopic.id,
+                  topicDescription: selectedTopic.description,
+                  topicType: selectedTopic.topic_type
+                }) : '/index'}>
+                  Back to Curriculum
+                </Link>
+              ) : null}
+              {librarySource === 'entry-setups' ? (
+                <Link className="secondary-button" to="/entry-setups">
+                  Back to Entry Setups
+                </Link>
+              ) : null}
+              {selectedTopic?.title ? (
+                <Link className="secondary-button" to={`/decision-tree?search=${encodeURIComponent(selectedTopic.title)}&source=library`}>
+                  Next: Study in Tree
+                </Link>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
+
         {error ? <p className="error-text">{error}</p> : null}
 
         <section className="stats-grid">
@@ -961,7 +1065,7 @@ export default function LibraryPage() {
                     <div className="dashboard-setup-helper">
                       {latestMemberEntry.description || 'Open the resource to review what your coaches shared most recently.'}
                     </div>
-                      <RelatedSetupFamilies families={getRelatedSetupFamiliesForEntry(latestMemberEntry)} />
+                      <RelatedSetupFamilies families={getRelatedSetupFamiliesForEntry(latestMemberEntry)} source="library" />
                       <div className="inline-actions">
                         {getSafeExternalUrl(latestMemberEntry.video_url) ? (
                           <a
@@ -989,7 +1093,7 @@ export default function LibraryPage() {
                         {latestMemberEntry.topic_title ? (
                           <Link
                             className="secondary-button"
-                            to={`/decision-tree?search=${encodeURIComponent(latestMemberEntry.topic_title)}`}
+                            to={`/decision-tree?search=${encodeURIComponent(latestMemberEntry.topic_title)}&source=library`}
                           >
                             Study in Tree
                           </Link>
@@ -1034,9 +1138,10 @@ export default function LibraryPage() {
             activeFilters.length > 0 ? `${activeFilters.length} filter${activeFilters.length === 1 ? '' : 's'} active` : 'No filters active',
             selectedTopic ? `Focused on ${selectedTopic.title}` : 'No topic focus'
           ]}
-          className="library-filters-section"
+          className={isMobileLayout && isMemberFiltersCollapsed ? 'library-filters-section is-mobile-controls-collapsed' : 'library-filters-section'}
           defaultOpen
           stickyHeader
+          mobileStickyToggleMode="custom"
           actionsAfterToggle={(
             <button
               className="secondary-button"
@@ -1047,54 +1152,73 @@ export default function LibraryPage() {
             </button>
           )}
         >
-          <div className="sticky-action-bar">
-          <div className="form-grid">
-            <div>
-              <label>Search</label>
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search the library..."
-              />
-            </div>
+          <div className={`sticky-action-bar${isMemberFiltersCollapsed ? ' is-mobile-collapsed' : ''}`}>
+            {isMemberFiltersCollapsed ? (
+              <p className="mobile-shell-collapsed-note">
+                Filters are tucked away so the member Library list is easier to read.
+              </p>
+            ) : (
+              <>
+                <div className="form-grid">
+                  <div>
+                    <label>Search</label>
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search the library..."
+                    />
+                  </div>
 
-            <div>
-              <label>Resource Type</label>
-              <select value={entryTypeFilter} onChange={(e) => setEntryTypeFilter(e.target.value)}>
-                <option value="">All resource types</option>
-                {entryTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {formatSentenceLabel(type)}
-                  </option>
-                ))}
-              </select>
-            </div>
+                  <div>
+                    <label>Resource Type</label>
+                    <select value={entryTypeFilter} onChange={(e) => setEntryTypeFilter(e.target.value)}>
+                      <option value="">All resource types</option>
+                      {entryTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {formatSentenceLabel(type)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-            <div>
-              <label>Sort</label>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                <option value="updated_desc">Recently updated</option>
-                <option value="created_desc">Recently created</option>
-                <option value="title_asc">Title A-Z</option>
-                <option value="category_asc">Category A-Z</option>
-              </select>
-            </div>
-          </div>
+                  <div>
+                    <label>Sort</label>
+                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                      <option value="updated_desc">Recently updated</option>
+                      <option value="created_desc">Recently created</option>
+                      <option value="title_asc">Title A-Z</option>
+                      <option value="category_asc">Category A-Z</option>
+                    </select>
+                  </div>
+                </div>
 
-          {activeFilters.length > 0 ? (
-            <div className="library-active-filters">
-              <div className="library-filter-chip-row">
-                {activeFilters.map((filter) => (
-                  <span key={filter.key} className="library-filter-chip">
-                    {filter.label}
-                  </span>
-                ))}
-              </div>
-              <button type="button" className="secondary-button" onClick={clearAllFilters}>
-                Clear filters
+                {activeFilters.length > 0 ? (
+                  <div className="library-active-filters">
+                    <div className="library-filter-chip-row">
+                      {activeFilters.map((filter) => (
+                        <span key={filter.key} className="library-filter-chip">
+                          {filter.label}
+                        </span>
+                      ))}
+                    </div>
+                    <button type="button" className="secondary-button" onClick={clearAllFilters}>
+                      Clear filters
+                    </button>
+                  </div>
+                ) : null}
+              </>
+            )}
+            {isMobileLayout ? (
+              <button
+                type="button"
+                className="secondary-button mobile-sticky-corner-toggle"
+                onClick={() => setIsMemberFiltersCollapsed((current) => !current)}
+                aria-label={isMemberFiltersCollapsed ? 'Show library filters' : 'Hide library filters'}
+                title={isMemberFiltersCollapsed ? 'Show library filters' : 'Hide library filters'}
+              >
+                {isMemberFiltersCollapsed ? '↓' : '↑'}
               </button>
-            </div>
             ) : null}
           </div>
         </ExpandableSection>
@@ -1155,7 +1279,7 @@ export default function LibraryPage() {
                   </div>
                   <div className="detail-block">
                     <div>{entry.description || 'No description added yet.'}</div>
-                    <RelatedSetupFamilies families={getRelatedSetupFamiliesForEntry(entry)} />
+                      <RelatedSetupFamilies families={getRelatedSetupFamiliesForEntry(entry)} source="library" />
                   </div>
                     <div className="inline-actions">
                       {getSafeExternalUrl(entry.video_url) ? (
@@ -1181,7 +1305,7 @@ export default function LibraryPage() {
                       {entry.topic_title ? (
                         <Link
                           className="secondary-button"
-                          to={`/decision-tree?search=${encodeURIComponent(entry.topic_title)}`}
+                          to={`/decision-tree?search=${encodeURIComponent(entry.topic_title)}&source=library`}
                         >
                           Study in Tree
                         </Link>
@@ -1312,6 +1436,54 @@ export default function LibraryPage() {
       <Layout>
         <div className="library-page">
         <h2 className="page-title">Library</h2>
+
+      <section className="page-section workflow-provenance-section">
+        <div className="section-header">
+          <div>
+            <h3>Gym-created Library layer</h3>
+            <p className="section-note">
+              Every Library entry here is gym-created or gym-linked. Progressory does not auto-fill stock Library media into this page.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {workflowSourceMeta ? (
+        <section className="page-section workflow-continuity-banner">
+          <div className="workflow-continuity-copy">
+            <span className="eyebrow">Last action: {workflowSourceMeta.label}</span>
+            <strong>Use Library to support the next coaching move.</strong>
+            <p className="section-note">{workflowSourceMeta.body}</p>
+          </div>
+          <div className="workflow-continuity-actions">
+            {librarySource === 'curriculum' ? (
+              <Link className="secondary-button" to={selectedTopic ? buildCurriculumIndexLink({
+                title: selectedTopic.title,
+                topicId: selectedTopic.id,
+                topicDescription: selectedTopic.description,
+                topicType: selectedTopic.topic_type
+              }) : '/index'}>
+                Back to Curriculum
+              </Link>
+            ) : null}
+            {librarySource === 'entry-setups' ? (
+              <Link className="secondary-button" to="/entry-setups">
+                Back to Entry Setups
+              </Link>
+            ) : null}
+            {librarySource === 'my-progress' ? (
+              <Link className="secondary-button" to="/my-progress">
+                Back to My Progress
+              </Link>
+            ) : null}
+            {(selectedTopic?.title || search) ? (
+              <Link className="secondary-button" to={`/decision-tree?search=${encodeURIComponent(selectedTopic?.title || search)}&source=library`}>
+                Next: Study in Tree
+              </Link>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
 
       <div ref={libraryCreateTopRef} />
       <ExpandableSection
@@ -1581,9 +1753,10 @@ export default function LibraryPage() {
           inactiveEntryCount > 0 ? `${inactiveEntryCount} inactive` : 'No inactive entries',
           activeFilters.length > 0 ? `${activeFilters.length} filter${activeFilters.length === 1 ? '' : 's'} active` : 'No filters active'
         ]}
-        className="library-filters-section"
+        className={isMobileLayout && isManagementFiltersCollapsed ? 'library-filters-section is-mobile-controls-collapsed' : 'library-filters-section'}
         defaultOpen={openFiltersByDefault}
         stickyHeader
+        mobileStickyToggleMode="custom"
         actionsAfterToggle={(
           <button
             className="secondary-button"
@@ -1594,7 +1767,14 @@ export default function LibraryPage() {
           </button>
         )}
       >
-          <div className="sticky-action-bar">
+          <div className={`sticky-action-bar${isManagementFiltersCollapsed ? ' is-mobile-collapsed' : ''}`}>
+          {isManagementFiltersCollapsed && (
+            <p className="mobile-shell-collapsed-note">
+              Filters and helper panels are tucked away so you can read the Library list more easily.
+            </p>
+          )}
+          {!isManagementFiltersCollapsed && (
+            <div className="library-sticky-expanded-content">
           <div className="summary-grid" style={{ marginBottom: '16px' }}>
             {summaryCards.map((card) => (
             <div key={card.label} className="summary-card">
@@ -1652,7 +1832,7 @@ export default function LibraryPage() {
           {cameFromTree ? (
             <div className="library-linked-topic-banner">
               <div>
-                <strong>Opened from Decision Trees{treeFocusName ? `: ${treeFocusName}` : ''}</strong>
+                <strong>Last action: Decision Trees{treeFocusName ? ` - ${treeFocusName}` : ''}</strong>
                 <div className="meta-text">
                   {treePathLabel
                     ? `Current path: ${treePathLabel}. Use this Library view to find resources that support the exact lane you were tracing in the Tree.`
@@ -1676,9 +1856,12 @@ export default function LibraryPage() {
           {selectedTopic ? (
             <div className="library-linked-topic-banner">
               <div>
-                <strong>Showing resources linked to {selectedTopic.title}</strong>
+                <strong>Last action: focused topic - {selectedTopic.title}</strong>
                 <div className="meta-text">
                   This keeps the coaching work focused on one topic.
+                </div>
+                <div className="meta-text">
+                  Next action: reopen Curriculum or plan the class that should use this exact resource.
                 </div>
               </div>
               <div className="inline-actions">
@@ -1791,7 +1974,20 @@ export default function LibraryPage() {
               </button>
               </div>
             ) : null}
-          </div>
+            </div>
+            </div>
+          )}
+          {isMobileLayout ? (
+            <button
+              type="button"
+              className="secondary-button mobile-sticky-corner-toggle"
+              onClick={() => setIsManagementFiltersCollapsed((current) => !current)}
+              aria-label={isManagementFiltersCollapsed ? 'Show library filters' : 'Hide library filters'}
+              title={isManagementFiltersCollapsed ? 'Show library filters' : 'Hide library filters'}
+            >
+              {isManagementFiltersCollapsed ? '↓' : '↑'}
+            </button>
+          ) : null}
           </div>
       </ExpandableSection>
 
@@ -1961,7 +2157,7 @@ export default function LibraryPage() {
                           : entry.description
                         : 'No description added yet.'}
                     </div>
-                    <RelatedSetupFamilies families={getRelatedSetupFamiliesForEntry(entry)} />
+                    <RelatedSetupFamilies families={getRelatedSetupFamiliesForEntry(entry)} source="library" />
                   </div>
                   <button
                     type="button"
@@ -2147,7 +2343,7 @@ export default function LibraryPage() {
                     <>
                       <Link
                         className="secondary-button"
-                        to={`/decision-tree?search=${encodeURIComponent(entry.topic_title || entry.title)}`}
+                        to={`/decision-tree?search=${encodeURIComponent(entry.topic_title || entry.title)}&source=library`}
                       >
                         Study in Tree
                       </Link>
