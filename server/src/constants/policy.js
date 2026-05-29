@@ -1,5 +1,5 @@
 const POLICY_VERSION = '2026-06-01';
-const SUPPORT_EMAIL = 'support@progressory.app';
+const SUPPORT_EMAIL = 'owner.progressory@gmail.com';
 
 module.exports = {
   POLICY_VERSION,

@@ -59,7 +59,7 @@ const topicTypeCategoryHints = {
 const reportReasonLabels = {
   inappropriate_content: 'Inappropriate or unsafe content',
   minor_safety_concern: 'Unsafe for kids or teens',
-  copyright_or_permission_issue: 'Uploaded without permission',
+  copyright_or_permission_issue: 'Other issue',
   harassment_or_abuse: 'Harassment or abuse',
   other: 'Something else'
 };

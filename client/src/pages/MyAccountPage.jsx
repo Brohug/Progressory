@@ -22,7 +22,7 @@ const roleLabels = {
 
 const roleRestrictions = {
   owner: [
-    'Owner-only billing controls will live here when payments launch.',
+    'Owner-only billing controls stay with this account.',
     'This is the highest access level in the app.'
   ],
   admin: [
