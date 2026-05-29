@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../hooks/useAuth';
+import {
+  policyAcknowledgementText,
+  policyLinks,
+  policyUseText
+} from '../constants/policies';
 
 export default function StaffAccessPage() {
   const navigate = useNavigate();
@@ -13,6 +18,9 @@ export default function StaffAccessPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [policyAgreementAccepted, setPolicyAgreementAccepted] = useState(false);
+  const [founderUseAcknowledged, setFounderUseAcknowledged] = useState(false);
+  const requiresPolicyAcceptance = invite?.role === 'owner' || invite?.role === 'admin';
 
   useEffect(() => {
     const loadInvite = async () => {
@@ -45,10 +53,19 @@ export default function StaffAccessPage() {
       return;
     }
 
+    if (requiresPolicyAcceptance && (!policyAgreementAccepted || !founderUseAcknowledged)) {
+      setError('You must accept the policies before finishing account setup.');
+      return;
+    }
+
     try {
       setSubmitting(true);
       setError('');
-      const response = await api.post(`/auth/staff-access/${token}`, { password });
+      const response = await api.post(`/auth/staff-access/${token}`, {
+        password,
+        policyAgreementAccepted,
+        founderUseAcknowledged
+      });
       login(response.data.token, response.data.user);
       navigate('/dashboard');
     } catch (err) {
@@ -96,6 +113,40 @@ export default function StaffAccessPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
             </div>
+
+            {requiresPolicyAcceptance ? (
+              <div className="policy-agreement-card" style={{ gridColumn: '1 / -1' }}>
+                <strong>Before entering the app</strong>
+                <p className="meta-text">
+                  Owner and admin accounts must accept the current Progressory policies before setup is complete.
+                </p>
+                <div className="policy-link-row">
+                  {policyLinks.map((link) => (
+                    <Link key={link.key} to={link.to} target="_blank" rel="noreferrer">
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={policyAgreementAccepted}
+                    onChange={(e) => setPolicyAgreementAccepted(e.target.checked)}
+                    required
+                  />
+                  <span>{policyAcknowledgementText}</span>
+                </label>
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={founderUseAcknowledged}
+                    onChange={(e) => setFounderUseAcknowledged(e.target.checked)}
+                    required
+                  />
+                  <span>{policyUseText}</span>
+                </label>
+              </div>
+            ) : null}
 
             <div className="inline-actions">
               <button type="submit" disabled={submitting}>

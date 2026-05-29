@@ -3,6 +3,9 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const pool = require('../config/db');
 const { isPlatformAdminEmail } = require('../services/platformAdminService');
+const { validatePolicyAcceptance, getAcceptedPolicyVersion } = require('../services/policyService');
+const { logAuditEvent } = require('../services/auditService');
+const { assertCanAddCoach } = require('../services/planLimitsService');
 
 const generateSlug = (name) => {
   return name
@@ -29,6 +32,7 @@ const generateToken = (user) => {
 const attachUserRuntimeFlags = (user) => ({
   ...user,
   is_platform_admin: isPlatformAdminEmail(user?.email),
+  can_upload_library_content: Boolean(user?.can_upload_library_content),
   gym_is_platform_suspended: Boolean(user?.is_platform_suspended),
   gym_platform_suspended_at: user?.platform_suspended_at || null,
   gym_platform_suspension_reason: user?.platform_suspension_reason || ''
@@ -38,11 +42,25 @@ const register = async (req, res) => {
   const connection = await pool.getConnection();
 
   try {
-    const { gym_name, first_name, last_name, email, password } = req.body;
+    const {
+      gym_name,
+      first_name,
+      last_name,
+      email,
+      password,
+      policyAgreementAccepted,
+      founderUseAcknowledged
+    } = req.body;
 
     if (!gym_name || !first_name || !last_name || !email || !password) {
       return res.status(400).json({
         message: 'All fields are required'
+      });
+    }
+
+    if (!validatePolicyAcceptance(policyAgreementAccepted) || !validatePolicyAcceptance(founderUseAcknowledged)) {
+      return res.status(400).json({
+        message: 'You must accept the Progressory policies and confirm the allowed platform use.'
       });
     }
 
@@ -80,17 +98,44 @@ const register = async (req, res) => {
     const gymId = gymResult.insertId;
 
     const [userResult] = await connection.query(
-      `INSERT INTO users (gym_id, first_name, last_name, email, password_hash, role)
-       VALUES (?, ?, ?, ?, ?, 'owner')`,
-      [gymId, first_name, last_name, email, passwordHash]
+      `INSERT INTO users (
+         gym_id,
+         first_name,
+         last_name,
+         email,
+         password_hash,
+         role,
+         can_upload_library_content,
+         terms_accepted_at,
+         privacy_accepted_at,
+         acceptable_use_accepted_at,
+         child_safety_accepted_at,
+         accepted_policy_version
+       )
+       VALUES (?, ?, ?, ?, ?, 'owner', TRUE, NOW(), NOW(), NOW(), NOW(), ?)`,
+      [gymId, first_name, last_name, email, passwordHash, acceptedPolicyVersion]
     );
 
     const userId = userResult.insertId;
+
+    await logAuditEvent({
+      gymId,
+      userId,
+      eventType: 'POLICY_ACCEPTED',
+      entityType: 'user',
+      entityId: userId,
+      metadata: {
+        accepted_policy_version: acceptedPolicyVersion,
+        source: 'register'
+      },
+      connection
+    });
 
     await connection.commit();
 
     const [rows] = await connection.query(
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.created_at, u.updated_at,
+              u.can_upload_library_content,
               g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
        FROM users u
        JOIN gyms g ON u.gym_id = g.id
@@ -130,7 +175,7 @@ const login = async (req, res) => {
 
     const [rows] = await pool.query(
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.password_hash, u.role, u.is_active,
-              u.created_at, u.updated_at,
+              u.created_at, u.updated_at, u.can_upload_library_content,
               m.id AS member_id,
               g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
        FROM users u
@@ -175,6 +220,7 @@ const login = async (req, res) => {
         email: user.email,
         role: user.role,
         member_id: user.member_id || null,
+        can_upload_library_content: user.can_upload_library_content,
         created_at: user.created_at,
         updated_at: user.updated_at,
         gym_name: user.gym_name,
@@ -286,7 +332,11 @@ const setMemberAccessPassword = async (req, res) => {
 
   try {
     const { token } = req.params;
-    const { password } = req.body;
+    const {
+      password,
+      policyAgreementAccepted,
+      founderUseAcknowledged
+    } = req.body;
 
     if (!password || password.length < 8) {
       return res.status(400).json({
@@ -315,6 +365,7 @@ const setMemberAccessPassword = async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const acceptedPolicyVersion = getAcceptedPolicyVersion();
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
     await connection.beginTransaction();
@@ -337,7 +388,7 @@ const setMemberAccessPassword = async (req, res) => {
 
     const [userRows] = await pool.query(
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
-              u.created_at, u.updated_at,
+              u.created_at, u.updated_at, u.can_upload_library_content,
               m.id AS member_id,
               g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
        FROM users u
@@ -416,7 +467,11 @@ const setStaffAccessPassword = async (req, res) => {
 
   try {
     const { token } = req.params;
-    const { password } = req.body;
+    const {
+      password,
+      policyAgreementAccepted,
+      founderUseAcknowledged
+    } = req.body;
 
     if (!password || password.length < 8) {
       return res.status(400).json({
@@ -444,16 +499,78 @@ const setStaffAccessPassword = async (req, res) => {
       });
     }
 
+    const requiresPolicyAcceptance = invite.role === 'owner' || invite.role === 'admin';
+
+    if (
+      requiresPolicyAcceptance
+      && (!validatePolicyAcceptance(policyAgreementAccepted) || !validatePolicyAcceptance(founderUseAcknowledged))
+    ) {
+      return res.status(400).json({
+        message: 'You must accept the Progressory policies before finishing staff access.'
+      });
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const acceptedPolicyVersion = getAcceptedPolicyVersion();
 
     await connection.beginTransaction();
 
+    if (invite.role === 'admin' || invite.role === 'coach') {
+      const [userRowsForLimit] = await connection.query(
+        'SELECT is_active, role FROM users WHERE id = ? AND gym_id = ? LIMIT 1',
+        [invite.user_id, invite.gym_id]
+      );
+
+      const invitedUser = userRowsForLimit[0];
+
+      if (invitedUser && !invitedUser.is_active) {
+        try {
+          await assertCanAddCoach(invite.gym_id, connection);
+        } catch (limitError) {
+          if (limitError.limitType) {
+            await connection.rollback();
+            return res.status(limitError.status || 409).json({
+              message: limitError.message,
+              limitType: limitError.limitType,
+              currentUsage: limitError.currentUsage,
+              planLimit: limitError.planLimit,
+              upgradeRequired: Boolean(limitError.upgradeRequired),
+              upgradePlan: limitError.upgradePlan || 'standard',
+              upgradePlanLabel: limitError.upgradePlanLabel || 'Standard'
+            });
+          }
+
+          throw limitError;
+        }
+      }
+    }
+
     await connection.query(
       `UPDATE users
-       SET password_hash = ?, is_active = TRUE
+       SET password_hash = ?,
+           is_active = TRUE,
+           can_upload_library_content = CASE
+             WHEN role IN ('owner', 'admin') THEN TRUE
+             ELSE can_upload_library_content
+           END,
+           terms_accepted_at = CASE WHEN ? THEN NOW() ELSE terms_accepted_at END,
+           privacy_accepted_at = CASE WHEN ? THEN NOW() ELSE privacy_accepted_at END,
+           acceptable_use_accepted_at = CASE WHEN ? THEN NOW() ELSE acceptable_use_accepted_at END,
+           child_safety_accepted_at = CASE WHEN ? THEN NOW() ELSE child_safety_accepted_at END,
+           accepted_policy_version = CASE WHEN ? THEN ? ELSE accepted_policy_version END
        WHERE id = ? AND gym_id = ?`,
-      [passwordHash, invite.user_id, invite.gym_id]
+      [
+        passwordHash,
+        requiresPolicyAcceptance,
+        requiresPolicyAcceptance,
+        requiresPolicyAcceptance,
+        requiresPolicyAcceptance,
+        requiresPolicyAcceptance,
+        acceptedPolicyVersion,
+        invite.user_id,
+        invite.gym_id
+      ]
     );
 
     await connection.query(
@@ -463,11 +580,26 @@ const setStaffAccessPassword = async (req, res) => {
       [tokenHash, invite.gym_id]
     );
 
+    if (requiresPolicyAcceptance) {
+      await logAuditEvent({
+        gymId: invite.gym_id,
+        userId: invite.user_id,
+        eventType: 'POLICY_ACCEPTED',
+        entityType: 'user',
+        entityId: invite.user_id,
+        metadata: {
+          accepted_policy_version: acceptedPolicyVersion,
+          source: 'staff_access'
+        },
+        connection
+      });
+    }
+
     await connection.commit();
 
     const [userRows] = await pool.query(
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
-              u.created_at, u.updated_at,
+              u.created_at, u.updated_at, u.can_upload_library_content,
               m.id AS member_id,
               g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
        FROM users u
@@ -491,6 +623,7 @@ const setStaffAccessPassword = async (req, res) => {
         email: user.email,
         role: user.role,
         member_id: user.member_id || null,
+        can_upload_library_content: user.can_upload_library_content,
         created_at: user.created_at,
         updated_at: user.updated_at,
         gym_name: user.gym_name,
@@ -516,7 +649,7 @@ const getMe = async (req, res) => {
   try {
     const [rows] = await pool.query(
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
-              u.created_at, u.updated_at,
+              u.created_at, u.updated_at, u.can_upload_library_content,
               m.id AS member_id,
               g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
        FROM users u
@@ -574,7 +707,7 @@ const updateProfile = async (req, res) => {
 
     const [rows] = await pool.query(
       `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active,
-              u.created_at, u.updated_at,
+              u.created_at, u.updated_at, u.can_upload_library_content,
               m.id AS member_id,
               g.name AS gym_name, g.slug, g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason
        FROM users u

@@ -1,12 +1,23 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import AppIcon from '../components/AppIcon';
 import Layout from '../components/Layout';
 import ExpandableSection from '../components/ExpandableSection';
+import curriculumIndexSeed from '../data/curriculumIndexSeed';
+import { findRelatedSetupFamilies } from '../data/entrySetupFamilies';
 import { useAuth } from '../hooks/useAuth';
 import { useFounderOnboarding } from '../hooks/useFounderOnboarding';
 import { formatLabel } from '../utils/formatLabel';
+
+const DASHBOARD_FEEDBACK_EMAIL = 'owner.progressory@gmail.com';
+const normalizeValue = (value) => (
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+);
 
 const getLocalIsoDate = () => {
   const now = new Date();
@@ -27,7 +38,11 @@ export default function DashboardPage() {
   } = useFounderOnboarding();
   const isMember = user?.role === 'member';
   const isManagement = user?.role === 'owner' || user?.role === 'admin';
+  const [searchParams, setSearchParams] = useSearchParams();
+  const onboardingCompleteBannerRef = useRef(null);
   const [recentClasses, setRecentClasses] = useState([]);
+  const [recentTopicSignals, setRecentTopicSignals] = useState([]);
+  const [neglectedTopics, setNeglectedTopics] = useState([]);
   const [topicCoverage, setTopicCoverage] = useState([]);
   const [trainingMethodUsage, setTrainingMethodUsage] = useState([]);
   const [classes, setClasses] = useState([]);
@@ -42,11 +57,15 @@ export default function DashboardPage() {
   const [isMinimizedTutorialExpanded, setIsMinimizedTutorialExpanded] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const [hideSetupChecklist, setHideSetupChecklist] = useState(false);
+  const [showOnboardingCompleteBanner, setShowOnboardingCompleteBanner] = useState(
+    searchParams.get('onboardingComplete') === '1'
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const tutorialStorageKey = user?.id ? `progressory-dashboard-tutorial-state-v8-${user.id}` : '';
   const setupStorageKey = user?.id ? `progressory-dashboard-setup-hidden-v2-${user.id}` : '';
+  const onboardingCompleteStorageKey = user?.id ? `progressory-founder-onboarding-complete-v1-${user.id}` : '';
 
   const loadDashboardData = useCallback(async () => {
     if (isMember) {
@@ -59,6 +78,8 @@ export default function DashboardPage() {
 
       const [
         recentClassesRes,
+        recentTopicSignalsRes,
+        neglectedTopicsRes,
         topicCoverageRes,
         trainingMethodUsageRes,
         classesRes,
@@ -67,6 +88,8 @@ export default function DashboardPage() {
         membersRes
       ] = await Promise.all([
         api.get('/reports/recent-classes?limit=5'),
+        api.get('/reports/recent-topic-signals?limit=12'),
+        api.get('/reports/neglected-topics?days=30'),
         api.get('/reports/topic-coverage'),
         api.get('/reports/training-method-usage'),
         api.get('/classes'),
@@ -115,6 +138,8 @@ export default function DashboardPage() {
       const classesWithAttendance = attendanceResponses.filter(({ recordedMembers }) => recordedMembers.length > 0).length;
 
       setRecentClasses(recentClassesRes.data);
+      setRecentTopicSignals(recentTopicSignalsRes.data);
+      setNeglectedTopics(neglectedTopicsRes.data);
       setTopicCoverage(topicCoverageRes.data);
       setTrainingMethodUsage(trainingMethodUsageRes.data);
       setClasses(allClasses);
@@ -142,10 +167,235 @@ export default function DashboardPage() {
   const todayClassCount = classes.filter((classItem) => classItem.class_date === todayIsoDate).length;
   const todayPlannedCount = plannedClasses.filter((classItem) => classItem.class_date === todayIsoDate).length;
   const activeLibraryVideoCount = libraryEntries.filter((entry) => entry.is_active && entry.video_url).length;
+  const memberReadyLibraryEntries = libraryEntries.filter((entry) => (
+    entry.is_active && (entry.visibility === 'members' || entry.visibility === 'members_and_parents')
+  ));
 
   const upcomingSetupTasks = nextSetupTask
     ? setupTasks.filter((task) => !task.complete && task.key !== nextSetupTask.key).slice(0, 3)
     : [];
+
+  const recentTopicSignalGroups = useMemo(() => {
+    const seenTopicIds = new Set();
+
+    return recentTopicSignals.filter((item) => {
+      const topicId = Number(item.topic_id);
+      if (seenTopicIds.has(topicId)) {
+        return false;
+      }
+
+      seenTopicIds.add(topicId);
+      return true;
+    });
+  }, [recentTopicSignals]);
+
+  const curriculumSeedByName = useMemo(() => (
+    new Map(curriculumIndexSeed.map((entry) => [normalizeValue(entry.name), entry]))
+  ), []);
+
+  const existingTopicTitles = useMemo(() => (
+    new Set(topicCoverage.map((item) => normalizeValue(item.topic_title)))
+  ), [topicCoverage]);
+
+  const managementWeeklyWinCards = useMemo(() => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const classesLoggedThisWeek = classes.filter((classItem) => {
+      const classDate = classItem.class_date ? new Date(classItem.class_date) : null;
+      return classDate && !Number.isNaN(classDate.getTime()) && classDate >= sevenDaysAgo;
+    }).length;
+
+    const topicsInRotation = topicCoverage.filter((item) => Number(item.total_times_used || 0) > 0).length;
+    const memberReviewResources = memberReadyLibraryEntries.length;
+
+    return [
+      { label: 'Classes logged this week', value: classesLoggedThisWeek },
+      { label: 'Topics in rotation', value: topicsInRotation },
+      { label: 'Member review resources', value: memberReviewResources },
+      { label: 'Attendance completed', value: attendanceSnapshot.classesWithAttendance }
+    ];
+  }, [attendanceSnapshot.classesWithAttendance, classes, memberReadyLibraryEntries.length, topicCoverage]);
+
+  const recentlyTaughtTopics = useMemo(() => (
+    recentTopicSignalGroups.slice(0, 4)
+  ), [recentTopicSignalGroups]);
+
+  const topicsNotTaughtRecently = useMemo(() => (
+    neglectedTopics.slice(0, 4)
+  ), [neglectedTopics]);
+
+  const suggestedNextTopics = useMemo(() => {
+    if (recentTopicSignalGroups.length === 0 || topicCoverage.length === 0) {
+      return [];
+    }
+
+    const relationshipDetails = new Map();
+
+    recentTopicSignalGroups.forEach((recentTopic, index) => {
+      const seedEntry = curriculumSeedByName.get(normalizeValue(recentTopic.topic_title));
+      if (!seedEntry) {
+        return;
+      }
+
+      [
+        ['commonFollowUps', 'Natural follow-up'],
+        ['commonTransitions', 'Natural transition'],
+        ['commonAttacks', 'Natural attack'],
+        ['relatedPositions', 'Close positional neighbor']
+      ].forEach(([key, label]) => {
+        (seedEntry[key] || []).forEach((relatedName) => {
+          const normalizedName = normalizeValue(relatedName);
+          if (!normalizedName) {
+            return;
+          }
+
+          const existing = relationshipDetails.get(normalizedName) || {
+            score: 0,
+            reasons: new Set(),
+            recentTopics: new Set(),
+            sourceIndex: Number.POSITIVE_INFINITY
+          };
+
+          existing.score += index === 0 ? 4 : 3;
+          existing.reasons.add(label);
+          existing.recentTopics.add(recentTopic.topic_title);
+          existing.sourceIndex = Math.min(existing.sourceIndex, index);
+          relationshipDetails.set(normalizedName, existing);
+        });
+      });
+    });
+
+    return topicCoverage
+      .filter((item) => !recentTopicSignalGroups.some((signal) => Number(signal.topic_id) === Number(item.topic_id)))
+      .map((item) => {
+        const relationshipMatch = relationshipDetails.get(normalizeValue(item.topic_title));
+        const totalUses = Number(item.total_times_used || 0);
+        let score = relationshipMatch?.score || 0;
+        const reasons = relationshipMatch ? Array.from(relationshipMatch.reasons) : [];
+
+        if (topicsNotTaughtRecently.some((topic) => Number(topic.topic_id) === Number(item.topic_id))) {
+          score += 3;
+          reasons.push('Not used recently');
+        }
+
+        if (totalUses <= 1) {
+          score += 2;
+          reasons.push(totalUses === 0 ? 'Still unused in class logs' : 'Only used once so far');
+        }
+
+        return {
+          ...item,
+          score,
+          reasons: [...new Set(reasons)],
+          recentSources: relationshipMatch ? Array.from(relationshipMatch.recentTopics) : []
+        };
+      })
+      .filter((item) => item.score > 0)
+      .sort((left, right) => {
+        if (right.score !== left.score) return right.score - left.score;
+        return Number(left.total_times_used || 0) - Number(right.total_times_used || 0);
+      })
+      .slice(0, 4);
+  }, [curriculumSeedByName, recentTopicSignalGroups, topicCoverage, topicsNotTaughtRecently]);
+
+  const suggestedFollowUps = useMemo(() => {
+    const lastTopic = recentTopicSignalGroups[0];
+    if (!lastTopic) {
+      return [];
+    }
+
+    const seedEntry = curriculumSeedByName.get(normalizeValue(lastTopic.topic_title));
+    if (!seedEntry) {
+      return [];
+    }
+
+    const followUpNames = [
+      ...(seedEntry.commonFollowUps || []),
+      ...(seedEntry.commonTransitions || []),
+      ...(seedEntry.commonAttacks || [])
+    ];
+
+    return followUpNames
+      .map((name) => {
+        const existingCoverage = topicCoverage.find((item) => normalizeValue(item.topic_title) === normalizeValue(name));
+        return {
+          name,
+          existsInGym: Boolean(existingCoverage || existingTopicTitles.has(normalizeValue(name))),
+          sourceTopic: lastTopic.topic_title
+        };
+      })
+      .filter((item, index, array) => array.findIndex((candidate) => normalizeValue(candidate.name) === normalizeValue(item.name)) === index)
+      .slice(0, 4);
+  }, [curriculumSeedByName, existingTopicTitles, recentTopicSignalGroups, topicCoverage]);
+
+  const dashboardNextMoveCards = useMemo(() => {
+    const cards = [];
+    const latestClass = recentClasses[0] || null;
+    const nextTopic = suggestedNextTopics[0] || null;
+    const nextFollowUp = suggestedFollowUps[0] || null;
+    const latestMemberResource = memberReadyLibraryEntries[0] || null;
+
+    if (latestClass) {
+      cards.push({
+        title: 'Recently taught',
+        eyebrow: 'What changed since last class',
+        body: `${latestClass.title || 'Untitled Class'} was the latest logged class. Use it to plan the cleanest follow-up instead of guessing from memory.`,
+        primaryLabel: 'Open class log',
+        primaryTo: `/classes?openClassId=${latestClass.id}`,
+        secondaryLabel: 'Plan follow-up',
+        secondaryTo: '/planned-classes?action=create'
+      });
+    }
+
+    if (nextTopic) {
+      cards.push({
+        title: 'Suggested next topic to teach',
+        eyebrow: 'Next best move',
+        body: `${nextTopic.topic_title} keeps the sequence moving naturally${nextTopic.reasons.length ? ` because it is a ${nextTopic.reasons[0].toLowerCase()}` : ''}.`,
+        primaryLabel: 'Open topic',
+        primaryTo: `/topics?topicId=${nextTopic.topic_id}`,
+        secondaryLabel: 'Plan this class',
+        secondaryTo: `/planned-classes?openForm=1&reportTopicId=${nextTopic.topic_id}&reportTopicTitle=${encodeURIComponent(nextTopic.topic_title)}`
+      });
+    }
+
+    if (nextFollowUp) {
+      cards.push({
+        title: 'Suggested follow-up after the last class',
+        eyebrow: 'Bridge to the next session',
+        body: `${nextFollowUp.name} is a clean next branch after ${nextFollowUp.sourceTopic}.`,
+        primaryLabel: 'Study in Tree',
+        primaryTo: `/decision-tree?search=${encodeURIComponent(nextFollowUp.name)}`,
+        secondaryLabel: nextFollowUp.existsInGym ? 'Open Curriculum' : 'Add topic',
+        secondaryTo: nextFollowUp.existsInGym
+          ? `/index?search=${encodeURIComponent(nextFollowUp.name)}`
+          : `/topics?action=create&suggestedTitle=${encodeURIComponent(nextFollowUp.name)}`
+      });
+    }
+
+    if (latestMemberResource) {
+      cards.push({
+        title: 'Member-ready review resource',
+        eyebrow: 'Library payoff',
+        body: `${latestMemberResource.title} is already ready for members, so coaches can point people back to it after class.`,
+        primaryLabel: 'Open Library',
+        primaryTo: '/library',
+        secondaryLabel: 'Open resource',
+        secondaryTo: latestMemberResource.video_url || '/library'
+      });
+    }
+
+    return cards.slice(0, 4);
+  }, [memberReadyLibraryEntries, recentClasses, suggestedFollowUps, suggestedNextTopics]);
+
+  const recentSetupFamilySuggestions = useMemo(() => {
+    const titles = recentTopicSignalGroups.map((item) => item.topic_title);
+    return titles
+      .flatMap((title) => findRelatedSetupFamilies(title))
+      .filter((family, index, array) => array.findIndex((candidate) => candidate.title === family.title) === index)
+      .slice(0, 3);
+  }, [recentTopicSignalGroups]);
 
   const tutorialSteps = useMemo(() => {
     const steps = [
@@ -216,6 +466,37 @@ export default function DashboardPage() {
   }, [setupComplete, setupStorageKey]);
 
   useEffect(() => {
+    const shouldShowFromParams = searchParams.get('onboardingComplete') === '1';
+    const shouldShowFromStorage = (
+      onboardingCompleteStorageKey
+      && typeof window !== 'undefined'
+      && window.sessionStorage.getItem(onboardingCompleteStorageKey) === 'true'
+    );
+    const shouldShowCompletion = shouldShowFromParams || shouldShowFromStorage;
+    setShowOnboardingCompleteBanner(shouldShowCompletion);
+  }, [onboardingCompleteStorageKey, searchParams]);
+
+  useEffect(() => {
+    if (!showOnboardingCompleteBanner) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      const target = onboardingCompleteBannerRef.current;
+
+      if (!target) {
+        return;
+      }
+
+      const targetTop = target.getBoundingClientRect().top + window.scrollY - 112;
+      window.scrollTo({
+        top: Math.max(targetTop, 0),
+        behavior: 'smooth'
+      });
+    }, 120);
+  }, [showOnboardingCompleteBanner]);
+
+  useEffect(() => {
     if (!isTutorialActive || !activeTutorialStep || typeof window === 'undefined') {
       return;
     }
@@ -245,6 +526,16 @@ export default function DashboardPage() {
     if (setupStorageKey && typeof window !== 'undefined') {
       window.localStorage.setItem(setupStorageKey, 'true');
     }
+  };
+
+  const handleDismissOnboardingCompleteBanner = () => {
+    setShowOnboardingCompleteBanner(false);
+    if (onboardingCompleteStorageKey && typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(onboardingCompleteStorageKey);
+    }
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('onboardingComplete');
+    setSearchParams(nextParams, { replace: true });
   };
 
   const startTutorial = () => {
@@ -316,7 +607,7 @@ export default function DashboardPage() {
   ];
 
   const memberVisibleLibraryEntries = libraryEntries.filter(
-    (entry) => entry.is_active && entry.visibility === 'member_visible'
+    (entry) => entry.is_active && (entry.visibility === 'members' || entry.visibility === 'members_and_parents')
   );
   const upcomingMemberClasses = plannedClasses
     .filter((item) => item.status === 'planned')
@@ -339,6 +630,50 @@ export default function DashboardPage() {
       value: memberProgress.filter((item) => item.status === 'competent').length
     }
   ];
+
+  const memberRecentProgress = useMemo(() => (
+    [...memberProgress]
+      .sort((a, b) => new Date(b.updated_at || b.last_reviewed_at || 0) - new Date(a.updated_at || a.last_reviewed_at || 0))
+      .slice(0, 4)
+  ), [memberProgress]);
+
+  const memberSuggestedReview = useMemo(() => (
+    memberProgress
+      .filter((item) => item.status !== 'competent')
+      .sort((a, b) => new Date(b.updated_at || b.last_reviewed_at || 0) - new Date(a.updated_at || a.last_reviewed_at || 0))
+      .slice(0, 3)
+  ), [memberProgress]);
+
+  const memberVisibleWins = useMemo(() => {
+    const statusCounts = memberProgress.reduce((acc, item) => {
+      acc[item.status] = (acc[item.status] || 0) + 1;
+      return acc;
+    }, {});
+
+    return [
+      { label: 'Topics introduced', value: statusCounts.introduced || 0 },
+      { label: 'Topics developing', value: statusCounts.developing || 0 },
+      { label: 'Topics competent', value: statusCounts.competent || 0 },
+      { label: 'Resources ready to review', value: recentMemberLibraryEntries.length }
+    ];
+  }, [memberProgress, recentMemberLibraryEntries.length]);
+
+  const memberNextStudyPath = useMemo(() => {
+    const focusTopic = memberSuggestedReview[0] || memberRecentProgress[0] || null;
+    if (!focusTopic) {
+      return null;
+    }
+
+    const seedEntry = curriculumSeedByName.get(normalizeValue(focusTopic.topic_title));
+    const nextBranch = seedEntry?.commonFollowUps?.[0] || seedEntry?.commonTransitions?.[0] || seedEntry?.commonAttacks?.[0] || '';
+
+    return {
+      topicTitle: focusTopic.topic_title,
+      topicType: focusTopic.topic_type,
+      status: focusTopic.status,
+      nextBranch
+    };
+  }, [curriculumSeedByName, memberRecentProgress, memberSuggestedReview]);
 
   const staffPageIntro = isManagement
     ? 'New founder gym? Use the setup guide once to get the first real workflow live, then come back to Today and Quick Actions for normal use.'
@@ -404,6 +739,24 @@ export default function DashboardPage() {
                 ))}
               </section>
 
+              <section className="page-section dashboard-momentum-section">
+                <div className="section-header">
+                  <div>
+                    <h3>What changed for you</h3>
+                    <p className="section-note">A quick pulse on your progress, study wins, and what is ready to review right now.</p>
+                  </div>
+                </div>
+                <div className="dashboard-momentum-grid">
+                  {memberVisibleWins.map((card) => (
+                    <div key={`member-win-${card.label}`} className="dashboard-momentum-card">
+                      <span className="eyebrow">Visible win</span>
+                      <strong>{card.label}</strong>
+                      <div className="dashboard-momentum-value">{card.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
               <section className="page-section dashboard-hero-section">
                 <div className="section-header">
                   <div>
@@ -437,6 +790,51 @@ export default function DashboardPage() {
                     <span className="dashboard-card-cta">Open Decision Trees</span>
                   </Link>
                 </div>
+              </section>
+
+              <section className="page-section dashboard-recommendation-section">
+                <div className="section-header">
+                  <div>
+                    <h3>Suggested review before next class</h3>
+                    <p className="section-note">This keeps the next study step obvious instead of making you hunt around the app.</p>
+                  </div>
+                </div>
+                {memberNextStudyPath ? (
+                  <div className="dashboard-next-move-highlight">
+                    <div className="dashboard-next-move-copy">
+                      <span className="eyebrow">Next study path</span>
+                      <strong>
+                        {memberNextStudyPath.nextBranch
+                          ? `${memberNextStudyPath.topicTitle} -> ${memberNextStudyPath.nextBranch}`
+                          : memberNextStudyPath.topicTitle}
+                      </strong>
+                      <p className="meta-text">
+                        Start with {memberNextStudyPath.topicTitle}, then use Curriculum, Library, or Decision Trees to keep moving without guessing what should come next.
+                      </p>
+                    </div>
+                    <div className="inline-actions">
+                      <Link className="secondary-button" to={`/index?search=${encodeURIComponent(memberNextStudyPath.topicTitle)}`}>
+                        Open Curriculum
+                      </Link>
+                      <Link className="secondary-button" to={`/decision-tree?search=${encodeURIComponent(memberNextStudyPath.topicTitle)}`}>
+                        Study in Tree
+                      </Link>
+                      <Link className="secondary-button" to={`/library?search=${encodeURIComponent(memberNextStudyPath.topicTitle)}`}>
+                        Open Library
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="dashboard-next-move-highlight">
+                    <div className="dashboard-next-move-copy">
+                      <span className="eyebrow">No study path yet</span>
+                      <strong>Your gym has not logged enough member progress yet to suggest a clear next study path.</strong>
+                      <p className="meta-text">
+                        Library, Curriculum, and Decision Trees are still ready to use. This section gets smarter as coaches log more real progress.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </section>
 
               <section className="page-section dashboard-onboarding-section">
@@ -489,6 +887,42 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </section>
+
+              <ExpandableSection
+                title="What changed lately"
+                note="Use this when you want the short version of your latest progress updates."
+                summary={`${memberRecentProgress.length} recent update${memberRecentProgress.length === 1 ? '' : 's'} ready to reopen.`}
+              >
+                {memberRecentProgress.length === 0 ? (
+                  <p className="empty-state">No progress updates have been logged for you yet.</p>
+                ) : (
+                  <ul className="card-list">
+                    {memberRecentProgress.map((item) => (
+                      <li key={`member-recent-${item.id}`} className="card-item compact-topic-card">
+                        <div className="compact-topic-header">
+                          <div>
+                            <strong>{item.topic_title}</strong>
+                            <div className="meta-text">
+                              {formatLabel(item.topic_type)} | {formatLabel(item.status)}
+                            </div>
+                          </div>
+                          <Link className="secondary-button" to={`/decision-tree?search=${encodeURIComponent(item.topic_title)}`}>
+                            Study next
+                          </Link>
+                        </div>
+                        <div className="detail-block">
+                          {item.updated_at ? (
+                            <div className="meta-text">
+                              Updated: {new Date(item.updated_at).toLocaleString()}
+                            </div>
+                          ) : null}
+                          {item.notes ? <div>{item.notes}</div> : null}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </ExpandableSection>
 
               <section className="page-section dashboard-queue-section">
                 <div className="section-header">
@@ -564,6 +998,25 @@ export default function DashboardPage() {
                   </ul>
                 )}
               </ExpandableSection>
+
+              <section className="page-section dashboard-feedback-section">
+                <div className="section-header">
+                  <div>
+                    <h3>Thank you for using Progressory</h3>
+                    <p className="section-note">
+                      Updates will keep coming to improve the gym and member experience over time.
+                    </p>
+                  </div>
+                </div>
+                <div className="detail-block">
+                  <p className="dashboard-card-copy" style={{ marginBottom: 0 }}>
+                    If anything feels confusing, missing, or especially helpful, feel free to email me directly.
+                  </p>
+                  <a className="library-resource-link" href={`mailto:${DASHBOARD_FEEDBACK_EMAIL}`}>
+                    {DASHBOARD_FEEDBACK_EMAIL}
+                  </a>
+                </div>
+              </section>
             </>
           )}
         </div>
@@ -899,6 +1352,55 @@ export default function DashboardPage() {
               </div>
             ) : null}
 
+            {isManagement && showOnboardingCompleteBanner ? (
+              <section
+                ref={onboardingCompleteBannerRef}
+                className="page-section dashboard-onboarding-complete-banner"
+              >
+                <div className="section-header">
+                  <div>
+                    <span className="eyebrow">First workflow complete</span>
+                    <h3>Your first workflow is live</h3>
+                    <p className="section-note">
+                      You moved a real class through topics, members, planning, class logs, and attendance. Beginner Phase is complete, and you can use Progressory normally from here.
+                    </p>
+                  </div>
+                  <div className="inline-actions">
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={handleDismissOnboardingCompleteBanner}
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+                <div className="dashboard-guide-grid">
+                  <div className="dashboard-guide-highlight">
+                    <span className="eyebrow">What to do next</span>
+                    <strong>Repeat the class workflow, then expand the gym setup only when it helps real coaching work.</strong>
+                    <p className="meta-text">
+                      You do not need to build everything today. Keep planning, logging, and attendance consistent first, then add programs, Library support, scenarios, and deeper tools as the gym starts using them.
+                    </p>
+                  </div>
+                  <div className="dashboard-guide-steps">
+                    <div className="dashboard-guide-step">
+                      <strong>Keep planning classes</strong>
+                      <span>Use Class Planner for the next sessions you are actually going to teach.</span>
+                    </div>
+                    <div className="dashboard-guide-step">
+                      <strong>Finish the logs after class</strong>
+                      <span>Keep attendance and topics connected so Progressory builds a real coaching history.</span>
+                    </div>
+                    <div className="dashboard-guide-step">
+                      <strong>Add structure when it earns its place</strong>
+                      <span>Programs, Library resources, and scenarios matter more now that the main workflow is already alive.</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
             <section id="dashboard-coaching-queue" className={`page-section dashboard-today-section${getTutorialSectionClass('dashboard-coaching-queue')}`}>
               <div className="section-header">
                 <div>
@@ -919,6 +1421,24 @@ export default function DashboardPage() {
                     <p className="dashboard-card-copy">{item.description}</p>
                     <span className="dashboard-card-cta">{item.cta}</span>
                   </Link>
+                ))}
+              </div>
+            </section>
+
+            <section className={`page-section dashboard-momentum-section${isTutorialActive ? ' dashboard-tutorial-dimmed' : ''}`}>
+              <div className="section-header">
+                <div>
+                  <h3>What changed</h3>
+                  <p className="section-note">This is the quick pulse on what moved, what is fading, and what looks ready for the next teaching decision.</p>
+                </div>
+              </div>
+              <div className="dashboard-momentum-grid">
+                {managementWeeklyWinCards.map((card) => (
+                  <div key={`management-win-${card.label}`} className="dashboard-momentum-card">
+                    <span className="eyebrow">Visible win</span>
+                    <strong>{card.label}</strong>
+                    <div className="dashboard-momentum-value">{card.value}</div>
+                  </div>
                 ))}
               </div>
             </section>
@@ -944,6 +1464,52 @@ export default function DashboardPage() {
                   </Link>
                 ))}
               </div>
+            </section>
+
+            <section className={`page-section dashboard-recommendation-section${isTutorialActive ? ' dashboard-tutorial-dimmed' : ''}`}>
+              <div className="section-header">
+                <div>
+                  <h3>Next best moves</h3>
+                  <p className="section-note">Use this when you want the app to suggest the next coaching move instead of opening pages cold.</p>
+                </div>
+              </div>
+              {dashboardNextMoveCards.length === 0 ? (
+                <div className="dashboard-next-move-highlight">
+                  <div className="dashboard-next-move-copy">
+                    <span className="eyebrow">Not enough signal yet</span>
+                    <strong>Once the gym logs more classes, topics, and resources, this section will start suggesting smarter next moves.</strong>
+                    <p className="meta-text">
+                      For now, keep using planning, class logs, attendance, and topics. Those are the signals that make the coaching suggestions stronger.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="dashboard-recommendation-grid">
+                  {dashboardNextMoveCards.map((card) => (
+                    <article key={card.title} className="dashboard-next-move-highlight">
+                      <div className="dashboard-next-move-copy">
+                        <span className="eyebrow">{card.eyebrow}</span>
+                        <strong>{card.title}</strong>
+                        <p className="meta-text">{card.body}</p>
+                      </div>
+                      <div className="inline-actions">
+                        <Link className="secondary-button" to={card.primaryTo}>
+                          {card.primaryLabel}
+                        </Link>
+                        {String(card.secondaryTo || '').startsWith('http') ? (
+                          <a className="secondary-button" href={card.secondaryTo} target="_blank" rel="noreferrer">
+                            {card.secondaryLabel}
+                          </a>
+                        ) : (
+                          <Link className="secondary-button" to={card.secondaryTo}>
+                            {card.secondaryLabel}
+                          </Link>
+                        )}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
             </section>
 
             {isManagement && !hideSetupChecklist ? (
@@ -1068,6 +1634,105 @@ export default function DashboardPage() {
             ) : null}
 
             <ExpandableSection
+              title="Momentum signals"
+              note="Use this when you want the app to tell you what feels active, neglected, or ready to teach next."
+              summary="Recently taught topics, neglected topics, member-ready review resources, and likely follow-ups all live here."
+              className={`dashboard-primary-section${isTutorialActive ? ' dashboard-tutorial-dimmed' : ''}`}
+              defaultOpen={false}
+            >
+              <div className="two-column-grid dashboard-insights-grid">
+                <div className="card-item dashboard-compact-card">
+                  <strong>Recently taught</strong>
+                  {recentlyTaughtTopics.length === 0 ? (
+                    <p className="empty-state">No recent topic signals yet.</p>
+                  ) : (
+                    <div className="dashboard-signal-list">
+                      {recentlyTaughtTopics.map((item) => (
+                        <div key={`recent-topic-${item.topic_id}`} className="dashboard-signal-row">
+                          <div>
+                            <strong>{item.topic_title}</strong>
+                            <div className="meta-text">{item.program_name || 'No program'} | {formatLabel(item.topic_type)}</div>
+                          </div>
+                          <Link className="secondary-button" to={`/topics?topicId=${item.topic_id}`}>
+                            Open
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="card-item dashboard-compact-card">
+                  <strong>Topics not taught in a while</strong>
+                  {topicsNotTaughtRecently.length === 0 ? (
+                    <p className="empty-state">Nothing is falling behind right now.</p>
+                  ) : (
+                    <div className="dashboard-signal-list">
+                      {topicsNotTaughtRecently.map((item) => (
+                        <div key={`neglected-topic-${item.topic_id}`} className="dashboard-signal-row">
+                          <div>
+                            <strong>{item.topic_title}</strong>
+                            <div className="meta-text">
+                              {item.last_used_date ? `Last used ${new Date(item.last_used_date).toLocaleDateString()}` : 'Not yet used in class'}
+                            </div>
+                          </div>
+                          <Link
+                            className="secondary-button"
+                            to={`/planned-classes?openForm=1&reportTopicId=${item.topic_id}&reportTopicTitle=${encodeURIComponent(item.topic_title)}`}
+                          >
+                            Plan it
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="card-item dashboard-compact-card">
+                  <strong>Member-ready review resources</strong>
+                  {memberReadyLibraryEntries.length === 0 ? (
+                    <p className="empty-state">No member-ready Library resources yet.</p>
+                  ) : (
+                    <div className="dashboard-signal-list">
+                      {memberReadyLibraryEntries.slice(0, 4).map((entry) => (
+                        <div key={`member-library-${entry.id}`} className="dashboard-signal-row">
+                          <div>
+                            <strong>{entry.title}</strong>
+                            <div className="meta-text">{entry.topic_title || 'Unlinked resource'} | {formatLabel(entry.visibility)}</div>
+                          </div>
+                          <Link className="secondary-button" to="/library">
+                            Open
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="card-item dashboard-compact-card">
+                  <strong>Suggested follow-up after the last class</strong>
+                  {suggestedFollowUps.length === 0 ? (
+                    <p className="empty-state">Log a few more topic-driven classes and this will start suggesting follow-ups.</p>
+                  ) : (
+                    <div className="dashboard-signal-list">
+                      {suggestedFollowUps.map((item) => (
+                        <div key={`follow-up-${item.name}`} className="dashboard-signal-row">
+                          <div>
+                            <strong>{item.name}</strong>
+                            <div className="meta-text">Flows after {item.sourceTopic}</div>
+                          </div>
+                          <Link className="secondary-button" to={`/decision-tree?search=${encodeURIComponent(item.name)}`}>
+                            Study next
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </ExpandableSection>
+
+            <ExpandableSection
               title="Recent Classes"
               note="Recent sessions logged by your team."
               summary="Open this when you want a quick look at the latest class logs."
@@ -1143,8 +1808,48 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 )}
+
+                <div className="card-item dashboard-compact-card">
+                  <strong>Bridge into setups and trees</strong>
+                  {recentSetupFamilySuggestions.length === 0 ? (
+                    <p className="empty-state">Recent topic signals have not suggested a setup family yet.</p>
+                  ) : (
+                    <div className="dashboard-signal-list">
+                      {recentSetupFamilySuggestions.map((family) => (
+                        <div key={`setup-family-${family.title}`} className="dashboard-signal-row">
+                          <div>
+                            <strong>{family.title}</strong>
+                            <div className="meta-text">{family.summary}</div>
+                          </div>
+                          <Link className="secondary-button" to={`/entry-setups?family=${encodeURIComponent(family.title)}`}>
+                            Open
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </ExpandableSection>
+
+            <section className="page-section dashboard-feedback-section">
+              <div className="section-header">
+                <div>
+                  <h3>Thank you for using Progressory</h3>
+                  <p className="section-note">
+                    Updates will keep coming to improve your gym and user experience over time.
+                  </p>
+                </div>
+              </div>
+              <div className="detail-block">
+                <p className="dashboard-card-copy" style={{ marginBottom: 0 }}>
+                  If you have feedback, ideas, or anything that would make the workflow smoother for your gym, feel free to email me directly.
+                </p>
+                <a className="library-resource-link" href={`mailto:${DASHBOARD_FEEDBACK_EMAIL}`}>
+                  {DASHBOARD_FEEDBACK_EMAIL}
+                </a>
+              </div>
+            </section>
           </>
         )}
       </div>

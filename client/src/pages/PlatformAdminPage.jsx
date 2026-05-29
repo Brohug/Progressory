@@ -847,7 +847,7 @@ export default function PlatformAdminPage() {
                   <div>
                     <strong>Trials ending soon</strong>
                     <div className="meta-text">
-                      Founder or regular trials closing within the next 14 days.
+                      Founder or Standard trials closing within the next 14 days.
                     </div>
                   </div>
                 </div>

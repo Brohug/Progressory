@@ -29,21 +29,23 @@ const createClass = async (req, res) => {
       notes
     } = req.body;
 
-    if (!program_id || !class_date || !head_coach_user_id) {
+    if (!class_date || !head_coach_user_id) {
       return res.status(400).json({
-        message: 'program_id, class_date, and head_coach_user_id are required'
+        message: 'class_date and head_coach_user_id are required'
       });
     }
 
-    const [programRows] = await pool.query(
-      'SELECT id FROM programs WHERE id = ? AND gym_id = ?',
-      [program_id, gymId]
-    );
+    if (program_id) {
+      const [programRows] = await pool.query(
+        'SELECT id FROM programs WHERE id = ? AND gym_id = ?',
+        [program_id, gymId]
+      );
 
-    if (programRows.length === 0) {
-      return res.status(400).json({
-        message: 'Program not found for this gym'
-      });
+      if (programRows.length === 0) {
+        return res.status(400).json({
+          message: 'Program not found for this gym'
+        });
+      }
     }
 
     const [coachRows] = await pool.query(
@@ -63,7 +65,7 @@ const createClass = async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         gymId,
-        program_id,
+        program_id || null,
         title || null,
         class_date,
         start_time || null,
@@ -82,7 +84,7 @@ const createClass = async (req, res) => {
               lu.first_name AS logged_by_first_name,
               lu.last_name AS logged_by_last_name
        FROM classes c
-       JOIN programs p ON c.program_id = p.id
+       LEFT JOIN programs p ON c.program_id = p.id
        JOIN users hc ON c.head_coach_user_id = hc.id
        JOIN users lu ON c.logged_by_user_id = lu.id
        WHERE c.id = ? AND c.gym_id = ?`,
@@ -114,7 +116,7 @@ const getClasses = async (req, res) => {
               lu.first_name AS logged_by_first_name,
               lu.last_name AS logged_by_last_name
        FROM classes c
-       JOIN programs p ON c.program_id = p.id
+       LEFT JOIN programs p ON c.program_id = p.id
        JOIN users hc ON c.head_coach_user_id = hc.id
        JOIN users lu ON c.logged_by_user_id = lu.id
        WHERE c.gym_id = ?
@@ -152,7 +154,7 @@ const getClassById = async (req, res) => {
               lu.first_name AS logged_by_first_name,
               lu.last_name AS logged_by_last_name
        FROM classes c
-       JOIN programs p ON c.program_id = p.id
+       LEFT JOIN programs p ON c.program_id = p.id
        JOIN users hc ON c.head_coach_user_id = hc.id
        JOIN users lu ON c.logged_by_user_id = lu.id
        WHERE c.id = ? AND c.gym_id = ?`,
@@ -212,15 +214,17 @@ const updateClass = async (req, res) => {
       head_coach_user_id !== undefined ? head_coach_user_id : currentClass.head_coach_user_id;
     const updatedNotes = notes !== undefined ? notes : currentClass.notes;
 
-    const [programRows] = await pool.query(
-      'SELECT id FROM programs WHERE id = ? AND gym_id = ?',
-      [updatedProgramId, gymId]
-    );
+    if (updatedProgramId) {
+      const [programRows] = await pool.query(
+        'SELECT id FROM programs WHERE id = ? AND gym_id = ?',
+        [updatedProgramId, gymId]
+      );
 
-    if (programRows.length === 0) {
-      return res.status(400).json({
-        message: 'Program not found for this gym'
-      });
+      if (programRows.length === 0) {
+        return res.status(400).json({
+          message: 'Program not found for this gym'
+        });
+      }
     }
 
     const [coachRows] = await pool.query(
@@ -259,7 +263,7 @@ const updateClass = async (req, res) => {
               lu.first_name AS logged_by_first_name,
               lu.last_name AS logged_by_last_name
        FROM classes c
-       JOIN programs p ON c.program_id = p.id
+       LEFT JOIN programs p ON c.program_id = p.id
        JOIN users hc ON c.head_coach_user_id = hc.id
        JOIN users lu ON c.logged_by_user_id = lu.id
        WHERE c.id = ? AND c.gym_id = ?`,

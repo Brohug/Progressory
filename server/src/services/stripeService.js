@@ -143,19 +143,34 @@ const constructWebhookEvent = (rawBody, signature) => {
 
 const getStripePriceIdForPlan = (planCode) => {
   if (planCode === PLAN_CODES.FOUNDER) {
-    return String(process.env.STRIPE_FOUNDER_PRICE_ID || '').trim();
+    return String(
+      process.env.STRIPE_PRICE_FOUNDER_MONTHLY
+      || process.env.STRIPE_FOUNDER_PRICE_ID
+      || ''
+    ).trim();
   }
 
   if (planCode === PLAN_CODES.REGULAR) {
-    return String(process.env.STRIPE_REGULAR_PRICE_ID || '').trim();
+    return String(
+      process.env.STRIPE_PRICE_STANDARD_MONTHLY
+      || process.env.STRIPE_REGULAR_PRICE_ID
+      || ''
+    ).trim();
   }
 
   return '';
 };
 
 const getCheckoutUrls = () => {
-  const successUrl = String(process.env.STRIPE_SUCCESS_URL || '').trim();
-  const cancelUrl = String(process.env.STRIPE_CANCEL_URL || '').trim();
+  const clientUrl = String(process.env.CLIENT_URL || '').trim().replace(/\/+$/, '');
+  const successUrl = String(
+    process.env.STRIPE_SUCCESS_URL
+    || (clientUrl ? `${clientUrl}/billing?checkout=success` : '')
+  ).trim();
+  const cancelUrl = String(
+    process.env.STRIPE_CANCEL_URL
+    || (clientUrl ? `${clientUrl}/billing?checkout=cancel` : '')
+  ).trim();
 
   if (!successUrl || !cancelUrl) {
     throw getStripeConfigError('Stripe checkout URLs are not configured yet.');
@@ -165,7 +180,11 @@ const getCheckoutUrls = () => {
 };
 
 const getCustomerPortalReturnUrl = () => {
-  const returnUrl = String(process.env.STRIPE_CUSTOMER_PORTAL_RETURN_URL || '').trim();
+  const clientUrl = String(process.env.CLIENT_URL || '').trim().replace(/\/+$/, '');
+  const returnUrl = String(
+    process.env.STRIPE_CUSTOMER_PORTAL_RETURN_URL
+    || (clientUrl ? `${clientUrl}/billing` : '')
+  ).trim();
 
   if (!returnUrl) {
     throw getStripeConfigError('Stripe customer portal return URL is not configured yet.');

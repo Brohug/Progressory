@@ -2,6 +2,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import api from '../api/axios';
 import AppIcon from '../components/AppIcon';
+import { policyLinks } from '../constants/policies';
 
 const CONTACT_EMAIL = 'owner.progressory@gmail.com';
 
@@ -26,7 +27,7 @@ const ctaActions = [
     requestType: 'founder',
     className: 'secondary-button is-attention',
     icon: 'account',
-    label: 'Apply for founder access'
+    label: 'Request Founder Access'
   }
 ];
 
@@ -51,10 +52,18 @@ const whoItHelps = [
 
 const founderPlanItems = [
   'First 5-10 gyms only',
-  'Locked-in while subscribed',
-  '30-day free trial',
-  'Cancel anytime',
-  'Personal onboarding included'
+  '30-day trial/onboarding period',
+  'Locked-in founder rate while subscribed',
+  'Up to 5 coaches',
+  'Up to 200 active members'
+];
+
+const standardPlanItems = [
+  'Standard plan after founder spots are filled',
+  'Up to 5 coaches',
+  'Up to 200 active members',
+  'Same core Progressory workflow',
+  'Built for the production rollout after founder pricing closes'
 ];
 
 const onboardingItems = [
@@ -240,6 +249,7 @@ export default function LandingPage() {
   };
 
   return (
+    <>
     <div className="landing-page">
       <header className="landing-header">
         <div className="landing-brand">
@@ -260,10 +270,10 @@ export default function LandingPage() {
       <main className="landing-shell">
         <section className="landing-hero">
           <div className="landing-hero-copy">
-            <span className="eyebrow">Founder release</span>
-            <h1>Curriculum and progress tracking built for BJJ gyms.</h1>
+            <span className="eyebrow">June 1 launch</span>
+            <h1>Track more than attendance.</h1>
             <p className="landing-subheadline">
-              Plan classes, organize curriculum, track student progress, and give coaches a clearer system.
+              Progressory helps martial arts gyms connect curriculum, class planning, attendance context, student progress, coach-created review content, and guided technique pathways in one place.
             </p>
 
             <div className="landing-chip-row">
@@ -275,6 +285,10 @@ export default function LandingPage() {
             </div>
 
             <div className="landing-cta-row">
+              <Link to="/register" className="secondary-button is-attention">
+                <AppIcon name="account" />
+                <span>Start Founder Plan</span>
+              </Link>
               {ctaActions.map((action) => (
                 <button
                   key={action.key}
@@ -289,7 +303,7 @@ export default function LandingPage() {
               ))}
             </div>
             <p className="landing-cta-note">
-              Demos are 20 minutes. Founder access is $50/month for the first 5-10 gyms and includes a 30-day free trial. Standard access is $99.99/month, and founder access comes with personal onboarding.
+              Demos are 20 minutes. Founder access is $49.99/month for the first 5-10 gyms and includes a 30-day trial/onboarding period. Standard access is $99.99/month.
             </p>
             <p className="landing-cta-note">
               Prefer email? Send demo or founder requests to {CONTACT_EMAIL} with your name, gym and for more information.
@@ -299,7 +313,7 @@ export default function LandingPage() {
           <aside className="landing-plan-card">
             <span className="eyebrow">Founder Plan</span>
             <div className="landing-plan-price">
-              <strong>$50/month</strong>
+              <strong>$49.99/month</strong>
               <span>for first 5-10 gyms</span>
             </div>
             <div className="landing-plan-list">
@@ -311,6 +325,63 @@ export default function LandingPage() {
               ))}
             </div>
           </aside>
+        </section>
+
+        <section className="page-section landing-section">
+          <div className="section-header">
+            <div>
+              <h3>Founder launch pricing</h3>
+              <p className="section-note">
+                Built first with Treasure Valley gyms and early gym feedback. Founder pricing is meant for the earliest gyms helping shape the product in the field.
+              </p>
+            </div>
+          </div>
+          <div className="account-permissions-grid">
+            <div className="summary-card account-summary-card">
+              <div className="account-summary-heading">
+                <span className="dashboard-card-icon"><AppIcon name="reports" /></span>
+                <div>
+                  <strong>Founder Plan - $49.99/month</strong>
+                  <div className="meta-text">First 5-10 gyms only</div>
+                </div>
+              </div>
+              <div className="account-access-list">
+                {founderPlanItems.map((item) => (
+                  <div key={item} className="account-access-item">
+                    <AppIcon name="progress" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="summary-card account-summary-card">
+              <div className="account-summary-heading">
+                <span className="dashboard-card-icon"><AppIcon name="curriculum" /></span>
+                <div>
+                  <strong>Standard Plan - $99.99/month</strong>
+                  <div className="meta-text">Standard plan after founder spots are filled</div>
+                </div>
+              </div>
+              <div className="account-access-list">
+                {standardPlanItems.map((item) => (
+                  <div key={item} className="account-access-item">
+                    <AppIcon name="progress" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="detail-block" style={{ marginTop: '1rem' }}>
+            <p className="landing-cta-note" style={{ marginBottom: 0 }}>
+              Most gym software handles attendance, billing, and member management. Progressory focuses on the learning side of training - what was taught, what students covered, what they missed, and what they can review next.
+            </p>
+            <p className="landing-cta-note" style={{ marginBottom: 0 }}>
+              During the founder beta, the gym library supports coach-created review content and external video links. Direct video upload limits may apply while storage and streaming are finalized.
+            </p>
+          </div>
         </section>
 
         <section className="page-section landing-section">
@@ -633,5 +704,20 @@ export default function LandingPage() {
         </div>
       ) : null}
     </div>
+
+      <footer className="landing-footer">
+        <div className="landing-footer-copy">
+          Progressory is for martial arts education, curriculum planning, class review, attendance context, progress tracking, and gym-created training resources.
+        </div>
+        <div className="landing-footer-links">
+          {policyLinks.map((link) => (
+            <Link key={link.key} to={link.to}>
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      </footer>
+    </>
   );
 }
+

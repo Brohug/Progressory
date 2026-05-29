@@ -608,8 +608,8 @@ export default function PlannedClassesPage() {
   const planReadinessItems = [
     {
       label: 'Program',
-      value: selectedProgram?.name || 'Choose a program',
-      complete: Boolean(formData.program_id)
+      value: selectedProgram?.name || 'Optional for your first plan',
+      complete: true
     },
     {
       label: 'Date',
@@ -1321,7 +1321,7 @@ export default function PlannedClassesPage() {
               <div>
                 <h3>{editingPlannedClassId ? 'Edit planned class' : 'Create planned class'}</h3>
                 <p className="section-note">
-                  Choose a program first so the topic and scenario pickers stay focused.
+                  Program is optional here. Add one if you already have it, or keep the first class broad and sort it later.
                 </p>
                 {isManagement ? (
                   <div className="inline-actions" style={{ marginTop: '10px' }}>
@@ -1385,9 +1385,8 @@ export default function PlannedClassesPage() {
                 name="program_id"
                 value={formData.program_id}
                 onChange={handleChange}
-                required
               >
-                <option value="">Choose a program</option>
+                <option value="">No program yet</option>
                 {activePrograms.map((program) => (
                   <option key={program.id} value={program.id}>
                     {program.name}
@@ -1417,7 +1416,7 @@ export default function PlannedClassesPage() {
                       ? `${availableScenarios.length} matching scenario${availableScenarios.length === 1 ? '' : 's'} available for this program.`
                       : 'No matching scenarios yet for this program.'
                   )
-                  : 'Choose a program first, then add a scenario if you want the completed class to start with a seeded training entry.'}
+                  : 'Scenarios stay optional. You can add one later after you decide how you want to group this class.'}
               </p>
             </div>
 
@@ -1499,7 +1498,7 @@ export default function PlannedClassesPage() {
               <p className="section-note planned-classes-inline-note">
                 {formData.program_id
                   ? `${availableTopics.length} matching topic${availableTopics.length === 1 ? '' : 's'} available for this program.`
-                  : 'Choose a program to narrow the topic list, or search across all active topics if this plan crosses categories.'}
+                  : 'You can search across all active topics now, then assign a program later if this class becomes part of a regular track.'}
               </p>
               <p className="section-note planned-classes-inline-note">
                 Planned topics currently default to a Developing progress outcome when attendance is recorded, and coaches can fine-tune member progress later if needed.

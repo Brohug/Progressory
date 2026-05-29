@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const pool = require('../config/db');
+const { assertCanAddCoach } = require('../services/planLimitsService');
 
 const allowedCreateRoles = ['admin', 'coach', 'member'];
 const allowedUpdateRoles = ['admin', 'coach', 'member'];
@@ -103,7 +104,8 @@ const createUser = async (req, res) => {
       email,
       password,
       role,
-      member_id
+      member_id,
+      can_upload_library_content
     } = req.body;
 
     if (!first_name || !first_name.trim() || !last_name || !last_name.trim()) {
@@ -128,6 +130,18 @@ const createUser = async (req, res) => {
       return res.status(400).json({
         message: 'Role must be admin, coach, or member'
       });
+    }
+
+    if (['admin', 'coach'].includes(role)) {
+      try {
+        await assertCanAddCoach(gymId);
+      } catch (limitError) {
+        if (limitError.limitType) {
+          return sendPlanLimitError(res, limitError);
+        }
+
+        throw limitError;
+      }
     }
 
     const normalizedEmail = email.trim().toLowerCase();
@@ -173,23 +187,27 @@ const createUser = async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const normalizedUploadPermission = role === 'coach'
+      ? can_upload_library_content === true
+      : role === 'admin';
 
     const [result] = await pool.query(
       `INSERT INTO users
-       (gym_id, first_name, last_name, email, password_hash, role, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, TRUE)`,
+       (gym_id, first_name, last_name, email, password_hash, role, is_active, can_upload_library_content)
+       VALUES (?, ?, ?, ?, ?, ?, TRUE, ?)`,
       [
         gymId,
         first_name.trim(),
         last_name.trim(),
         normalizedEmail,
         passwordHash,
-        role
+        role,
+        normalizedUploadPermission
       ]
     );
 
     const [rows] = await pool.query(
-      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active, u.created_at, u.updated_at,
+      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active, u.can_upload_library_content, u.created_at, u.updated_at,
               m.id AS member_id
        FROM users u
        LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id
@@ -219,6 +237,18 @@ const createUser = async (req, res) => {
     });
   }
 };
+
+const sendPlanLimitError = (res, error) => (
+  res.status(error.status || 409).json({
+    message: error.message,
+    limitType: error.limitType,
+    currentUsage: error.currentUsage,
+    planLimit: error.planLimit,
+    upgradeRequired: Boolean(error.upgradeRequired),
+    upgradePlan: error.upgradePlan || 'standard',
+    upgradePlanLabel: error.upgradePlanLabel || 'Standard'
+  })
+);
 
 const createMemberAccessInvite = async (req, res) => {
   const connection = await pool.getConnection();
@@ -396,7 +426,8 @@ const createStaffAccessInvite = async (req, res) => {
       first_name,
       last_name,
       email,
-      role
+      role,
+      can_upload_library_content
     } = req.body;
 
     const normalizedRole = (role || '').trim().toLowerCase();
@@ -412,6 +443,19 @@ const createStaffAccessInvite = async (req, res) => {
     let targetUserId = user_id ? Number(user_id) : null;
     let inviteType = 'activation';
     let targetUser = null;
+
+    if (!targetUserId) {
+      try {
+        await assertCanAddCoach(gymId, connection);
+      } catch (limitError) {
+        if (limitError.limitType) {
+          await connection.rollback();
+          return sendPlanLimitError(res, limitError);
+        }
+
+        throw limitError;
+      }
+    }
 
     if (targetUserId) {
       const [existingRows] = await connection.query(
@@ -429,6 +473,19 @@ const createStaffAccessInvite = async (req, res) => {
       }
 
       targetUser = existingRows[0];
+
+      if (!targetUser.is_active && ['admin', 'coach'].includes(normalizedRole)) {
+        try {
+          await assertCanAddCoach(gymId, connection);
+        } catch (limitError) {
+          if (limitError.limitType) {
+            await connection.rollback();
+            return sendPlanLimitError(res, limitError);
+          }
+
+          throw limitError;
+        }
+      }
 
       if (targetUser.role === 'owner') {
         await connection.rollback();
@@ -476,9 +533,19 @@ const createStaffAccessInvite = async (req, res) => {
 
       await connection.query(
         `UPDATE users
-         SET first_name = ?, last_name = ?, email = ?, role = ?
+         SET first_name = ?, last_name = ?, email = ?, role = ?, can_upload_library_content = ?
          WHERE id = ? AND gym_id = ?`,
-        [updatedFirstName, updatedLastName, updatedEmail, normalizedRole, targetUserId, gymId]
+        [
+          updatedFirstName,
+          updatedLastName,
+          updatedEmail,
+          normalizedRole,
+          normalizedRole === 'coach'
+            ? can_upload_library_content === true
+            : normalizedRole === 'admin',
+          targetUserId,
+          gymId
+        ]
       );
 
       inviteType = targetUser.is_active ? 'reset_password' : 'activation';
@@ -517,9 +584,19 @@ const createStaffAccessInvite = async (req, res) => {
 
       const [newUserResult] = await connection.query(
         `INSERT INTO users
-         (gym_id, first_name, last_name, email, password_hash, role, is_active)
-         VALUES (?, ?, ?, ?, ?, ?, FALSE)`,
-        [gymId, newFirstName, newLastName, normalizedEmail, passwordHash, normalizedRole]
+         (gym_id, first_name, last_name, email, password_hash, role, is_active, can_upload_library_content)
+         VALUES (?, ?, ?, ?, ?, ?, FALSE, ?)`,
+        [
+          gymId,
+          newFirstName,
+          newLastName,
+          normalizedEmail,
+          passwordHash,
+          normalizedRole,
+          normalizedRole === 'coach'
+            ? can_upload_library_content === true
+            : normalizedRole === 'admin'
+        ]
       );
 
       targetUserId = newUserResult.insertId;
@@ -536,7 +613,7 @@ const createStaffAccessInvite = async (req, res) => {
     await connection.commit();
 
     const [userRows] = await pool.query(
-      `SELECT id, gym_id, first_name, last_name, email, role, is_active, created_at, updated_at
+      `SELECT id, gym_id, first_name, last_name, email, role, is_active, can_upload_library_content, created_at, updated_at
        FROM users
        WHERE id = ? AND gym_id = ?`,
       [targetUserId, gymId]
@@ -572,7 +649,7 @@ const getUsers = async (req, res) => {
     const gymId = req.user.gym_id;
 
     const [rows] = await pool.query(
-      `SELECT id, gym_id, first_name, last_name, email, role, is_active, created_at, updated_at
+      `SELECT id, gym_id, first_name, last_name, email, role, is_active, can_upload_library_content, created_at, updated_at
        FROM users
        WHERE gym_id = ? AND role IN ('owner', 'admin', 'coach')
        ORDER BY created_at DESC`,
@@ -597,7 +674,7 @@ const getUserById = async (req, res) => {
     const { id } = req.params;
 
     const [rows] = await pool.query(
-      `SELECT id, gym_id, first_name, last_name, email, role, is_active, created_at, updated_at
+      `SELECT id, gym_id, first_name, last_name, email, role, is_active, can_upload_library_content, created_at, updated_at
        FROM users
        WHERE id = ? AND gym_id = ?`,
       [id, gymId]
@@ -633,7 +710,8 @@ const updateUser = async (req, res) => {
       role,
       is_active,
       password,
-      member_id
+      member_id,
+      can_upload_library_content
     } = req.body;
 
     const [existingRows] = await pool.query(
@@ -665,6 +743,18 @@ const updateUser = async (req, res) => {
       role !== undefined ? role : currentRecord.role;
     const updatedIsActive =
       is_active !== undefined ? is_active : currentRecord.is_active;
+    const updatedCanUploadLibraryContent =
+      can_upload_library_content !== undefined
+        ? can_upload_library_content === true
+        : Boolean(currentRecord.can_upload_library_content);
+    const activatingManagedStaff = (
+      ['admin', 'coach'].includes(updatedRole)
+      && Boolean(updatedIsActive)
+      && (
+        !Boolean(currentRecord.is_active)
+        || !['admin', 'coach'].includes(currentRecord.role)
+      )
+    );
 
     if (!updatedFirstName || !updatedLastName) {
       return res.status(400).json({
@@ -727,6 +817,18 @@ const updateUser = async (req, res) => {
       });
     }
 
+    if (activatingManagedStaff) {
+      try {
+        await assertCanAddCoach(gymId);
+      } catch (limitError) {
+        if (limitError.limitType) {
+          return sendPlanLimitError(res, limitError);
+        }
+
+        throw limitError;
+      }
+    }
+
     const [duplicateRows] = await pool.query(
       'SELECT id FROM users WHERE email = ? AND id <> ?',
       [updatedEmail, id]
@@ -740,7 +842,7 @@ const updateUser = async (req, res) => {
 
     await pool.query(
       `UPDATE users
-       SET first_name = ?, last_name = ?, email = ?, role = ?, is_active = ?
+       SET first_name = ?, last_name = ?, email = ?, role = ?, is_active = ?, can_upload_library_content = ?
        WHERE id = ? AND gym_id = ?`,
       [
         updatedFirstName,
@@ -748,6 +850,9 @@ const updateUser = async (req, res) => {
         updatedEmail,
         updatedRole,
         updatedIsActive,
+        updatedRole === 'coach'
+          ? updatedCanUploadLibraryContent
+          : updatedRole === 'admin',
         id,
         gymId
       ]
@@ -769,7 +874,7 @@ const updateUser = async (req, res) => {
     }
 
     const [updatedRows] = await pool.query(
-      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active, u.created_at, u.updated_at,
+      `SELECT u.id, u.gym_id, u.first_name, u.last_name, u.email, u.role, u.is_active, u.can_upload_library_content, u.created_at, u.updated_at,
               m.id AS member_id
        FROM users u
        LEFT JOIN members m ON m.user_id = u.id AND m.gym_id = u.gym_id

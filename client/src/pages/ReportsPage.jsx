@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
 import Layout from '../components/Layout';
 import curriculumIndexSeed from '../data/curriculumIndexSeed';
+import { useAuth } from '../hooks/useAuth';
 import { formatLabel } from '../utils/formatLabel';
 
 const normalizeValue = (value) => (
@@ -21,6 +22,14 @@ const RELATIONSHIP_GROUPS = [
   { key: 'commonFollowUps', label: 'Natural follow-up after' },
   { key: 'relatedPositions', label: 'Close positional neighbor to' }
 ];
+
+const reportReasonLabels = {
+  inappropriate_content: 'Inappropriate or unsafe content',
+  minor_safety_concern: 'Unsafe for kids or teens',
+  copyright_or_permission_issue: 'Uploaded without permission',
+  harassment_or_abuse: 'Harassment or abuse',
+  other: 'Something else'
+};
 
 const mapSeedEntryToTopicType = (entry) => {
   const category = String(entry?.category || '').toLowerCase();
@@ -49,19 +58,25 @@ const mapSeedEntryToTopicType = (entry) => {
 };
 
 export default function ReportsPage() {
+  const { user } = useAuth();
+  const isManagement = user?.role === 'owner' || user?.role === 'admin';
   const [recentClasses, setRecentClasses] = useState([]);
   const [recentTopicSignals, setRecentTopicSignals] = useState([]);
   const [topicCoverage, setTopicCoverage] = useState([]);
   const [trainingMethodUsage, setTrainingMethodUsage] = useState([]);
   const [neglectedTopics, setNeglectedTopics] = useState([]);
   const [topics, setTopics] = useState([]);
+  const [contentReports, setContentReports] = useState([]);
+  const [reviewingReportId, setReviewingReportId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const loadReports = async () => {
+  const loadReports = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
+
+      const reportPromise = isManagement ? api.get('/library/reports') : Promise.resolve({ data: [] });
 
       const [
         recentClassesRes,
@@ -69,14 +84,16 @@ export default function ReportsPage() {
         topicCoverageRes,
         trainingMethodUsageRes,
         neglectedTopicsRes,
-        topicsRes
+        topicsRes,
+        contentReportsRes
       ] = await Promise.all([
         api.get('/reports/recent-classes?limit=5'),
         api.get('/reports/recent-topic-signals?limit=16'),
         api.get('/reports/topic-coverage'),
         api.get('/reports/training-method-usage'),
         api.get('/reports/neglected-topics?days=30'),
-        api.get('/topics')
+        api.get('/topics'),
+        reportPromise
       ]);
 
       setRecentClasses(recentClassesRes.data);
@@ -85,17 +102,32 @@ export default function ReportsPage() {
       setTrainingMethodUsage(trainingMethodUsageRes.data);
       setNeglectedTopics(neglectedTopicsRes.data);
       setTopics(topicsRes.data);
+      setContentReports(contentReportsRes.data || []);
     } catch (err) {
       console.error('Load reports error:', err);
       setError(err.response?.data?.message || 'Couldn\'t load reports right now.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [isManagement]);
 
   useEffect(() => {
     loadReports();
-  }, []);
+  }, [loadReports]);
+
+  const handleReviewReport = async (reportId) => {
+    try {
+      setReviewingReportId(reportId);
+      setError('');
+      await api.patch(`/library/reports/${reportId}/review`);
+      await loadReports();
+    } catch (err) {
+      console.error('Review content report error:', err);
+      setError(err.response?.data?.message || 'Could not review that content report right now.');
+    } finally {
+      setReviewingReportId(null);
+    }
+  };
 
   const summaryCards = [
     { label: 'Recent Classes', value: recentClasses.length },
@@ -363,6 +395,58 @@ export default function ReportsPage() {
                   </article>
                 ))}
               </section>
+            ) : null}
+
+              {isManagement ? (
+                <ExpandableSection
+                  title="Content Reports"
+                  note="Open reports about, minor-safety concerns, innapropriate content and other issues raised by your gym."
+                  summary={`${contentReports.filter((report) => report.status === 'open').length} open report${contentReports.filter((report) => report.status === 'open').length === 1 ? '' : 's'}.`}
+                  className="reports-priority-section"
+                  defaultOpen
+                >
+                {contentReports.length === 0 ? (
+                  <p className="empty-state">No content reports have been submitted yet.</p>
+                ) : (
+                  <ul className="card-list">
+                    {contentReports.map((report) => (
+                      <li key={report.id} className="card-item compact-topic-card">
+                        <div className="compact-topic-header">
+                          <div>
+                            <strong>{report.content_title}</strong>
+                            <div className="member-card-summary-row">
+                              <span className="member-card-summary-pill">{reportReasonLabels[report.reason] || formatLabel(report.reason)}</span>
+                              <span className="member-card-summary-pill">{formatLabel(report.status)}</span>
+                              <span className="member-card-summary-pill">{formatLabel(report.content_status)}</span>
+                            </div>
+                          </div>
+                          <Link className="secondary-button" to="/library">
+                            Open Library
+                          </Link>
+                        </div>
+                        <div className="detail-block">
+                          <div className="meta-text">
+                            Reported by {report.reported_by_first_name} {report.reported_by_last_name} on {new Date(report.created_at).toLocaleString()}
+                          </div>
+                          <div>{report.description || 'No additional description was provided.'}</div>
+                        </div>
+                        <div className="inline-actions">
+                          {report.status === 'open' ? (
+                            <button
+                              type="button"
+                              className="secondary-button"
+                              onClick={() => handleReviewReport(report.id)}
+                              disabled={reviewingReportId === report.id}
+                            >
+                              {reviewingReportId === report.id ? 'Reviewing...' : 'Mark reviewed'}
+                            </button>
+                          ) : null}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </ExpandableSection>
             ) : null}
 
             <ExpandableSection

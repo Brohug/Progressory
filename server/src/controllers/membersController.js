@@ -1,4 +1,17 @@
 const pool = require('../config/db');
+const { assertCanAddMember } = require('../services/planLimitsService');
+
+const sendPlanLimitError = (res, error) => (
+  res.status(error.status || 409).json({
+    message: error.message,
+    limitType: error.limitType,
+    currentUsage: error.currentUsage,
+    planLimit: error.planLimit,
+    upgradeRequired: Boolean(error.upgradeRequired),
+    upgradePlan: error.upgradePlan || 'standard',
+    upgradePlanLabel: error.upgradePlanLabel || 'Standard'
+  })
+);
 
 const createMember = async (req, res) => {
   try {
@@ -15,6 +28,16 @@ const createMember = async (req, res) => {
       return res.status(400).json({
         message: 'First name and last name are required'
       });
+    }
+
+    try {
+      await assertCanAddMember(gymId);
+    } catch (limitError) {
+      if (limitError.limitType) {
+        return sendPlanLimitError(res, limitError);
+      }
+
+      throw limitError;
     }
 
     if (program_id !== undefined && program_id !== null) {
@@ -191,6 +214,18 @@ const updateMember = async (req, res) => {
         return res.status(400).json({
           message: 'Program not found for this gym'
         });
+      }
+    }
+
+    if (!currentMember.is_active && Boolean(updatedIsActive)) {
+      try {
+        await assertCanAddMember(gymId);
+      } catch (limitError) {
+        if (limitError.limitType) {
+          return sendPlanLimitError(res, limitError);
+        }
+
+        throw limitError;
       }
     }
 

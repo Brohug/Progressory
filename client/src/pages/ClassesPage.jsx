@@ -43,6 +43,7 @@ export default function ClassesPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const classListSectionRef = useRef(null);
+  const onboardingCompleteStorageKey = user?.id ? `progressory-founder-onboarding-complete-v1-${user.id}` : '';
 
   const [classes, setClasses] = useState([]);
   const [programs, setPrograms] = useState([]);
@@ -1077,7 +1078,7 @@ export default function ClassesPage() {
         <section className="page-section" style={{ maxWidth: '760px' }}>
           <h3>Create Class</h3>
           <p className="section-note">
-            Log a class here when it already happened.
+            Log a class here when it already happened. Program is optional if you are still in the founder setup phase.
           </p>
 
           <form className="form-grid" onSubmit={handleSubmit}>
@@ -1088,7 +1089,7 @@ export default function ClassesPage() {
               value={formData.program_id}
               onChange={handleChange}
             >
-              <option value="">Choose a program</option>
+              <option value="">No program yet</option>
               {programs.filter((program) => program.is_active).map((program) => (
                 <option key={program.id} value={program.id}>
                   {program.name}
@@ -1544,7 +1545,10 @@ export default function ClassesPage() {
                           const onboardingSnapshot = await refreshFounderOnboarding();
                           scrollToClassListTop();
                           if (beginnerPhaseActive && onboardingSnapshot?.setupComplete) {
-                            navigate('/dashboard');
+                            if (onboardingCompleteStorageKey && typeof window !== 'undefined') {
+                              window.sessionStorage.setItem(onboardingCompleteStorageKey, 'true');
+                            }
+                            navigate('/dashboard?onboardingComplete=1');
                           }
                         }}
                       />

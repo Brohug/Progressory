@@ -5,7 +5,12 @@ import { FounderOnboardingProvider } from './context/FounderOnboardingContext.js
 import ProtectedRoute from './components/ProtectedRoute';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const AcceptableUsePage = lazy(() => import('./pages/AcceptableUsePage'));
+const ChildSafetyPage = lazy(() => import('./pages/ChildSafetyPage'));
 const MemberAccessPage = lazy(() => import('./pages/MemberAccessPage'));
 const StaffAccessPage = lazy(() => import('./pages/StaffAccessPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
@@ -64,6 +69,11 @@ export default function App() {
             <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/acceptable-use" element={<AcceptableUsePage />} />
+            <Route path="/child-safety" element={<ChildSafetyPage />} />
             <Route path="/member-access/:token" element={<MemberAccessPage />} />
             <Route path="/staff-access/:token" element={<StaffAccessPage />} />
             <Route

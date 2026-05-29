@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useFounderOnboarding } from '../hooks/useFounderOnboarding';
 import AppIcon from './AppIcon';
+import { policyLinks } from '../constants/policies';
 
 const getLinkClassName = ({ isActive }) => (
   `app-nav-link${isActive ? ' is-active' : ''}`
@@ -606,7 +607,7 @@ export default function Layout({ children }) {
                             <span>Platform Admin</span>
                           </Link>
                         ) : null}
-                        {isOwner ? (
+                        {isManagement ? (
                           <Link className="secondary-button" to="/billing" onClick={closeMenus}>
                             <AppIcon name="reports" />
                             <span>Billing</span>
@@ -757,7 +758,7 @@ export default function Layout({ children }) {
                         <span>Platform Admin</span>
                       </Link>
                     ) : null}
-                    {isOwner ? (
+                    {isManagement ? (
                       <Link to="/billing" className="secondary-button" onClick={closeMenus}>
                         <AppIcon name="reports" />
                         <span>Billing</span>
@@ -802,6 +803,18 @@ export default function Layout({ children }) {
         ) : null}
 
         <main>{children}</main>
+        <footer className="app-footer">
+          <div className="app-footer-copy">
+            Progressory is for martial arts education, curriculum, class planning, progress tracking, and gym-created review content.
+          </div>
+          <div className="app-footer-links">
+            {policyLinks.map((link) => (
+              <Link key={link.key} to={link.to}>
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </footer>
       </div>
     </div>
   );

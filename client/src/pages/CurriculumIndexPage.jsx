@@ -720,6 +720,73 @@ export default function CurriculumIndexPage() {
     ];
   }, [categories.length, enrichedEntries, groupedEntries, isMember, skillLevels.length]);
 
+  const starterCards = useMemo(() => {
+    if (isMember) {
+      const strongStartingPoints = enrichedEntries
+        .filter((entry) => entry.skillLevel === 'Beginner')
+        .slice(0, 4);
+
+      return strongStartingPoints.map((entry) => ({
+        title: entry.name,
+        body: entry.description,
+        cta: 'Open result',
+        onClick: () => {
+          setSearch(entry.name);
+          setSelectedEntryId(entry.id);
+          setIsResultsSectionOpen(true);
+        }
+      }));
+    }
+
+    const missingTopicEntry = enrichedEntries.find((entry) => !entry.topic);
+    const noLibraryEntry = enrichedEntries.find((entry) => entry.topic && entry.linkedLibraryCount === 0);
+    const underusedEntry = enrichedEntries.find((entry) => entry.topic && entry.isUnderused);
+    const usedButUnguidedEntry = enrichedEntries.find((entry) => entry.topic && Number(entry.coverage?.total_times_used || 0) > 0);
+
+    return [
+      missingTopicEntry ? {
+        title: 'Add the next missing topic',
+        body: `${missingTopicEntry.name} exists in the index but not in your Topics yet.`,
+        cta: 'Open result',
+        onClick: () => {
+          setSearch(missingTopicEntry.name);
+          setSelectedEntryId(missingTopicEntry.id);
+          setIsResultsSectionOpen(true);
+        }
+      } : null,
+      noLibraryEntry ? {
+        title: 'Connect a review resource',
+        body: `${noLibraryEntry.name} already exists as a topic, but it still has no linked Library support.`,
+        cta: 'Open result',
+        onClick: () => {
+          setSearch(noLibraryEntry.name);
+          setSelectedEntryId(noLibraryEntry.id);
+          setIsResultsSectionOpen(true);
+        }
+      } : null,
+      underusedEntry ? {
+        title: 'Revisit an underused topic',
+        body: `${underusedEntry.name} is in your gym already but has not shown up recently.`,
+        cta: 'Open result',
+        onClick: () => {
+          setSearch(underusedEntry.name);
+          setSelectedEntryId(underusedEntry.id);
+          setIsResultsSectionOpen(true);
+        }
+      } : null,
+      usedButUnguidedEntry ? {
+        title: 'Trace a live follow-up',
+        body: `${usedButUnguidedEntry.name} is already being taught, so this is a good place to jump into setups or the next branch.`,
+        cta: 'Open result',
+        onClick: () => {
+          setSearch(usedButUnguidedEntry.name);
+          setSelectedEntryId(usedButUnguidedEntry.id);
+          setIsResultsSectionOpen(true);
+        }
+      } : null
+    ].filter(Boolean);
+  }, [enrichedEntries, isMember]);
+
   const guidedSearchPrompt = useMemo(() => {
     const normalizedSearch = normalizeValue(search);
 
@@ -1044,6 +1111,33 @@ export default function CurriculumIndexPage() {
               <div className="stat-value">{card.value}</div>
             </div>
           ))}
+        </section>
+
+        <section className="page-section dashboard-recommendation-section">
+          <div className="section-header">
+            <div>
+              <h3>Good places to start</h3>
+              <p className="section-note">
+                Use this when the Index feels too broad and you want one smart place to begin instead of a blank page.
+              </p>
+            </div>
+          </div>
+          <div className="dashboard-recommendation-grid">
+            {starterCards.map((card) => (
+              <article key={card.title} className="dashboard-next-move-highlight">
+                <div className="dashboard-next-move-copy">
+                  <span className="eyebrow">Start here</span>
+                  <strong>{card.title}</strong>
+                  <p className="meta-text">{card.body}</p>
+                </div>
+                <div className="inline-actions">
+                  <button type="button" className="secondary-button" onClick={card.onClick}>
+                    {card.cta}
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
 
           <div ref={resultsSectionRef} />

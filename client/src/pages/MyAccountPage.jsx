@@ -9,7 +9,7 @@ import { useAuth } from '../hooks/useAuth';
 const roleDescriptions = {
   owner: 'Owner access covers staff setup, gym controls, coaching workflows, and account-level decisions.',
   admin: 'Admin access covers day-to-day gym management without owner-only account controls.',
-  coach: 'Coach access focuses on planning, logging classes, reviewing progress, and teaching tools.',
+  coach: 'Coach access focuses on planning, logging classes, reviewing progress, and teaching tools. Library upload access depends on owner approval.',
   member: 'Member access focuses on classes, progress, curriculum, library study, and decision trees.'
 };
 
@@ -92,7 +92,9 @@ export default function MyAccountPage() {
         'Log attendance and progress',
         'Use reports and scenarios',
         'View programs and curriculum',
-        'Manage library teaching flow'
+        user?.can_upload_library_content
+          ? 'Manage and upload library teaching content'
+          : 'Request access from gym owner to manage/upload library content'
       ];
     }
 
@@ -103,7 +105,7 @@ export default function MyAccountPage() {
       'Open library resources',
       'Work through decision trees'
     ];
-  }, [user?.role]);
+  }, [user?.can_upload_library_content, user?.role]);
 
   const rolePermissionItems = useMemo(() => {
     return roleRestrictions[user?.role] || [
@@ -354,7 +356,7 @@ export default function MyAccountPage() {
               <div>
                 <h3>Billing</h3>
                 <p className="section-note">
-                  This owner-only workspace will hold billing, subscription, and payment controls once billing goes live.
+                  Owner-only billing summary and plan controls for this gym.
                 </p>
               </div>
             </div>
@@ -365,39 +367,19 @@ export default function MyAccountPage() {
                 <div>
                   <strong>Billing workspace</strong>
                   <div className="meta-text">
-                    This owner-only area is where subscription status, plan changes, and payment settings will live.
+                    Review plan status, usage, and billing actions for this gym.
                   </div>
-                </div>
-              </div>
-
-              <div className="account-inline-meta">
-                <span className="member-card-summary-pill">Owner only</span>
-                <span className="member-card-summary-pill">Coming soon</span>
-              </div>
-
-              <div className="account-billing-status-grid">
-                <div className="account-billing-status-card">
-                  <span className="meta-text">Current plan</span>
-                  <strong>Demo environment</strong>
-                </div>
-                <div className="account-billing-status-card">
-                  <span className="meta-text">Billing status</span>
-                  <strong>Not live yet</strong>
-                </div>
-                <div className="account-billing-status-card">
-                  <span className="meta-text">Payments</span>
-                  <strong>Coming soon</strong>
                 </div>
               </div>
 
               <div className="account-billing-list">
                 <div className="account-access-item">
                   <AppIcon name="progress" />
-                  <span>Review active subscription details here once billing launches.</span>
+                  <span>Review the current subscription, trial timing, and access status.</span>
                 </div>
                 <div className="account-access-item">
                   <AppIcon name="progress" />
-                  <span>Manage plan upgrades, renewals, and future payment settings from one place.</span>
+                  <span>Manage checkout, upgrades, and Stripe billing settings from one place.</span>
                 </div>
               </div>
 

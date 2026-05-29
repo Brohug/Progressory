@@ -42,7 +42,16 @@ Progressory is a full-stack SaaS-style web application built for Brazilian Jiu-J
 - Create internal gym library entries
 - Link entries to programs and topics
 - Store notes, drill ideas, concept entries, and video links
-- Set entries as coach-only or member-visible
+- Set entries as coach-only, members, parents, or members-and-parents
+- Restrict uploads to owner/admin users by default and optionally allow specific coaches
+- Report inappropriate or unsafe content for gym review
+
+### Safety and Policy Controls
+- Public Terms, Privacy, Acceptable Use, and Child Safety pages
+- Required legal/policy acknowledgement during owner signup and owner/admin onboarding
+- Gym-library safety confirmation before content can be created
+- Soft-hide/delete moderation flow and content reporting workflow
+- MVP audit logging for policy acceptance, uploads, moderation, and reports
 
 ### Staff Management
 - Owner-controlled staff account creation
@@ -93,10 +102,15 @@ Progressory is a full-stack SaaS-style web application built for Brazilian Jiu-J
 - Public demo and founder requests are stored in `public_inquiries`.
 - Optional owner notification env vars:
   - `OWNER_NOTIFICATION_EMAIL`
+  - `SUPPORT_EMAIL`
   - `RESEND_API_KEY`
   - `NOTIFICATION_FROM_EMAIL`
     - when configured, new demo/founder requests are emailed to the owner inbox
     - the same Resend configuration also lets `/platform-admin` email founder setup invites directly after provisioning or resend
+- Optional library upload tuning:
+  - `MAX_UPLOAD_MB`
+    - defaults to `100` when unset
+    - used for future upload/file metadata validation and current content-guardrail checks
 - Optional platform operator env var:
   - `PLATFORM_ADMIN_EMAILS`
     - comma-separated allowlist for internal operator accounts that can access `/platform-admin`
@@ -112,14 +126,28 @@ Progressory is a full-stack SaaS-style web application built for Brazilian Jiu-J
   - `BILLING_STRIPE_MODE`
   - `STRIPE_SECRET_KEY`
   - `STRIPE_WEBHOOK_SECRET`
+  - `STRIPE_PRICE_FOUNDER_MONTHLY`
+  - `STRIPE_PRICE_STANDARD_MONTHLY`
   - `STRIPE_FOUNDER_PRICE_ID`
   - `STRIPE_REGULAR_PRICE_ID`
+  - `CLIENT_URL`
+  - `SERVER_URL`
   - `STRIPE_SUCCESS_URL`
   - `STRIPE_CANCEL_URL`
   - `STRIPE_CUSTOMER_PORTAL_RETURN_URL`
   - `BILLING_TRIAL_DAYS`
+  - `MAX_FOUNDER_GYMS`
 - Founder checkout uses `BILLING_TRIAL_DAYS` and collects a payment method up front without charging immediately.
 - Regular checkout does not apply a trial by default and bills immediately through Stripe.
+- Founder launch pricing is `$49.99/month` for the first `5-10` gyms, with a locked-in founder rate while subscribed.
+- Standard pricing is `$99.99/month` after founder spots are filled or when a gym upgrades.
+- Plan limits are tracked in the backend and currently warn/block at:
+  - `5` coaches
+  - `200` active members
+  - founder: `100` library items / `100` external video links
+  - standard: `250` library items / `250` external video links
+- No automatic overage billing is enabled right now. The app warns near limits and blocks new usage when a hard limit is reached.
+- The policy and child-safety language in this repo is MVP placeholder content and should be reviewed by a qualified attorney before a production launch.
 - Billing 8B uses Stripe test mode only.
 - `BILLING_STRIPE_MODE` defaults to `test` when unset.
 - Test mode requires `STRIPE_SECRET_KEY` to use `sk_test_...`.
@@ -167,12 +195,17 @@ Use test mode by default:
 BILLING_STRIPE_MODE=test
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_FOUNDER_MONTHLY=price_...
+STRIPE_PRICE_STANDARD_MONTHLY=price_...
 STRIPE_FOUNDER_PRICE_ID=price_...
 STRIPE_REGULAR_PRICE_ID=price_...
+CLIENT_URL=http://localhost:5173
+SERVER_URL=http://localhost:4000
 STRIPE_SUCCESS_URL=http://localhost:5173/billing?checkout=success
 STRIPE_CANCEL_URL=http://localhost:5173/billing?checkout=cancel
 STRIPE_CUSTOMER_PORTAL_RETURN_URL=http://localhost:5173/billing
 BILLING_TRIAL_DAYS=30
+MAX_FOUNDER_GYMS=10
 ```
 
 Stripe CLI example:
@@ -191,11 +224,16 @@ ALLOWED_ORIGINS=https://your-app-domain.com
 BILLING_STRIPE_MODE=live
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_FOUNDER_MONTHLY=price_...
+STRIPE_PRICE_STANDARD_MONTHLY=price_...
 STRIPE_FOUNDER_PRICE_ID=price_...
 STRIPE_REGULAR_PRICE_ID=price_...
+CLIENT_URL=https://your-app-domain.com
+SERVER_URL=https://your-api-domain.com
 STRIPE_SUCCESS_URL=https://your-app-domain.com/billing?checkout=success
 STRIPE_CANCEL_URL=https://your-app-domain.com/billing?checkout=cancel
 STRIPE_CUSTOMER_PORTAL_RETURN_URL=https://your-app-domain.com/billing
+MAX_FOUNDER_GYMS=10
 ```
 
 Recommended:
@@ -238,7 +276,7 @@ Required events:
 4. Set `VITE_API_BASE_URL` on the frontend host.
 5. Register the production Stripe webhook endpoint.
 6. Confirm a founder checkout works in the live Stripe dashboard for a test internal gym.
-7. Confirm a regular checkout works.
+7. Confirm a Standard checkout works.
 8. Confirm webhook delivery marks the gym `active` or `trialing`.
 9. Confirm unpaid gyms are blocked from protected routes.
 10. Confirm billing recovery routes still work for unpaid owners.

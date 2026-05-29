@@ -18,6 +18,12 @@ const {
   toNullableDate
 } = require('../services/billingService');
 const {
+  getPlanLimits,
+  getCurrentUsage,
+  getUsageWarnings,
+  checkFounderAvailability
+} = require('../services/planLimitsService');
+const {
   getStripeClient,
   constructWebhookEvent,
   getStripePriceIdForPlan,
@@ -49,6 +55,27 @@ const getSubscriptionPriceId = (subscriptionObject) => (
   || null
 );
 
+const isBillingManager = (user) => ['owner', 'admin'].includes(String(user?.role || '').trim().toLowerCase());
+
+const buildBillingDashboardPayload = async (subscription) => {
+  const safePayload = buildSafeBillingPayload(subscription);
+  const limits = await getPlanLimits(subscription.plan_code);
+  const usageMeta = await getUsageWarnings(subscription.gym_id);
+
+  return {
+    subscription: {
+      ...safePayload,
+      founder_locked_rate: Boolean(subscription?.founder_locked_rate),
+      founder_started_at: subscription?.founder_started_at || null,
+      current_period_start: subscription?.current_period_start || null
+    },
+    plan_limits: limits,
+    usage: usageMeta.usage,
+    usage_warnings: usageMeta.warnings,
+    founder_availability: await checkFounderAvailability()
+  };
+};
+
 const resolveSubscriptionCurrentPeriodEnd = (subscriptionObject) => {
   const subscriptionCurrentPeriodEnd = subscriptionObject?.current_period_end;
   if (typeof subscriptionCurrentPeriodEnd === 'number') {
@@ -70,6 +97,20 @@ const resolveSubscriptionCurrentPeriodEnd = (subscriptionObject) => {
     value: undefined,
     source: 'none'
   };
+};
+
+const resolveSubscriptionCurrentPeriodStart = (subscriptionObject) => {
+  const subscriptionCurrentPeriodStart = subscriptionObject?.current_period_start;
+  if (typeof subscriptionCurrentPeriodStart === 'number') {
+    return subscriptionCurrentPeriodStart;
+  }
+
+  const itemCurrentPeriodStart = subscriptionObject?.items?.data?.[0]?.current_period_start;
+  if (typeof itemCurrentPeriodStart === 'number') {
+    return itemCurrentPeriodStart;
+  }
+
+  return undefined;
 };
 
 const resolveScheduledCancel = (subscriptionObject) => {
@@ -152,6 +193,7 @@ const buildSubscriptionUpdateFields = (
   const priceId = getSubscriptionPriceId(subscriptionObject);
   const scheduledCancel = resolveScheduledCancel(subscriptionObject);
   const currentPeriodEnd = resolveSubscriptionCurrentPeriodEnd(subscriptionObject);
+  const currentPeriodStart = resolveSubscriptionCurrentPeriodStart(subscriptionObject);
   const trialEnd = getSubscriptionTrialEnd(subscriptionObject);
 
   if (stripeCustomerId) {
@@ -166,6 +208,10 @@ const buildSubscriptionUpdateFields = (
     updateFields.plan_code = resolvedPlanCode;
   }
 
+  if (resolvedPlanCode === PLAN_CODES.FOUNDER) {
+    updateFields.founder_locked_rate = true;
+  }
+
   if (priceId) {
     updateFields.price_id = priceId;
   }
@@ -178,6 +224,10 @@ const buildSubscriptionUpdateFields = (
 
   if (typeof currentPeriodEnd.value === 'number') {
     updateFields.current_period_end = toNullableDate(currentPeriodEnd.value);
+  }
+
+  if (typeof currentPeriodStart === 'number') {
+    updateFields.current_period_start = toNullableDate(currentPeriodStart);
   }
 
   updateFields.cancel_at_period_end = scheduledCancel.value ? 1 : 0;
@@ -471,6 +521,11 @@ const processCheckoutSessionCompleted = async (connection, stripe, event) => {
     updateFields.plan_code = fallbackPlanCode;
   }
 
+  if (fallbackPlanCode === PLAN_CODES.FOUNDER) {
+    updateFields.founder_locked_rate = true;
+    updateFields.founder_started_at = localSubscription.founder_started_at || new Date();
+  }
+
   await updateGymSubscription(gymId, updateFields, connection);
 
   if (!stripeSubscriptionId) {
@@ -478,9 +533,17 @@ const processCheckoutSessionCompleted = async (connection, stripe, event) => {
   }
 
   const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
-  await updateGymSubscription(gymId, buildSubscriptionUpdateFields(stripeSubscription, {
-    fallbackPlanCode
-  }), connection);
+  await updateGymSubscription(gymId, {
+    ...buildSubscriptionUpdateFields(stripeSubscription, {
+      fallbackPlanCode
+    }),
+    ...(fallbackPlanCode === PLAN_CODES.FOUNDER
+      ? {
+          founder_locked_rate: true,
+          founder_started_at: localSubscription.founder_started_at || new Date()
+        }
+      : {})
+  }, connection);
   return true;
 };
 
@@ -591,15 +654,39 @@ const processStripeWebhookEvent = async (connection, stripe, event) => {
 
 const getBillingSubscription = async (req, res) => {
   try {
+    if (!isBillingManager(req.user)) {
+      return sendClientError(res, {
+        status: 403,
+        message: 'Only owner or admin accounts can access billing details.'
+      });
+    }
+
     const subscription = await reconcileGymSubscriptionFromStripeIfNeeded(
       await getSubscriptionByGymId(req.user.gym_id)
     );
 
-    return res.status(200).json({
-      subscription: buildSafeBillingPayload(subscription)
-    });
+    return res.status(200).json(await buildBillingDashboardPayload(subscription));
   } catch (error) {
     return handleBillingError(res, 'Get billing subscription error:', error);
+  }
+};
+
+const getBillingStatus = async (req, res) => {
+  try {
+    if (!isBillingManager(req.user)) {
+      return sendClientError(res, {
+        status: 403,
+        message: 'Only owner or admin accounts can access billing details.'
+      });
+    }
+
+    const subscription = await reconcileGymSubscriptionFromStripeIfNeeded(
+      await getSubscriptionByGymId(req.user.gym_id)
+    );
+
+    return res.status(200).json(await buildBillingDashboardPayload(subscription));
+  } catch (error) {
+    return handleBillingError(res, 'Get billing status error:', error);
   }
 };
 
@@ -614,6 +701,7 @@ const getBillingAccessStatus = async (req, res) => {
       gym_id: safePayload.gym_id,
       access_granted: safePayload.access_granted,
       plan_code: safePayload.plan_code,
+      plan_label: safePayload.plan_label,
       billing_status: safePayload.billing_status,
       current_period_end: safePayload.current_period_end,
       cancel_at_period_end: safePayload.cancel_at_period_end,
@@ -626,7 +714,14 @@ const getBillingAccessStatus = async (req, res) => {
 
 const createCheckoutSession = async (req, res) => {
   try {
-    const rawPlanCode = String(req.body?.plan_code || '').trim().toLowerCase();
+    if (!isBillingManager(req.user)) {
+      return sendClientError(res, {
+        status: 403,
+        message: 'Only owner or admin accounts can start checkout.'
+      });
+    }
+
+    const rawPlanCode = String(req.body?.plan_code || req.body?.plan || '').trim().toLowerCase();
     const requestedPlanCode = rawPlanCode === 'standard'
       ? PLAN_CODES.REGULAR
       : rawPlanCode;
@@ -634,7 +729,7 @@ const createCheckoutSession = async (req, res) => {
     if (![PLAN_CODES.FOUNDER, PLAN_CODES.REGULAR].includes(requestedPlanCode)) {
       return sendClientError(res, {
         status: 400,
-        message: 'plan_code must be founder or regular'
+        message: 'plan must be founder or standard'
       });
     }
 
@@ -651,6 +746,20 @@ const createCheckoutSession = async (req, res) => {
         status: 501,
         message: 'Selected billing plan is not configured yet.'
       });
+    }
+
+    if (requestedPlanCode === PLAN_CODES.FOUNDER) {
+      const founderAvailability = await checkFounderAvailability();
+
+      if (!founderAvailability.founderPlanAvailable) {
+        return res.status(409).json({
+          message: 'Founder Plan spots are currently filled. Please choose the Standard Plan.',
+          upgradeRequired: true,
+          upgradePlan: 'standard',
+          upgradePlanLabel: 'Standard',
+          founder_availability: founderAvailability
+        });
+      }
     }
 
     const { successUrl, cancelUrl } = getCheckoutUrls();
@@ -673,7 +782,8 @@ const createCheckoutSession = async (req, res) => {
         email: gymContext.owner_email || undefined,
         metadata: {
           gym_id: String(req.user.gym_id),
-          owner_user_id: String(req.user.id),
+          actor_user_id: String(req.user.id),
+          owner_user_id: String(gymContext.owner_user_id || req.user.id),
           plan_code: requestedPlanCode
         }
       });
@@ -687,7 +797,8 @@ const createCheckoutSession = async (req, res) => {
     const subscriptionData = {
       metadata: {
         gym_id: String(req.user.gym_id),
-        owner_user_id: String(req.user.id),
+        actor_user_id: String(req.user.id),
+        owner_user_id: String(gymContext.owner_user_id || req.user.id),
         plan_code: requestedPlanCode
       }
     };
@@ -710,7 +821,8 @@ const createCheckoutSession = async (req, res) => {
       cancel_url: cancelUrl,
       metadata: {
         gym_id: String(req.user.gym_id),
-        owner_user_id: String(req.user.id),
+        actor_user_id: String(req.user.id),
+        owner_user_id: String(gymContext.owner_user_id || req.user.id),
         plan_code: requestedPlanCode
       },
       subscription_data: subscriptionData
@@ -727,6 +839,13 @@ const createCheckoutSession = async (req, res) => {
 
 const createCustomerPortalSession = async (req, res) => {
   try {
+    if (!isBillingManager(req.user)) {
+      return sendClientError(res, {
+        status: 403,
+        message: 'Only owner or admin accounts can manage billing.'
+      });
+    }
+
     const subscription = await getSubscriptionByGymId(req.user.gym_id);
 
     if (rejectDemoGymBilling(res, subscription)) {
@@ -854,6 +973,7 @@ const handleBillingWebhook = async (req, res) => {
 
 module.exports = {
   getBillingSubscription,
+  getBillingStatus,
   getBillingAccessStatus,
   createCheckoutSession,
   createCustomerPortalSession,

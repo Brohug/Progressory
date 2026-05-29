@@ -39,7 +39,7 @@ const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const [rows] = await pool.query(
-      `SELECT u.id, u.gym_id, u.email, u.role, u.is_active,
+      `SELECT u.id, u.gym_id, u.email, u.role, u.is_active, u.can_upload_library_content,
               g.is_platform_suspended, g.platform_suspended_at, g.platform_suspension_reason,
               m.id AS member_id
        FROM users u
@@ -72,6 +72,7 @@ const protect = async (req, res, next) => {
       role: currentUser.role,
       email: currentUser.email,
       member_id: currentUser.member_id || null,
+      can_upload_library_content: Boolean(currentUser.can_upload_library_content),
       is_platform_admin: isPlatformAdmin,
       gym_is_platform_suspended: Boolean(currentUser.is_platform_suspended),
       gym_platform_suspended_at: currentUser.platform_suspended_at || null,

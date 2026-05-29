@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 
 const formatStatusLabel = (value) => (
   String(value || 'none')
+    .replace(/^regular$/i, 'standard')
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase())
 );
@@ -25,8 +26,12 @@ const formatDateLabel = (value) => {
 export default function BillingPage() {
   const { user } = useAuth();
   const location = useLocation();
-  const isOwner = user?.role === 'owner';
+  const isBillingManager = user?.role === 'owner' || user?.role === 'admin';
   const [billingState, setBillingState] = useState(null);
+  const [usageState, setUsageState] = useState(null);
+  const [planLimits, setPlanLimits] = useState(null);
+  const [usageWarnings, setUsageWarnings] = useState([]);
+  const [founderAvailability, setFounderAvailability] = useState(null);
   const [pageState, setPageState] = useState({
     loading: true,
     error: '',
@@ -60,15 +65,16 @@ export default function BillingPage() {
       });
 
       try {
-        const response = isOwner
-          ? await api.get('/billing/subscription')
+        const response = isBillingManager
+          ? await api.get('/billing/status')
           : await api.get('/billing/access-status');
 
-        const nextBillingState = isOwner
+        const nextBillingState = isBillingManager
           ? response.data?.subscription || null
           : {
               gym_id: response.data?.gym_id ?? user?.gym_id ?? null,
               plan_code: response.data?.plan_code || 'none',
+              plan_label: response.data?.plan_label || '',
               billing_status: response.data?.billing_status || 'none',
               access_granted: Boolean(response.data?.access_granted),
               stripe_customer_id_present: false,
@@ -79,6 +85,10 @@ export default function BillingPage() {
             };
 
         setBillingState(nextBillingState);
+        setUsageState(isBillingManager ? response.data?.usage || null : null);
+        setPlanLimits(isBillingManager ? response.data?.plan_limits || null : null);
+        setUsageWarnings(isBillingManager ? response.data?.usage_warnings || [] : []);
+        setFounderAvailability(isBillingManager ? response.data?.founder_availability || null : null);
         setPageState({
           loading: false,
           error: '',
@@ -95,7 +105,7 @@ export default function BillingPage() {
     };
 
     loadBillingState();
-  }, [checkoutMessage, isOwner, user?.gym_id]);
+  }, [checkoutMessage, isBillingManager, user?.gym_id]);
 
   const handleCheckout = async (planCode) => {
     setActionState({
@@ -105,7 +115,7 @@ export default function BillingPage() {
 
     try {
       const response = await api.post('/billing/checkout-session', {
-        plan_code: planCode
+        plan: planCode
       });
 
       const checkoutUrl = response.data?.url;
@@ -151,7 +161,7 @@ export default function BillingPage() {
       <div className="billing-page">
         <h2 className="page-title">Billing</h2>
         <p className="page-intro">
-          Review the current subscription state for this gym and use Stripe-backed billing tools when you need to start or manage a plan.
+          Review the current plan, usage, founder availability, and Stripe-backed billing tools for this gym.
         </p>
 
         <section className="page-section">
@@ -159,7 +169,7 @@ export default function BillingPage() {
             <div>
               <h3>Billing overview</h3>
               <p className="section-note">
-                This page now reads the real subscription state from the backend instead of relying on placeholder billing UI.
+                This page reads the real subscription state and plan usage from the backend instead of relying on placeholder billing UI.
               </p>
             </div>
           </div>
@@ -178,7 +188,7 @@ export default function BillingPage() {
             <div className="account-billing-status-grid">
               <div className="account-billing-status-card">
                 <span className="meta-text">Current plan</span>
-                <strong>{formatStatusLabel(billingState.plan_code)}</strong>
+                <strong>{billingState.plan_label || formatStatusLabel(billingState.plan_code)}</strong>
               </div>
               <div className="account-billing-status-card">
                 <span className="meta-text">Billing status</span>
@@ -201,6 +211,10 @@ export default function BillingPage() {
                 <strong>{formatDateLabel(billingState.current_period_end)}</strong>
               </div>
               <div className="account-billing-status-card">
+                <span className="meta-text">Current period start</span>
+                <strong>{formatDateLabel(billingState.current_period_start)}</strong>
+              </div>
+              <div className="account-billing-status-card">
                 <span className="meta-text">Trial ends</span>
                 <strong>{formatDateLabel(billingState.trial_ends_at)}</strong>
               </div>
@@ -208,16 +222,70 @@ export default function BillingPage() {
                 <span className="meta-text">Cancel at period end</span>
                 <strong>{billingState.cancel_at_period_end ? 'Yes' : 'No'}</strong>
               </div>
+              <div className="account-billing-status-card">
+                <span className="meta-text">Founder locked rate</span>
+                <strong>{billingState.founder_locked_rate ? 'Yes' : 'No'}</strong>
+              </div>
             </div>
           ) : null}
         </section>
+
+        {isBillingManager && billingState && usageState && planLimits ? (
+          <section className="page-section">
+            <div className="section-header">
+              <div>
+                <h3>Plan usage</h3>
+                <p className="section-note">
+                  We warn as you approach plan limits and block new usage only after a hard limit is reached. No automatic overage billing is enabled.
+                </p>
+              </div>
+            </div>
+
+            {usageWarnings.length > 0 ? (
+              <div className="detail-block" style={{ marginBottom: '1rem' }}>
+                {usageWarnings.map((warning) => (
+                  <p key={warning.limitType} className="success-text account-form-feedback" style={{ marginBottom: 0 }}>
+                    {warning.message}
+                  </p>
+                ))}
+              </div>
+            ) : null}
+
+            <div className="account-billing-status-grid">
+              <div className="account-billing-status-card">
+                <span className="meta-text">Coaches</span>
+                <strong>{usageState.coaches_count} / {planLimits.max_coaches}</strong>
+              </div>
+              <div className="account-billing-status-card">
+                <span className="meta-text">Active members</span>
+                <strong>{usageState.active_members_count} / {planLimits.max_active_members}</strong>
+              </div>
+              <div className="account-billing-status-card">
+                <span className="meta-text">Library items</span>
+                <strong>{usageState.library_items_count} / {planLimits.max_library_items}</strong>
+              </div>
+              <div className="account-billing-status-card">
+                <span className="meta-text">External video links</span>
+                <strong>{usageState.external_video_links_count} / {planLimits.max_external_video_links}</strong>
+              </div>
+              <div className="account-billing-status-card">
+                <span className="meta-text">Direct video uploads</span>
+                <strong>{planLimits.max_direct_video_uploads > 0 ? `${usageState.direct_video_uploads_count} / ${planLimits.max_direct_video_uploads}` : 'Disabled during founder beta'}</strong>
+              </div>
+              <div className="account-billing-status-card">
+                <span className="meta-text">Storage</span>
+                <strong>{planLimits.max_storage_mb > 0 ? `${usageState.storage_mb_used} MB / ${planLimits.max_storage_mb} MB` : 'Not enabled during founder beta'}</strong>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <section className="page-section">
           <div className="section-header">
             <div>
               <h3>What this page is for</h3>
               <p className="section-note">
-                Owners can start Stripe checkout or open the customer portal here. Staff and members can still review the current billing state without getting owner-only payment controls.
+                Owners and admins can start Stripe checkout or open the customer portal here. Staff and members can still review the current billing state without getting payment controls.
               </p>
             </div>
           </div>
@@ -234,7 +302,7 @@ export default function BillingPage() {
               <div className="account-access-list">
                 <div className="account-access-item">
                   <AppIcon name="progress" />
-                  <span>Plan code, billing status, and access rights come from backend subscription sync.</span>
+                  <span>Current plan, billing status, and access rights come from backend subscription sync.</span>
                 </div>
                 <div className="account-access-item">
                   <AppIcon name="progress" />
@@ -247,29 +315,29 @@ export default function BillingPage() {
               <div className="account-summary-heading">
                 <span className="dashboard-card-icon"><AppIcon name="account" /></span>
                 <div>
-                  <strong>{isOwner ? 'Owner billing actions' : 'Need a billing change?'}</strong>
-                  <div className="meta-text">
-                    {isOwner
+                <strong>{isBillingManager ? 'Billing actions' : 'Need a billing change?'}</strong>
+                <div className="meta-text">
+                    {isBillingManager
                       ? 'Start checkout or open the customer portal without leaving the app flow.'
-                      : 'Only the gym owner can start checkout or open the Stripe customer portal.'}
-                  </div>
+                      : 'Only the gym owner or an admin can start checkout or open the Stripe customer portal.'}
+                </div>
                 </div>
               </div>
               <div className="account-access-list">
-                <div className={`account-access-item${isOwner ? '' : ' is-muted'}`}>
+                <div className={`account-access-item${isBillingManager ? '' : ' is-muted'}`}>
                   <AppIcon name="account" />
                   <span>
-                    {isOwner
-                      ? 'Use founder or regular checkout when the gym needs a plan.'
-                      : 'Contact the gym owner if billing needs to be started, updated, or recovered.'}
+                    {isBillingManager
+                      ? 'Use founder or Standard checkout when the gym needs a plan.'
+                      : 'Contact the gym owner or an admin if billing needs to be started, updated, or recovered.'}
                   </span>
                 </div>
-                <div className={`account-access-item${isOwner ? '' : ' is-muted'}`}>
+                <div className={`account-access-item${isBillingManager ? '' : ' is-muted'}`}>
                   <AppIcon name="account" />
                   <span>
-                    {isOwner
+                    {isBillingManager
                       ? 'Open Stripe customer portal after checkout has created a customer record.'
-                      : 'Your access view is read-only here so billing controls stay with the owner.'}
+                      : 'Your access view is read-only here so billing controls stay with gym management.'}
                   </span>
                 </div>
               </div>
@@ -280,11 +348,11 @@ export default function BillingPage() {
         <section className="page-section account-billing-section">
           <div className="section-header">
             <div>
-              <h3>{isOwner ? 'Manage billing' : 'Billing status'}</h3>
+              <h3>{isBillingManager ? 'Manage billing' : 'Billing status'}</h3>
               <p className="section-note">
-                {isOwner
+                {isBillingManager
                   ? 'These actions talk directly to the backend billing routes and then hand off to Stripe.'
-                  : 'You can review the current billing state here, but checkout and portal access stay owner-only.'}
+                  : 'You can review the current billing state here, but checkout and portal access stay with gym management.'}
               </p>
             </div>
           </div>
@@ -293,11 +361,11 @@ export default function BillingPage() {
             <div className="account-summary-heading">
               <span className="dashboard-card-icon"><AppIcon name="reports" /></span>
               <div>
-                <strong>{isOwner ? 'Stripe billing controls' : 'Read-only billing view'}</strong>
+                <strong>{isBillingManager ? 'Stripe billing controls' : 'Read-only billing view'}</strong>
                 <div className="meta-text">
-                  {isOwner
+                  {isBillingManager
                     ? 'Choose a plan or open the customer portal once Stripe has a customer for this gym.'
-                    : 'Billing management actions are hidden because this account is not the gym owner.'}
+                    : 'Billing management actions are hidden because this account is not a gym-management account.'}
                 </div>
               </div>
             </div>
@@ -312,25 +380,45 @@ export default function BillingPage() {
               </p>
             ) : null}
 
-            {isOwner ? (
+            {founderAvailability && !founderAvailability.founderPlanAvailable ? (
+              <p className="error-text account-form-feedback">
+                Founder Plan spots are currently filled. Please choose the Standard Plan.
+              </p>
+            ) : null}
+
+            {billingState?.plan_code === 'founder' && billingState?.billing_status !== 'canceled' ? (
+              <p className="meta-text account-form-feedback">
+                Founder rate stays locked while this gym remains subscribed.
+              </p>
+            ) : null}
+
+            {isBillingManager ? (
               <div className="inline-actions">
                 <button
                   type="button"
                   className="secondary-button"
-                  disabled={pageState.loading || actionState.loadingAction === 'checkout-founder'}
+                  disabled={
+                    pageState.loading
+                    || actionState.loadingAction === 'checkout-founder'
+                    || (
+                      founderAvailability
+                      && !founderAvailability.founderPlanAvailable
+                      && billingState?.plan_code !== 'founder'
+                    )
+                  }
                   onClick={() => handleCheckout('founder')}
                 >
                   <AppIcon name="reports" />
-                  <span>{actionState.loadingAction === 'checkout-founder' ? 'Opening founder checkout...' : 'Start founder checkout'}</span>
+                  <span>{actionState.loadingAction === 'checkout-founder' ? 'Opening founder checkout...' : 'Start Founder Plan'}</span>
                 </button>
                 <button
                   type="button"
                   className="secondary-button"
-                  disabled={pageState.loading || actionState.loadingAction === 'checkout-regular'}
-                  onClick={() => handleCheckout('regular')}
+                  disabled={pageState.loading || actionState.loadingAction === 'checkout-standard'}
+                  onClick={() => handleCheckout('standard')}
                 >
                   <AppIcon name="reports" />
-                  <span>{actionState.loadingAction === 'checkout-regular' ? 'Opening regular checkout...' : 'Start regular checkout'}</span>
+                  <span>{actionState.loadingAction === 'checkout-standard' ? 'Opening standard checkout...' : 'Upgrade to Standard'}</span>
                 </button>
                 <button
                   type="button"
@@ -339,12 +427,12 @@ export default function BillingPage() {
                   onClick={handleCustomerPortal}
                 >
                   <AppIcon name="account" />
-                  <span>{actionState.loadingAction === 'portal' ? 'Opening customer portal...' : 'Open customer portal'}</span>
+                  <span>{actionState.loadingAction === 'portal' ? 'Opening customer portal...' : 'Manage Billing'}</span>
                 </button>
               </div>
             ) : (
               <p className="meta-text">
-                Billing access is managed by the gym owner. If this gym needs a new plan, payment update, or recovery step, reach out to the owner to continue in Stripe.
+                Billing access is managed by the gym owner or an admin. If this gym needs a new plan, payment update, or recovery step, reach out to gym management to continue in Stripe.
               </p>
             )}
           </div>

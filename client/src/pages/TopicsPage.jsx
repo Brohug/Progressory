@@ -6,6 +6,25 @@ import ExpandableSection from '../components/ExpandableSection';
 import { formatLabel } from '../utils/formatLabel';
 import TopicSearchSelect from '../components/TopicSearchSelect';
 import { useAuth } from '../hooks/useAuth';
+import curriculumIndexSeed from '../data/curriculumIndexSeed';
+
+const normalizeValue = (value) => (
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+);
+
+const topicTypeCategoryHints = {
+  position: ['Positions'],
+  submission: ['Submissions', 'Leg Locks'],
+  escape: ['Submission Defense', 'Escapes'],
+  takedown: ['Takedowns'],
+  concept: ['Concepts', 'Fundamentals', 'Strategy and Game Planning'],
+  drill_theme: ['Drills', 'Constraint-Led Games', 'Positional Sparring'],
+  technique: ['Positions', 'Submissions', 'Leg Locks', 'Fundamentals', 'Concepts', 'Takedowns']
+};
 
 export default function TopicsPage() {
   const { user } = useAuth();
@@ -34,7 +53,13 @@ export default function TopicsPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [isCreateTopicOpen, setIsCreateTopicOpen] = useState(false);
   const [isTopicListOpen, setIsTopicListOpen] = useState(true);
+  const [isMobileLayout, setIsMobileLayout] = useState(() => (
+    typeof window !== 'undefined' ? window.innerWidth <= 720 : false
+  ));
+  const [isMobileTopicFiltersCollapsed, setIsMobileTopicFiltersCollapsed] = useState(false);
   const [expandedTopicDetails, setExpandedTopicDetails] = useState({});
+  const [descriptionEditedManually, setDescriptionEditedManually] = useState(false);
+  const [lastAutoFilledDescription, setLastAutoFilledDescription] = useState('');
 
   const topicTypes = [
     'position',
@@ -95,6 +120,31 @@ export default function TopicsPage() {
 
     loadPageData();
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 720px)');
+    const syncMobileLayout = (event) => {
+      setIsMobileLayout(event.matches);
+    };
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', syncMobileLayout);
+      return () => mediaQuery.removeEventListener('change', syncMobileLayout);
+    }
+
+    mediaQuery.addListener(syncMobileLayout);
+    return () => mediaQuery.removeListener(syncMobileLayout);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobileLayout) {
+      setIsMobileTopicFiltersCollapsed(false);
+    }
+  }, [isMobileLayout]);
 
   useEffect(() => {
     const searchValue = searchParams.get('search');
@@ -215,10 +265,70 @@ export default function TopicsPage() {
     return matchingTopics.length > 0 ? matchingTopics : activeTopics;
   }, [topics, formData.program_id]);
 
-  const handleChange = (e) => {
+  const suggestedIndexDescription = useMemo(() => {
+    const normalizedTitle = normalizeValue(formData.title);
+
+    if (!normalizedTitle) {
+      return '';
+    }
+
+    let matches = curriculumIndexSeed.filter((entry) => normalizeValue(entry.name) === normalizedTitle);
+    const categoryHints = topicTypeCategoryHints[formData.topic_type] || [];
+
+    if (categoryHints.length > 0) {
+      const categoryMatches = matches.filter((entry) => categoryHints.includes(entry.category));
+      if (categoryMatches.length > 0) {
+        matches = categoryMatches;
+      }
+    }
+
+    return matches[0]?.description || '';
+  }, [formData.title, formData.topic_type]);
+
+  useEffect(() => {
+    if (!suggestedIndexDescription) {
+      if (formData.description === lastAutoFilledDescription && lastAutoFilledDescription) {
+        setFormData((prev) => ({
+          ...prev,
+          description: ''
+        }));
+      }
+      setLastAutoFilledDescription('');
+      return;
+    }
+
+    const shouldAutoFill = (
+      !descriptionEditedManually
+      || !formData.description.trim()
+      || formData.description === lastAutoFilledDescription
+    );
+
+    if (!shouldAutoFill) {
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      description: suggestedIndexDescription
+    }));
+    setLastAutoFilledDescription(suggestedIndexDescription);
+  }, [
+    suggestedIndexDescription,
+    descriptionEditedManually,
+    formData.description,
+    lastAutoFilledDescription
+  ]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === 'description') {
+      setDescriptionEditedManually(value !== lastAutoFilledDescription);
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
     }));
   };
 
@@ -253,6 +363,8 @@ export default function TopicsPage() {
         topic_type: 'position',
         description: ''
       });
+      setDescriptionEditedManually(false);
+      setLastAutoFilledDescription('');
 
       await fetchTopics();
       setSuccessMessage('Topic saved successfully.');
@@ -421,6 +533,30 @@ export default function TopicsPage() {
               rows="4"
               placeholder="Optional note about what this topic is, when you teach it, or where it fits."
             />
+            {suggestedIndexDescription ? (
+              <p className="field-helper-text">
+                Suggested from Curriculum Index. Keep this description or replace it with your own.
+                {formData.description !== suggestedIndexDescription ? (
+                  <>
+                    {' '}
+                    <button
+                      type="button"
+                      className="inline-link-button"
+                      onClick={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          description: suggestedIndexDescription
+                        }));
+                        setDescriptionEditedManually(false);
+                        setLastAutoFilledDescription(suggestedIndexDescription);
+                      }}
+                    >
+                      Use suggested description
+                    </button>
+                  </>
+                ) : null}
+              </p>
+            ) : null}
             <p className="field-helper-text">Helpful, but not required to save the topic.</p>
           </div>
 
@@ -454,6 +590,7 @@ export default function TopicsPage() {
         title="Topic List"
         note="Search and filter your curriculum as the topic library grows."
         summary={`${filteredTopics.length} topic${filteredTopics.length === 1 ? '' : 's'} in the current view.`}
+        className={isMobileLayout && isMobileTopicFiltersCollapsed ? 'topics-topic-list-shell is-mobile-controls-collapsed' : 'topics-topic-list-shell'}
         summaryMeta={[
           `${activeTopicCount} active`,
           inactiveTopicCount > 0 ? `${inactiveTopicCount} inactive` : 'No inactive topics',
@@ -479,48 +616,63 @@ export default function TopicsPage() {
       >
         <div ref={topicListSectionRef} />
 
-        <div className="sticky-action-bar">
-          <div className="filter-grid">
-            <div>
-              <label>Search Topics</label>
-              <input
-                type="text"
-                value={topicSearch}
-                onChange={(e) => setTopicSearch(e.target.value)}
-                placeholder="Search by title, description, or parent topic..."
-              />
-            </div>
+        <div className={`sticky-action-bar${isMobileTopicFiltersCollapsed ? ' is-mobile-collapsed' : ''}`}>
+          {isMobileTopicFiltersCollapsed ? (
+            <p className="mobile-shell-collapsed-note">
+              Filters are tucked away so you can read the topic list more easily.
+            </p>
+          ) : (
+            <div className="filter-grid">
+              <div>
+                <label>Search Topics</label>
+                <input
+                  type="text"
+                  value={topicSearch}
+                  onChange={(e) => setTopicSearch(e.target.value)}
+                  placeholder="Search by title, description, or parent topic..."
+                />
+              </div>
 
-            <div>
-              <label>Filter By Type</label>
-              <select
-                value={topicTypeFilter}
-                onChange={(e) => setTopicTypeFilter(e.target.value)}
-              >
-                <option value="">All Types</option>
-                {topicTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {formatLabel(type)}
-                  </option>
-                ))}
-              </select>
-            </div>
+              <div>
+                <label>Filter By Type</label>
+                <select
+                  value={topicTypeFilter}
+                  onChange={(e) => setTopicTypeFilter(e.target.value)}
+                >
+                  <option value="">All Types</option>
+                  {topicTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {formatLabel(type)}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div>
-              <label>Filter By Program</label>
-              <select
-                value={programFilter}
-                onChange={(e) => setProgramFilter(e.target.value)}
-              >
-                <option value="">All Programs</option>
-                {programs.map((program) => (
-                  <option key={program.id} value={String(program.id)}>
-                    {program.name}
-                  </option>
-                ))}
-              </select>
+              <div>
+                <label>Filter By Program</label>
+                <select
+                  value={programFilter}
+                  onChange={(e) => setProgramFilter(e.target.value)}
+                >
+                  <option value="">All Programs</option>
+                  {programs.map((program) => (
+                    <option key={program.id} value={String(program.id)}>
+                      {program.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-          </div>
+          )}
+          <button
+            type="button"
+            className="secondary-button mobile-sticky-corner-toggle"
+            onClick={() => setIsMobileTopicFiltersCollapsed((current) => !current)}
+            aria-label={isMobileTopicFiltersCollapsed ? 'Show topic filters' : 'Hide topic filters'}
+            title={isMobileTopicFiltersCollapsed ? 'Show topic filters' : 'Hide topic filters'}
+          >
+            {isMobileTopicFiltersCollapsed ? '↓' : '↑'}
+          </button>
         </div>
 
         {loading ? (

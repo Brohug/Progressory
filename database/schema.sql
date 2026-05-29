@@ -18,6 +18,12 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('owner', 'admin', 'coach', 'member') NOT NULL DEFAULT 'coach',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    can_upload_library_content BOOLEAN NOT NULL DEFAULT FALSE,
+    terms_accepted_at DATETIME NULL,
+    privacy_accepted_at DATETIME NULL,
+    acceptable_use_accepted_at DATETIME NULL,
+    child_safety_accepted_at DATETIME NULL,
+    accepted_policy_version VARCHAR(32) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_users_gym
@@ -117,7 +123,7 @@ CREATE TABLE training_scenarios (
 CREATE TABLE planned_classes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     gym_id INT NOT NULL,
-    program_id INT NOT NULL,
+    program_id INT NULL,
     training_scenario_id INT NULL,
     title VARCHAR(150) NULL,
     class_date DATE NOT NULL,
@@ -163,7 +169,7 @@ CREATE TABLE planned_class_topics (
 CREATE TABLE classes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     gym_id INT NOT NULL,
-    program_id INT NOT NULL,
+    program_id INT NULL,
     title VARCHAR(150) NULL,
     class_date DATE NOT NULL,
     start_time TIME NULL,
@@ -245,8 +251,13 @@ CREATE TABLE library_entries (
     entry_type ENUM('technique', 'concept', 'drill', 'cla_game', 'video_note') NOT NULL,
     description TEXT NULL,
     video_url TEXT NULL,
-    visibility ENUM('coach_only', 'member_visible') NOT NULL DEFAULT 'coach_only',
+    original_filename VARCHAR(255) NULL,
+    mime_type VARCHAR(100) NULL,
+    file_size BIGINT NULL,
+    content_safety_confirmed BOOLEAN NOT NULL DEFAULT FALSE,
+    visibility ENUM('coach_only', 'members', 'parents', 'members_and_parents') NOT NULL DEFAULT 'coach_only',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    content_status ENUM('active', 'hidden', 'deleted') NOT NULL DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_library_entries_gym
@@ -261,6 +272,54 @@ CREATE TABLE library_entries (
     CONSTRAINT fk_library_entries_user
         FOREIGN KEY (created_by_user_id) REFERENCES users(id)
         ON DELETE RESTRICT
+);
+
+CREATE TABLE content_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    content_id INT NOT NULL,
+    gym_id INT NOT NULL,
+    reported_by_user_id INT NOT NULL,
+    reason ENUM(
+        'inappropriate_content',
+        'minor_safety_concern',
+        'copyright_or_permission_issue',
+        'harassment_or_abuse',
+        'other'
+    ) NOT NULL,
+    description TEXT NULL,
+    status ENUM('open', 'reviewed') NOT NULL DEFAULT 'open',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reviewed_at DATETIME NULL,
+    reviewed_by_user_id INT NULL,
+    CONSTRAINT fk_content_reports_content
+        FOREIGN KEY (content_id) REFERENCES library_entries(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_content_reports_gym
+        FOREIGN KEY (gym_id) REFERENCES gyms(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_content_reports_reporter
+        FOREIGN KEY (reported_by_user_id) REFERENCES users(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_content_reports_reviewer
+        FOREIGN KEY (reviewed_by_user_id) REFERENCES users(id)
+        ON DELETE SET NULL
+);
+
+CREATE TABLE audit_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    gym_id INT NULL,
+    user_id INT NULL,
+    event_type VARCHAR(100) NOT NULL,
+    entity_type VARCHAR(100) NULL,
+    entity_id INT NULL,
+    metadata_json JSON NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_audit_logs_gym
+        FOREIGN KEY (gym_id) REFERENCES gyms(id)
+        ON DELETE SET NULL,
+    CONSTRAINT fk_audit_logs_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE SET NULL
 );
 
 CREATE TABLE members (
@@ -385,9 +444,12 @@ CREATE TABLE gym_subscriptions (
     gym_id INT NOT NULL,
     stripe_customer_id VARCHAR(255) NULL,
     stripe_subscription_id VARCHAR(255) NULL,
+    founder_locked_rate BOOLEAN NOT NULL DEFAULT FALSE,
+    founder_started_at DATETIME NULL,
     plan_code VARCHAR(50) NOT NULL DEFAULT 'none',
     billing_status VARCHAR(50) NOT NULL DEFAULT 'none',
     price_id VARCHAR(255) NULL,
+    current_period_start DATETIME NULL,
     current_period_end DATETIME NULL,
     cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE,
     trial_ends_at DATETIME NULL,
@@ -402,6 +464,22 @@ CREATE TABLE gym_subscriptions (
         UNIQUE (stripe_customer_id),
     CONSTRAINT uq_gym_subscriptions_subscription
         UNIQUE (stripe_subscription_id)
+);
+
+CREATE TABLE plan_limits (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    plan_code ENUM('founder', 'regular') NOT NULL,
+    display_name VARCHAR(80) NOT NULL,
+    max_coaches INT NOT NULL DEFAULT 0,
+    max_active_members INT NOT NULL DEFAULT 0,
+    max_library_items INT NOT NULL DEFAULT 0,
+    max_external_video_links INT NOT NULL DEFAULT 0,
+    max_direct_video_uploads INT NOT NULL DEFAULT 0,
+    max_storage_mb INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uq_plan_limits_plan_code
+        UNIQUE (plan_code)
 );
 
 CREATE TABLE billing_events (

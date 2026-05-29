@@ -151,7 +151,7 @@ const getPlannedClasses = async (req, res) => {
         hc.first_name AS head_coach_first_name,
         hc.last_name AS head_coach_last_name
       FROM planned_classes pc
-      JOIN programs p ON pc.program_id = p.id
+      LEFT JOIN programs p ON pc.program_id = p.id
       JOIN users hc ON pc.head_coach_user_id = hc.id
       LEFT JOIN training_scenarios ts ON pc.training_scenario_id = ts.id
       WHERE pc.gym_id = ?
@@ -232,27 +232,29 @@ const createPlannedClass = async (req, res) => {
       topic_ids = []
     } = req.body;
 
-    if (!program_id || !class_date || !head_coach_user_id) {
+    if (!class_date || !head_coach_user_id) {
       connection.release();
       return res.status(400).json({
-        message: 'program_id, class_date, and head_coach_user_id are required'
+        message: 'class_date and head_coach_user_id are required'
       });
     }
 
     await connection.beginTransaction();
     transactionStarted = true;
 
-    const [programRows] = await connection.query(
-      'SELECT id FROM programs WHERE id = ? AND gym_id = ?',
-      [program_id, gymId]
-    );
+    if (program_id) {
+      const [programRows] = await connection.query(
+        'SELECT id FROM programs WHERE id = ? AND gym_id = ?',
+        [program_id, gymId]
+      );
 
-    if (programRows.length === 0) {
-      await connection.rollback();
-      connection.release();
-      return res.status(400).json({
-        message: 'Program not found for this gym'
-      });
+      if (programRows.length === 0) {
+        await connection.rollback();
+        connection.release();
+        return res.status(400).json({
+          message: 'Program not found for this gym'
+        });
+      }
     }
 
     const [coachRows] = await connection.query(
@@ -310,7 +312,7 @@ const createPlannedClass = async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'planned', ?)`,
       [
         gymId,
-        program_id,
+        program_id || null,
         training_scenario_id || null,
         title || null,
         class_date,
@@ -408,27 +410,29 @@ const updatePlannedClass = async (req, res) => {
       });
     }
 
-    if (!program_id || !class_date || !head_coach_user_id) {
+    if (!class_date || !head_coach_user_id) {
       connection.release();
       return res.status(400).json({
-        message: 'program_id, class_date, and head_coach_user_id are required'
+        message: 'class_date and head_coach_user_id are required'
       });
     }
 
     await connection.beginTransaction();
     transactionStarted = true;
 
-    const [programRows] = await connection.query(
-      'SELECT id FROM programs WHERE id = ? AND gym_id = ?',
-      [program_id, gymId]
-    );
+    if (program_id) {
+      const [programRows] = await connection.query(
+        'SELECT id FROM programs WHERE id = ? AND gym_id = ?',
+        [program_id, gymId]
+      );
 
-    if (programRows.length === 0) {
-      await connection.rollback();
-      connection.release();
-      return res.status(400).json({
-        message: 'Program not found for this gym'
-      });
+      if (programRows.length === 0) {
+        await connection.rollback();
+        connection.release();
+        return res.status(400).json({
+          message: 'Program not found for this gym'
+        });
+      }
     }
 
     const [coachRows] = await connection.query(
@@ -485,7 +489,7 @@ const updatePlannedClass = async (req, res) => {
        SET program_id = ?, training_scenario_id = ?, title = ?, class_date = ?, start_time = ?, end_time = ?, head_coach_user_id = ?, notes = ?
        WHERE id = ? AND gym_id = ?`,
       [
-        program_id,
+        program_id || null,
         training_scenario_id || null,
         title || null,
         class_date,

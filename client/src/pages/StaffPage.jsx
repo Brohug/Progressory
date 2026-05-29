@@ -7,7 +7,8 @@ const initialFormState = {
   first_name: '',
   last_name: '',
   email: '',
-  role: 'coach'
+  role: 'coach',
+  can_upload_library_content: false
 };
 
 export default function StaffPage() {
@@ -54,9 +55,10 @@ export default function StaffPage() {
   }, [isOwner]);
 
   const handleChange = (e) => {
+    const nextValue = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: nextValue
     }));
   };
 
@@ -96,7 +98,8 @@ export default function StaffPage() {
         first_name: formData.first_name,
         last_name: formData.last_name,
         email: formData.email,
-        role: formData.role
+        role: formData.role,
+        can_upload_library_content: formData.role === 'coach' ? formData.can_upload_library_content : true
       });
 
       setFormData(initialFormState);
@@ -119,7 +122,8 @@ export default function StaffPage() {
         first_name: staffUser.first_name,
         last_name: staffUser.last_name,
         email: staffUser.email,
-        role: staffUser.role
+        role: staffUser.role,
+        can_upload_library_content: Boolean(staffUser.can_upload_library_content)
       });
     } catch (err) {
       console.error('Create staff reset invite error:', err);
@@ -162,6 +166,33 @@ export default function StaffPage() {
     } catch (err) {
       console.error('Activate staff user error:', err);
       setError(err.response?.data?.message || 'Failed to activate staff user');
+    } finally {
+      setActionUserId(null);
+    }
+  };
+
+  const handleToggleCoachUploadPermission = async (staffUser) => {
+    try {
+      setActionUserId(staffUser.id);
+      setError('');
+      setSuccessMessage('');
+      await api.put(`/users/${staffUser.id}`, {
+        first_name: staffUser.first_name,
+        last_name: staffUser.last_name,
+        email: staffUser.email,
+        role: staffUser.role,
+        is_active: staffUser.is_active,
+        can_upload_library_content: !staffUser.can_upload_library_content
+      });
+      await fetchUsers();
+      setSuccessMessage(
+        !staffUser.can_upload_library_content
+          ? 'Coach upload permission enabled.'
+          : 'Coach upload permission removed.'
+      );
+    } catch (err) {
+      console.error('Toggle coach upload permission error:', err);
+      setError(err.response?.data?.message || 'Failed to update coach upload permission');
     } finally {
       setActionUserId(null);
     }
@@ -238,6 +269,20 @@ export default function StaffPage() {
                   <option value="admin">admin</option>
                 </select>
               </div>
+
+              {formData.role === 'coach' ? (
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label className="checkbox-row">
+                    <input
+                      type="checkbox"
+                      name="can_upload_library_content"
+                      checked={formData.can_upload_library_content}
+                      onChange={handleChange}
+                    />
+                    <span>Allow this coach to upload and manage their own gym library content.</span>
+                  </label>
+                </div>
+              ) : null}
 
               <div>
                 <button type="submit" disabled={submitting}>
@@ -323,6 +368,11 @@ export default function StaffPage() {
                         <div className="member-card-summary-row">
                           <span className="member-card-summary-pill">{staffUser.role}</span>
                           <span className="member-card-summary-pill">{staffUser.is_active ? 'Active' : 'Inactive'}</span>
+                          {staffUser.role === 'coach' ? (
+                            <span className="member-card-summary-pill">
+                              Uploads {staffUser.can_upload_library_content ? 'enabled' : 'disabled'}
+                            </span>
+                          ) : null}
                           <span className="member-card-summary-pill">
                             Added {new Date(staffUser.created_at).toLocaleDateString()}
                           </span>
@@ -334,6 +384,11 @@ export default function StaffPage() {
                             <div className="meta-text">Role: {staffUser.role}</div>
                             <div className="meta-text">
                               Active: {staffUser.is_active ? 'Yes' : 'No'}
+                            </div>
+                            <div className="meta-text">
+                              Library uploads: {staffUser.role === 'coach'
+                                ? (staffUser.can_upload_library_content ? 'Allowed' : 'Not allowed')
+                                : 'Allowed'}
                             </div>
                             <div className="meta-text">
                               Created: {new Date(staffUser.created_at).toLocaleString()}
@@ -350,6 +405,21 @@ export default function StaffPage() {
                             >
                               {actionUserId === staffUser.id ? 'Preparing link...' : staffUser.is_active ? 'Prepare reset link' : 'Prepare setup link'}
                             </button>
+
+                            {staffUser.role === 'coach' ? (
+                              <button
+                                type="button"
+                                className="secondary-button"
+                                onClick={() => handleToggleCoachUploadPermission(staffUser)}
+                                disabled={actionUserId === staffUser.id}
+                              >
+                                {actionUserId === staffUser.id
+                                  ? 'Updating permission...'
+                                  : staffUser.can_upload_library_content
+                                    ? 'Disable uploads'
+                                    : 'Enable uploads'}
+                              </button>
+                            ) : null}
 
                             {staffUser.is_active ? (
                               <button

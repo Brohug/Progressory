@@ -7,6 +7,13 @@ const PLAN_CODES = Object.freeze({
   REGULAR: 'regular'
 });
 
+const PLAN_PUBLIC_LABELS = Object.freeze({
+  [PLAN_CODES.NONE]: 'None',
+  [PLAN_CODES.DEMO]: 'Demo',
+  [PLAN_CODES.FOUNDER]: 'Founder',
+  [PLAN_CODES.REGULAR]: 'Standard'
+});
+
 const BILLING_STATUSES = Object.freeze({
   NONE: 'none',
   TRIALING: 'trialing',
@@ -131,7 +138,8 @@ const normalizeSubscriptionRow = (row) => {
     ...row,
     plan_code: normalizePlanCode(row.plan_code),
     billing_status: normalizeBillingStatus(row.billing_status),
-    cancel_at_period_end: Boolean(row.cancel_at_period_end)
+    cancel_at_period_end: Boolean(row.cancel_at_period_end),
+    founder_locked_rate: Boolean(row.founder_locked_rate)
   };
 };
 
@@ -244,8 +252,16 @@ const inferPlanCodeFromPriceId = (priceId) => {
     return PLAN_CODES.NONE;
   }
 
-  const founderPriceId = String(process.env.STRIPE_FOUNDER_PRICE_ID || '').trim();
-  const regularPriceId = String(process.env.STRIPE_REGULAR_PRICE_ID || '').trim();
+  const founderPriceId = String(
+    process.env.STRIPE_PRICE_FOUNDER_MONTHLY
+    || process.env.STRIPE_FOUNDER_PRICE_ID
+    || ''
+  ).trim();
+  const regularPriceId = String(
+    process.env.STRIPE_PRICE_STANDARD_MONTHLY
+    || process.env.STRIPE_REGULAR_PRICE_ID
+    || ''
+  ).trim();
 
   if (founderPriceId && normalizedPriceId === founderPriceId) {
     return PLAN_CODES.FOUNDER;
@@ -298,10 +314,14 @@ const buildSafeBillingPayload = (subscriptionRow) => {
   return {
     gym_id: subscription.gym_id,
     plan_code: subscription.plan_code,
+    plan_label: PLAN_PUBLIC_LABELS[subscription.plan_code] || 'None',
     billing_status: subscription.billing_status,
+    founder_locked_rate: Boolean(subscription.founder_locked_rate),
+    founder_started_at: subscription.founder_started_at || null,
     stripe_customer_id_present: Boolean(subscription.stripe_customer_id),
     stripe_subscription_id_present: Boolean(subscription.stripe_subscription_id),
     price_id: subscription.price_id || null,
+    current_period_start: subscription.current_period_start || null,
     current_period_end: subscription.current_period_end || null,
     cancel_at_period_end: Boolean(subscription.cancel_at_period_end),
     trial_ends_at: subscription.trial_ends_at || null,
@@ -311,6 +331,7 @@ const buildSafeBillingPayload = (subscriptionRow) => {
 
 module.exports = {
   PLAN_CODES,
+  PLAN_PUBLIC_LABELS,
   BILLING_STATUSES,
   normalizePlanCode,
   normalizeBillingStatus,

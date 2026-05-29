@@ -122,6 +122,7 @@ export default function EntrySetupsPage() {
   const [isMobileCompactCards, setIsMobileCompactCards] = useState(() => (
     typeof window !== 'undefined' ? window.innerWidth <= 720 : false
   ));
+  const [isMobileSearchShellCollapsed, setIsMobileSearchShellCollapsed] = useState(false);
   const hasHandledInitialFamilySelectionRef = useRef(false);
   const exampleFormRef = useRef(null);
   const builtInSearchTopRef = useRef(null);
@@ -148,6 +149,12 @@ export default function EntrySetupsPage() {
     mediaQuery.addListener(syncCompactState);
     return () => mediaQuery.removeListener(syncCompactState);
   }, []);
+
+  useEffect(() => {
+    if (!isMobileCompactCards) {
+      setIsMobileSearchShellCollapsed(false);
+    }
+  }, [isMobileCompactCards]);
 
   useEffect(() => {
     if (!selectedFamily) {
@@ -390,6 +397,47 @@ export default function EntrySetupsPage() {
 
   const topBuiltInMatch = filteredSetupFamilies[0] || null;
   const topSavedMatch = sortedCustomExamples[0] || null;
+  const nextMoveSuggestions = useMemo(() => {
+    const suggestions = [];
+
+    if (selectedFamily) {
+      const selectedBuiltIn = setupFamilies.find((family) => family.title === selectedFamily);
+      if (selectedBuiltIn) {
+        suggestions.push({
+          title: 'Continue from the selected family',
+          body: `${selectedBuiltIn.title} is already focused, so the fastest next move is to open its matching Curriculum or Decision Tree branch.`,
+          primaryLabel: 'Open Curriculum',
+          primaryTo: buildCurriculumLink(selectedBuiltIn.curriculumSearch),
+          secondaryLabel: 'Open Decision Tree',
+          secondaryTo: buildDecisionTreeLink(selectedBuiltIn.treeSearch, selectedBuiltIn.title)
+        });
+      }
+    }
+
+    if (topBuiltInMatch) {
+      suggestions.push({
+        title: 'Best built-in family to open next',
+        body: `${topBuiltInMatch.title} is the strongest visible starter family right now. Use it to bridge straight into Curriculum or the Tree.`,
+        primaryLabel: 'Open family',
+        primaryTo: buildCurriculumLink(topBuiltInMatch.curriculumSearch),
+        secondaryLabel: 'Open in Tree',
+        secondaryTo: buildDecisionTreeLink(topBuiltInMatch.treeSearch, topBuiltInMatch.title)
+      });
+    }
+
+    if (topSavedMatch) {
+      suggestions.push({
+        title: 'Reusable example already saved',
+        body: `${topSavedMatch.title} is already in your saved examples, so you can reopen it instead of rebuilding the sequence from scratch.`,
+        primaryLabel: 'Open saved examples',
+        primaryTo: '#saved-examples',
+        secondaryLabel: 'Open Curriculum',
+        secondaryTo: buildCurriculumLink(topSavedMatch.curriculum_search || topSavedMatch.linked_family_title || topSavedMatch.title)
+      });
+    }
+
+    return suggestions.slice(0, 3);
+  }, [selectedFamily, topBuiltInMatch, topSavedMatch]);
 
   const sharedExamples = useMemo(
     () => sortedCustomExamples.filter((example) => example.visibility === 'gym_shared'),
@@ -1107,7 +1155,47 @@ export default function EntrySetupsPage() {
           </div>
         </section>
 
-        <section className="page-section">
+        <section className="page-section dashboard-recommendation-section">
+          <div className="section-header">
+            <div>
+              <h3>Best next move from here</h3>
+              <p className="section-note">Use this when you want the strongest bridge out of Entry Setups instead of reading the whole page cold.</p>
+            </div>
+          </div>
+          <div className="dashboard-recommendation-grid">
+            {nextMoveSuggestions.map((item) => (
+              <article key={item.title} className="dashboard-next-move-highlight">
+                <div className="dashboard-next-move-copy">
+                  <span className="eyebrow">Setup bridge</span>
+                  <strong>{item.title}</strong>
+                  <p className="meta-text">{item.body}</p>
+                </div>
+                <div className="inline-actions">
+                  {item.primaryTo.startsWith('#') ? (
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => {
+                        window.location.hash = item.primaryTo;
+                      }}
+                    >
+                      {item.primaryLabel}
+                    </button>
+                  ) : (
+                    <Link className="secondary-button" to={item.primaryTo}>
+                      {item.primaryLabel}
+                    </Link>
+                  )}
+                  <Link className="secondary-button" to={item.secondaryTo}>
+                    {item.secondaryLabel}
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section id="saved-examples" className="page-section">
           <div className="section-header">
             <div>
               <h3>Saved setup examples</h3>
@@ -1449,47 +1537,60 @@ export default function EntrySetupsPage() {
           </div>
 
           <div ref={builtInSearchTopRef} />
-          <div className="entry-setups-search-shell entry-setups-search-shell-sticky">
-            <div className="entry-setups-search-shell-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={scrollToBuiltInSearchTop}
-              >
-                Back to top
-              </button>
+          <div className={`entry-setups-search-shell entry-setups-search-shell-sticky${isMobileSearchShellCollapsed ? ' is-mobile-collapsed' : ''}`}>
+            <div className="entry-setups-search-shell-topbar">
+              {!isMobileSearchShellCollapsed ? (
+                <div className="entry-setups-search-shell-actions">
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={scrollToBuiltInSearchTop}
+                  >
+                    Back to top
+                  </button>
+                </div>
+              ) : null}
             </div>
-            <div className="entry-setups-search-row">
-              <div>
-                <label htmlFor="entry-setup-search">Search setup families</label>
-                <input
-                  id="entry-setup-search"
-                  type="text"
-                  value={familySearch}
-                  onChange={(event) => setFamilySearch(event.target.value)}
-                  placeholder="Search single leg, front headlock, guard, passing..."
-                />
-              </div>
-            </div>
-            <div className="entry-setups-lane-row">
-              <button
-                type="button"
-                className={`secondary-button${!activeLane ? ' is-active' : ''}`}
-                onClick={() => setActiveLane('')}
-              >
-                All lanes ({builtInLaneCounts.all})
-              </button>
-              {quickLanes.map((lane) => (
-                <button
-                  key={lane}
-                  type="button"
-                  className={`secondary-button${activeLane === lane ? ' is-active' : ''}`}
-                  onClick={() => setActiveLane(lane)}
-                >
-                  {lane} ({builtInLaneCounts[lane] || 0})
-                </button>
-              ))}
-            </div>
+
+            {isMobileSearchShellCollapsed ? (
+              <p className="mobile-shell-collapsed-note">
+                Filters are tucked away so you can read the setup families more easily.
+              </p>
+            ) : (
+              <>
+                <div className="entry-setups-search-row">
+                  <div>
+                    <label htmlFor="entry-setup-search">Search setup families</label>
+                    <input
+                      id="entry-setup-search"
+                      type="text"
+                      value={familySearch}
+                      onChange={(event) => setFamilySearch(event.target.value)}
+                      placeholder="Search single leg, front headlock, guard, passing..."
+                    />
+                  </div>
+                </div>
+                <div className="entry-setups-lane-row">
+                  <button
+                    type="button"
+                    className={`secondary-button${!activeLane ? ' is-active' : ''}`}
+                    onClick={() => setActiveLane('')}
+                  >
+                    All lanes ({builtInLaneCounts.all})
+                  </button>
+                  {quickLanes.map((lane) => (
+                    <button
+                      key={lane}
+                      type="button"
+                      className={`secondary-button${activeLane === lane ? ' is-active' : ''}`}
+                      onClick={() => setActiveLane(lane)}
+                    >
+                      {lane} ({builtInLaneCounts[lane] || 0})
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
             <div className="entry-setups-search-summary">
               <span className="entry-setup-info-chip">
                 {filteredSetupFamilies.length} famil{filteredSetupFamilies.length === 1 ? 'y' : 'ies'} shown
@@ -1515,29 +1616,40 @@ export default function EntrySetupsPage() {
                 </button>
               ) : null}
             </div>
-            <div className="entry-setups-lane-row entry-setups-sort-row">
-              <button
-                type="button"
-                className={`secondary-button${builtInSort === 'recommended' ? ' is-active' : ''}`}
-                onClick={() => setBuiltInSort('recommended')}
-              >
-                Recommended
-              </button>
-              <button
-                type="button"
-                className={`secondary-button${builtInSort === 'a-z' ? ' is-active' : ''}`}
-                onClick={() => setBuiltInSort('a-z')}
-              >
-                A-Z
-              </button>
-              <button
-                type="button"
-                className={`secondary-button${builtInSort === 'lane' ? ' is-active' : ''}`}
-                onClick={() => setBuiltInSort('lane')}
-              >
-                Group by lane
-              </button>
-            </div>
+            {!isMobileSearchShellCollapsed ? (
+              <div className="entry-setups-lane-row entry-setups-sort-row">
+                <button
+                  type="button"
+                  className={`secondary-button${builtInSort === 'recommended' ? ' is-active' : ''}`}
+                  onClick={() => setBuiltInSort('recommended')}
+                >
+                  Recommended
+                </button>
+                <button
+                  type="button"
+                  className={`secondary-button${builtInSort === 'a-z' ? ' is-active' : ''}`}
+                  onClick={() => setBuiltInSort('a-z')}
+                >
+                  A-Z
+                </button>
+                <button
+                  type="button"
+                  className={`secondary-button${builtInSort === 'lane' ? ' is-active' : ''}`}
+                  onClick={() => setBuiltInSort('lane')}
+                >
+                  Group by lane
+                </button>
+              </div>
+            ) : null}
+            <button
+              type="button"
+              className="secondary-button mobile-sticky-corner-toggle"
+              onClick={() => setIsMobileSearchShellCollapsed((current) => !current)}
+              aria-label={isMobileSearchShellCollapsed ? 'Show search and lane filters' : 'Hide search and lane filters'}
+              title={isMobileSearchShellCollapsed ? 'Show search and lane filters' : 'Hide search and lane filters'}
+            >
+              {isMobileSearchShellCollapsed ? '↓' : '↑'}
+            </button>
           </div>
 
           <div className="action-grid entry-setups-family-grid">

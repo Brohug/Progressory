@@ -2729,6 +2729,54 @@ export default function DecisionTreePage() {
       .filter((group) => group.scenarios.length > 0)
   ), [resolvedCoachingScenarios]);
 
+  const treeStarterCards = useMemo(() => {
+    if (focusEntry) {
+      return [
+        {
+          title: `Stay with ${focusEntry.name}`,
+          body: 'You already have a live branch open. Keep pushing this path before starting a totally different problem.',
+          primaryLabel: 'Open Curriculum',
+          primaryTo: buildCurriculumIndexLink(focusEntry),
+          secondaryLabel: 'Open Library',
+          secondaryTo: buildLibraryLink({
+            entryName: focusEntry.name,
+            focusEntry,
+            decisionPathEntries
+          })
+        },
+        {
+          title: 'Continue through a setup family',
+          body: setupFamily
+            ? `The ${setupFamily} setup family is already shaping this branch.`
+            : 'Use Entry Setups if you want the opening reaction that creates this branch in live training.',
+          primaryLabel: 'Open Entry Setups',
+          primaryTo: (() => {
+            const fallbackFamily = findRelatedSetupFamilies(focusEntry.name)[0]?.title || '';
+            return fallbackFamily || setupFamily
+              ? `/entry-setups?family=${encodeURIComponent(setupFamily || fallbackFamily)}`
+              : '/entry-setups';
+          })(),
+          secondaryLabel: 'Save scenario draft',
+          secondaryTo: buildTrainingScenarioDraftLink({
+            setupFamily,
+            focusEntry,
+            currentSequenceTrail
+          })
+        }
+      ];
+    }
+
+    const starterScenarios = groupedCoachingScenarios.flatMap((group) => group.scenarios).slice(0, 3);
+    return starterScenarios.map((scenario) => ({
+      title: scenario.label,
+      body: scenario.description,
+      primaryLabel: 'Start here',
+      primaryTo: `/decision-tree?search=${encodeURIComponent(scenario.focusName || scenario.label)}`,
+      secondaryLabel: 'Open search',
+      secondaryTo: `/decision-tree?search=${encodeURIComponent(scenario.focusName || scenario.label)}`
+    }));
+  }, [currentSequenceTrail, decisionPathEntries, focusEntry, groupedCoachingScenarios, setupFamily]);
+
   const visibleBranchCount = branchGroups.reduce((count, group) => count + group.options.length, 0);
   const activeFilterSummary = useMemo(
     () => buildFilterSummary(filters, [
@@ -3118,6 +3166,40 @@ export default function DecisionTreePage() {
             ? 'Follow one study path at a time, then jump back into Curriculum or Library when you want more support.'
             : 'Explore one universal grappling tree from Curriculum, then use real-life filters to narrow the next best options for a coach, student, or matchup.'}
         </p>
+
+        <section className="page-section dashboard-recommendation-section">
+          <div className="section-header">
+            <div>
+              <h3>Best next move from here</h3>
+              <p className="section-note">Use this when the Tree feels broad and you want one strong starting point immediately.</p>
+            </div>
+          </div>
+          <div className="dashboard-recommendation-grid">
+            {treeStarterCards.map((card) => (
+              <article key={card.title} className="dashboard-next-move-highlight">
+                <div className="dashboard-next-move-copy">
+                  <span className="eyebrow">Tree guide</span>
+                  <strong>{card.title}</strong>
+                  <p className="meta-text">{card.body}</p>
+                </div>
+                <div className="inline-actions">
+                  {card.onClick ? (
+                    <button type="button" className="secondary-button" onClick={card.onClick}>
+                      {card.primaryLabel}
+                    </button>
+                  ) : (
+                    <Link className="secondary-button" to={card.primaryTo}>
+                      {card.primaryLabel}
+                    </Link>
+                  )}
+                  <Link className="secondary-button" to={card.secondaryTo}>
+                    {card.secondaryLabel}
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
 
         <section className="page-section decision-tree-hero">
           <div>

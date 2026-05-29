@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import ExpandableSection from '../components/ExpandableSection';
@@ -9,6 +9,7 @@ import { findRelatedSetupFamilies } from '../data/entrySetupFamilies';
 import { formatSentenceLabel } from '../utils/formatLabel';
 import TopicSearchSelect from '../components/TopicSearchSelect';
 import { useAuth } from '../hooks/useAuth';
+import { POLICY_SUPPORT_EMAIL } from '../constants/policies';
 
 const normalizeValue = (value) => (
   String(value || '')
@@ -55,13 +56,23 @@ const topicTypeCategoryHints = {
   drill_theme: ['Drills', 'Constraint-Led Games', 'Positional Sparring']
 };
 
+const reportReasonLabels = {
+  inappropriate_content: 'Inappropriate or unsafe content',
+  minor_safety_concern: 'Unsafe for kids or teens',
+  copyright_or_permission_issue: 'Uploaded without permission',
+  harassment_or_abuse: 'Harassment or abuse',
+  other: 'Something else'
+};
+
 export default function LibraryPage() {
   const { user } = useAuth();
   const isMember = user?.role === 'member';
   const isManagement = user?.role === 'owner' || user?.role === 'admin';
+  const canUploadLibraryContent = isManagement || (user?.role === 'coach' && user?.can_upload_library_content);
   const [searchParams, setSearchParams] = useSearchParams();
   const libraryFiltersTopRef = useRef(null);
   const libraryEntriesTopRef = useRef(null);
+  const libraryCreateTopRef = useRef(null);
   const librarySource = searchParams.get('source') || '';
   const cameFromTree = librarySource === 'tree';
   const cameFromPlannedClasses = librarySource === 'planned-classes';
@@ -83,6 +94,12 @@ export default function LibraryPage() {
   const [expandedEntryDetails, setExpandedEntryDetails] = useState({});
   const [editingEntryId, setEditingEntryId] = useState(null);
   const [activeEntryId, setActiveEntryId] = useState(null);
+  const [reportingEntry, setReportingEntry] = useState(null);
+  const [reportSuccessNotice, setReportSuccessNotice] = useState('');
+  const [reportFormData, setReportFormData] = useState({
+    reason: 'inappropriate_content',
+    description: ''
+  });
   const [editFormData, setEditFormData] = useState({
     program_id: '',
     curriculum_topic_id: '',
@@ -90,7 +107,8 @@ export default function LibraryPage() {
     entry_type: 'video_note',
     description: '',
     video_url: '',
-    visibility: 'coach_only'
+    visibility: 'coach_only',
+    contentSafetyConfirmed: false
   });
   const [formData, setFormData] = useState({
     program_id: '',
@@ -99,7 +117,8 @@ export default function LibraryPage() {
     entry_type: 'video_note',
     description: '',
     video_url: '',
-    visibility: 'coach_only'
+    visibility: 'coach_only',
+    contentSafetyConfirmed: false
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -148,8 +167,35 @@ export default function LibraryPage() {
     });
   };
 
+  const scrollToLibraryCreateTop = () => {
+    window.requestAnimationFrame(() => {
+      const target = libraryCreateTopRef.current;
+
+      if (!target) {
+        return;
+      }
+
+      const targetTop = target.getBoundingClientRect().top + window.scrollY - 96;
+      window.scrollTo({
+        top: Math.max(targetTop, 0),
+        behavior: 'smooth'
+      });
+    });
+  };
+
+  const openCreateEntryForm = () => {
+    setShowCreateEntryForm(true);
+    scrollToLibraryCreateTop();
+  };
+
   const entryTypes = ['technique', 'concept', 'drill', 'cla_game', 'video_note'];
-  const visibilityOptions = ['coach_only', 'member_visible'];
+  const visibilityOptions = ['coach_only', 'members', 'parents', 'members_and_parents'];
+  const reportReasonOptions = [
+    'inappropriate_content',
+    'minor_safety_concern',
+    'harassment_or_abuse',
+    'other'
+  ];
   const quickEntryPresets = [
     {
       key: 'video_note',
@@ -162,7 +208,7 @@ export default function LibraryPage() {
       key: 'technique',
       label: 'Technique resource',
       entry_type: 'technique',
-      visibility: 'member_visible',
+      visibility: 'members',
       description: 'Technique reference meant to support a specific curriculum topic.'
     },
     {
@@ -174,20 +220,20 @@ export default function LibraryPage() {
     }
   ];
 
-  const fetchEntries = async () => {
+  const fetchEntries = useCallback(async () => {
     const response = await api.get('/library');
     setEntries(response.data);
-  };
+  }, []);
 
-  const fetchPrograms = async () => {
+  const fetchPrograms = useCallback(async () => {
     const response = await api.get('/programs');
     setPrograms(response.data);
-  };
+  }, []);
 
-  const fetchTopics = async () => {
+  const fetchTopics = useCallback(async () => {
     const response = await api.get('/topics');
     setTopics(response.data);
-  };
+  }, []);
 
   const topicById = useMemo(() => {
     const nextMap = new Map();
@@ -254,7 +300,7 @@ export default function LibraryPage() {
     };
 
     loadPageData();
-  }, [isMember]);
+  }, [fetchEntries, fetchPrograms, fetchTopics, isMember]);
 
   useEffect(() => {
     const nextParams = new URLSearchParams();
@@ -287,8 +333,8 @@ export default function LibraryPage() {
   ]);
 
   const orderedEntries = useMemo(() => {
-    const active = entries.filter((entry) => entry.is_active);
-    const inactive = entries.filter((entry) => !entry.is_active);
+    const active = entries.filter((entry) => entry.content_status === 'active');
+    const inactive = entries.filter((entry) => entry.content_status !== 'active');
 
     const visibleEntries = showInactive ? [...active, ...inactive] : active;
 
@@ -360,7 +406,9 @@ export default function LibraryPage() {
 
   const summaryCards = useMemo(() => {
     const linkedTopicCount = filteredEntries.filter((entry) => entry.curriculum_topic_id).length;
-    const memberVisibleCount = filteredEntries.filter((entry) => entry.visibility === 'member_visible').length;
+    const memberVisibleCount = filteredEntries.filter((entry) => (
+      entry.visibility === 'members' || entry.visibility === 'members_and_parents'
+    )).length;
     const videoCount = filteredEntries.filter((entry) => entry.video_url).length;
 
     return [
@@ -370,6 +418,53 @@ export default function LibraryPage() {
       { label: 'Videos linked', value: videoCount }
     ];
   }, [filteredEntries]);
+
+  const memberReadyEntries = useMemo(() => (
+    entries.filter((entry) => entry.content_status === 'active' && (entry.visibility === 'members' || entry.visibility === 'members_and_parents'))
+  ), [entries]);
+
+  const needsTopicEntries = useMemo(() => (
+    entries.filter((entry) => entry.content_status === 'active' && !entry.curriculum_topic_id)
+  ), [entries]);
+
+  const latestLibraryEntry = useMemo(() => (
+    [...entries]
+      .filter((entry) => entry.content_status === 'active')
+      .sort((a, b) => new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0))[0] || null
+  ), [entries]);
+
+  const librarySuggestionCards = useMemo(() => {
+    const cards = [];
+
+    if (latestLibraryEntry) {
+      cards.push({
+        title: 'Recently updated resource',
+        body: `${latestLibraryEntry.title} is the fastest way to reopen what changed most recently in your gym library.`,
+        primaryLabel: 'Open Library entries',
+        primaryTo: '#library-entries'
+      });
+    }
+
+    if (memberReadyEntries[0]) {
+      cards.push({
+        title: 'Shared for members after class',
+        body: `${memberReadyEntries[0].title} is already visible to members, so it can support review right away.`,
+        primaryLabel: 'Open member-ready resources',
+        primaryTo: `/library?search=${encodeURIComponent(memberReadyEntries[0].title)}`
+      });
+    }
+
+    if (needsTopicEntries[0]) {
+      cards.push({
+        title: 'Needs topic link',
+        body: `${needsTopicEntries[0].title} still is not tied to Curriculum, so it is harder to find from the rest of the app.`,
+        primaryLabel: 'Filter needs topic',
+        primaryTo: '/library?needsTopic=true'
+      });
+    }
+
+    return cards.slice(0, 3);
+  }, [latestLibraryEntry, memberReadyEntries, needsTopicEntries]);
 
   const selectedTopic = useMemo(
     () => topics.find((topic) => String(topic.id) === topicFilter) || null,
@@ -427,7 +522,7 @@ export default function LibraryPage() {
     return nextFilters;
   }, [search, selectedProgram, selectedTopic, entryTypeFilter, needsTopicOnly]);
 
-  const activeEntryCount = entries.filter((entry) => entry.is_active).length;
+  const activeEntryCount = entries.filter((entry) => entry.content_status === 'active').length;
   const inactiveEntryCount = entries.length - activeEntryCount;
 
   const getCoachingUseBadges = (entry) => {
@@ -437,8 +532,10 @@ export default function LibraryPage() {
       badges.push('Supports curriculum topic');
     }
 
-    if (entry.visibility === 'member_visible') {
+    if (entry.visibility === 'members' || entry.visibility === 'members_and_parents') {
       badges.push('Good for member review');
+    } else if (entry.visibility === 'parents') {
+      badges.push('Visible to parents');
     } else {
       badges.push('Coach-facing teaching note');
     }
@@ -456,6 +553,15 @@ export default function LibraryPage() {
 
   const getRelatedSetupFamiliesForEntry = (entry) => (
     findRelatedSetupFamilies(entry.topic_title || entry.title)
+  );
+
+  const userCanManageEntry = (entry) => (
+    isManagement
+    || (
+      user?.role === 'coach'
+      && user?.can_upload_library_content
+      && Number(entry.created_by_user_id) === Number(user.id)
+    )
   );
 
   const availableTopics = useMemo(() => {
@@ -522,7 +628,7 @@ export default function LibraryPage() {
     setSuccessMessage('');
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.type === 'checkbox' ? e.target.checked : e.target.value
     }));
   };
 
@@ -530,7 +636,7 @@ export default function LibraryPage() {
     setSuccessMessage('');
     setEditFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.type === 'checkbox' ? e.target.checked : e.target.value
     }));
   };
 
@@ -550,6 +656,37 @@ export default function LibraryPage() {
     }));
   };
 
+  const openReportDialog = (entry) => {
+    setError('');
+    setSuccessMessage('');
+    setReportSuccessNotice('');
+    setReportingEntry(entry);
+    setReportFormData({
+      reason: 'inappropriate_content',
+      description: ''
+    });
+  };
+
+  const closeReportDialog = () => {
+    setReportingEntry(null);
+    setReportFormData({
+      reason: 'inappropriate_content',
+      description: ''
+    });
+  };
+
+  const closeReportSuccessNotice = () => {
+    setReportSuccessNotice('');
+  };
+
+  const handleReportFieldChange = (event) => {
+    const { name, value } = event.target;
+    setReportFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleApplyPreset = (preset) => {
     setSuccessMessage('');
     setFormData((prev) => ({
@@ -557,7 +694,7 @@ export default function LibraryPage() {
       entry_type: preset.entry_type,
       visibility: preset.visibility
     }));
-    setShowCreateEntryForm(true);
+    openCreateEntryForm();
   };
 
   const handleSubmit = async (e) => {
@@ -584,7 +721,8 @@ export default function LibraryPage() {
         entry_type: formData.entry_type,
         description: formData.description || null,
         video_url: formData.video_url || null,
-        visibility: formData.visibility
+        visibility: formData.visibility,
+        contentSafetyConfirmed: formData.contentSafetyConfirmed
       };
 
       await api.post('/library', payload);
@@ -596,7 +734,8 @@ export default function LibraryPage() {
         entry_type: 'video_note',
         description: '',
         video_url: '',
-        visibility: 'coach_only'
+        visibility: 'coach_only',
+        contentSafetyConfirmed: false
       });
 
       await fetchEntries();
@@ -625,18 +764,9 @@ export default function LibraryPage() {
       setError('');
       setSuccessMessage('');
       setActiveEntryId(entry.id);
-      await api.put(`/library/${entry.id}`, {
-        program_id: entry.program_id,
-        curriculum_topic_id: entry.curriculum_topic_id,
-        title: entry.title,
-        entry_type: entry.entry_type,
-        description: entry.description || null,
-        video_url: entry.video_url || null,
-        visibility: entry.visibility,
-        is_active: nextIsActive
-      });
+      await api.patch(`/library/${entry.id}/${nextIsActive ? 'restore' : 'hide'}`);
       await fetchEntries();
-      setSuccessMessage(nextIsActive ? 'Library entry reactivated successfully.' : 'Library entry moved out of the active list.');
+      setSuccessMessage(nextIsActive ? 'Library entry restored successfully.' : 'Library entry hidden from active use.');
     } catch (err) {
       console.error('Update library entry active state error:', err);
       setError(err.response?.data?.message || 'Couldn\'t update that library entry right now.');
@@ -656,7 +786,8 @@ export default function LibraryPage() {
       entry_type: entry.entry_type || 'video_note',
       description: entry.description || '',
       video_url: entry.video_url || '',
-      visibility: entry.visibility || 'coach_only'
+      visibility: entry.visibility || 'coach_only',
+      contentSafetyConfirmed: Boolean(entry.content_safety_confirmed)
     });
   };
 
@@ -669,7 +800,8 @@ export default function LibraryPage() {
       entry_type: 'video_note',
       description: '',
       video_url: '',
-      visibility: 'coach_only'
+      visibility: 'coach_only',
+      contentSafetyConfirmed: false
     });
   };
 
@@ -696,7 +828,8 @@ export default function LibraryPage() {
         description: editFormData.description || null,
         video_url: editFormData.video_url || null,
         visibility: editFormData.visibility,
-        is_active: entry.is_active
+        is_active: entry.content_status === 'active',
+        contentSafetyConfirmed: editFormData.contentSafetyConfirmed
       });
 
       await fetchEntries();
@@ -705,6 +838,50 @@ export default function LibraryPage() {
     } catch (err) {
       console.error('Update library entry error:', err);
       setError(err.response?.data?.message || 'Couldn\'t update that library entry right now.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteEntry = async (entry) => {
+    const confirmed = window.confirm('Delete this library entry from active use? It will stay in the system as deleted.');
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setError('');
+      setSuccessMessage('');
+      setActiveEntryId(entry.id);
+      await api.delete(`/library/${entry.id}`);
+      await fetchEntries();
+      setSuccessMessage('Library entry deleted successfully.');
+    } catch (err) {
+      console.error('Delete library entry error:', err);
+      setError(err.response?.data?.message || 'Could not delete that library entry right now.');
+    } finally {
+      setActiveEntryId(null);
+    }
+  };
+
+  const handleSubmitReport = async (event) => {
+    event.preventDefault();
+
+    if (!reportingEntry) {
+      return;
+    }
+
+      try {
+        setSubmitting(true);
+        setError('');
+        setSuccessMessage('');
+        await api.post(`/library/${reportingEntry.id}/reports`, reportFormData);
+        setReportSuccessNotice('Thank you. The content report was submitted.');
+        closeReportDialog();
+      } catch (err) {
+      console.error('Submit content report error:', err);
+      setError(err.response?.data?.message || 'Could not submit that content report right now.');
     } finally {
       setSubmitting(false);
     }
@@ -731,8 +908,9 @@ export default function LibraryPage() {
     { label: 'Type', value: formatSentenceLabel(formData.entry_type) },
     { label: 'Visibility', value: formatSentenceLabel(formData.visibility) },
     { label: 'Program', value: formSelectedProgram?.name || 'No program' },
-    { label: 'Linked topic', value: formSelectedTopic?.title || 'No topic linked' }
-  ]), [formData.entry_type, formData.visibility, formSelectedProgram, formSelectedTopic]);
+    { label: 'Linked topic', value: formSelectedTopic?.title || 'No topic linked' },
+    { label: 'Safety confirmed', value: formData.contentSafetyConfirmed ? 'Yes' : 'Required' }
+  ]), [formData.contentSafetyConfirmed, formData.entry_type, formData.visibility, formSelectedProgram, formSelectedTopic]);
 
   if (isMember) {
     const latestMemberEntry = filteredEntries[0] || null;
@@ -744,6 +922,12 @@ export default function LibraryPage() {
         <p className="page-intro">
           Open the resources your coaches shared, then jump back into Curriculum or the Tree when you want more context.
         </p>
+        <section className="page-section">
+          <strong>Content safety</strong>
+          <p className="section-note">
+            Content is provided by your gym for martial arts education and review. Report anything inappropriate or unsafe to your gym staff or to <a href={`mailto:${POLICY_SUPPORT_EMAIL}`}>{POLICY_SUPPORT_EMAIL}</a>.
+          </p>
+        </section>
 
         {error ? <p className="error-text">{error}</p> : null}
 
@@ -963,10 +1147,6 @@ export default function LibraryPage() {
                     <div>
                       <strong>{entry.title}</strong>
                       <div className="library-card-chip-row">
-                        <span className="library-info-chip">{formatSentenceLabel(entry.entry_type)}</span>
-                        {entry.program_name ? (
-                          <span className="library-info-chip">{entry.program_name}</span>
-                        ) : null}
                         {entry.topic_title ? (
                           <span className="library-info-chip">{entry.topic_title}</span>
                         ) : null}
@@ -1006,15 +1186,112 @@ export default function LibraryPage() {
                           Study in Tree
                         </Link>
                       ) : null}
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => openReportDialog(entry)}
+                      >
+                        Report content
+                      </button>
                     </div>
                   </li>
                 ))}
               </ul>
-          )}
-        </ExpandableSection>
-        </div>
-      </Layout>
-    );
+            )}
+          </ExpandableSection>
+
+          {reportingEntry ? (
+            <div className="landing-request-overlay">
+              <div className="landing-request-modal" role="dialog" aria-modal="true" aria-labelledby="library-report-title">
+                <div className="landing-request-header">
+                <div>
+                  <div className="landing-request-eyebrow">CONTENT REPORT</div>
+                  <h3 id="library-report-title">Report library content</h3>
+                  <p className="section-note">
+                  Report anything inappropriate, unsafe for minors, abusive, or otherwise concerning.
+                  </p>
+                </div>
+                  <button type="button" className="secondary-button" onClick={closeReportDialog}>
+                    Close
+                  </button>
+                </div>
+
+                <div className="page-section" style={{ marginBottom: '1rem' }}>
+                  <strong>{reportingEntry.title}</strong>
+                  <p className="section-note" style={{ marginBottom: 0 }}>
+                    Content is provided by your gym for martial arts education and review. Report anything inappropriate or unsafe.
+                  </p>
+                </div>
+
+                <form className="form-grid" onSubmit={handleSubmitReport}>
+                  <div>
+                    <label>Reason</label>
+                    <select name="reason" value={reportFormData.reason} onChange={handleReportFieldChange}>
+                      {reportReasonOptions.map((reason) => (
+                        <option key={reason} value={reason}>
+                          {reportReasonLabels[reason] || formatSentenceLabel(reason)}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="meta-text" style={{ marginTop: 6, marginBottom: 0 }}>
+                      Pick the closest match. "Unsafe for kids or teens" covers anything you would not want shown around minors.
+                    </p>
+                  </div>
+
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label>Description (optional)</label>
+                    <textarea
+                      name="description"
+                      value={reportFormData.description}
+                      onChange={handleReportFieldChange}
+                      rows="4"
+                      placeholder="Share any context that would help your gym review this safely."
+                    />
+                  </div>
+
+                  <div className="inline-actions" style={{ gridColumn: '1 / -1' }}>
+                    <button type="submit" disabled={submitting}>
+                      {submitting ? 'Submitting report...' : 'Submit report'}
+                    </button>
+                    <button type="button" className="secondary-button" onClick={closeReportDialog}>
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          ) : null}
+
+          {reportSuccessNotice ? (
+            <div className="landing-request-overlay" onClick={closeReportSuccessNotice}>
+              <div
+                className="landing-request-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="library-report-success-title"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="landing-request-header">
+                  <div>
+                    <div className="landing-request-eyebrow">REPORT SUBMITTED</div>
+                    <h3 id="library-report-success-title">Thank you</h3>
+                    <p className="section-note" style={{ marginBottom: 0 }}>
+                      {reportSuccessNotice}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="page-section" style={{ marginBottom: 0 }}>
+                  <p className="meta-text" style={{ marginBottom: 0 }}>
+                    Click anywhere outside this message to close it.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+          </div>
+        </Layout>
+      );
   }
 
   const getTopicsForProgram = (programId) => {
@@ -1032,51 +1309,55 @@ export default function LibraryPage() {
   };
 
   return (
-    <Layout>
-      <div className="library-page">
-      <h2 className="page-title">Library</h2>
+      <Layout>
+        <div className="library-page">
+        <h2 className="page-title">Library</h2>
 
+      <div ref={libraryCreateTopRef} />
       <ExpandableSection
         title="Create Library Entry"
-        note="Add a teaching resource, video note, or reference."
-        summary="Open this when you want to add a library resource."
+        note={canUploadLibraryContent ? 'Add a teaching resource, video note, or reference.' : user?.role === 'coach' ? 'Request access from the gym owner to manage or upload library content.' : 'Only owner/admin users and coaches with explicit upload permission can add library content.'}
+        summary={canUploadLibraryContent ? 'Open this when you want to add a library resource.' : 'You can still review and report content here, but uploads are disabled for this account.'}
         className="library-create-section"
+        isOpen={showCreateEntryForm}
+        onToggle={setShowCreateEntryForm}
       >
         <div>
-          <div className="compact-form-header">
-            <div>
-              <h3>Create Library Entry</h3>
-              <p className="section-note">
-                Add a teaching resource, video note, or reference.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => setShowCreateEntryForm((prev) => !prev)}
-            >
-              {showCreateEntryForm ? 'Close library form' : 'Add library entry'}
-            </button>
-          </div>
+          <p className="section-note">
+            Progressory is for martial arts education only, not general-purpose media hosting. External video links are supported during founder beta, while direct upload/storage limits remain restricted.
+          </p>
 
-          <div className="library-preset-row">
-            {quickEntryPresets.map((preset) => (
-              <button
-                key={preset.key}
-                type="button"
-                className="secondary-button"
-                onClick={() => handleApplyPreset(preset)}
-              >
-                {preset.label}
-              </button>
-            ))}
-          </div>
+          {canUploadLibraryContent ? (
+            <>
+              <div className="library-preset-row">
+                {quickEntryPresets.map((preset) => (
+                  <button
+                    key={preset.key}
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => handleApplyPreset(preset)}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
 
-          <div className="library-preset-help meta-text">
-            Pick a quick start above to prefill the most common entry patterns.
-          </div>
+              <div className="library-preset-help meta-text">
+                Pick a quick start above to prefill the most common entry patterns.
+              </div>
+            </>
+            ) : (
+              <div className="page-section">
+                <strong>Uploads are restricted</strong>
+                <p className="section-note">
+                  {user?.role === 'coach'
+                    ? 'Request access from the gym owner to manage or upload library content. Owners and admins can manage visibility, hide content, delete content, and review reports.'
+                    : 'Members are view-only. Coaches need explicit upload permission from the gym owner. Owners and admins can manage visibility, hide content, delete content, and review reports.'}
+                </p>
+              </div>
+            )}
 
-          {showCreateEntryForm && (
+          {canUploadLibraryContent && showCreateEntryForm && (
             <form className="form-grid" onSubmit={handleSubmit}>
               <div className="class-flow-summary-grid library-create-summary" style={{ gridColumn: '1 / -1' }}>
                 {createEntrySummary.map((item) => (
@@ -1194,6 +1475,26 @@ export default function LibraryPage() {
                 </select>
               </div>
 
+                <div className="library-safety-confirmation" style={{ gridColumn: '1 / -1' }}>
+                  <div className="library-safety-confirmation-copy">
+                    <strong>Before saving</strong>
+                    <p className="meta-text">
+                      Confirm this is gym-approved martial arts education content. Sexual, exploitative, abusive, illegal, or unsafe material is prohibited, and you must have permission to upload it.
+                    </p>
+                  </div>
+                  <div className="library-safety-checkbox">
+                    <label className="library-safety-checkbox-row">
+                      <input
+                        type="checkbox"
+                        name="contentSafetyConfirmed"
+                        checked={formData.contentSafetyConfirmed}
+                        onChange={handleChange}
+                      />
+                      <span>I confirm this content is appropriate for martial arts education and I have permission to upload it.</span>
+                    </label>
+                  </div>
+                </div>
+
               <div>
                 <button type="submit" disabled={submitting}>
                   {submitting ? 'Saving...' : 'Save Library Entry'}
@@ -1232,6 +1533,43 @@ export default function LibraryPage() {
       </ExpandableSection>
 
       {error && <p className="error-text">{error}</p>}
+
+      <section className="page-section dashboard-recommendation-section">
+        <div className="section-header">
+          <div>
+            <h3>Use Library like a coaching payoff</h3>
+            <p className="section-note">This keeps Library feeling tied to real teaching instead of just acting like storage.</p>
+          </div>
+        </div>
+        <div className="dashboard-recommendation-grid">
+          {librarySuggestionCards.map((card) => (
+            <article key={card.title} className="dashboard-next-move-highlight">
+              <div className="dashboard-next-move-copy">
+                <span className="eyebrow">Library payoff</span>
+                <strong>{card.title}</strong>
+                <p className="meta-text">{card.body}</p>
+              </div>
+              <div className="inline-actions">
+                {card.primaryTo.startsWith('#') ? (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => {
+                      scrollToLibraryEntriesTop();
+                    }}
+                  >
+                    {card.primaryLabel}
+                  </button>
+                ) : (
+                  <Link className="secondary-button" to={card.primaryTo}>
+                    {card.primaryLabel}
+                  </Link>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <div ref={libraryFiltersTopRef} />
       <ExpandableSection
@@ -1300,13 +1638,13 @@ export default function LibraryPage() {
                 <Link className="secondary-button library-topic-link-button" to="/index">
                   Open Curriculum
                 </Link>
-                <button
-                  type="button"
-                  className="secondary-button library-topic-link-button"
-                  onClick={() => setShowCreateEntryForm(true)}
-                >
-                  Add library entry
-                </button>
+                    <button
+                      type="button"
+                      className="secondary-button library-topic-link-button"
+                      onClick={openCreateEntryForm}
+                    >
+                      Add library entry
+                    </button>
               </div>
             </div>
           ) : null}
@@ -1531,13 +1869,15 @@ export default function LibraryPage() {
                 Open guide
               </button>
             </div>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => setShowCreateEntryForm(true)}
-            >
-              Add library entry
-            </button>
+            {canUploadLibraryContent ? (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={openCreateEntryForm}
+                >
+                  Add library entry
+                </button>
+            ) : null}
           </div>
         ) : (
           <ul className="card-list">
@@ -1547,26 +1887,33 @@ export default function LibraryPage() {
                   <div>
                     <div className="library-card-title-row">
                       <strong>{entry.title}</strong>
-                      <span className={`library-status-chip ${entry.visibility === 'member_visible' ? 'is-member-visible' : ''}`}>
+                      <span className={`library-status-chip ${entry.visibility === 'members' || entry.visibility === 'members_and_parents' ? 'is-member-visible' : ''}`}>
                         {formatSentenceLabel(entry.visibility)}
                       </span>
                       {!entry.curriculum_topic_id && (
                         <span className="library-status-chip is-warning">Needs topic</span>
                       )}
-                    </div>
-                    <div className="member-card-summary-row">
-                      <span className="member-card-summary-pill">{formatSentenceLabel(entry.entry_type)}</span>
-                      <span className="member-card-summary-pill">{entry.program_name || 'No program'}</span>
-                      <span className="member-card-summary-pill">{entry.is_active ? 'Active' : 'Inactive'}</span>
-                    </div>
-                    <div className="library-card-chip-row">
-                      <span className="library-info-chip">{formatSentenceLabel(entry.entry_type)}</span>
-                      <span className="library-info-chip">{entry.program_name || 'No program'}</span>
-                      {entry.curriculum_topic_id ? (
-                        <button
-                          type="button"
-                          className="library-topic-chip"
-                          onClick={() => handleFocusTopic(entry.curriculum_topic_id)}
+                      {entry.content_status === 'hidden' ? (
+                        <span className="library-status-chip">Hidden</span>
+                      ) : null}
+                      {entry.content_status === 'deleted' ? (
+                        <span className="library-status-chip is-warning">Deleted</span>
+                      ) : null}
+                      </div>
+                      <div className="member-card-summary-row">
+                        <span className="member-card-summary-pill">{formatSentenceLabel(entry.entry_type)}</span>
+                        <span className="member-card-summary-pill">{entry.program_name || 'No program'}</span>
+                        <span className="member-card-summary-pill">{formatSentenceLabel(entry.content_status)}</span>
+                      {Number(entry.open_reports_count) > 0 ? (
+                        <span className="member-card-summary-pill">{entry.open_reports_count} open report{Number(entry.open_reports_count) === 1 ? '' : 's'}</span>
+                      ) : null}
+                      </div>
+                      <div className="library-card-chip-row">
+                        {entry.curriculum_topic_id ? (
+                          <button
+                            type="button"
+                            className="library-topic-chip"
+                            onClick={() => handleFocusTopic(entry.curriculum_topic_id)}
                         >
                           {entry.topic_title}
                         </button>
@@ -1707,6 +2054,26 @@ export default function LibraryPage() {
                       </select>
                     </div>
 
+                      <div className="library-safety-confirmation" style={{ gridColumn: '1 / -1' }}>
+                        <div className="library-safety-confirmation-copy">
+                          <strong>Keep this resource safe to share</strong>
+                          <p className="meta-text">
+                            Confirm this entry still belongs in the gym library for martial arts education and still has the right permissions.
+                          </p>
+                        </div>
+                        <div className="library-safety-checkbox">
+                          <label className="library-safety-checkbox-row">
+                            <input
+                              type="checkbox"
+                              name="contentSafetyConfirmed"
+                              checked={editFormData.contentSafetyConfirmed}
+                              onChange={handleEditChange}
+                            />
+                            <span>I confirm this resource remains appropriate for martial arts education and I still have permission to keep it in the gym library.</span>
+                          </label>
+                        </div>
+                      </div>
+
                     <div style={{ gridColumn: '1 / -1' }}>
                       <label>Description</label>
                       <textarea
@@ -1735,7 +2102,10 @@ export default function LibraryPage() {
                     <div className="meta-text">Topic: {entry.topic_title || 'None'}</div>
                     <div className="meta-text">Visibility: {formatSentenceLabel(entry.visibility)}</div>
                     <div className="meta-text">
-                      Active: {entry.is_active ? 'Yes' : 'No'}
+                      Status: {formatSentenceLabel(entry.content_status)}
+                    </div>
+                    <div className="meta-text">
+                      Safety confirmed: {entry.content_safety_confirmed ? 'Yes' : 'No'}
                     </div>
                     <div className="meta-text">
                       Created By: {entry.created_by_first_name} {entry.created_by_last_name}
@@ -1755,15 +2125,17 @@ export default function LibraryPage() {
                 )}
 
                 <div className="inline-actions">
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => (
-                      editingEntryId === entry.id ? cancelEditingEntry() : startEditingEntry(entry)
-                    )}
-                  >
-                    {editingEntryId === entry.id ? 'Close edit' : 'Edit entry'}
-                  </button>
+                  {userCanManageEntry(entry) ? (
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => (
+                        editingEntryId === entry.id ? cancelEditingEntry() : startEditingEntry(entry)
+                      )}
+                    >
+                      {editingEntryId === entry.id ? 'Close edit' : 'Edit entry'}
+                    </button>
+                  ) : null}
                   {getSafeExternalUrl(entry.video_url) ? (
                     <a className="library-resource-link" href={getSafeExternalUrl(entry.video_url)} target="_blank" rel="noreferrer">
                       Open resource
@@ -1796,14 +2168,21 @@ export default function LibraryPage() {
                       </button>
                     </span>
                   )}
-                  {isManagement ? (
-                    entry.is_active ? (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => openReportDialog(entry)}
+                  >
+                    Report content
+                  </button>
+                  {userCanManageEntry(entry) ? (
+                    entry.content_status === 'active' ? (
                       <button
                         className="danger-button"
                         onClick={() => handleSetActiveState(entry, false)}
                         disabled={activeEntryId === entry.id}
                       >
-                        {activeEntryId === entry.id ? 'Updating...' : 'Deactivate'}
+                        {activeEntryId === entry.id ? 'Updating...' : 'Hide content'}
                       </button>
                     ) : (
                       <button
@@ -1811,9 +2190,19 @@ export default function LibraryPage() {
                         onClick={() => handleSetActiveState(entry, true)}
                         disabled={activeEntryId === entry.id}
                       >
-                        {activeEntryId === entry.id ? 'Updating...' : 'Reactivate'}
+                        {activeEntryId === entry.id ? 'Updating...' : 'Restore content'}
                       </button>
                     )
+                  ) : null}
+                  {userCanManageEntry(entry) ? (
+                    <button
+                      type="button"
+                      className="danger-button"
+                      onClick={() => handleDeleteEntry(entry)}
+                      disabled={activeEntryId === entry.id}
+                    >
+                      {activeEntryId === entry.id ? 'Deleting...' : 'Delete content'}
+                    </button>
                   ) : null}
                 </div>
               </li>
@@ -1821,7 +2210,97 @@ export default function LibraryPage() {
           </ul>
         )}
       </ExpandableSection>
-      </div>
-    </Layout>
-  );
+
+        {reportingEntry ? (
+          <div className="landing-request-overlay">
+          <div className="landing-request-modal" role="dialog" aria-modal="true" aria-labelledby="library-report-title">
+            <div className="landing-request-header">
+              <div>
+                <div className="landing-request-eyebrow">CONTENT REPORT</div>
+                <h3 id="library-report-title">Report library content</h3>
+                <p className="section-note">
+                  Report anything inappropriate, unsafe for minors, abusive, or otherwise concerning.
+                </p>
+              </div>
+              <button type="button" className="secondary-button" onClick={closeReportDialog}>
+                Close
+              </button>
+            </div>
+
+            <div className="page-section" style={{ marginBottom: '1rem' }}>
+              <strong>{reportingEntry.title}</strong>
+              <p className="section-note" style={{ marginBottom: 0 }}>
+                Content is provided by your gym for martial arts education and review. Report anything inappropriate or unsafe.
+              </p>
+            </div>
+
+            <form className="form-grid" onSubmit={handleSubmitReport}>
+              <div>
+                <label>Reason</label>
+                <select name="reason" value={reportFormData.reason} onChange={handleReportFieldChange}>
+                  {reportReasonOptions.map((reason) => (
+                      <option key={reason} value={reason}>
+                        {reportReasonLabels[reason] || formatSentenceLabel(reason)}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="meta-text" style={{ marginTop: 6, marginBottom: 0 }}>
+                    Pick the closest match. "Unsafe for kids or teens" covers anything you would not want shown around minors.
+                  </p>
+                </div>
+
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label>Optional description</label>
+                <textarea
+                  name="description"
+                  value={reportFormData.description}
+                  onChange={handleReportFieldChange}
+                  rows="4"
+                  placeholder="Add context that would help your gym review this content."
+                />
+              </div>
+
+              <div className="inline-actions" style={{ gridColumn: '1 / -1' }}>
+                <button type="submit" disabled={submitting}>
+                  {submitting ? 'Submitting report...' : 'Submit report'}
+                </button>
+                <button type="button" className="secondary-button" onClick={closeReportDialog}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+          </div>
+        ) : null}
+
+        {reportSuccessNotice ? (
+          <div className="landing-request-overlay" onClick={closeReportSuccessNotice}>
+            <div
+              className="landing-request-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="library-report-success-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="landing-request-header">
+                <div>
+                  <div className="landing-request-eyebrow">REPORT SUBMITTED</div>
+                  <h3 id="library-report-success-title">Thank you</h3>
+                  <p className="section-note" style={{ marginBottom: 0 }}>
+                    {reportSuccessNotice}
+                  </p>
+                </div>
+              </div>
+
+              <div className="page-section" style={{ marginBottom: 0 }}>
+                <p className="meta-text" style={{ marginBottom: 0 }}>
+                  Click anywhere outside this message to close it.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+        </div>
+      </Layout>
+    );
 }
