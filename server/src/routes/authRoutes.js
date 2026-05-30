@@ -19,7 +19,11 @@ const {
   inviteAccessLimiter
 } = require('../middleware/rateLimit');
 
-router.post('/register', registerLimiter, register);
+router.post('/register', registerLimiter, (req, res) => {
+  return res.status(403).json({
+    message: 'Owner account creation requires founder approval.'
+  });
+});
 router.post('/login', loginLimiter, login);
 router.get('/member-access/:token', inviteAccessLimiter, getMemberAccessInvite);
 router.post('/member-access/:token', inviteAccessLimiter, setMemberAccessPassword);

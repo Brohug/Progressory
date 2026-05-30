@@ -10,8 +10,8 @@ export default function LoginPage() {
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({
-    email: 'kyle@example.com',
-    password: 'Password123!'
+    email:'',
+    password: ''
   });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -98,9 +98,7 @@ export default function LoginPage() {
             <button type="submit" disabled={submitting}>
               {submitting ? 'Logging in...' : 'Log in'}
             </button>
-            <Link to="/register" className="secondary-button">
-              Create owner account
-            </Link>
+            
             <Link to="/" className="secondary-button">
               <AppIcon name="dashboard" />
               <span>Back to founder page</span>
