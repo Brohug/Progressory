@@ -42,6 +42,13 @@ const isStripeConfigError = (error) => Boolean(error?.isStripeConfigError || err
 
 const isStripeApiError = (error) => Boolean(error?.type && String(error.type).startsWith('Stripe'));
 const isStripeSignatureError = (error) => error?.type === 'StripeSignatureVerificationError';
+const isStripeMissingResourceError = (error) => (
+  Boolean(error)
+  && (
+    error?.code === 'resource_missing'
+    || /No such customer|No such subscription/i.test(error?.message || '')
+  )
+);
 const isBillingEventDuplicateError = (error) => (
   error?.code === 'ER_DUP_ENTRY'
   && /billing_events|stripe_event_id|uq_billing_events_stripe_event/i.test(
@@ -368,6 +375,24 @@ const reconcileGymSubscriptionFromStripeIfNeeded = async (subscription) => {
   return getSubscriptionByGymId(subscription.gym_id);
 };
 
+const reconcileGymSubscriptionSafely = async (subscription) => {
+  try {
+    return await reconcileGymSubscriptionFromStripeIfNeeded(subscription);
+  } catch (error) {
+    if (isStripeApiError(error)) {
+      console.warn('Billing reconciliation warning:', {
+        gymId: subscription?.gym_id || null,
+        message: error.message,
+        code: error.code || null
+      });
+
+      return subscription;
+    }
+
+    throw error;
+  }
+};
+
 const getSelectedDatabaseName = async (connection) => {
   const [rows] = await connection.query('SELECT DATABASE() AS db_name');
   return rows[0]?.db_name || null;
@@ -661,7 +686,7 @@ const getBillingSubscription = async (req, res) => {
       });
     }
 
-    const subscription = await reconcileGymSubscriptionFromStripeIfNeeded(
+    const subscription = await reconcileGymSubscriptionSafely(
       await getSubscriptionByGymId(req.user.gym_id)
     );
 
@@ -680,7 +705,7 @@ const getBillingStatus = async (req, res) => {
       });
     }
 
-    const subscription = await reconcileGymSubscriptionFromStripeIfNeeded(
+    const subscription = await reconcileGymSubscriptionSafely(
       await getSubscriptionByGymId(req.user.gym_id)
     );
 
@@ -692,7 +717,7 @@ const getBillingStatus = async (req, res) => {
 
 const getBillingAccessStatus = async (req, res) => {
   try {
-    const subscription = await reconcileGymSubscriptionFromStripeIfNeeded(
+    const subscription = await reconcileGymSubscriptionSafely(
       await getSubscriptionByGymId(req.user.gym_id)
     );
     const safePayload = buildSafeBillingPayload(subscription);
@@ -792,6 +817,31 @@ const createCheckoutSession = async (req, res) => {
       await updateGymSubscription(req.user.gym_id, {
         stripe_customer_id: stripeCustomerId
       });
+    } else {
+      try {
+        await stripe.customers.retrieve(stripeCustomerId);
+      } catch (error) {
+        if (!isStripeMissingResourceError(error)) {
+          throw error;
+        }
+
+        const customer = await stripe.customers.create({
+          name: gymContext.name,
+          email: gymContext.owner_email || undefined,
+          metadata: {
+            gym_id: String(req.user.gym_id),
+            actor_user_id: String(req.user.id),
+            owner_user_id: String(gymContext.owner_user_id || req.user.id),
+            plan_code: requestedPlanCode
+          }
+        });
+
+        stripeCustomerId = customer.id;
+        await updateGymSubscription(req.user.gym_id, {
+          stripe_customer_id: stripeCustomerId,
+          stripe_subscription_id: null
+        });
+      }
     }
 
     const subscriptionData = {
@@ -859,12 +909,30 @@ const createCustomerPortalSession = async (req, res) => {
       });
     }
 
-    const stripe = getStripeClient();
     const returnUrl = getCustomerPortalReturnUrl();
-    const session = await stripe.billingPortal.sessions.create({
-      customer: subscription.stripe_customer_id,
-      return_url: returnUrl
-    });
+    const stripe = getStripeClient();
+    let session;
+
+    try {
+      session = await stripe.billingPortal.sessions.create({
+        customer: subscription.stripe_customer_id,
+        return_url: returnUrl
+      });
+    } catch (error) {
+      if (isStripeMissingResourceError(error)) {
+        await updateGymSubscription(req.user.gym_id, {
+          stripe_customer_id: null,
+          stripe_subscription_id: null
+        });
+
+        return sendClientError(res, {
+          status: 400,
+          message: 'Saved Stripe customer record was not found in this Stripe environment. Start checkout again first.'
+        });
+      }
+
+      throw error;
+    }
 
     return res.status(200).json({
       url: session.url

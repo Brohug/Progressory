@@ -106,6 +106,9 @@ export default function PlatformAdminPage() {
     error: '',
     notice: ''
   });
+  const [quickActionState, setQuickActionState] = useState({
+    notice: ''
+  });
   const [actionState, setActionState] = useState({
     loadingAction: '',
     copiedInviteUrl: '',
@@ -444,27 +447,49 @@ export default function PlatformAdminPage() {
   };
 
   const handleOpenNewFounderLeads = () => {
+    setQuickActionState({ notice: '' });
     setFilterState((prev) => ({
       ...prev,
       founderStatus: 'new'
+    }));
+    setPageState((prev) => ({
+      ...prev,
+      notice: ''
     }));
     scrollToSection(founderRequestsSectionRef);
   };
 
   const handleOpenAttentionGyms = () => {
+    if (atRiskGyms.length === 0) {
+      setQuickActionState({
+        notice: 'No at-risk gyms.'
+      });
+      return;
+    }
+
+    setQuickActionState({ notice: '' });
     setFilterState((prev) => ({
       ...prev,
       gymBillingStatus: 'past_due',
       gymAccessState: 'all'
     }));
+    setPageState((prev) => ({
+      ...prev,
+      notice: ''
+    }));
     scrollToSection(gymOverviewSectionRef);
   };
 
   const handleOpenLiveOrTrialingGyms = () => {
+    setQuickActionState({ notice: '' });
     setFilterState((prev) => ({
       ...prev,
       gymBillingStatus: 'all',
       gymAccessState: 'live'
+    }));
+    setPageState((prev) => ({
+      ...prev,
+      notice: ''
     }));
     scrollToSection(gymOverviewSectionRef);
   };
@@ -868,7 +893,7 @@ export default function PlatformAdminPage() {
           Private operator view for founder leads, gym provisioning, invite recovery, and subscription health across every academy.
         </p>
 
-        <section ref={gymOverviewSectionRef} className="page-section">
+        <section className="page-section">
           <div className="section-header">
             <div>
               <h3>Eagle-eye summary</h3>
@@ -1383,7 +1408,7 @@ export default function PlatformAdminPage() {
           )}
         </section>
 
-        <section className="page-section">
+        <section ref={gymOverviewSectionRef} className="page-section">
           <div className="section-header">
             <div>
               <h3>Gym overview</h3>
@@ -1792,6 +1817,27 @@ export default function PlatformAdminPage() {
                 </div>
               ) : null}
             </section>
+          </div>
+        ) : null}
+
+        {quickActionState.notice ? (
+          <div
+            className="platform-admin-detail-overlay platform-admin-quick-action-overlay"
+            onClick={() => setQuickActionState({ notice: '' })}
+            role="presentation"
+          >
+            <div
+              className="platform-admin-detail-modal platform-admin-quick-action-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Platform admin notice"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="platform-admin-empty-state">
+                <strong>{quickActionState.notice}</strong>
+                <p className="meta-text">Click outside this message to continue.</p>
+              </div>
+            </div>
           </div>
         ) : null}
       </div>

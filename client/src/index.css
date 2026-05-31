@@ -767,6 +767,11 @@ ul {
   backdrop-filter: blur(6px);
 }
 
+.platform-admin-quick-action-overlay {
+  justify-content: center;
+  align-items: center;
+}
+
 .platform-admin-detail-modal {
   width: min(860px, 100%);
   max-height: calc(100vh - 40px);
@@ -780,6 +785,14 @@ ul {
     radial-gradient(circle at top right, rgba(56, 189, 248, 0.1), transparent 28%),
     linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(11, 18, 32, 0.98));
   box-shadow: 0 28px 56px rgba(2, 6, 23, 0.45);
+}
+
+.platform-admin-quick-action-modal {
+  width: min(460px, calc(100% - 32px));
+  max-height: none;
+  overflow: visible;
+  align-self: center;
+  justify-self: center;
 }
 
 .platform-admin-detail-hero {
