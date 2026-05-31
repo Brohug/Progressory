@@ -7,6 +7,7 @@ const { validatePolicyAcceptance, getAcceptedPolicyVersion } = require('../servi
 const { logAuditEvent } = require('../services/auditService');
 const { assertCanAddCoach } = require('../services/planLimitsService');
 const { getAuthSchemaSupport, getAuthUserByWhere, buildAuthUserSelectSql } = require('../services/authSchemaService');
+const { applyPlatformAdminShowcaseContext } = require('../services/showcaseAccessService');
 
 const generateSlug = (name) => {
   return name
@@ -33,6 +34,9 @@ const generateToken = (user) => {
 const attachUserRuntimeFlags = (user) => ({
   ...user,
   is_platform_admin: isPlatformAdminEmail(user?.email),
+  is_showcase_mode: Boolean(user?.is_showcase_mode),
+  actual_gym_id: user?.actual_gym_id || user?.gym_id,
+  actual_gym_name: user?.actual_gym_name || user?.gym_name,
   can_upload_library_content: Boolean(user?.can_upload_library_content),
   gym_is_platform_suspended: Boolean(user?.is_platform_suspended),
   gym_platform_suspended_at: user?.platform_suspended_at || null,
@@ -221,11 +225,8 @@ const login = async (req, res) => {
     }
 
     const token = generateToken(user);
-
-    return res.status(200).json({
-      message: 'Login successful',
-      token,
-      user: attachUserRuntimeFlags({
+    const runtimeUser = await applyPlatformAdminShowcaseContext(
+      {
         id: user.id,
         gym_id: user.gym_id,
         first_name: user.first_name,
@@ -241,7 +242,15 @@ const login = async (req, res) => {
         is_platform_suspended: user.is_platform_suspended,
         platform_suspended_at: user.platform_suspended_at,
         platform_suspension_reason: user.platform_suspension_reason
-      })
+      },
+      isPlatformAdminEmail(user.email),
+      pool
+    );
+
+    return res.status(200).json({
+      message: 'Login successful',
+      token,
+      user: attachUserRuntimeFlags(runtimeUser)
     });
   } catch (error) {
     console.error('Login error:', error.message);
@@ -679,7 +688,13 @@ const getMe = async (req, res) => {
       });
     }
 
-    return res.status(200).json(attachUserRuntimeFlags(user));
+    const runtimeUser = await applyPlatformAdminShowcaseContext(
+      user,
+      isPlatformAdminEmail(user.email),
+      pool
+    );
+
+    return res.status(200).json(attachUserRuntimeFlags(runtimeUser));
   } catch (error) {
     console.error('Get me error:', error.message);
 

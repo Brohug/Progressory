@@ -4,6 +4,7 @@ const { sendClientError } = require('./errorHandler');
 const { enforceBillingAccess } = require('./billingMiddleware');
 const { isPlatformAdminEmail } = require('../services/platformAdminService');
 const { getAuthSchemaSupport, buildAuthUserSelectSql } = require('../services/authSchemaService');
+const { applyPlatformAdminShowcaseContext } = require('../services/showcaseAccessService');
 
 const STAFF_ROLES = ['owner', 'admin', 'coach'];
 const MANAGEMENT_ROLES = ['owner', 'admin'];
@@ -63,20 +64,31 @@ const protect = async (req, res, next) => {
 
     const isPlatformAdmin = isPlatformAdminEmail(currentUser.email);
 
+    const runtimeUser = await applyPlatformAdminShowcaseContext(
+      currentUser,
+      isPlatformAdmin,
+      pool
+    );
+
     req.user = {
       ...decoded,
-      role: currentUser.role,
-      email: currentUser.email,
-      member_id: currentUser.member_id || null,
-      can_upload_library_content: Boolean(currentUser.can_upload_library_content),
+      gym_id: runtimeUser.gym_id,
+      role: runtimeUser.role,
+      email: runtimeUser.email,
+      member_id: runtimeUser.member_id || null,
+      can_upload_library_content: Boolean(runtimeUser.can_upload_library_content),
       is_platform_admin: isPlatformAdmin,
-      gym_is_platform_suspended: Boolean(currentUser.is_platform_suspended),
-      gym_platform_suspended_at: currentUser.platform_suspended_at || null,
-      gym_platform_suspension_reason: currentUser.platform_suspension_reason || ''
+      is_showcase_mode: Boolean(runtimeUser.is_showcase_mode),
+      actual_gym_id: runtimeUser.actual_gym_id || runtimeUser.gym_id,
+      actual_gym_name: runtimeUser.actual_gym_name || runtimeUser.gym_name,
+      gym_name: runtimeUser.gym_name,
+      gym_is_platform_suspended: Boolean(runtimeUser.is_platform_suspended),
+      gym_platform_suspended_at: runtimeUser.platform_suspended_at || null,
+      gym_platform_suspension_reason: runtimeUser.platform_suspension_reason || ''
     };
 
     if (
-      currentUser.is_platform_suspended
+      runtimeUser.is_platform_suspended
       && !isPlatformAdmin
       && !isSuspensionAllowedPath(req.originalUrl || req.url)
     ) {

@@ -984,7 +984,7 @@ export default function MembersPage() {
                             className="secondary-button"
                             onClick={() => toggleMemberProgressForm(member.id)}
                           >
-                            {showMemberProgressFormMap[member.id] ? 'Close progress form' : 'Log progress'}
+                            {showMemberProgressFormMap[member.id] ? 'Close progress form' : 'Edit progress'}
                           </button>
                         </div>
 
