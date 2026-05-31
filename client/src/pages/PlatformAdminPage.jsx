@@ -868,7 +868,7 @@ export default function PlatformAdminPage() {
           Private operator view for founder leads, gym provisioning, invite recovery, and subscription health across every academy.
         </p>
 
-        <section className="page-section">
+        <section ref={gymOverviewSectionRef} className="page-section">
           <div className="section-header">
             <div>
               <h3>Eagle-eye summary</h3>
@@ -949,7 +949,7 @@ export default function PlatformAdminPage() {
           )}
         </section>
 
-        <section ref={founderRequestsSectionRef} className="page-section">
+        <section className="page-section">
           <div className="section-header">
             <div>
               <h3>Operator reporting</h3>
@@ -1151,7 +1151,7 @@ export default function PlatformAdminPage() {
           )}
         </section>
 
-        <section ref={gymOverviewSectionRef} className="page-section">
+        <section ref={founderRequestsSectionRef} className="page-section">
           <div className="section-header">
             <div>
               <h3>Founder requests</h3>
