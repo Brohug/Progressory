@@ -25,7 +25,7 @@ export default function MyProgressPage() {
         setProgress(response.data.progress || []);
       } catch (err) {
         console.error('Load my progress error:', err);
-        setError(err.response?.data?.message || 'Couldn’t load your progress right now.');
+        setError(err.response?.data?.message || "Couldn't load your progress right now.");
       } finally {
         setLoading(false);
       }

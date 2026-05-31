@@ -472,7 +472,7 @@ export default function TrainingScenariosPage() {
 
           <section className="page-quickstart-card scenarios-quickstart">
             <div className="planned-classes-quickstart-copy">
-              <span className="eyebrow">What this page is for</span>
+              <span className="eyebrow">Quick guide</span>
               <strong>Scenarios help you reuse good class structures instead of rebuilding them every time.</strong>
               <p className="meta-text">
                 Use scenarios when you already know a format you like: the training method, the starting topic,

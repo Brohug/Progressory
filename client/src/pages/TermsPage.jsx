@@ -1,5 +1,5 @@
 import PolicyPageLayout from './PolicyPageLayout';
-import { POLICY_SUPPORT_EMAIL, POLICY_VERSION } from '../constants/policies';
+import { POLICY_SUPPORT_EMAIL, POLICY_SUPPORT_LINK_LABEL, POLICY_VERSION } from '../constants/policies';
 
 export default function TermsPage() {
   return (
@@ -25,7 +25,7 @@ export default function TermsPage() {
         following Progressory policies, including the Privacy Policy, Acceptable Use Policy, and Child Safety Policy.
       </p>
       <p>
-        Report inappropriate or unsafe content to <a href={`mailto:${POLICY_SUPPORT_EMAIL}`}>{POLICY_SUPPORT_EMAIL}</a>.
+        Report inappropriate or unsafe content to <a href={`mailto:${POLICY_SUPPORT_EMAIL}`}>{POLICY_SUPPORT_LINK_LABEL}</a>.
       </p>
     </PolicyPageLayout>
   );

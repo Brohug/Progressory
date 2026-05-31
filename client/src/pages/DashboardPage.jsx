@@ -9,8 +9,7 @@ import { findRelatedSetupFamilies } from '../data/entrySetupFamilies';
 import { useAuth } from '../hooks/useAuth';
 import { useFounderOnboarding } from '../hooks/useFounderOnboarding';
 import { formatLabel } from '../utils/formatLabel';
-
-const DASHBOARD_FEEDBACK_EMAIL = 'owner.progressory@gmail.com';
+import { DASHBOARD_FEEDBACK_LINK_LABEL, POLICY_SUPPORT_EMAIL } from '../constants/policies';
 const normalizeValue = (value) => (
   String(value || '')
     .trim()
@@ -1085,10 +1084,10 @@ export default function DashboardPage() {
                 </div>
                 <div className="detail-block">
                   <p className="dashboard-card-copy" style={{ marginBottom: 0 }}>
-                    If anything feels confusing, missing, or especially helpful, feel free to email me directly.
+                    If anything feels confusing, missing, or especially helpful, send it through support and keep the feedback loop moving.
                   </p>
-                  <a className="library-resource-link" href={`mailto:${DASHBOARD_FEEDBACK_EMAIL}`}>
-                    {DASHBOARD_FEEDBACK_EMAIL}
+                  <a className="library-resource-link" href={`mailto:${POLICY_SUPPORT_EMAIL}`}>
+                    {DASHBOARD_FEEDBACK_LINK_LABEL}
                   </a>
                 </div>
               </section>
@@ -1918,10 +1917,10 @@ export default function DashboardPage() {
               </div>
               <div className="detail-block">
                 <p className="dashboard-card-copy" style={{ marginBottom: 0 }}>
-                  If you have feedback, ideas, or anything that would make the workflow smoother for your gym, feel free to email me directly.
+                  If you have feedback, ideas, or anything that would make the workflow smoother for your gym, send it through support and keep the feedback loop moving.
                 </p>
-                <a className="library-resource-link" href={`mailto:${DASHBOARD_FEEDBACK_EMAIL}`}>
-                  {DASHBOARD_FEEDBACK_EMAIL}
+                <a className="library-resource-link" href={`mailto:${POLICY_SUPPORT_EMAIL}`}>
+                  {DASHBOARD_FEEDBACK_LINK_LABEL}
                 </a>
               </div>
             </section>

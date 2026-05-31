@@ -419,7 +419,7 @@ export default function TopicsPage() {
 
       <section className="page-quickstart-card topics-page-quickstart">
         <div className="planned-classes-quickstart-copy">
-          <span className="eyebrow">What this page is for</span>
+          <span className="eyebrow">Quick guide</span>
           <strong>Topics are the real curriculum items your gym uses across the app.</strong>
           <p className="meta-text">
             Use this page to create the positions, techniques, concepts, and submissions your gym actually teaches.
@@ -611,7 +611,7 @@ export default function TopicsPage() {
             className="secondary-button"
             onClick={scrollToTopicListTop}
           >
-            Back to top
+            Top
           </button>
         )}
       >

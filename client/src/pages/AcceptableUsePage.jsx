@@ -1,5 +1,5 @@
 import PolicyPageLayout from './PolicyPageLayout';
-import { POLICY_SUPPORT_EMAIL, POLICY_VERSION } from '../constants/policies';
+import { POLICY_SUPPORT_EMAIL, POLICY_SUPPORT_LINK_LABEL, POLICY_VERSION } from '../constants/policies';
 
 export default function AcceptableUsePage() {
   return (
@@ -25,7 +25,7 @@ export default function AcceptableUsePage() {
       <p>
         Progressory may remove content, hide content, restrict uploads, suspend accounts, terminate access, or
         report illegal or child-safety-related material when appropriate. Report policy concerns to{' '}
-        <a href={`mailto:${POLICY_SUPPORT_EMAIL}`}>{POLICY_SUPPORT_EMAIL}</a>.
+        <a href={`mailto:${POLICY_SUPPORT_EMAIL}`}>{POLICY_SUPPORT_LINK_LABEL}</a>.
       </p>
     </PolicyPageLayout>
   );

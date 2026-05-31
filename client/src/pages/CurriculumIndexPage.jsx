@@ -1040,7 +1040,7 @@ export default function CurriculumIndexPage() {
 
           <section className="page-quickstart-card curriculum-quickstart">
             <div className="planned-classes-quickstart-copy">
-              <span className="eyebrow">What this page is for</span>
+              <span className="eyebrow">Quick guide</span>
               <strong>Curriculum is the big-picture map of what your gym teaches.</strong>
               <p className="meta-text">
                 Use this page to search the full curriculum, understand where a position or technique fits, and decide
@@ -1256,7 +1256,7 @@ export default function CurriculumIndexPage() {
                 onClick={scrollToResultsSectionTop}
                 type="button"
               >
-                Back to top
+                Top
               </button>
             )}
           >

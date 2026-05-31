@@ -65,9 +65,9 @@ const buildFounderInviteEmailBody = ({
     '1. Open the invite link and finish your owner account setup.',
     '2. Log in to Progressory.',
     '3. Open Billing and start the Founder Plan checkout.',
-    '4. Once billing is active or trialing, your gym will have access.',
+    '4. Finish the Founder Plan checkout so your gym moves into the live trial period.',
     '',
-    `Questions before you jump in? Reply back to ${OWNER_NOTIFICATION_EMAIL}.`
+    `Questions before you jump in? Reply to ${OWNER_NOTIFICATION_EMAIL}.`
   ];
 
   return lines.join('\n');

@@ -118,6 +118,17 @@ export default function PlatformAdminPage() {
     latestInviteUrl: '',
     latestInviteExpiresAt: ''
   });
+  const [dialogState, setDialogState] = useState({
+    open: false,
+    action: '',
+    title: '',
+    message: '',
+    confirmLabel: 'Confirm',
+    valueLabel: '',
+    valuePlaceholder: '',
+    value: '',
+    payload: null
+  });
   const [detailState, setDetailState] = useState({
     selectedInquiryId: null,
     inquiry: null,
@@ -125,6 +136,47 @@ export default function PlatformAdminPage() {
     error: '',
     copyFeedback: ''
   });
+
+  const closeActionDialog = () => {
+    if (actionState.loadingAction) {
+      return;
+    }
+
+    setDialogState({
+      open: false,
+      action: '',
+      title: '',
+      message: '',
+      confirmLabel: 'Confirm',
+      valueLabel: '',
+      valuePlaceholder: '',
+      value: '',
+      payload: null
+    });
+  };
+
+  const openActionDialog = ({
+    action,
+    title,
+    message,
+    confirmLabel,
+    valueLabel = '',
+    valuePlaceholder = '',
+    value = '',
+    payload = null
+  }) => {
+    setDialogState({
+      open: true,
+      action,
+      title,
+      message,
+      confirmLabel,
+      valueLabel,
+      valuePlaceholder,
+      value,
+      payload
+    });
+  };
 
   const loadDashboard = useCallback(async ({ preserveNotice = false } = {}) => {
     setPageState((prev) => ({
@@ -588,13 +640,13 @@ export default function PlatformAdminPage() {
 
     if (emailDelivery?.reason === 'notification_failed') {
       return {
-        inviteNotice: `${actionLabel} for ${request.gym_name}, but email delivery failed. Copy the invite URL below and send it manually.`,
+        inviteNotice: `${actionLabel} for ${request.gym_name}. Email delivery failed, so the invite link is ready below for a manual handoff.`,
         inviteEmailStatus: 'failed'
       };
     }
 
     return {
-      inviteNotice: `${actionLabel} for ${request.gym_name}. Email delivery is not configured yet, so copy the invite URL below and send it manually.`,
+      inviteNotice: `${actionLabel} for ${request.gym_name}. Automatic email is still off, so use the invite link below for the handoff.`,
       inviteEmailStatus: 'manual'
     };
   };
@@ -605,16 +657,7 @@ export default function PlatformAdminPage() {
     }
   }, [detailState.selectedInquiryId, loadFounderRequestDetail]);
 
-  const handleMarkContacted = async (request) => {
-    const notes = window.prompt(
-      `Add an optional internal note for ${request.first_name} ${request.last_name}:`,
-      request.internal_notes || ''
-    );
-
-    if (notes === null) {
-      return;
-    }
-
+  const executeMarkContacted = async (request, notes) => {
     const actionKey = `contact-${request.id}`;
     setActionLoading(actionKey);
 
@@ -632,15 +675,7 @@ export default function PlatformAdminPage() {
     }
   };
 
-  const handleProvision = async (request) => {
-    const confirmed = window.confirm(
-      `Provision ${request.gym_name} and create an owner invite for ${request.email}?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+  const executeProvision = async (request) => {
     const actionKey = `provision-${request.id}`;
     setActionLoading(actionKey);
 
@@ -674,15 +709,7 @@ export default function PlatformAdminPage() {
     }
   };
 
-  const handleResendInvite = async (request) => {
-    const confirmed = window.confirm(
-      `Generate a fresh owner invite for ${request.gym_name}?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+  const executeResendInvite = async (request) => {
     const actionKey = `resend-${request.id}`;
     setActionLoading(actionKey);
 
@@ -716,15 +743,7 @@ export default function PlatformAdminPage() {
     }
   };
 
-  const handleDeactivateGym = async (gym) => {
-    const confirmed = window.confirm(
-      `Deactivate ${gym.name}? This will inactivate gym users and mark billing as canceled.`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+  const executeDeactivateGym = async (gym) => {
     const actionKey = `deactivate-${gym.id}`;
     setActionLoading(actionKey);
 
@@ -758,16 +777,7 @@ export default function PlatformAdminPage() {
     }
   };
 
-  const handleSaveNotes = async (request) => {
-    const notes = window.prompt(
-      `Edit internal notes for ${request.gym_name}:`,
-      request.internal_notes || ''
-    );
-
-    if (notes === null) {
-      return;
-    }
-
+  const executeSaveNotes = async (request, notes) => {
     const actionKey = `notes-${request.id}`;
     setActionLoading(actionKey);
 
@@ -785,24 +795,7 @@ export default function PlatformAdminPage() {
     }
   };
 
-  const handleSuspendGym = async (gym) => {
-    const reason = window.prompt(
-      `Add an optional suspension reason for ${gym.name}:`,
-      gym.platform_suspension_reason || ''
-    );
-
-    if (reason === null) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `Suspend ${gym.name}? Users will keep their records, but the gym will be blocked from protected app routes until reactivated.`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+  const executeSuspendGym = async (gym, reason) => {
     const actionKey = `suspend-${gym.id}`;
     setActionLoading(actionKey);
 
@@ -819,15 +812,7 @@ export default function PlatformAdminPage() {
     }
   };
 
-  const handleMarkConverted = async (request) => {
-    const confirmed = window.confirm(
-      `Mark ${request.gym_name} as converted? This is for your operator pipeline and does not change Stripe billing state.`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+  const executeMarkConverted = async (request) => {
     const actionKey = `convert-${request.id}`;
     setActionLoading(actionKey);
 
@@ -862,15 +847,7 @@ export default function PlatformAdminPage() {
     }
   };
 
-  const handleReactivateGym = async (gym) => {
-    const confirmed = window.confirm(
-      `Reactivate ${gym.name} and restore normal app access?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+  const executeReactivateGym = async (gym) => {
     const actionKey = `reactivate-${gym.id}`;
     setActionLoading(actionKey);
 
@@ -883,6 +860,130 @@ export default function PlatformAdminPage() {
     } finally {
       setActionLoading('');
     }
+  };
+
+  const handleMarkContacted = (request) => {
+    openActionDialog({
+      action: 'contact-request',
+      title: `Mark ${request.gym_name} as contacted`,
+      message: `Add any internal follow-up notes for ${request.first_name} ${request.last_name}. You can leave this blank if you just want to move the lead forward.`,
+      confirmLabel: 'Mark contacted',
+      valueLabel: 'Internal note',
+      valuePlaceholder: 'Optional note about outreach, questions, or next steps.',
+      value: request.internal_notes || '',
+      payload: request
+    });
+  };
+
+  const handleProvision = (request) => {
+    openActionDialog({
+      action: 'provision-request',
+      title: `Provision ${request.gym_name}`,
+      message: `Create the gym shell and owner invite for ${request.email}. This is the handoff that gets the owner into setup and billing.`,
+      confirmLabel: 'Provision owner access',
+      payload: request
+    });
+  };
+
+  const handleResendInvite = (request) => {
+    openActionDialog({
+      action: 'resend-invite',
+      title: `Send a fresh invite for ${request.gym_name}`,
+      message: 'Generate a fresh owner invite so the founder can continue setup without using an older link.',
+      confirmLabel: 'Generate fresh invite',
+      payload: request
+    });
+  };
+
+  const handleDeactivateGym = (gym) => {
+    openActionDialog({
+      action: 'deactivate-gym',
+      title: `Deactivate ${gym.name}`,
+      message: 'This is the blunt shutdown action. It will inactivate gym users and mark billing as canceled.',
+      confirmLabel: 'Deactivate gym',
+      payload: gym
+    });
+  };
+
+  const handleSaveNotes = (request) => {
+    openActionDialog({
+      action: 'save-notes',
+      title: `Update notes for ${request.gym_name}`,
+      message: 'Use this to capture anything the operator team should remember about this lead.',
+      confirmLabel: 'Save notes',
+      valueLabel: 'Internal notes',
+      valuePlaceholder: 'Add internal notes for this founder lead.',
+      value: request.internal_notes || '',
+      payload: request
+    });
+  };
+
+  const handleSuspendGym = (gym) => {
+    openActionDialog({
+      action: 'suspend-gym',
+      title: `Suspend ${gym.name}`,
+      message: 'Suspension keeps the gym record intact while blocking protected app routes until you reactivate it.',
+      confirmLabel: 'Suspend gym',
+      valueLabel: 'Suspension reason',
+      valuePlaceholder: 'Optional internal reason for the suspension.',
+      value: gym.platform_suspension_reason || '',
+      payload: gym
+    });
+  };
+
+  const handleMarkConverted = (request) => {
+    openActionDialog({
+      action: 'mark-converted',
+      title: `Mark ${request.gym_name} as converted`,
+      message: 'This updates your internal founder pipeline. It does not change Stripe billing by itself.',
+      confirmLabel: 'Mark converted',
+      payload: request
+    });
+  };
+
+  const handleReactivateGym = (gym) => {
+    openActionDialog({
+      action: 'reactivate-gym',
+      title: `Reactivate ${gym.name}`,
+      message: 'Restore normal protected-app access for this gym.',
+      confirmLabel: 'Reactivate gym',
+      payload: gym
+    });
+  };
+
+  const handleActionDialogConfirm = async () => {
+    const { action, payload, value } = dialogState;
+
+    switch (action) {
+      case 'contact-request':
+        await executeMarkContacted(payload, value);
+        break;
+      case 'provision-request':
+        await executeProvision(payload);
+        break;
+      case 'resend-invite':
+        await executeResendInvite(payload);
+        break;
+      case 'deactivate-gym':
+        await executeDeactivateGym(payload);
+        break;
+      case 'save-notes':
+        await executeSaveNotes(payload, value);
+        break;
+      case 'suspend-gym':
+        await executeSuspendGym(payload, value);
+        break;
+      case 'mark-converted':
+        await executeMarkConverted(payload);
+        break;
+      case 'reactivate-gym':
+        await executeReactivateGym(payload);
+        break;
+      default:
+        break;
+    }
+
+    setDialogState((prev) => ({ ...prev, open: false }));
   };
 
   return (
@@ -1675,7 +1776,7 @@ export default function PlatformAdminPage() {
                         <div>
                           <strong>Lead timeline</strong>
                           <div className="meta-text">
-                            This keeps the founder pipeline visible even while onboarding is manual.
+                            Keep the founder handoff, invite history, and conversion steps in one place.
                           </div>
                         </div>
                       </div>
@@ -1707,7 +1808,7 @@ export default function PlatformAdminPage() {
                         <div>
                           <strong>Invite handoff</strong>
                           <div className="meta-text">
-                            Fresh invite links only exist right after provisioning or sending a fresh email invite, but the history below shows each handoff event.
+                            Fresh invite links show up right after provisioning or sending a new invite. Use the history below to confirm each handoff.
                           </div>
                         </div>
                       </div>
@@ -1816,6 +1917,60 @@ export default function PlatformAdminPage() {
                   </div>
                 </div>
               ) : null}
+            </section>
+          </div>
+        ) : null}
+
+        {dialogState.open ? (
+          <div
+            className="platform-admin-detail-overlay platform-admin-action-dialog-overlay"
+            onClick={closeActionDialog}
+            role="presentation"
+          >
+            <section
+              className="platform-admin-detail-modal platform-admin-action-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="platformAdminActionDialogTitle"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="platform-admin-detail-header">
+                <div>
+                  <span className="landing-request-kicker">Platform admin action</span>
+                  <h3 id="platformAdminActionDialogTitle">{dialogState.title}</h3>
+                  <p className="section-note">{dialogState.message}</p>
+                </div>
+                <button type="button" className="secondary-button" onClick={closeActionDialog} disabled={Boolean(actionState.loadingAction)}>
+                  <span>Close</span>
+                </button>
+              </div>
+
+              {dialogState.valueLabel ? (
+                <label className="account-field">
+                  <span>{dialogState.valueLabel}</span>
+                  <textarea
+                    rows="4"
+                    value={dialogState.value}
+                    onChange={(event) => setDialogState((prev) => ({ ...prev, value: event.target.value }))}
+                    placeholder={dialogState.valuePlaceholder}
+                    disabled={Boolean(actionState.loadingAction)}
+                  />
+                </label>
+              ) : null}
+
+              <div className="inline-actions">
+                <button type="button" className="secondary-button" onClick={closeActionDialog} disabled={Boolean(actionState.loadingAction)}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={handleActionDialogConfirm}
+                  disabled={Boolean(actionState.loadingAction)}
+                >
+                  {actionState.loadingAction ? 'Saving...' : dialogState.confirmLabel}
+                </button>
+              </div>
             </section>
           </div>
         ) : null}

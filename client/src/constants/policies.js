@@ -1,5 +1,8 @@
 export const POLICY_VERSION = '2026-06-01';
 export const POLICY_SUPPORT_EMAIL = 'owner.progressory@gmail.com';
+export const POLICY_SUPPORT_LINK_LABEL = 'Email Progressory support';
+export const FOUNDER_CONTACT_LINK_LABEL = 'Email Progressory';
+export const DASHBOARD_FEEDBACK_LINK_LABEL = 'Send feedback by email';
 
 export const policyLinks = [
   { key: 'terms', label: 'Terms', to: '/terms' },

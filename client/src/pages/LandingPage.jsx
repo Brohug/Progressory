@@ -2,9 +2,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import api from '../api/axios';
 import AppIcon from '../components/AppIcon';
-import { policyLinks } from '../constants/policies';
-
-const CONTACT_EMAIL = 'owner.progressory@gmail.com';
+import { FOUNDER_CONTACT_LINK_LABEL, POLICY_SUPPORT_EMAIL, policyLinks } from '../constants/policies';
 
 const emptyRequestForm = {
   first_name: '',
@@ -306,7 +304,7 @@ export default function LandingPage() {
               Demos are 20 minutes. Founder access is $49.99/month for the first 5-10 gyms and includes a 30-day trial/onboarding period. Standard access is $99.99/month.
             </p>
             <p className="landing-cta-note">
-              Prefer email? Send demo or founder requests to {CONTACT_EMAIL} with your name, gym and for more information.
+              Prefer email? <a className="library-resource-link" href={`mailto:${POLICY_SUPPORT_EMAIL}`}>{FOUNDER_CONTACT_LINK_LABEL}</a> with your name, gym, and what you want help with.
             </p>
           </div>
 
@@ -525,7 +523,7 @@ export default function LandingPage() {
             Founder access means paid access to the founder plan, not just a waitlist. Demos stay short and focused so gym owners can quickly see whether the system fits.
           </p>
           <p className="landing-cta-note">
-            Prefer email? Send demo or founder requests to {CONTACT_EMAIL} with your name, gym and for more information.
+            Prefer email? <a className="library-resource-link" href={`mailto:${POLICY_SUPPORT_EMAIL}`}>{FOUNDER_CONTACT_LINK_LABEL}</a> with your name, gym, and what you want help with.
           </p>
         </section>
       </main>
@@ -676,7 +674,7 @@ export default function LandingPage() {
                       </div>
                     ) : (
                       <p className="meta-text">
-                        No open demo times are available right now. Please email {CONTACT_EMAIL} and I&apos;ll coordinate directly.
+                        No open demo times are available right now. Please <a className="library-resource-link" href={`mailto:${POLICY_SUPPORT_EMAIL}`}>{FOUNDER_CONTACT_LINK_LABEL}</a> and I&apos;ll coordinate directly.
                       </p>
                     )}
                   </div>

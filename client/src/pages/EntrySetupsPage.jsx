@@ -1122,7 +1122,7 @@ export default function EntrySetupsPage() {
 
           <section className="page-quickstart-card entry-setups-quickstart">
             <div className="planned-classes-quickstart-copy">
-              <span className="eyebrow">What this page is for</span>
+              <span className="eyebrow">Quick guide</span>
               <strong>Entry Setups helps you study how to create the opening before the main attack.</strong>
               <p className="meta-text">
                 Use this page when you want starter ideas for setups, reactions, and continuations. It is meant to
@@ -1634,7 +1634,7 @@ export default function EntrySetupsPage() {
                     className="secondary-button"
                     onClick={scrollToBuiltInSearchTop}
                   >
-                    Back to top
+                    Top
                   </button>
                 </div>
               ) : null}

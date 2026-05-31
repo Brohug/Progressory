@@ -9,7 +9,7 @@ import { findRelatedSetupFamilies } from '../data/entrySetupFamilies';
 import { formatSentenceLabel } from '../utils/formatLabel';
 import TopicSearchSelect from '../components/TopicSearchSelect';
 import { useAuth } from '../hooks/useAuth';
-import { POLICY_SUPPORT_EMAIL } from '../constants/policies';
+import { POLICY_SUPPORT_EMAIL, POLICY_SUPPORT_LINK_LABEL } from '../constants/policies';
 
 const normalizeValue = (value) => (
   String(value || '')
@@ -981,7 +981,7 @@ export default function LibraryPage() {
         <section className="page-section">
           <strong>Content safety</strong>
           <p className="section-note">
-            Content is provided by your gym for martial arts education and review. Report anything inappropriate or unsafe to your gym staff or to <a href={`mailto:${POLICY_SUPPORT_EMAIL}`}>{POLICY_SUPPORT_EMAIL}</a>.
+            Content is provided by your gym for martial arts education and review. Report anything inappropriate or unsafe to your gym staff or to <a href={`mailto:${POLICY_SUPPORT_EMAIL}`}>{POLICY_SUPPORT_LINK_LABEL}</a>.
           </p>
         </section>
 
@@ -1148,7 +1148,7 @@ export default function LibraryPage() {
               onClick={scrollToLibraryFiltersTop}
               type="button"
             >
-              Back to top
+              Top
             </button>
           )}
         >
@@ -1242,7 +1242,7 @@ export default function LibraryPage() {
                 onClick={scrollToLibraryEntriesTop}
                 type="button"
               >
-                Back to top
+                Top
               </button>
             )}
           >
@@ -1763,7 +1763,7 @@ export default function LibraryPage() {
             onClick={scrollToLibraryFiltersTop}
             type="button"
           >
-            Back to top
+            Top
           </button>
         )}
       >
@@ -2019,7 +2019,7 @@ export default function LibraryPage() {
             onClick={scrollToLibraryEntriesTop}
             type="button"
           >
-            Back to top
+                Top
           </button>
         )}
       >

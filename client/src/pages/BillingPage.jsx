@@ -169,7 +169,7 @@ export default function BillingPage() {
             <div>
               <h3>Billing overview</h3>
               <p className="section-note">
-                This page reads the real subscription state and plan usage from the backend instead of relying on placeholder billing UI.
+                This page reads the live subscription state and plan usage for the gym directly from the backend.
               </p>
             </div>
           </div>
@@ -283,7 +283,7 @@ export default function BillingPage() {
         <section className="page-section">
           <div className="section-header">
             <div>
-              <h3>What this page is for</h3>
+              <h3>How billing works here</h3>
               <p className="section-note">
                 Owners and admins can start Stripe checkout or open the customer portal here. Staff and members can still review the current billing state without getting payment controls.
               </p>

@@ -1011,7 +1011,7 @@ export default function ClassesPage() {
 
         <section className="page-quickstart-card classes-quickstart">
           <div className="planned-classes-quickstart-copy">
-            <span className="eyebrow">What this page is for</span>
+            <span className="eyebrow">Quick guide</span>
             <strong>Class Logs is where you finish what actually happened in class.</strong>
             <p className="meta-text">
               Use this page after class to confirm the class details, add the topics that were taught, record

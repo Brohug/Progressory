@@ -1252,7 +1252,7 @@ export default function PlannedClassesPage() {
 
           <section className="planned-classes-quickstart page-quickstart-card">
             <div className="planned-classes-quickstart-copy">
-              <span className="eyebrow">What this page is for</span>
+              <span className="eyebrow">Quick guide</span>
               <strong>Class Planner is where you build the session before class starts.</strong>
               <p className="meta-text">
                 The usual workflow is: choose the program and date, add the topics you plan to teach, save the class,

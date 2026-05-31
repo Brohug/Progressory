@@ -1,5 +1,5 @@
 import PolicyPageLayout from './PolicyPageLayout';
-import { POLICY_SUPPORT_EMAIL, POLICY_VERSION } from '../constants/policies';
+import { POLICY_SUPPORT_EMAIL, POLICY_SUPPORT_LINK_LABEL, POLICY_VERSION } from '../constants/policies';
 
 export default function PrivacyPage() {
   return (
@@ -24,7 +24,7 @@ export default function PrivacyPage() {
         content and accounts when necessary to protect users, minors, or the platform.
       </p>
       <p>
-        Privacy and safety questions can be sent to <a href={`mailto:${POLICY_SUPPORT_EMAIL}`}>{POLICY_SUPPORT_EMAIL}</a>.
+        Privacy and safety questions can be sent to <a href={`mailto:${POLICY_SUPPORT_EMAIL}`}>{POLICY_SUPPORT_LINK_LABEL}</a>.
       </p>
     </PolicyPageLayout>
   );
