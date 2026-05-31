@@ -1,6 +1,8 @@
 const pool = require('../config/db');
 const { sendClientError, handleServerError } = require('../middleware/errorHandler');
 const { sendFounderInviteNotification } = require('../services/notificationService');
+const { getSubscriptionByGymId } = require('../services/billingService');
+const { reconcileGymSubscriptionFromStripeIfNeeded } = require('./billingController');
 const {
   listFounderInquiries,
   getFounderInquiryDetail,
@@ -20,6 +22,35 @@ const parsePositiveId = (value) => {
   const parsedId = Number.parseInt(value, 10);
   return Number.isInteger(parsedId) && parsedId > 0 ? parsedId : null;
 };
+
+const enrichGymOverviewWithBilling = async (gyms = []) => Promise.all(
+  gyms.map(async (gym) => {
+    if (!gym?.id) {
+      return gym;
+    }
+
+    try {
+      const subscription = await getSubscriptionByGymId(gym.id);
+      const reconciledSubscription = await reconcileGymSubscriptionFromStripeIfNeeded(subscription);
+
+      return {
+        ...gym,
+        plan_code: reconciledSubscription?.plan_code ?? gym.plan_code,
+        billing_status: reconciledSubscription?.billing_status ?? gym.billing_status,
+        current_period_end: reconciledSubscription?.current_period_end ?? gym.current_period_end,
+        cancel_at_period_end: reconciledSubscription?.cancel_at_period_end ?? gym.cancel_at_period_end,
+        trial_ends_at: reconciledSubscription?.trial_ends_at ?? gym.trial_ends_at
+      };
+    } catch (error) {
+      console.warn('Platform admin billing enrichment warning:', {
+        gymId: gym.id,
+        message: error.message
+      });
+
+      return gym;
+    }
+  })
+);
 
 const buildInviteEmailDelivery = async (result, logLabel) => {
   try {
@@ -56,10 +87,12 @@ const getPlatformAdminDashboard = async (req, res) => {
       listGymOverview()
     ]);
 
+    const enrichedGyms = await enrichGymOverviewWithBilling(gyms);
+
     return res.status(200).json({
       summary,
       founder_requests: founderRequests,
-      gyms
+      gyms: enrichedGyms
     });
   } catch (error) {
     return handleServerError(res, 'Get platform admin dashboard error:', error);

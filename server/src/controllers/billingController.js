@@ -977,5 +977,6 @@ module.exports = {
   getBillingAccessStatus,
   createCheckoutSession,
   createCustomerPortalSession,
-  handleBillingWebhook
+  handleBillingWebhook,
+  reconcileGymSubscriptionFromStripeIfNeeded
 };

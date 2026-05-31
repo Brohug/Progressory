@@ -1034,7 +1034,7 @@ export default function MembersPage() {
                                       ? new Date(progress.last_reviewed_at).toLocaleString()
                                       : 'None'}
                                   </div>
-                                  <div>Notes: {progress.notes || 'None'}</div>
+                                  <div>Staff Note: {progress.notes || 'None'}</div>
                                 </div>
                               ) : null}
                             </li>

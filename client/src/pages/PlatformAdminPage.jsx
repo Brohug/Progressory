@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import api from '../api/axios';
 import Layout from '../components/Layout';
 import AppIcon from '../components/AppIcon';
@@ -24,6 +24,22 @@ const formatDateLabel = (value) => {
 };
 
 const formatPhoneLabel = (value) => value || 'Not provided';
+
+const getGymAccessStateLabel = (gym) => {
+  if (gym?.is_platform_suspended) {
+    return 'Suspended';
+  }
+
+  if (gym?.billing_status === 'trialing') {
+    return 'Trialing';
+  }
+
+  if (gym?.billing_status === 'active') {
+    return 'Live';
+  }
+
+  return formatStatusLabel(gym?.billing_status);
+};
 
 const sortByDateDesc = (left, right) => {
   const leftTime = left ? new Date(left).getTime() : 0;
@@ -75,6 +91,8 @@ const emptyDashboardState = {
 };
 
 export default function PlatformAdminPage() {
+  const founderRequestsSectionRef = useRef(null);
+  const gymOverviewSectionRef = useRef(null);
   const [dashboardState, setDashboardState] = useState(emptyDashboardState);
   const [filterState, setFilterState] = useState({
     founderSearch: '',
@@ -146,15 +164,105 @@ export default function PlatformAdminPage() {
     }
 
     return [
-      { label: 'Founder requests', value: summary.founder_requests_total },
-      { label: 'New founder requests', value: summary.founder_requests_new },
-      { label: 'Provisioned leads', value: summary.founder_requests_provisioned },
-      { label: 'Gyms total', value: summary.gyms_total },
-      { label: 'Suspended gyms', value: summary.gyms_suspended },
-      { label: 'Trialing gyms', value: summary.gyms_trialing },
-      { label: 'Active gyms', value: summary.gyms_active },
-      { label: 'Past due gyms', value: summary.gyms_past_due },
-      { label: 'Canceled gyms', value: summary.gyms_canceled }
+      {
+        label: 'Founder requests',
+        value: summary.founder_requests_total,
+        eyebrow: 'Pipeline',
+        helper: 'All founder leads currently in the operator queue.',
+        tone: 'neutral'
+      },
+      {
+        label: 'New founder requests',
+        value: summary.founder_requests_new,
+        eyebrow: 'Needs reply',
+        helper: 'Fresh leads waiting for first outreach or a next decision.',
+        tone: summary.founder_requests_new > 0 ? 'action' : 'neutral'
+      },
+      {
+        label: 'Provisioned leads',
+        value: summary.founder_requests_provisioned,
+        eyebrow: 'Activated',
+        helper: 'Founder leads with a gym shell and owner access created.',
+        tone: 'positive'
+      },
+      {
+        label: 'Gyms total',
+        value: summary.gyms_total,
+        eyebrow: 'Footprint',
+        helper: 'Every gym currently represented in the platform.',
+        tone: 'neutral'
+      },
+      {
+        label: 'Suspended gyms',
+        value: summary.gyms_suspended,
+        eyebrow: 'Access risk',
+        helper: 'Gyms currently blocked by a platform suspension.',
+        tone: summary.gyms_suspended > 0 ? 'danger' : 'neutral'
+      },
+      {
+        label: 'Trialing gyms',
+        value: summary.gyms_trialing,
+        eyebrow: 'In trial',
+        helper: 'Gyms currently inside the trial/onboarding window.',
+        tone: 'action'
+      },
+      {
+        label: 'Active gyms',
+        value: summary.gyms_active,
+        eyebrow: 'Live',
+        helper: 'Gyms with billing active and normal access restored.',
+        tone: 'positive'
+      },
+      {
+        label: 'Past due gyms',
+        value: summary.gyms_past_due,
+        eyebrow: 'Billing risk',
+        helper: 'Gyms that may need outreach before they stall or churn.',
+        tone: summary.gyms_past_due > 0 ? 'danger' : 'neutral'
+      },
+      {
+        label: 'Canceled gyms',
+        value: summary.gyms_canceled,
+        eyebrow: 'Lost',
+        helper: 'Gyms no longer subscribed and no longer in active billing.',
+        tone: summary.gyms_canceled > 0 ? 'danger' : 'neutral'
+      }
+    ];
+  }, [dashboardState.summary]);
+
+  const summarySignalCards = useMemo(() => {
+    const summary = dashboardState.summary;
+
+    if (!summary) {
+      return [];
+    }
+
+    const gymsNeedingAttention = Number(summary.gyms_suspended || 0) + Number(summary.gyms_past_due || 0);
+    const liveAndTrialingGyms = Number(summary.gyms_active || 0) + Number(summary.gyms_trialing || 0);
+
+    return [
+      {
+        label: 'New leads waiting',
+        value: summary.founder_requests_new,
+        helper: summary.founder_requests_new > 0
+          ? 'Founder requests that still need a reply or first action.'
+          : 'No fresh founder requests are waiting right now.',
+        tone: summary.founder_requests_new > 0 ? 'action' : 'neutral'
+      },
+      {
+        label: 'Gyms needing attention',
+        value: gymsNeedingAttention,
+        helper: gymsNeedingAttention > 0
+          ? 'Suspended or past-due gyms that may need owner follow-up.'
+          : 'No billing or suspension issues are active right now.',
+        tone: gymsNeedingAttention > 0 ? 'danger' : 'positive'
+      },
+      {
+        label: 'Live or trialing gyms',
+        value: liveAndTrialingGyms,
+        helper: 'Gyms currently onboarding or operating with access granted.',
+        tone: liveAndTrialingGyms > 0 ? 'positive' : 'neutral'
+      }
     ];
   }, [dashboardState.summary]);
 
@@ -323,6 +431,43 @@ export default function PlatformAdminPage() {
     () => buildFounderTimeline(detailState.inquiry),
     [detailState.inquiry]
   );
+
+  const scrollToSection = (sectionRef) => {
+    if (!sectionRef?.current) {
+      return;
+    }
+
+    sectionRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  };
+
+  const handleOpenNewFounderLeads = () => {
+    setFilterState((prev) => ({
+      ...prev,
+      founderStatus: 'new'
+    }));
+    scrollToSection(founderRequestsSectionRef);
+  };
+
+  const handleOpenAttentionGyms = () => {
+    setFilterState((prev) => ({
+      ...prev,
+      gymBillingStatus: 'past_due',
+      gymAccessState: 'all'
+    }));
+    scrollToSection(gymOverviewSectionRef);
+  };
+
+  const handleOpenLiveOrTrialingGyms = () => {
+    setFilterState((prev) => ({
+      ...prev,
+      gymBillingStatus: 'all',
+      gymAccessState: 'live'
+    }));
+    scrollToSection(gymOverviewSectionRef);
+  };
 
   const setActionLoading = (loadingAction) => {
     setActionState((prev) => ({
@@ -747,18 +892,64 @@ export default function PlatformAdminPage() {
               <p className="meta-text">Pulling founder pipeline and live gym status now.</p>
             </div>
           ) : (
-            <div className="platform-admin-summary-grid">
-              {summaryCards.map((card) => (
-                <div key={card.label} className="platform-admin-summary-card">
-                  <span className="platform-admin-summary-label">{card.label}</span>
-                  <strong className="platform-admin-summary-value">{card.value}</strong>
-                </div>
-              ))}
-            </div>
+            <>
+              <div className="platform-admin-signal-grid">
+                {summarySignalCards.map((card) => (
+                  <article
+                    key={card.label}
+                    className={`platform-admin-signal-card platform-admin-signal-card--${card.tone}`}
+                  >
+                    <span className="platform-admin-summary-label">{card.label}</span>
+                    <strong className="platform-admin-signal-value">{card.value}</strong>
+                    <p className="meta-text">{card.helper}</p>
+                  </article>
+                ))}
+              </div>
+
+              <div className="platform-admin-summary-grid">
+                {summaryCards.map((card) => (
+                  <div
+                    key={card.label}
+                    className={`platform-admin-summary-card platform-admin-summary-card--${card.tone}`}
+                  >
+                    <div className="platform-admin-summary-copy">
+                      <span className="eyebrow">{card.eyebrow}</span>
+                      <span className="platform-admin-summary-label">{card.label}</span>
+                    </div>
+                    <strong className="platform-admin-summary-value">{card.value}</strong>
+                    <p className="meta-text">{card.helper}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="platform-admin-summary-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={handleOpenNewFounderLeads}
+                >
+                  Review new founder leads
+                </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={handleOpenAttentionGyms}
+                >
+                  Open at-risk gyms
+                </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={handleOpenLiveOrTrialingGyms}
+                >
+                  View live or trialing gyms
+                </button>
+              </div>
+            </>
           )}
         </section>
 
-        <section className="page-section">
+        <section ref={founderRequestsSectionRef} className="page-section">
           <div className="section-header">
             <div>
               <h3>Operator reporting</h3>
@@ -960,7 +1151,7 @@ export default function PlatformAdminPage() {
           )}
         </section>
 
-        <section className="page-section">
+        <section ref={gymOverviewSectionRef} className="page-section">
           <div className="section-header">
             <div>
               <h3>Founder requests</h3>
@@ -1270,7 +1461,7 @@ export default function PlatformAdminPage() {
                       </div>
                     </div>
                     <span className="member-card-summary-pill">
-                      {gym.is_platform_suspended ? 'Suspended' : formatStatusLabel(gym.billing_status)}
+                      {getGymAccessStateLabel(gym)}
                     </span>
                   </div>
 
@@ -1285,7 +1476,7 @@ export default function PlatformAdminPage() {
                     </div>
                     <div className="account-billing-status-card">
                       <span className="meta-text">Access state</span>
-                      <strong>{gym.is_platform_suspended ? 'Suspended' : 'Live'}</strong>
+                      <strong>{getGymAccessStateLabel(gym)}</strong>
                     </div>
                     <div className="account-billing-status-card">
                       <span className="meta-text">Plan</span>

@@ -2,6 +2,13 @@ const pool = require('../config/db');
 
 const validStatuses = ['not_started', 'introduced', 'developing', 'competent'];
 
+const mapProgressRowsForMemberView = (rows) => (
+  rows.map(({ notes, ...row }) => ({
+    ...row,
+    notes: null
+  }))
+);
+
 const createOrUpdateMemberProgress = async (req, res) => {
   try {
     const gymId = req.user.gym_id;
@@ -135,7 +142,11 @@ const getMemberProgress = async (req, res) => {
       [id]
     );
 
-    return res.status(200).json(rows);
+    const safeRows = req.user.role === 'member'
+      ? mapProgressRowsForMemberView(rows)
+      : rows;
+
+    return res.status(200).json(safeRows);
   } catch (error) {
     console.error('Get member progress error:', error.message);
 
@@ -179,7 +190,7 @@ const getMyProgress = async (req, res) => {
         first_name: member.first_name,
         last_name: member.last_name
       },
-      progress: rows
+      progress: mapProgressRowsForMemberView(rows)
     });
   } catch (error) {
     console.error('Get my progress error:', error.message);

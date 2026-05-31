@@ -252,13 +252,17 @@ export default function MemberProgressForm({
         </div>
 
         <div>
-          <label>Notes</label>
+          <label>Staff Note</label>
           <textarea
             name="notes"
             value={formData.notes}
             onChange={handleChange}
             rows="3"
+            placeholder="Optional coach/admin note about how this member is picking up the topic."
           />
+          <div className="meta-text">
+            Visible to owner/admin/coaches when reviewing member progress.
+          </div>
         </div>
 
         <div className="inline-actions">
