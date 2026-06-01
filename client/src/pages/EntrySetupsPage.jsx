@@ -131,6 +131,7 @@ export default function EntrySetupsPage() {
   const builtInSearchTopRef = useRef(null);
   const quickLanes = useMemo(() => ['Standing', 'Guard', 'Passing', 'Submission'], []);
   const isOwner = user?.role === 'owner';
+  const isMember = user?.role === 'member';
   const useBuiltInCompactCards = isMobileCompactCards || isBuiltInCompactView;
   const useSavedCompactCards = isMobileCompactCards || isSavedCompactView;
 
@@ -1207,7 +1208,7 @@ export default function EntrySetupsPage() {
               <span className="eyebrow">Gym-created layer</span>
               <strong>Saved examples from your gym</strong>
               <p className="dashboard-card-copy">
-                Shared owner examples and private coach examples are your gym&apos;s own layer. That is where your exact version of the setup becomes reusable.
+                Shared owner examples and staff-saved examples are your gym&apos;s own layer. That is where your exact version of the setup becomes reusable.
               </p>
             </article>
           </div>
@@ -1287,7 +1288,11 @@ export default function EntrySetupsPage() {
           <div className="section-header">
             <div>
               <h3>Saved setup examples</h3>
-              <p className="section-note">Owner-shared examples are visible to the whole gym. Private examples stay only with the account that created them.</p>
+              <p className="section-note">
+                {isMember
+                  ? 'Owner-shared examples are visible to the whole gym. Member accounts can browse the shared setup layer here.'
+                  : 'Owner-shared examples are visible to the whole gym. Private examples stay only with the account that created them.'}
+              </p>
             </div>
             <div className="inline-actions">
               <button
@@ -1300,39 +1305,45 @@ export default function EntrySetupsPage() {
               >
                 {isSavedCompactView ? 'Show more detail' : 'Minimize saved view'}
               </button>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => {
-                  if (isExampleFormOpen) {
-                    minimizeExampleForm();
-                    return;
-                  }
+              {!isMember ? (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    if (isExampleFormOpen) {
+                      minimizeExampleForm();
+                      return;
+                    }
 
-                  openCreateExampleForm();
-                }}
-              >
-                {isExampleFormOpen
-                  ? (editingExampleId ? 'Minimize editing form' : 'Minimize setup form')
-                  : (editingExampleId ? 'Editing setup example' : 'Create setup example')}
-              </button>
+                    openCreateExampleForm();
+                  }}
+                >
+                  {isExampleFormOpen
+                    ? (editingExampleId ? 'Minimize editing form' : 'Minimize setup form')
+                    : (editingExampleId ? 'Editing setup example' : 'Create setup example')}
+                </button>
+              ) : null}
             </div>
           </div>
 
           <div className="entry-setups-search-shell">
             <p className="section-note">
-              Use this layer when your gym wants to save example setup paths beyond the built-in starter families. Owners can share across the gym. Everyone else can keep private versions for their own study.
+              {isMember
+                ? 'Use this layer to browse owner-shared setup paths beyond the built-in starter families.'
+                : 'Use this layer when your gym wants to save example setup paths beyond the built-in starter families. Owners can share across the gym. Staff can keep private versions for their own study.'}
             </p>
             <div className="entry-setups-search-summary">
               <span className="entry-setup-info-chip">{setupFamilies.length} built-in families</span>
               <span className="entry-setup-info-chip">{sharedExamples.length} shared owner example{sharedExamples.length === 1 ? '' : 's'}</span>
-              <span className="entry-setup-info-chip">{privateExamples.length} private example{privateExamples.length === 1 ? '' : 's'}</span>
+              {!isMember ? (
+                <span className="entry-setup-info-chip">{privateExamples.length} private example{privateExamples.length === 1 ? '' : 's'}</span>
+              ) : null}
               {familySearch && topSavedMatch ? (
                 <span className="entry-setup-info-chip entry-setup-info-chip-accent">
                   Top saved match: {topSavedMatch.title}
                 </span>
               ) : null}
-              {isExampleFormOpen ? (
+              {!isMember && isExampleFormOpen ? (
                 <span className="entry-setup-info-chip entry-setup-info-chip-accent">Draft form open</span>
               ) : null}
             </div>
@@ -1363,7 +1374,7 @@ export default function EntrySetupsPage() {
             {customExamplesError ? <p className="error-text">{customExamplesError}</p> : null}
           </div>
 
-          {isExampleFormOpen ? (
+          {!isMember && isExampleFormOpen ? (
             <form ref={exampleFormRef} className="page-section entry-setup-example-form" onSubmit={submitExampleForm}>
               <div className="section-header">
                 <div>
@@ -1585,21 +1596,23 @@ export default function EntrySetupsPage() {
                       )}
                     </div>
 
-                    <div className="entry-setups-custom-group">
-                      <div className="section-header">
-                        <div>
-                          <h4>My private examples</h4>
-                          <p className="section-note">Only you can see these saved setup examples.</p>
+                    {!isMember ? (
+                      <div className="entry-setups-custom-group">
+                        <div className="section-header">
+                          <div>
+                            <h4>My private examples</h4>
+                            <p className="section-note">Only you can see these saved setup examples.</p>
+                          </div>
                         </div>
+                        {privateExamples.length === 0 ? (
+                          <p className="meta-text entry-setups-inline-empty">No private saved examples match these filters yet.</p>
+                        ) : (
+                          <div className="action-grid entry-setups-family-grid">
+                            {privateExamples.map((example) => renderCustomExampleCard(example, 'private', true))}
+                          </div>
+                        )}
                       </div>
-                      {privateExamples.length === 0 ? (
-                        <p className="meta-text entry-setups-inline-empty">No private saved examples match these filters yet.</p>
-                      ) : (
-                        <div className="action-grid entry-setups-family-grid">
-                          {privateExamples.map((example) => renderCustomExampleCard(example, 'private', true))}
-                        </div>
-                      )}
-                    </div>
+                    ) : null}
                   </>
                 )
               )}

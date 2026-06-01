@@ -322,6 +322,28 @@ CREATE TABLE audit_logs (
         ON DELETE SET NULL
 );
 
+CREATE TABLE product_analytics_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    gym_id INT NULL,
+    user_role VARCHAR(32) NOT NULL DEFAULT 'unknown',
+    page_path VARCHAR(255) NOT NULL,
+    event_type ENUM('page_view', 'page_exit') NOT NULL,
+    duration_seconds INT NULL,
+    metadata_json LONGTEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_product_analytics_events_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE SET NULL,
+    CONSTRAINT fk_product_analytics_events_gym
+        FOREIGN KEY (gym_id) REFERENCES gyms(id)
+        ON DELETE SET NULL,
+    KEY idx_product_analytics_events_created (created_at),
+    KEY idx_product_analytics_events_path (page_path),
+    KEY idx_product_analytics_events_user (user_id),
+    KEY idx_product_analytics_events_type (event_type)
+);
+
 CREATE TABLE members (
     id INT AUTO_INCREMENT PRIMARY KEY,
     gym_id INT NOT NULL,
@@ -544,4 +566,37 @@ CREATE TABLE public_inquiries (
     KEY idx_public_inquiries_demo_slot_start (demo_slot_start),
     KEY idx_public_inquiries_linked_gym_id (linked_gym_id),
     KEY idx_public_inquiries_linked_owner_user_id (linked_owner_user_id)
+);
+
+CREATE TABLE gym_check_in_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    gym_id INT NOT NULL,
+    user_id INT NULL,
+    member_id INT NULL,
+    matched_class_id INT NULL,
+    matched_planned_class_id INT NULL,
+    checked_in_role VARCHAR(32) NOT NULL DEFAULT 'member',
+    source ENUM('public_qr', 'staff_tool') NOT NULL DEFAULT 'public_qr',
+    identifier_email VARCHAR(150) NULL,
+    first_name VARCHAR(100) NULL,
+    last_name VARCHAR(100) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_gym_check_in_events_gym
+        FOREIGN KEY (gym_id) REFERENCES gyms(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_gym_check_in_events_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE SET NULL,
+    CONSTRAINT fk_gym_check_in_events_member
+        FOREIGN KEY (member_id) REFERENCES members(id)
+        ON DELETE SET NULL,
+    CONSTRAINT fk_gym_check_in_events_class
+        FOREIGN KEY (matched_class_id) REFERENCES classes(id)
+        ON DELETE SET NULL,
+    CONSTRAINT fk_gym_check_in_events_planned_class
+        FOREIGN KEY (matched_planned_class_id) REFERENCES planned_classes(id)
+        ON DELETE SET NULL,
+    KEY idx_gym_check_in_events_gym_created (gym_id, created_at),
+    KEY idx_gym_check_in_events_user (user_id),
+    KEY idx_gym_check_in_events_member (member_id)
 );

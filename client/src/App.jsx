@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { FounderOnboardingProvider } from './context/FounderOnboardingContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
+import AppAnalyticsTracker from './components/AppAnalyticsTracker.jsx';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
@@ -13,6 +14,7 @@ const AcceptableUsePage = lazy(() => import('./pages/AcceptableUsePage'));
 const ChildSafetyPage = lazy(() => import('./pages/ChildSafetyPage'));
 const MemberAccessPage = lazy(() => import('./pages/MemberAccessPage'));
 const StaffAccessPage = lazy(() => import('./pages/StaffAccessPage'));
+const PublicCheckInPage = lazy(() => import('./pages/PublicCheckInPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ProgramsPage = lazy(() => import('./pages/ProgramsPage'));
 const TopicsPage = lazy(() => import('./pages/TopicsPage'));
@@ -30,6 +32,8 @@ const MyProgressPage = lazy(() => import('./pages/MyProgressPage'));
 const MyAccountPage = lazy(() => import('./pages/MyAccountPage'));
 const BillingPage = lazy(() => import('./pages/BillingPage'));
 const PlatformAdminPage = lazy(() => import('./pages/PlatformAdminPage'));
+const PlatformAnalyticsPage = lazy(() => import('./pages/PlatformAnalyticsPage'));
+const CheckInToolsPage = lazy(() => import('./pages/CheckInToolsPage'));
 const SuspendedPage = lazy(() => import('./pages/SuspendedPage'));
 
 const STAFF_ROLES = ['owner', 'admin', 'coach'];
@@ -65,6 +69,7 @@ export default function App() {
       <FounderOnboardingProvider>
         <BrowserRouter>
           <ScrollToTop />
+          <AppAnalyticsTracker />
           <Suspense fallback={<RouteFallback />}>
             <Routes>
             <Route path="/" element={<LandingPage />} />
@@ -76,6 +81,7 @@ export default function App() {
             <Route path="/child-safety" element={<ChildSafetyPage />} />
             <Route path="/member-access/:token" element={<MemberAccessPage />} />
             <Route path="/staff-access/:token" element={<StaffAccessPage />} />
+            <Route path="/check-in/:slug" element={<PublicCheckInPage />} />
             <Route
               path="/dashboard"
               element={
@@ -209,6 +215,22 @@ export default function App() {
               element={
                 <ProtectedRoute requirePlatformAdmin>
                   <PlatformAdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/platform-analytics"
+              element={
+                <ProtectedRoute requirePlatformAdmin>
+                  <PlatformAnalyticsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/check-in-tools"
+              element={
+                <ProtectedRoute allowedRoles={STAFF_ROLES}>
+                  <CheckInToolsPage />
                 </ProtectedRoute>
               }
             />

@@ -69,6 +69,16 @@ const serializeExampleRow = (row) => ({
 
 const getEntrySetupExamples = async (req, res) => {
   try {
+    const visibilityClause = req.user.role === 'member'
+      ? "ese.visibility = 'gym_shared'"
+      : `(
+          ese.visibility = 'gym_shared'
+          OR ese.created_by_user_id = ?
+        )`;
+    const queryParams = req.user.role === 'member'
+      ? [req.user.gym_id]
+      : [req.user.gym_id, req.user.id];
+
     const [rows] = await pool.query(
       `SELECT
         ese.id,
@@ -93,14 +103,11 @@ const getEntrySetupExamples = async (req, res) => {
       INNER JOIN users u ON u.id = ese.created_by_user_id AND u.gym_id = ese.gym_id
       WHERE ese.gym_id = ?
         AND ese.is_active = TRUE
-        AND (
-          ese.visibility = 'gym_shared'
-          OR ese.created_by_user_id = ?
-        )
+        AND ${visibilityClause}
       ORDER BY
         CASE WHEN ese.visibility = 'gym_shared' THEN 0 ELSE 1 END,
         ese.updated_at DESC`,
-      [req.user.gym_id, req.user.id]
+      queryParams
     );
 
     return res.status(200).json(rows.map(serializeExampleRow));
@@ -121,6 +128,12 @@ const getEntrySetupExamples = async (req, res) => {
 
 const createEntrySetupExample = async (req, res) => {
   try {
+    if (req.user.role === 'member') {
+      return res.status(403).json({
+        message: 'Member accounts cannot create saved setup examples.'
+      });
+    }
+
     const title = normalizeString(req.body.title);
     const lane = normalizeString(req.body.lane);
 
@@ -240,6 +253,12 @@ const createEntrySetupExample = async (req, res) => {
 
 const updateEntrySetupExample = async (req, res) => {
   try {
+    if (req.user.role === 'member') {
+      return res.status(403).json({
+        message: 'Member accounts cannot edit saved setup examples.'
+      });
+    }
+
     const { id } = req.params;
 
     const [existingRows] = await pool.query(
@@ -389,6 +408,12 @@ const updateEntrySetupExample = async (req, res) => {
 
 const deleteEntrySetupExample = async (req, res) => {
   try {
+    if (req.user.role === 'member') {
+      return res.status(403).json({
+        message: 'Member accounts cannot delete saved setup examples.'
+      });
+    }
+
     const { id } = req.params;
 
     const [existingRows] = await pool.query(

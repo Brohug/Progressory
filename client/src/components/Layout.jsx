@@ -47,6 +47,10 @@ const getIconNameForPath = (path) => {
       return 'account';
     case '/platform-admin':
       return 'reports';
+    case '/platform-analytics':
+      return 'reports';
+    case '/check-in-tools':
+      return 'members';
     default:
       return 'dashboard';
   }
@@ -533,7 +537,8 @@ export default function Layout({ children }) {
       { label: 'Decision Trees', to: '/decision-tree' },
       { label: 'Entry Setups', to: '/entry-setups' },
       { label: 'Scenarios', to: '/training-scenarios' },
-      { label: 'Topics', to: '/topics' }
+      { label: 'Topics', to: '/topics' },
+      { label: 'Check-In Tools', to: '/check-in-tools' }
     ];
 
     if (isManagement) {
@@ -602,10 +607,16 @@ export default function Layout({ children }) {
                           <span>My Account</span>
                         </Link>
                         {isPlatformAdmin ? (
-                          <Link className="secondary-button" to="/platform-admin" onClick={closeMenus}>
-                            <AppIcon name="reports" />
-                            <span>Platform Admin</span>
-                          </Link>
+                          <>
+                            <Link className="secondary-button" to="/platform-admin" onClick={closeMenus}>
+                              <AppIcon name="reports" />
+                              <span>Platform Admin</span>
+                            </Link>
+                            <Link className="secondary-button" to="/platform-analytics" onClick={closeMenus}>
+                              <AppIcon name="reports" />
+                              <span>Analytics</span>
+                            </Link>
+                          </>
                         ) : null}
                         {isManagement ? (
                           <Link className="secondary-button" to="/billing" onClick={closeMenus}>
@@ -753,10 +764,16 @@ export default function Layout({ children }) {
                       <span>My Account</span>
                     </Link>
                     {isPlatformAdmin ? (
-                      <Link to="/platform-admin" className="secondary-button" onClick={closeMenus}>
-                        <AppIcon name="reports" />
-                        <span>Platform Admin</span>
-                      </Link>
+                      <>
+                        <Link to="/platform-admin" className="secondary-button" onClick={closeMenus}>
+                          <AppIcon name="reports" />
+                          <span>Platform Admin</span>
+                        </Link>
+                        <Link to="/platform-analytics" className="secondary-button" onClick={closeMenus}>
+                          <AppIcon name="reports" />
+                          <span>Analytics</span>
+                        </Link>
+                      </>
                     ) : null}
                     {isManagement ? (
                       <Link to="/billing" className="secondary-button" onClick={closeMenus}>

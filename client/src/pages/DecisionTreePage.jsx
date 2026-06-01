@@ -3138,7 +3138,21 @@ export default function DecisionTreePage() {
     }));
   };
 
+  const trackDecisionTreeAction = (eventType, metadata = {}) => {
+    api.post('/analytics/action', {
+      event_type: eventType,
+      entity_type: 'decision_tree',
+      metadata
+    }).catch(() => {});
+  };
+
   const selectFocusEntry = (entry, options) => {
+    trackDecisionTreeAction('DECISION_TREE_NEXT_STEP', {
+      from_entry: focusEntry?.name || '',
+      to_entry: entry?.name || '',
+      path_depth: decisionPath.length,
+      interaction_source: options?.analyticsSource || 'decision_tree'
+    });
     navigateToEntry(entry, options);
   };
 
@@ -3151,6 +3165,10 @@ export default function DecisionTreePage() {
   };
 
   const resetDecisionTree = () => {
+    trackDecisionTreeAction('DECISION_TREE_SUCCESS', {
+      final_entry: focusEntry?.name || '',
+      path_depth: decisionPath.length
+    });
     setFocusId(defaultFocusId);
     setHistory([]);
     setDecisionPath([]);
@@ -3172,6 +3190,11 @@ export default function DecisionTreePage() {
   };
 
   const resetStartPoint = () => {
+    trackDecisionTreeAction('DECISION_TREE_RESET', {
+      reset_type: 'start_point',
+      previous_entry: focusEntry?.name || '',
+      path_depth: decisionPath.length
+    });
     setFocusId(defaultFocusId);
     setHistory([]);
     setDecisionPath([]);
@@ -3447,7 +3470,8 @@ export default function DecisionTreePage() {
                           pathMode: 'reset',
                           scrollTarget: 'tree',
                           closeSearch: true,
-                          feedback: `Focused on ${entry.name}. The page jumped to Tree branches below.`
+                          feedback: `Focused on ${entry.name}. The page jumped to Tree branches below.`,
+                          analyticsSource: 'search_result'
                         })}
                         onKeyDown={(event) => {
                           if (event.key === 'Enter' || event.key === ' ') {
@@ -3456,7 +3480,8 @@ export default function DecisionTreePage() {
                               pathMode: 'reset',
                               scrollTarget: 'tree',
                               closeSearch: true,
-                              feedback: `Focused on ${entry.name}. The page jumped to Tree branches below.`
+                              feedback: `Focused on ${entry.name}. The page jumped to Tree branches below.`,
+                              analyticsSource: 'search_result'
                             });
                           }
                         }}
@@ -3477,7 +3502,8 @@ export default function DecisionTreePage() {
                                   pathMode: 'reset',
                                   scrollTarget: 'tree',
                                   closeSearch: true,
-                                  feedback: `Focused on ${entry.name}. The page jumped to Tree branches below.`
+                                  feedback: `Focused on ${entry.name}. The page jumped to Tree branches below.`,
+                                  analyticsSource: 'search_result'
                                 });
                               }}
                           >
@@ -3604,7 +3630,13 @@ export default function DecisionTreePage() {
                                 <button
                                   type="button"
                                   className="secondary-button"
-                                  onClick={() => applyCoachingScenario(scenario)}
+                                  onClick={() => {
+                                    trackDecisionTreeAction('DECISION_TREE_GUIDED_START', {
+                                      coaching_problem: scenario.label,
+                                      focus_entry: scenario.focusName || ''
+                                    });
+                                    applyCoachingScenario(scenario);
+                                  }}
                                 >
                                   Start here
                                 </button>
@@ -3736,11 +3768,12 @@ export default function DecisionTreePage() {
                           key={`${reaction.reaction}-${option.id}`}
                           type="button"
                           className="secondary-button"
-                          onClick={() => selectFocusEntry(option, {
-                            pathMode: 'append',
-                            scrollTarget: 'recommendations',
-                            feedback: `Moved from ${focusEntry.name} to ${option.name}. Jumped to the next recommendation layer below.`
-                          })}
+                        onClick={() => selectFocusEntry(option, {
+                          pathMode: 'append',
+                          scrollTarget: 'recommendations',
+                          feedback: `Moved from ${focusEntry.name} to ${option.name}. Jumped to the next recommendation layer below.`,
+                          analyticsSource: 'reaction_card'
+                        })}
                         >
                           {option.name}
                         </button>
@@ -3814,7 +3847,8 @@ export default function DecisionTreePage() {
                         onClick={() => selectFocusEntry(option.entry, {
                           pathMode: 'append',
                           scrollTarget: 'recommendations',
-                          feedback: `Moved from ${focusEntry.name} to ${option.entry.name}. Jumped to the next recommendation layer below.`
+                          feedback: `Moved from ${focusEntry.name} to ${option.entry.name}. Jumped to the next recommendation layer below.`,
+                          analyticsSource: 'top_recommendation'
                         })}
                       >
                         Go to next step
@@ -3893,10 +3927,11 @@ export default function DecisionTreePage() {
                     key={`escape-continuation-${option.entry.id}`}
                     type="button"
                     className="decision-tree-guided-option"
-                    onClick={() => selectFocusEntry(option.entry, {
+                  onClick={() => selectFocusEntry(option.entry, {
                       pathMode: 'append',
                       scrollTarget: 'recommendations',
-                      feedback: `Escape worked. Continue through ${option.entry.name} from here.`
+                      feedback: `Escape worked. Continue through ${option.entry.name} from here.`,
+                      analyticsSource: 'escape_continuation'
                     })}
                   >
                     <strong>{option.entry.name}</strong>
@@ -3928,7 +3963,8 @@ export default function DecisionTreePage() {
                             onClick={() => option.entry && selectFocusEntry(option.entry, {
                               pathMode: 'append',
                               scrollTarget: 'recommendations',
-                              feedback: `Moved from ${focusEntry.name} to ${option.entry.name}. Jumped to the next recommendation layer below.`
+                              feedback: `Moved from ${focusEntry.name} to ${option.entry.name}. Jumped to the next recommendation layer below.`,
+                              analyticsSource: 'branch_group'
                             })}
                             disabled={!option.entry}
                           >

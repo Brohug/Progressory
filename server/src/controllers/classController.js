@@ -14,6 +14,34 @@ const isMissingClassArchiveSchemaError = (error) => (
   && /archived_at/i.test(error.sqlMessage || error.message || '')
 );
 
+const resolveHeadCoachUserId = async ({ requestedUserId, gymId, showcaseMode = false }) => {
+  const [coachRows] = await pool.query(
+    'SELECT id FROM users WHERE id = ? AND gym_id = ?',
+    [requestedUserId, gymId]
+  );
+
+  if (coachRows.length > 0) {
+    return coachRows[0].id;
+  }
+
+  if (!showcaseMode) {
+    return null;
+  }
+
+  const [fallbackRows] = await pool.query(
+    `SELECT id
+     FROM users
+     WHERE gym_id = ?
+       AND is_active = TRUE
+       AND role IN ('owner', 'admin', 'coach')
+     ORDER BY FIELD(role, 'owner', 'admin', 'coach'), id ASC
+     LIMIT 1`,
+    [gymId]
+  );
+
+  return fallbackRows[0]?.id || null;
+};
+
 const createClass = async (req, res) => {
   try {
     const gymId = req.user.gym_id;
@@ -48,12 +76,13 @@ const createClass = async (req, res) => {
       }
     }
 
-    const [coachRows] = await pool.query(
-      'SELECT id FROM users WHERE id = ? AND gym_id = ?',
-      [head_coach_user_id, gymId]
-    );
+    const resolvedHeadCoachUserId = await resolveHeadCoachUserId({
+      requestedUserId: head_coach_user_id,
+      gymId,
+      showcaseMode: Boolean(req.user?.is_showcase_mode && req.user?.is_platform_admin)
+    });
 
-    if (coachRows.length === 0) {
+    if (!resolvedHeadCoachUserId) {
       return res.status(400).json({
         message: 'Head coach not found for this gym'
       });
@@ -70,7 +99,7 @@ const createClass = async (req, res) => {
         class_date,
         start_time || null,
         end_time || null,
-        head_coach_user_id,
+        resolvedHeadCoachUserId,
         loggedByUserId,
         notes || null
       ]
@@ -227,12 +256,13 @@ const updateClass = async (req, res) => {
       }
     }
 
-    const [coachRows] = await pool.query(
-      'SELECT id FROM users WHERE id = ? AND gym_id = ?',
-      [updatedHeadCoachUserId, gymId]
-    );
+    const resolvedHeadCoachUserId = await resolveHeadCoachUserId({
+      requestedUserId: updatedHeadCoachUserId,
+      gymId,
+      showcaseMode: Boolean(req.user?.is_showcase_mode && req.user?.is_platform_admin)
+    });
 
-    if (coachRows.length === 0) {
+    if (!resolvedHeadCoachUserId) {
       return res.status(400).json({
         message: 'Head coach not found for this gym'
       });
@@ -248,7 +278,7 @@ const updateClass = async (req, res) => {
         updatedClassDate,
         updatedStartTime,
         updatedEndTime,
-        updatedHeadCoachUserId,
+        resolvedHeadCoachUserId,
         updatedNotes,
         id,
         gymId

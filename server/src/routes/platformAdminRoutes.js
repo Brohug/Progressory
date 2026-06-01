@@ -2,6 +2,7 @@ const express = require('express');
 
 const {
   getPlatformAdminDashboard,
+  getPlatformAnalytics,
   getFounderRequestDetail,
   markFounderRequestContacted,
   saveFounderRequestNotes,
@@ -19,6 +20,7 @@ const router = express.Router();
 router.use(protect, requirePlatformAdmin);
 
 router.get('/dashboard', getPlatformAdminDashboard);
+router.get('/analytics', getPlatformAnalytics);
 router.get('/founder-requests/:id', getFounderRequestDetail);
 router.post('/founder-requests/:id/contacted', markFounderRequestContacted);
 router.patch('/founder-requests/:id/notes', saveFounderRequestNotes);

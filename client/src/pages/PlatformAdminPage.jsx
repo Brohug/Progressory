@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import Layout from '../components/Layout';
 import AppIcon from '../components/AppIcon';
@@ -24,6 +25,14 @@ const formatDateLabel = (value) => {
 };
 
 const formatPhoneLabel = (value) => value || 'Not provided';
+
+const isAtRiskGym = (gym) => (
+  Boolean(
+    gym?.is_platform_suspended
+    || ['past_due', 'canceled', 'unpaid', 'incomplete'].includes(gym?.billing_status)
+    || gym?.cancel_at_period_end
+  )
+);
 
 const getGymAccessStateLabel = (gym) => {
   if (gym?.is_platform_suspended) {
@@ -373,9 +382,23 @@ export default function PlatformAdminPage() {
     return (dashboardState.gyms || []).filter((gym) => {
       const matchesBillingStatus = filterState.gymBillingStatus === 'all'
         || gym.billing_status === filterState.gymBillingStatus;
-      const accessState = gym.is_platform_suspended ? 'suspended' : 'live';
-      const matchesAccessState = filterState.gymAccessState === 'all'
-        || accessState === filterState.gymAccessState;
+      const matchesAccessState = (() => {
+        switch (filterState.gymAccessState) {
+          case 'suspended':
+            return Boolean(gym.is_platform_suspended);
+          case 'trialing':
+            return gym.billing_status === 'trialing' && !gym.is_platform_suspended;
+          case 'live':
+            return gym.billing_status === 'active' && !gym.is_platform_suspended;
+          case 'accessible':
+            return ['trialing', 'active'].includes(gym.billing_status) && !gym.is_platform_suspended;
+          case 'attention':
+            return isAtRiskGym(gym);
+          case 'all':
+          default:
+            return true;
+        }
+      })();
       const matchesSearch = !searchValue || [
         gym.name,
         gym.slug,
@@ -454,11 +477,7 @@ export default function PlatformAdminPage() {
 
   const atRiskGyms = useMemo(() => {
     return [...(dashboardState.gyms || [])]
-      .filter((gym) => (
-        gym.is_platform_suspended
-        || ['past_due', 'canceled', 'unpaid', 'incomplete'].includes(gym.billing_status)
-        || gym.cancel_at_period_end
-      ))
+      .filter((gym) => isAtRiskGym(gym))
       .sort((left, right) => {
         const leftWeight = left.is_platform_suspended ? 4
           : left.billing_status === 'past_due' ? 3
@@ -522,8 +541,8 @@ export default function PlatformAdminPage() {
     setQuickActionState({ notice: '' });
     setFilterState((prev) => ({
       ...prev,
-      gymBillingStatus: 'past_due',
-      gymAccessState: 'all'
+      gymBillingStatus: 'all',
+      gymAccessState: 'attention'
     }));
     setPageState((prev) => ({
       ...prev,
@@ -537,7 +556,7 @@ export default function PlatformAdminPage() {
     setFilterState((prev) => ({
       ...prev,
       gymBillingStatus: 'all',
-      gymAccessState: 'live'
+      gymAccessState: 'accessible'
     }));
     setPageState((prev) => ({
       ...prev,
@@ -986,10 +1005,32 @@ export default function PlatformAdminPage() {
     setDialogState((prev) => ({ ...prev, open: false }));
   };
 
+  const resetFounderFilters = () => {
+    setFilterState((prev) => ({
+      ...prev,
+      founderSearch: '',
+      founderStatus: 'all'
+    }));
+  };
+
+  const resetGymFilters = () => {
+    setFilterState((prev) => ({
+      ...prev,
+      gymSearch: '',
+      gymBillingStatus: 'all',
+      gymAccessState: 'all'
+    }));
+  };
+
   return (
     <Layout>
       <div className="account-page platform-admin-page">
-        <h2 className="page-title">Platform Admin</h2>
+        <div className="inline-actions">
+          <h2 className="page-title">Platform Admin</h2>
+          <Link className="secondary-button" to="/platform-analytics">
+            Open analytics
+          </Link>
+        </div>
         <p className="page-intro">
           Private operator view for founder leads, gym provisioning, invite recovery, and subscription health across every academy.
         </p>
@@ -1318,6 +1359,17 @@ export default function PlatformAdminPage() {
             </label>
           </div>
 
+          <div className="platform-admin-filter-toolbar">
+            <span className="platform-admin-filter-count">
+              Showing {founderRequests.length} founder request{founderRequests.length === 1 ? '' : 's'}
+            </span>
+            {(filterState.founderSearch || filterState.founderStatus !== 'all') ? (
+              <button type="button" className="secondary-button" onClick={resetFounderFilters}>
+                Clear founder filters
+              </button>
+            ) : null}
+          </div>
+
           <div className="platform-admin-pipeline-row">
             <span className="platform-admin-pill">All leads {founderPipelineStats.total}</span>
             <span className="platform-admin-pill">New {founderPipelineStats.newCount}</span>
@@ -1559,10 +1611,24 @@ export default function PlatformAdminPage() {
                 }))}
               >
                 <option value="all">All gyms</option>
+                <option value="accessible">Live or trialing</option>
+                <option value="trialing">Trialing</option>
                 <option value="live">Live</option>
                 <option value="suspended">Suspended</option>
+                <option value="attention">Needs attention</option>
               </select>
             </label>
+          </div>
+
+          <div className="platform-admin-filter-toolbar">
+            <span className="platform-admin-filter-count">
+              Showing {gyms.length} gym{gyms.length === 1 ? '' : 's'}
+            </span>
+            {(filterState.gymSearch || filterState.gymBillingStatus !== 'all' || filterState.gymAccessState !== 'all') ? (
+              <button type="button" className="secondary-button" onClick={resetGymFilters}>
+                Clear gym filters
+              </button>
+            ) : null}
           </div>
 
           {pageState.loading ? (
@@ -1621,6 +1687,10 @@ export default function PlatformAdminPage() {
                       <strong>{gym.cancel_at_period_end ? 'Yes' : 'No'}</strong>
                     </div>
                   </div>
+
+                  {gym.billing_timeline_note ? (
+                    <p className="section-note">{gym.billing_timeline_note}</p>
+                  ) : null}
 
                   {gym.platform_suspension_reason ? (
                     <p className="section-note">Suspension reason: {gym.platform_suspension_reason}</p>

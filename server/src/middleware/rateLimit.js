@@ -55,10 +55,15 @@ const publicInquiryLimiter = buildLimiter({
   max: parsePositiveInt(process.env.RATE_LIMIT_PUBLIC_INQUIRY_MAX, withDevDefault(12))
 });
 
+const publicCheckInLimiter = buildLimiter({
+  max: parsePositiveInt(process.env.RATE_LIMIT_PUBLIC_CHECK_IN_MAX, withDevDefault(30))
+});
+
 module.exports = {
   loginLimiter,
   registerLimiter,
   inviteAccessLimiter,
   ownerInviteLimiter,
-  publicInquiryLimiter
+  publicInquiryLimiter,
+  publicCheckInLimiter
 };

@@ -214,6 +214,34 @@ const getPlannedClasses = async (req, res) => {
   }
 };
 
+const resolveHeadCoachUserId = async ({ connection, requestedUserId, gymId, showcaseMode = false }) => {
+  const [coachRows] = await connection.query(
+    'SELECT id FROM users WHERE id = ? AND gym_id = ?',
+    [requestedUserId, gymId]
+  );
+
+  if (coachRows.length > 0) {
+    return coachRows[0].id;
+  }
+
+  if (!showcaseMode) {
+    return null;
+  }
+
+  const [fallbackRows] = await connection.query(
+    `SELECT id
+     FROM users
+     WHERE gym_id = ?
+       AND is_active = TRUE
+       AND role IN ('owner', 'admin', 'coach')
+     ORDER BY FIELD(role, 'owner', 'admin', 'coach'), id ASC
+     LIMIT 1`,
+    [gymId]
+  );
+
+  return fallbackRows[0]?.id || null;
+};
+
 const createPlannedClass = async (req, res) => {
   const connection = await pool.getConnection();
   let transactionStarted = false;
@@ -257,12 +285,14 @@ const createPlannedClass = async (req, res) => {
       }
     }
 
-    const [coachRows] = await connection.query(
-      'SELECT id FROM users WHERE id = ? AND gym_id = ?',
-      [head_coach_user_id, gymId]
-    );
+    const resolvedHeadCoachUserId = await resolveHeadCoachUserId({
+      connection,
+      requestedUserId: head_coach_user_id,
+      gymId,
+      showcaseMode: Boolean(req.user?.is_showcase_mode && req.user?.is_platform_admin)
+    });
 
-    if (coachRows.length === 0) {
+    if (!resolvedHeadCoachUserId) {
       await connection.rollback();
       connection.release();
       return res.status(400).json({
@@ -318,7 +348,7 @@ const createPlannedClass = async (req, res) => {
         class_date,
         start_time || null,
         end_time || null,
-        head_coach_user_id,
+        resolvedHeadCoachUserId,
         notes || null
       ]
     );
@@ -435,12 +465,14 @@ const updatePlannedClass = async (req, res) => {
       }
     }
 
-    const [coachRows] = await connection.query(
-      'SELECT id FROM users WHERE id = ? AND gym_id = ?',
-      [head_coach_user_id, gymId]
-    );
+    const resolvedHeadCoachUserId = await resolveHeadCoachUserId({
+      connection,
+      requestedUserId: head_coach_user_id,
+      gymId,
+      showcaseMode: Boolean(req.user?.is_showcase_mode && req.user?.is_platform_admin)
+    });
 
-    if (coachRows.length === 0) {
+    if (!resolvedHeadCoachUserId) {
       await connection.rollback();
       connection.release();
       return res.status(400).json({
@@ -495,7 +527,7 @@ const updatePlannedClass = async (req, res) => {
         class_date,
         start_time || null,
         end_time || null,
-        head_coach_user_id,
+        resolvedHeadCoachUserId,
         notes || null,
         id,
         gymId

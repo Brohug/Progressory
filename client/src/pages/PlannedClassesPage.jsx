@@ -1698,7 +1698,11 @@ export default function PlannedClassesPage() {
                         <button
                           type="button"
                           className="planned-classes-calendar-day-trigger"
-                          onClick={() => handleSelectCalendarDay(day.date)}
+                          onClick={() => (
+                            day.plans.length === 0
+                              ? handleCreatePlanForDate(day.date)
+                              : handleSelectCalendarDay(day.date)
+                          )}
                           disabled={!day.isCurrentMonth}
                         >
                           <span className="planned-classes-calendar-day-weekday">
@@ -1723,7 +1727,14 @@ export default function PlannedClassesPage() {
 
                       <div className="planned-classes-calendar-items">
                         {day.plans.length === 0 ? (
-                          <span className="planned-classes-calendar-empty">No class planned</span>
+                          <button
+                            type="button"
+                            className="planned-classes-calendar-empty"
+                            onClick={() => handleCreatePlanForDate(day.date)}
+                            disabled={!day.isCurrentMonth}
+                          >
+                            No class planned
+                          </button>
                         ) : (
                           day.plans.map((plannedClass) => {
                             const primaryTopic = plannedClass.topics?.[0]?.title;
