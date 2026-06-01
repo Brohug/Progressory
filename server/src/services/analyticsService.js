@@ -3,6 +3,12 @@ const pool = require('../config/db');
 const VALID_EVENT_TYPES = new Set(['page_view', 'page_exit']);
 const EXCLUDED_PAGE_PATHS = ['/platform-admin', '/platform-analytics'];
 
+const isMissingAnalyticsSchemaError = (error) => {
+  const message = String(error?.sqlMessage || error?.message || '');
+  return error?.code === 'ER_NO_SUCH_TABLE'
+    || (error?.code === 'ER_BAD_FIELD_ERROR' && /product_analytics_events/i.test(message));
+};
+
 const sanitizePagePath = (value) => {
   const normalizedValue = String(value || '').trim();
 
@@ -53,12 +59,20 @@ const recordProductAnalyticsEvent = async ({
   const safeDurationSeconds = sanitizeDurationSeconds(durationSeconds);
   const metadataJson = metadata ? JSON.stringify(metadata) : null;
 
-  await pool.query(
-    `INSERT INTO product_analytics_events
-     (user_id, gym_id, user_role, page_path, event_type, duration_seconds, metadata_json)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [userId || null, gymId || null, safeRole, safePagePath, safeEventType, safeDurationSeconds, metadataJson]
-  );
+  try {
+    await pool.query(
+      `INSERT INTO product_analytics_events
+       (user_id, gym_id, user_role, page_path, event_type, duration_seconds, metadata_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [userId || null, gymId || null, safeRole, safePagePath, safeEventType, safeDurationSeconds, metadataJson]
+    );
+  } catch (error) {
+    if (isMissingAnalyticsSchemaError(error)) {
+      return false;
+    }
+
+    throw error;
+  }
 
   return true;
 };
@@ -79,73 +93,108 @@ const analyticsPageFilterSql = `
 
 const getPlatformAnalyticsSnapshot = async ({ days = 14 } = {}) => {
   const windowDays = normalizeAnalyticsWindowDays(days);
+  let overviewRows = [[]];
+  let topPagesRows = [[]];
+  let roleRows = [[]];
+  let gymRows = [[]];
+  let recentViewRows = [[]];
 
-  const [
-    overviewRows,
-    topPagesRows,
-    roleRows,
-    gymRows,
-    actionRows,
-    recentViewRows
-  ] = await Promise.all([
-    pool.query(
-      `SELECT
-         SUM(CASE WHEN event_type = 'page_view' THEN 1 ELSE 0 END) AS total_page_views,
-         COUNT(DISTINCT user_id) AS unique_users,
-         COUNT(DISTINCT gym_id) AS active_gyms,
-         COALESCE(SUM(CASE WHEN event_type = 'page_exit' THEN duration_seconds ELSE 0 END), 0) AS total_seconds,
-         ROUND(AVG(CASE WHEN event_type = 'page_exit' THEN duration_seconds END), 1) AS avg_seconds
-       FROM product_analytics_events
-       WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-         AND ${analyticsPageFilterSql}`,
-      [windowDays]
-    ),
-    pool.query(
-      `SELECT
-         page_path,
-         SUM(CASE WHEN event_type = 'page_view' THEN 1 ELSE 0 END) AS views,
-         COUNT(DISTINCT user_id) AS unique_users,
-         COALESCE(SUM(CASE WHEN event_type = 'page_exit' THEN duration_seconds ELSE 0 END), 0) AS total_seconds,
-         ROUND(AVG(CASE WHEN event_type = 'page_exit' THEN duration_seconds END), 1) AS avg_seconds
-       FROM product_analytics_events
-       WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-         AND ${analyticsPageFilterSql}
-       GROUP BY page_path
-       ORDER BY views DESC, total_seconds DESC, page_path ASC
-       LIMIT 12`,
-      [windowDays]
-    ),
-    pool.query(
-      `SELECT
-         user_role,
-         SUM(CASE WHEN event_type = 'page_view' THEN 1 ELSE 0 END) AS views,
-         COUNT(DISTINCT user_id) AS unique_users,
-         COALESCE(SUM(CASE WHEN event_type = 'page_exit' THEN duration_seconds ELSE 0 END), 0) AS total_seconds
-       FROM product_analytics_events
-       WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-         AND ${analyticsPageFilterSql}
-       GROUP BY user_role
-       ORDER BY views DESC, total_seconds DESC`,
-      [windowDays]
-    ),
-    pool.query(
-      `SELECT
-         pae.gym_id,
-         COALESCE(g.name, 'Unknown gym') AS gym_name,
-         SUM(CASE WHEN pae.event_type = 'page_view' THEN 1 ELSE 0 END) AS views,
-         COUNT(DISTINCT pae.user_id) AS unique_users,
-         COALESCE(SUM(CASE WHEN pae.event_type = 'page_exit' THEN pae.duration_seconds ELSE 0 END), 0) AS total_seconds
-       FROM product_analytics_events pae
-       LEFT JOIN gyms g
-         ON g.id = pae.gym_id
-       WHERE pae.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-         AND ${analyticsPageFilterSql.replaceAll('page_path', 'pae.page_path')}
-       GROUP BY pae.gym_id, g.name
-       ORDER BY views DESC, total_seconds DESC, gym_name ASC
-       LIMIT 10`,
-      [windowDays]
-    ),
-    pool.query(
+  try {
+    [
+      overviewRows,
+      topPagesRows,
+      roleRows,
+      gymRows,
+      recentViewRows
+    ] = await Promise.all([
+      pool.query(
+        `SELECT
+           SUM(CASE WHEN event_type = 'page_view' THEN 1 ELSE 0 END) AS total_page_views,
+           COUNT(DISTINCT user_id) AS unique_users,
+           COUNT(DISTINCT gym_id) AS active_gyms,
+           COALESCE(SUM(CASE WHEN event_type = 'page_exit' THEN duration_seconds ELSE 0 END), 0) AS total_seconds,
+           ROUND(AVG(CASE WHEN event_type = 'page_exit' THEN duration_seconds END), 1) AS avg_seconds
+         FROM product_analytics_events
+         WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+           AND ${analyticsPageFilterSql}`,
+        [windowDays]
+      ),
+      pool.query(
+        `SELECT
+           page_path,
+           SUM(CASE WHEN event_type = 'page_view' THEN 1 ELSE 0 END) AS views,
+           COUNT(DISTINCT user_id) AS unique_users,
+           COALESCE(SUM(CASE WHEN event_type = 'page_exit' THEN duration_seconds ELSE 0 END), 0) AS total_seconds,
+           ROUND(AVG(CASE WHEN event_type = 'page_exit' THEN duration_seconds END), 1) AS avg_seconds
+         FROM product_analytics_events
+         WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+           AND ${analyticsPageFilterSql}
+         GROUP BY page_path
+         ORDER BY views DESC, total_seconds DESC, page_path ASC
+         LIMIT 12`,
+        [windowDays]
+      ),
+      pool.query(
+        `SELECT
+           user_role,
+           SUM(CASE WHEN event_type = 'page_view' THEN 1 ELSE 0 END) AS views,
+           COUNT(DISTINCT user_id) AS unique_users,
+           COALESCE(SUM(CASE WHEN event_type = 'page_exit' THEN duration_seconds ELSE 0 END), 0) AS total_seconds
+         FROM product_analytics_events
+         WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+           AND ${analyticsPageFilterSql}
+         GROUP BY user_role
+         ORDER BY views DESC, total_seconds DESC`,
+        [windowDays]
+      ),
+      pool.query(
+        `SELECT
+           pae.gym_id,
+           COALESCE(g.name, 'Unknown gym') AS gym_name,
+           SUM(CASE WHEN pae.event_type = 'page_view' THEN 1 ELSE 0 END) AS views,
+           COUNT(DISTINCT pae.user_id) AS unique_users,
+           COALESCE(SUM(CASE WHEN pae.event_type = 'page_exit' THEN pae.duration_seconds ELSE 0 END), 0) AS total_seconds
+         FROM product_analytics_events pae
+         LEFT JOIN gyms g
+           ON g.id = pae.gym_id
+         WHERE pae.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+           AND ${analyticsPageFilterSql.replaceAll('page_path', 'pae.page_path')}
+         GROUP BY pae.gym_id, g.name
+         ORDER BY views DESC, total_seconds DESC, gym_name ASC
+         LIMIT 10`,
+        [windowDays]
+      ),
+      pool.query(
+        `SELECT
+           pae.page_path,
+           pae.user_role,
+           pae.event_type,
+           pae.duration_seconds,
+           pae.created_at,
+           COALESCE(u.email, 'Unknown user') AS user_email,
+           COALESCE(g.name, 'Unknown gym') AS gym_name
+         FROM product_analytics_events pae
+         LEFT JOIN users u
+           ON u.id = pae.user_id
+         LEFT JOIN gyms g
+           ON g.id = pae.gym_id
+         WHERE pae.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+           AND ${analyticsPageFilterSql.replaceAll('page_path', 'pae.page_path')}
+           AND pae.event_type = 'page_view'
+         ORDER BY pae.created_at DESC
+         LIMIT 20`,
+        [windowDays]
+      )
+    ]);
+  } catch (error) {
+    if (!isMissingAnalyticsSchemaError(error)) {
+      throw error;
+    }
+  }
+
+  let actionRows = [[]];
+  try {
+    actionRows = await pool.query(
       `SELECT
          event_type,
          COUNT(*) AS count,
@@ -156,29 +205,16 @@ const getPlatformAnalyticsSnapshot = async ({ days = 14 } = {}) => {
        ORDER BY count DESC, latest_at DESC
        LIMIT 12`,
       [windowDays]
-    ),
-    pool.query(
-      `SELECT
-         pae.page_path,
-         pae.user_role,
-         pae.event_type,
-         pae.duration_seconds,
-         pae.created_at,
-         COALESCE(u.email, 'Unknown user') AS user_email,
-         COALESCE(g.name, 'Unknown gym') AS gym_name
-       FROM product_analytics_events pae
-       LEFT JOIN users u
-         ON u.id = pae.user_id
-       LEFT JOIN gyms g
-         ON g.id = pae.gym_id
-       WHERE pae.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-         AND ${analyticsPageFilterSql.replaceAll('page_path', 'pae.page_path')}
-         AND pae.event_type = 'page_view'
-       ORDER BY pae.created_at DESC
-       LIMIT 20`,
-      [windowDays]
-    )
-  ]);
+    );
+  } catch (error) {
+    const message = String(error?.sqlMessage || error?.message || '');
+    const isMissingAuditSchema = error?.code === 'ER_NO_SUCH_TABLE'
+      || (error?.code === 'ER_BAD_FIELD_ERROR' && /audit_logs/i.test(message));
+
+    if (!isMissingAuditSchema) {
+      throw error;
+    }
+  }
 
   const overview = overviewRows[0]?.[0] || {};
   const topPages = topPagesRows[0] || [];
