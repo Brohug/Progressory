@@ -17,6 +17,12 @@ const generateSlug = (name) => {
     .replace(/\s+/g, '-');
 };
 
+const normalizeEmailInput = (value) => (
+  String(value || '')
+    .trim()
+    .toLowerCase()
+);
+
 const generateToken = (user) => {
   return jwt.sign(
     {
@@ -56,8 +62,9 @@ const register = async (req, res) => {
       policyAgreementAccepted,
       founderUseAcknowledged
     } = req.body;
+    const normalizedEmail = normalizeEmailInput(email);
 
-    if (!gym_name || !first_name || !last_name || !email || !password) {
+    if (!gym_name || !first_name || !last_name || !normalizedEmail || !password) {
       return res.status(400).json({
         message: 'All fields are required'
       });
@@ -71,7 +78,7 @@ const register = async (req, res) => {
 
     const [existingUsers] = await connection.query(
       'SELECT id FROM users WHERE email = ?',
-      [email]
+      [normalizedEmail]
     );
 
     if (existingUsers.length > 0) {
@@ -113,6 +120,7 @@ const register = async (req, res) => {
       'role'
     ];
     const userValues = [gymId, first_name, last_name, email, passwordHash, 'owner'];
+    userValues[3] = normalizedEmail;
     const userPlaceholders = ['?', '?', '?', '?', '?', '?'];
 
     if (schemaSupport.users.has('can_upload_library_content')) {
@@ -189,8 +197,9 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = normalizeEmailInput(email);
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return res.status(400).json({
         message: 'Email and password are required'
       });
@@ -199,7 +208,7 @@ const login = async (req, res) => {
     const schemaSupport = await getAuthSchemaSupport(pool);
     const [rows] = await pool.query(
       buildAuthUserSelectSql(schemaSupport, 'WHERE u.email = ?', { includePasswordHash: true }),
-      [email]
+      [normalizedEmail]
     );
 
     if (rows.length === 0) {

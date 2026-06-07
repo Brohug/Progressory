@@ -44,7 +44,10 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await api.post('/auth/login', formData);
+      const response = await api.post('/auth/login', {
+        ...formData,
+        email: formData.email.trim()
+      });
       login(response.data.token, response.data.user);
       navigate('/dashboard');
     } catch (err) {
@@ -77,6 +80,10 @@ export default function LoginPage() {
               value={formData.email}
               onChange={handleChange}
               autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              inputMode="email"
             />
           </div>
 
