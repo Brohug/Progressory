@@ -23,6 +23,8 @@ const normalizeEmailInput = (value) => (
     .toLowerCase()
 );
 
+const normalizePasswordForRetry = (value) => String(value || '').trim();
+
 const generateToken = (user) => {
   return jwt.sign(
     {
@@ -225,7 +227,15 @@ const login = async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password_hash);
+    let isMatch = await bcrypt.compare(password, user.password_hash);
+
+    if (!isMatch) {
+      const trimmedPassword = normalizePasswordForRetry(password);
+
+      if (trimmedPassword && trimmedPassword !== password) {
+        isMatch = await bcrypt.compare(trimmedPassword, user.password_hash);
+      }
+    }
 
     if (!isMatch) {
       return res.status(401).json({

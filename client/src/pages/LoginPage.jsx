@@ -96,6 +96,9 @@ export default function LoginPage() {
               value={formData.password}
               onChange={handleChange}
               autoComplete="current-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
             />
           </div>
 
