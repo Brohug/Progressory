@@ -4,6 +4,9 @@ const router = express.Router();
 const {
   register,
   login,
+  requestPasswordReset,
+  getPasswordReset,
+  setPasswordReset,
   getMe,
   updateProfile,
   changePassword,
@@ -16,7 +19,8 @@ const { protect } = require('../middleware/authMiddleware');
 const {
   loginLimiter,
   registerLimiter,
-  inviteAccessLimiter
+  inviteAccessLimiter,
+  passwordResetLimiter
 } = require('../middleware/rateLimit');
 
 router.post('/register', registerLimiter, (req, res) => {
@@ -25,6 +29,9 @@ router.post('/register', registerLimiter, (req, res) => {
   });
 });
 router.post('/login', loginLimiter, login);
+router.post('/forgot-password', passwordResetLimiter, requestPasswordReset);
+router.get('/reset-password/:token', inviteAccessLimiter, getPasswordReset);
+router.post('/reset-password/:token', inviteAccessLimiter, setPasswordReset);
 router.get('/member-access/:token', inviteAccessLimiter, getMemberAccessInvite);
 router.post('/member-access/:token', inviteAccessLimiter, setMemberAccessPassword);
 router.get('/staff-access/:token', inviteAccessLimiter, getStaffAccessInvite);

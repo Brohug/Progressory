@@ -3122,6 +3122,16 @@ a.dashboard-setup-item {
   margin: 0;
 }
 
+.auth-field-action {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.auth-field-action a {
+  color: var(--accent);
+  font-weight: 800;
+}
+
 .landing-page {
   min-height: 100vh;
   padding: 24px 18px 48px;

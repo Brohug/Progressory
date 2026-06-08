@@ -8,6 +8,7 @@ const { logAuditEvent } = require('../services/auditService');
 const { assertCanAddCoach } = require('../services/planLimitsService');
 const { getAuthSchemaSupport, getAuthUserByWhere, buildAuthUserSelectSql } = require('../services/authSchemaService');
 const { applyPlatformAdminShowcaseContext } = require('../services/showcaseAccessService');
+const { sendPasswordResetNotification } = require('../services/notificationService');
 
 const generateSlug = (name) => {
   return name
@@ -158,6 +159,39 @@ const getDirectPlatformAdminRows = async (schemaSupport, loginEmail) => {
     ...row,
     email: loginEmail
   }));
+};
+
+const buildClientBaseUrl = () => (
+  (process.env.CLIENT_URL || process.env.APP_URL || 'http://localhost:5173').replace(/\/$/, '')
+);
+
+const buildPasswordResetUrl = (token) => (
+  `${buildClientBaseUrl()}/reset-password/${encodeURIComponent(token)}`
+);
+
+const ensurePasswordResetTokensTable = async (queryable = pool) => {
+  await queryable.query(`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      gym_id INT NOT NULL,
+      token_hash CHAR(64) NOT NULL UNIQUE,
+      expires_at DATETIME NOT NULL,
+      used_at DATETIME NULL,
+      requested_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      request_ip VARCHAR(64) NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_password_reset_user_active (user_id, used_at, expires_at),
+      INDEX idx_password_reset_hash (token_hash),
+      CONSTRAINT fk_password_reset_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE,
+      CONSTRAINT fk_password_reset_gym
+        FOREIGN KEY (gym_id) REFERENCES gyms(id)
+        ON DELETE CASCADE
+    )
+  `);
 };
 
 const generateToken = (user) => {
@@ -553,6 +587,289 @@ const findStaffInviteByRawToken = async (rawToken) => {
   }
 
   return rows[0];
+};
+
+const findPasswordResetByRawToken = async (rawToken) => {
+  await ensurePasswordResetTokensTable();
+
+  const tokenHash = crypto.createHash('sha256').update(String(rawToken || '')).digest('hex');
+
+  const [rows] = await pool.query(
+    `SELECT prt.id, prt.user_id, prt.gym_id, prt.expires_at, prt.used_at,
+            u.first_name, u.last_name, u.email, u.role, u.is_active,
+            g.name AS gym_name
+       FROM password_reset_tokens prt
+       JOIN users u ON prt.user_id = u.id AND prt.gym_id = u.gym_id
+       JOIN gyms g ON prt.gym_id = g.id
+      WHERE prt.token_hash = ?`,
+    [tokenHash]
+  );
+
+  return rows[0] || null;
+};
+
+const requestPasswordReset = async (req, res) => {
+  const connection = await pool.getConnection();
+  const genericResponse = {
+    message: 'If that email is registered with Progressory, a password reset link has been sent.'
+  };
+
+  try {
+    const normalizedEmail = normalizeEmailInput(req.body?.email);
+
+    if (!normalizedEmail) {
+      return res.status(400).json({
+        message: 'Email is required'
+      });
+    }
+
+    const schemaSupport = await getAuthSchemaSupport(connection);
+    const [rows] = await connection.query(
+      buildAuthUserSelectSql(schemaSupport, `WHERE LOWER(
+        REPLACE(
+          REPLACE(
+            REPLACE(
+              REPLACE(TRIM(u.email), ' ', ''),
+              '\t',
+              ''
+            ),
+            '\r',
+            ''
+          ),
+          '\n',
+          ''
+        )
+      ) = ?`, { includePasswordHash: false }),
+      [normalizedEmail]
+    );
+    const user = rows.find((row) => normalizeEmailInput(row.email) === normalizedEmail);
+
+    if (!user || !user.is_active) {
+      return res.status(200).json(genericResponse);
+    }
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+    const resetUrl = buildPasswordResetUrl(rawToken);
+
+    await ensurePasswordResetTokensTable(connection);
+    await connection.beginTransaction();
+
+    await connection.query(
+      `UPDATE password_reset_tokens
+          SET used_at = COALESCE(used_at, NOW())
+        WHERE user_id = ?
+          AND gym_id = ?
+          AND used_at IS NULL`,
+      [user.id, user.gym_id]
+    );
+
+    await connection.query(
+      `INSERT INTO password_reset_tokens
+       (user_id, gym_id, token_hash, expires_at, request_ip)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        user.id,
+        user.gym_id,
+        tokenHash,
+        expiresAt,
+        req.ip || null
+      ]
+    );
+
+    await connection.commit();
+
+    try {
+      await sendPasswordResetNotification({
+        firstName: user.first_name,
+        email: user.email,
+        gymName: user.gym_name,
+        resetUrl,
+        resetExpiresAt: expiresAt
+      });
+    } catch (notificationError) {
+      console.warn('Password reset notification warning:', {
+        message: notificationError.message,
+        statusCode: notificationError.statusCode || null
+      });
+    }
+
+    return res.status(200).json({
+      ...genericResponse,
+      reset_link: process.env.NODE_ENV === 'production' ? undefined : resetUrl
+    });
+  } catch (error) {
+    try {
+      await connection.rollback();
+    } catch {
+      // Ignore rollback errors when the transaction was not opened.
+    }
+
+    console.error('Request password reset error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error'
+    });
+  } finally {
+    connection.release();
+  }
+};
+
+const getPasswordReset = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const reset = await findPasswordResetByRawToken(token);
+
+    if (!reset) {
+      return res.status(404).json({
+        message: 'Reset link not found'
+      });
+    }
+
+    if (reset.used_at) {
+      return res.status(410).json({
+        message: 'This reset link has already been used'
+      });
+    }
+
+    if (new Date(reset.expires_at).getTime() < Date.now()) {
+      return res.status(410).json({
+        message: 'This reset link has expired'
+      });
+    }
+
+    if (!reset.is_active) {
+      return res.status(403).json({
+        message: 'This account is inactive. Ask your gym owner for a new setup link.'
+      });
+    }
+
+    return res.status(200).json({
+      reset: {
+        email: reset.email,
+        first_name: reset.first_name,
+        last_name: reset.last_name,
+        role: reset.role,
+        gym_name: reset.gym_name,
+        expires_at: reset.expires_at
+      }
+    });
+  } catch (error) {
+    console.error('Get password reset error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error'
+    });
+  }
+};
+
+const setPasswordReset = async (req, res) => {
+  const connection = await pool.getConnection();
+
+  try {
+    const { token } = req.params;
+    const { password, confirmPassword } = req.body;
+
+    if (!password || !confirmPassword) {
+      return res.status(400).json({
+        message: 'New password and confirmation are required'
+      });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        message: 'Password must be at least 8 characters'
+      });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        message: 'Passwords do not match'
+      });
+    }
+
+    const reset = await findPasswordResetByRawToken(token);
+
+    if (!reset) {
+      return res.status(404).json({
+        message: 'Reset link not found'
+      });
+    }
+
+    if (reset.used_at) {
+      return res.status(410).json({
+        message: 'This reset link has already been used'
+      });
+    }
+
+    if (new Date(reset.expires_at).getTime() < Date.now()) {
+      return res.status(410).json({
+        message: 'This reset link has expired'
+      });
+    }
+
+    if (!reset.is_active) {
+      return res.status(403).json({
+        message: 'This account is inactive. Ask your gym owner for a new setup link.'
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    await connection.beginTransaction();
+
+    await connection.query(
+      'UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = ? AND gym_id = ?',
+      [passwordHash, reset.user_id, reset.gym_id]
+    );
+
+    await connection.query(
+      `UPDATE password_reset_tokens
+          SET used_at = NOW()
+        WHERE token_hash = ?
+          AND user_id = ?
+          AND gym_id = ?`,
+      [tokenHash, reset.user_id, reset.gym_id]
+    );
+
+    await logAuditEvent({
+      gymId: reset.gym_id,
+      userId: reset.user_id,
+      eventType: 'PASSWORD_RESET_COMPLETED',
+      entityType: 'user',
+      entityId: reset.user_id,
+      metadata: {
+        source: 'forgot_password'
+      },
+      connection
+    });
+
+    await connection.commit();
+
+    const user = await getAuthUserByWhere(
+      pool,
+      'WHERE u.id = ? AND u.gym_id = ?',
+      [reset.user_id, reset.gym_id]
+    );
+    const authToken = generateToken(user);
+
+    return res.status(200).json({
+      message: 'Password reset successfully',
+      token: authToken,
+      user: attachUserRuntimeFlags(user)
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Set password reset error:', error.message);
+
+    return res.status(500).json({
+      message: 'Server error'
+    });
+  } finally {
+    connection.release();
+  }
 };
 
 const getMemberAccessInvite = async (req, res) => {
@@ -1073,6 +1390,9 @@ const changePassword = async (req, res) => {
 module.exports = {
   register,
   login,
+  requestPasswordReset,
+  getPasswordReset,
+  setPasswordReset,
   getMe,
   updateProfile,
   changePassword,

@@ -73,6 +73,30 @@ const buildFounderInviteEmailBody = ({
   return lines.join('\n');
 };
 
+const buildPasswordResetEmailBody = ({
+  firstName,
+  gymName,
+  resetUrl,
+  resetExpiresAt
+}) => {
+  const lines = [
+    `Hi ${firstName || 'there'},`,
+    '',
+    `We received a request to reset your Progressory password${gymName ? ` for ${gymName}` : ''}.`,
+    '',
+    'Use this secure link to choose a new password:',
+    resetUrl,
+    '',
+    `This link expires on: ${resetExpiresAt}`,
+    '',
+    'If you did not request this, you can ignore this email and your password will stay the same.',
+    '',
+    `Questions? Reply to ${OWNER_NOTIFICATION_EMAIL}.`
+  ];
+
+  return lines.join('\n');
+};
+
 const sendOwnerInquiryNotification = async (inquiry) => {
   if (!isNotificationConfigured()) {
     return {
@@ -164,9 +188,61 @@ const sendFounderInviteNotification = async ({
   };
 };
 
+const sendPasswordResetNotification = async ({
+  firstName,
+  email,
+  gymName,
+  resetUrl,
+  resetExpiresAt
+}) => {
+  if (!isNotificationConfigured()) {
+    return {
+      delivered: false,
+      skipped: true,
+      reason: 'notification_not_configured'
+    };
+  }
+
+  const resendApiKey = String(process.env.RESEND_API_KEY || '').trim();
+  const fromEmail = String(process.env.NOTIFICATION_FROM_EMAIL || '').trim();
+
+  const response = await fetch(RESEND_API_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${resendApiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: fromEmail,
+      to: [String(email || '').trim().toLowerCase()],
+      reply_to: OWNER_NOTIFICATION_EMAIL,
+      subject: 'Reset your Progressory password',
+      text: buildPasswordResetEmailBody({
+        firstName,
+        gymName,
+        resetUrl,
+        resetExpiresAt
+      })
+    })
+  });
+
+  if (!response.ok) {
+    const error = new Error('Password reset notification failed.');
+    error.statusCode = response.status;
+    error.isNotificationError = true;
+    throw error;
+  }
+
+  return {
+    delivered: true,
+    skipped: false
+  };
+};
+
 module.exports = {
   OWNER_NOTIFICATION_EMAIL,
   isNotificationConfigured,
   sendOwnerInquiryNotification,
-  sendFounderInviteNotification
+  sendFounderInviteNotification,
+  sendPasswordResetNotification
 };

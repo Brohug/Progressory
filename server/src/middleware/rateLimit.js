@@ -47,6 +47,10 @@ const inviteAccessLimiter = buildLimiter({
   skipSuccessfulRequests: true
 });
 
+const passwordResetLimiter = buildLimiter({
+  max: parsePositiveInt(process.env.RATE_LIMIT_PASSWORD_RESET_MAX, withDevDefault(5))
+});
+
 const ownerInviteLimiter = buildLimiter({
   max: parsePositiveInt(process.env.RATE_LIMIT_OWNER_INVITE_MAX, withDevDefault(20))
 });
@@ -63,6 +67,7 @@ module.exports = {
   loginLimiter,
   registerLimiter,
   inviteAccessLimiter,
+  passwordResetLimiter,
   ownerInviteLimiter,
   publicInquiryLimiter,
   publicCheckInLimiter

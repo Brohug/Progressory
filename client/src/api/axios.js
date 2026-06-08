@@ -40,7 +40,10 @@ api.interceptors.response.use(
     const isAuthSetupRequest =
       requestUrl.includes('/auth/login')
       || requestUrl.includes('/auth/register')
-      || requestUrl.includes('/auth/member-access');
+      || requestUrl.includes('/auth/member-access')
+      || requestUrl.includes('/auth/staff-access')
+      || requestUrl.includes('/auth/forgot-password')
+      || requestUrl.includes('/auth/reset-password');
 
     if (billingRequired && (status === 402 || status === 403)) {
       try {

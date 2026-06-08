@@ -108,6 +108,9 @@ export default function LoginPage() {
             >
               {showPassword ? 'Hide password' : 'Show password'}
             </button>
+            <div className="auth-field-action">
+              <Link to="/forgot-password">Forgot password?</Link>
+            </div>
           </div>
 
           {error ? <p className="error-text">{error}</p> : null}
