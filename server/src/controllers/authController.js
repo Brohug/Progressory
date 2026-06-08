@@ -32,9 +32,24 @@ const stripInvisibleCharacters = (value) => (
 
 const normalizePasswordForRetry = (value) => stripInvisibleCharacters(value).trim();
 const normalizePasswordCompatibility = (value) => String(value || '').normalize('NFKC');
+const getEnvValue = (...names) => {
+  for (const name of names) {
+    if (process.env[name]) {
+      return process.env[name];
+    }
+  }
+
+  return '';
+};
 const getPlatformAdminDirectLoginEmail = () => normalizeEmailInput(
-  process.env.PLATFORM_ADMIN_DIRECT_LOGIN_EMAIL
-  || process.env.OWNER_NOTIFICATION_EMAIL
+  getEnvValue(
+    'PLATFORM_ADMIN_DIRECT_LOGIN_EMAIL',
+    'platform_admin_direct_login_email',
+    'PLATFORM_ADMIN_DIRECT_EMAIL',
+    'platform_admin_direct_email',
+    'OWNER_NOTIFICATION_EMAIL',
+    'owner_notification_email'
+  )
   || 'owner.progressory@gmail.com'
 );
 
@@ -66,8 +81,14 @@ const comparePasswordCandidates = async (password, passwordHash) => {
 };
 
 const compareDirectPlatformAdminPassword = async (password) => {
-  const directPasswordHash = process.env.PLATFORM_ADMIN_DIRECT_PASSWORD_HASH;
-  const directPassword = process.env.PLATFORM_ADMIN_DIRECT_PASSWORD;
+  const directPasswordHash = getEnvValue(
+    'PLATFORM_ADMIN_DIRECT_PASSWORD_HASH',
+    'platform_admin_direct_password_hash'
+  );
+  const directPassword = getEnvValue(
+    'PLATFORM_ADMIN_DIRECT_PASSWORD',
+    'platform_admin_direct_password'
+  );
 
   if (directPasswordHash && await comparePasswordCandidates(password, directPasswordHash)) {
     return true;
@@ -77,8 +98,18 @@ const compareDirectPlatformAdminPassword = async (password) => {
     return false;
   }
 
-  return getPasswordCandidates(password).includes(directPassword);
+  const submittedCandidates = getPasswordCandidates(password);
+  const envPasswordCandidates = getPasswordCandidates(directPassword);
+
+  return submittedCandidates.some((candidate) => envPasswordCandidates.includes(candidate));
 };
+
+const hasDirectPlatformAdminPasswordConfigured = () => Boolean(getEnvValue(
+  'PLATFORM_ADMIN_DIRECT_PASSWORD',
+  'platform_admin_direct_password',
+  'PLATFORM_ADMIN_DIRECT_PASSWORD_HASH',
+  'platform_admin_direct_password_hash'
+));
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -317,8 +348,16 @@ const login = async (req, res) => {
     if (
       matchingRows.length === 0
       && normalizedEmail === getPlatformAdminDirectLoginEmail()
-      && await compareDirectPlatformAdminPassword(password)
     ) {
+      const directPasswordMatches = await compareDirectPlatformAdminPassword(password);
+
+      if (!directPasswordMatches) {
+        console.warn('Login fallback: direct platform admin password did not match or is not configured', {
+          directPasswordConfigured: hasDirectPlatformAdminPasswordConfigured()
+        });
+      }
+
+      if (directPasswordMatches) {
       const [directLoginRows] = await pool.query(
         buildAuthUserSelectSql(
           schemaSupport,
@@ -345,6 +384,7 @@ const login = async (req, res) => {
           email: normalizedEmail
         }));
         directPlatformAdminAuthenticated = true;
+      }
       }
     }
 
