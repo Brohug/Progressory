@@ -302,28 +302,77 @@ const login = async (req, res) => {
     }
 
     const schemaSupport = await getAuthSchemaSupport(pool);
-    const [rows] = await pool.query(
-      buildAuthUserSelectSql(schemaSupport, `
-        WHERE LOWER(
-          REPLACE(
+    let matchingRows = [];
+    let directPlatformAdminAuthenticated = false;
+
+    if (isDirectPlatformAdminLoginEmail(normalizedEmail)) {
+      console.error('Login fallback: direct platform admin branch reached', {
+        directPasswordConfigured: hasDirectPlatformAdminPasswordConfigured()
+      });
+
+      const directPasswordMatches = await compareDirectPlatformAdminPassword(password);
+
+      if (directPasswordMatches) {
+        const [directLoginRows] = await pool.query(
+          buildAuthUserSelectSql(
+            schemaSupport,
+            `WHERE u.role IN ('owner', 'admin')
+               AND g.slug IN ('progressory-hq', 'progressory-demo-academy')
+             ORDER BY CASE
+               WHEN g.slug = 'progressory-hq' THEN 0
+               ELSE 1
+             END,
+             CASE
+               WHEN u.role = 'owner' THEN 0
+               ELSE 1
+             END,
+             u.id ASC
+             LIMIT 1`,
+            { includePasswordHash: true }
+          )
+        );
+
+        if (directLoginRows.length > 0) {
+          console.error('Login fallback: direct platform admin login mapped to app owner record');
+          matchingRows = directLoginRows.map((row) => ({
+            ...row,
+            email: normalizedEmail
+          }));
+          directPlatformAdminAuthenticated = true;
+        } else {
+          console.error('Login fallback: direct platform admin password matched but no app owner record was found');
+        }
+      } else {
+        console.error('Login fallback: direct platform admin password did not match or is not configured', {
+          directPasswordConfigured: hasDirectPlatformAdminPasswordConfigured()
+        });
+      }
+    }
+
+    if (matchingRows.length === 0) {
+      const [rows] = await pool.query(
+        buildAuthUserSelectSql(schemaSupport, `
+          WHERE LOWER(
             REPLACE(
               REPLACE(
-                REPLACE(TRIM(u.email), ' ', ''),
-                '\t',
+                REPLACE(
+                  REPLACE(TRIM(u.email), ' ', ''),
+                  '\t',
+                  ''
+                ),
+                '\r',
                 ''
               ),
-              '\r',
+              '\n',
               ''
-            ),
-            '\n',
-            ''
-          )
-        ) = ?
-      `, { includePasswordHash: true }),
-      [normalizedEmail]
-    );
-    let matchingRows = rows;
-    let directPlatformAdminAuthenticated = false;
+            )
+          ) = ?
+        `, { includePasswordHash: true }),
+        [normalizedEmail]
+      );
+
+      matchingRows = rows;
+    }
 
     if (matchingRows.length === 0 && normalizedEmail.includes('@')) {
       const emailDomain = normalizedEmail.split('@').pop();
@@ -350,49 +399,6 @@ const login = async (req, res) => {
           ...row,
           email: normalizedEmail
         }));
-      }
-    }
-
-    if (
-      matchingRows.length === 0
-      && isDirectPlatformAdminLoginEmail(normalizedEmail)
-    ) {
-      const directPasswordMatches = await compareDirectPlatformAdminPassword(password);
-
-      if (!directPasswordMatches) {
-        console.warn('Login fallback: direct platform admin password did not match or is not configured', {
-          directPasswordConfigured: hasDirectPlatformAdminPasswordConfigured()
-        });
-      }
-
-      if (directPasswordMatches) {
-      const [directLoginRows] = await pool.query(
-        buildAuthUserSelectSql(
-          schemaSupport,
-          `WHERE u.role IN ('owner', 'admin')
-             AND g.slug IN ('progressory-hq', 'progressory-demo-academy')
-           ORDER BY CASE
-             WHEN g.slug = 'progressory-hq' THEN 0
-             ELSE 1
-           END,
-           CASE
-             WHEN u.role = 'owner' THEN 0
-             ELSE 1
-           END,
-           u.id ASC
-           LIMIT 1`,
-          { includePasswordHash: true }
-        )
-      );
-
-      if (directLoginRows.length > 0) {
-        console.warn('Login fallback: direct platform admin login mapped to app owner record');
-        matchingRows = directLoginRows.map((row) => ({
-          ...row,
-          email: normalizedEmail
-        }));
-        directPlatformAdminAuthenticated = true;
-      }
       }
     }
 
