@@ -4,15 +4,24 @@ const pool = require('../config/db');
 const { BILLING_STATUSES } = require('./billingService');
 
 const OWNER_INVITE_EXPIRY_HOURS = 72;
+const DEFAULT_PLATFORM_ADMIN_EMAIL = 'owner.progressory@gmail.com';
 
 const getPoolOrConnection = (connection) => connection || pool;
 
-const getPlatformAdminEmails = () => (
-  String(process.env.PLATFORM_ADMIN_EMAILS || '')
+const getPlatformAdminEmails = () => {
+  const configuredEmails = String(process.env.PLATFORM_ADMIN_EMAILS || '')
     .split(',')
     .map((value) => value.trim().toLowerCase())
-    .filter(Boolean)
-);
+    .filter(Boolean);
+  const fallbackEmails = [
+    process.env.OWNER_NOTIFICATION_EMAIL,
+    DEFAULT_PLATFORM_ADMIN_EMAIL
+  ]
+    .map((value) => String(value || '').trim().toLowerCase())
+    .filter(Boolean);
+
+  return [...new Set([...configuredEmails, ...fallbackEmails])];
+};
 
 const isPlatformAdminEmail = (email) => {
   const normalizedEmail = String(email || '').trim().toLowerCase();
