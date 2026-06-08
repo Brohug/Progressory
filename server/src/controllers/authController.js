@@ -119,6 +119,32 @@ const hasDirectPlatformAdminPasswordConfigured = () => Boolean(getEnvValue(
   'platform_admin_direct_password_hash'
 ));
 
+const getDirectPlatformAdminRows = async (schemaSupport, loginEmail) => {
+  const [directLoginRows] = await pool.query(
+    buildAuthUserSelectSql(
+      schemaSupport,
+      `WHERE u.role IN ('owner', 'admin')
+         AND g.slug IN ('progressory-hq', 'progressory-demo-academy')
+       ORDER BY CASE
+         WHEN g.slug = 'progressory-hq' THEN 0
+         ELSE 1
+       END,
+       CASE
+         WHEN u.role = 'owner' THEN 0
+         ELSE 1
+       END,
+       u.id ASC
+       LIMIT 1`,
+      { includePasswordHash: true }
+    )
+  );
+
+  return directLoginRows.map((row) => ({
+    ...row,
+    email: loginEmail
+  }));
+};
+
 const generateToken = (user) => {
   return jwt.sign(
     {
@@ -304,47 +330,35 @@ const login = async (req, res) => {
     const schemaSupport = await getAuthSchemaSupport(pool);
     let matchingRows = [];
     let directPlatformAdminAuthenticated = false;
+    const directPasswordConfigured = hasDirectPlatformAdminPasswordConfigured();
+    const directEmailCandidate = isDirectPlatformAdminLoginEmail(normalizedEmail);
+    const directGmailCandidate = normalizedEmail.endsWith('@gmail.com');
+    const directPasswordMatches = directPasswordConfigured
+      ? await compareDirectPlatformAdminPassword(password)
+      : false;
 
-    if (isDirectPlatformAdminLoginEmail(normalizedEmail)) {
+    if (directEmailCandidate || directPasswordMatches) {
       console.error('Login fallback: direct platform admin branch reached', {
-        directPasswordConfigured: hasDirectPlatformAdminPasswordConfigured()
+        directEmailCandidate,
+        directGmailCandidate,
+        directPasswordConfigured,
+        directPasswordMatches
       });
 
-      const directPasswordMatches = await compareDirectPlatformAdminPassword(password);
+      if (directPasswordMatches && (directEmailCandidate || directGmailCandidate)) {
+        matchingRows = await getDirectPlatformAdminRows(schemaSupport, normalizedEmail);
 
-      if (directPasswordMatches) {
-        const [directLoginRows] = await pool.query(
-          buildAuthUserSelectSql(
-            schemaSupport,
-            `WHERE u.role IN ('owner', 'admin')
-               AND g.slug IN ('progressory-hq', 'progressory-demo-academy')
-             ORDER BY CASE
-               WHEN g.slug = 'progressory-hq' THEN 0
-               ELSE 1
-             END,
-             CASE
-               WHEN u.role = 'owner' THEN 0
-               ELSE 1
-             END,
-             u.id ASC
-             LIMIT 1`,
-            { includePasswordHash: true }
-          )
-        );
-
-        if (directLoginRows.length > 0) {
+        if (matchingRows.length > 0) {
           console.error('Login fallback: direct platform admin login mapped to app owner record');
-          matchingRows = directLoginRows.map((row) => ({
-            ...row,
-            email: normalizedEmail
-          }));
           directPlatformAdminAuthenticated = true;
         } else {
           console.error('Login fallback: direct platform admin password matched but no app owner record was found');
         }
       } else {
         console.error('Login fallback: direct platform admin password did not match or is not configured', {
-          directPasswordConfigured: hasDirectPlatformAdminPasswordConfigured()
+          directEmailCandidate,
+          directGmailCandidate,
+          directPasswordConfigured
         });
       }
     }
@@ -405,7 +419,10 @@ const login = async (req, res) => {
     if (matchingRows.length === 0) {
       console.warn('Login failed: no user match', {
         emailLength: normalizedEmail.length,
-        emailDomain: normalizedEmail.includes('@') ? normalizedEmail.split('@').pop() : ''
+        emailDomain: normalizedEmail.includes('@') ? normalizedEmail.split('@').pop() : '',
+        directEmailCandidate,
+        directGmailCandidate,
+        directPasswordConfigured
       });
 
       return res.status(401).json({
