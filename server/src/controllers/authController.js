@@ -209,7 +209,7 @@ const login = async (req, res) => {
 
     const schemaSupport = await getAuthSchemaSupport(pool);
     const [rows] = await pool.query(
-      buildAuthUserSelectSql(schemaSupport, 'WHERE u.email = ?', { includePasswordHash: true }),
+      buildAuthUserSelectSql(schemaSupport, 'WHERE LOWER(TRIM(u.email)) = ?', { includePasswordHash: true }),
       [normalizedEmail]
     );
 
