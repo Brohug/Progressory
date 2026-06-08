@@ -236,8 +236,19 @@ const login = async (req, res) => {
       `, { includePasswordHash: true }),
       [normalizedEmail]
     );
+    let matchingRows = rows;
 
-    if (rows.length === 0) {
+    if (matchingRows.length === 0 && normalizedEmail.includes('@')) {
+      const emailDomain = normalizedEmail.split('@').pop();
+      const [domainRows] = await pool.query(
+        buildAuthUserSelectSql(schemaSupport, 'WHERE LOWER(u.email) LIKE ?', { includePasswordHash: true }),
+        [`%@${emailDomain}`]
+      );
+
+      matchingRows = domainRows.filter((row) => normalizeEmailInput(row.email) === normalizedEmail);
+    }
+
+    if (matchingRows.length === 0) {
       console.warn('Login failed: no user match', {
         emailLength: normalizedEmail.length,
         emailDomain: normalizedEmail.includes('@') ? normalizedEmail.split('@').pop() : ''
@@ -248,7 +259,7 @@ const login = async (req, res) => {
       });
     }
 
-    const user = rows[0];
+    const user = matchingRows[0];
 
     if (!user.is_active) {
       return res.status(403).json({
