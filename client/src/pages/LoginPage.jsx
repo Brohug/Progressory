@@ -15,6 +15,7 @@ export default function LoginPage() {
   });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const memberAccessToken = searchParams.get('memberAccessToken');
@@ -91,7 +92,7 @@ export default function LoginPage() {
             <label htmlFor="loginPassword">Password</label>
             <input
               id="loginPassword"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               name="password"
               value={formData.password}
               onChange={handleChange}
@@ -100,6 +101,13 @@ export default function LoginPage() {
               autoCorrect="off"
               spellCheck={false}
             />
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => setShowPassword((current) => !current)}
+            >
+              {showPassword ? 'Hide password' : 'Show password'}
+            </button>
           </div>
 
           {error ? <p className="error-text">{error}</p> : null}
