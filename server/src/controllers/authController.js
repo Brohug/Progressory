@@ -46,12 +46,20 @@ const getPlatformAdminDirectLoginEmail = () => normalizeEmailInput(
     'PLATFORM_ADMIN_DIRECT_LOGIN_EMAIL',
     'platform_admin_direct_login_email',
     'PLATFORM_ADMIN_DIRECT_EMAIL',
-    'platform_admin_direct_email',
-    'OWNER_NOTIFICATION_EMAIL',
-    'owner_notification_email'
+    'platform_admin_direct_email'
   )
   || 'owner.progressory@gmail.com'
 );
+
+const isDirectPlatformAdminLoginEmail = (email) => {
+  const normalizedEmail = normalizeEmailInput(email);
+
+  return Boolean(normalizedEmail) && (
+    normalizedEmail === 'owner.progressory@gmail.com'
+    || normalizedEmail === getPlatformAdminDirectLoginEmail()
+    || isPlatformAdminEmail(normalizedEmail)
+  );
+};
 
 const getPasswordCandidates = (value) => {
   const rawPassword = String(value || '');
@@ -347,7 +355,7 @@ const login = async (req, res) => {
 
     if (
       matchingRows.length === 0
-      && normalizedEmail === getPlatformAdminDirectLoginEmail()
+      && isDirectPlatformAdminLoginEmail(normalizedEmail)
     ) {
       const directPasswordMatches = await compareDirectPlatformAdminPassword(password);
 
