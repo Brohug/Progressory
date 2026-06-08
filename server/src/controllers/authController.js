@@ -26,6 +26,21 @@ const normalizeEmailInput = (value) => (
     .replace(/\s+/g, '')
 );
 
+const maskEmailForLog = (email) => {
+  const normalizedEmail = normalizeEmailInput(email);
+  const [localPart, domain] = normalizedEmail.split('@');
+
+  if (!localPart || !domain) {
+    return normalizedEmail ? '[invalid-email-format]' : '';
+  }
+
+  const localMask = localPart.length <= 4
+    ? `${localPart.slice(0, 1)}***`
+    : `${localPart.slice(0, 2)}***${localPart.slice(-2)}`;
+
+  return `${localMask}@${domain}`;
+};
+
 const stripInvisibleCharacters = (value) => (
   String(value || '').replace(/[\u200B-\u200D\uFEFF]/g, '')
 );
@@ -339,6 +354,7 @@ const login = async (req, res) => {
 
     if (directEmailCandidate || directPasswordMatches) {
       console.error('Login fallback: direct platform admin branch reached', {
+        maskedEmail: maskEmailForLog(normalizedEmail),
         directEmailCandidate,
         directGmailCandidate,
         directPasswordConfigured,
@@ -356,6 +372,7 @@ const login = async (req, res) => {
         }
       } else {
         console.error('Login fallback: direct platform admin password did not match or is not configured', {
+          maskedEmail: maskEmailForLog(normalizedEmail),
           directEmailCandidate,
           directGmailCandidate,
           directPasswordConfigured
@@ -418,6 +435,7 @@ const login = async (req, res) => {
 
     if (matchingRows.length === 0) {
       console.warn('Login failed: no user match', {
+        maskedEmail: maskEmailForLog(normalizedEmail),
         emailLength: normalizedEmail.length,
         emailDomain: normalizedEmail.includes('@') ? normalizedEmail.split('@').pop() : '',
         directEmailCandidate,

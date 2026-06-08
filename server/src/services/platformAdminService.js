@@ -8,23 +8,32 @@ const DEFAULT_PLATFORM_ADMIN_EMAIL = 'owner.progressory@gmail.com';
 
 const getPoolOrConnection = (connection) => connection || pool;
 
+const normalizeAdminEmail = (email) => (
+  String(email || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\s+/g, '')
+);
+
 const getPlatformAdminEmails = () => {
   const configuredEmails = String(process.env.PLATFORM_ADMIN_EMAILS || '')
     .split(',')
-    .map((value) => value.trim().toLowerCase())
+    .map(normalizeAdminEmail)
     .filter(Boolean);
   const fallbackEmails = [
     process.env.OWNER_NOTIFICATION_EMAIL,
     DEFAULT_PLATFORM_ADMIN_EMAIL
   ]
-    .map((value) => String(value || '').trim().toLowerCase())
+    .map(normalizeAdminEmail)
     .filter(Boolean);
 
   return [...new Set([...configuredEmails, ...fallbackEmails])];
 };
 
 const isPlatformAdminEmail = (email) => {
-  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const normalizedEmail = normalizeAdminEmail(email);
 
   if (!normalizedEmail) {
     return false;
