@@ -55,7 +55,65 @@ const coachingScenarios = [
         question: 'Where are you struggling to pass?',
         expandableLabel: 'Need more options?',
         options: [
-          { label: 'Closed guard', description: 'Posture breaking and angle control usually matter first.', focusName: 'Closed Guard' },
+          {
+            label: 'Closed guard',
+            description: 'Posture, opening discipline, and the first reaction after the guard opens usually matter first from top.',
+            focusName: 'Closed Guard Posture Control',
+            nextPrompt: {
+              question: 'What opening path fits the way you pass closed guard?',
+              expandableLabel: 'Need more closed-guard opening paths?',
+              options: [
+                {
+                  label: 'Mobility passing',
+                  description: 'Stand to open, keep posture safe, and start circling once the guard opens.',
+                  focusName: 'Standing',
+                  filters: { preferredStyle: 'scrambles', bodyType: 'smaller', riskTolerance: 'medium', topBottom: 'top', weakArea: 'guardPassing' },
+                  nextPrompt: {
+                    question: 'What reaction usually gives you the next problem after you stand to open?',
+                    expandableLabel: 'Need more reactions?',
+                    options: [
+                      {
+                        label: 'They keep closed guard locked',
+                        description: 'They hold the guard closed or climb higher as you stand, so posture, hand position, and safe opening mechanics come first.',
+                        focusName: 'Closed Guard Posture Control',
+                        filters: { preferredStyle: 'pressure', topBottom: 'top', weakArea: 'guardPassing', partnerStyle: 'guard', riskTolerance: 'low' }
+                      },
+                      {
+                        label: 'They drop to K-guard',
+                        description: 'You usually need to solve the underneath K-guard threat before the mobility pass continues.',
+                        focusName: 'K-Guard',
+                        filters: { preferredStyle: 'scrambles', topBottom: 'top', weakArea: 'guardPassing', partnerStyle: 'guard' }
+                      },
+                      {
+                        label: 'They open and stay square underneath',
+                        description: 'The exchange usually becomes an open-guard passing problem instead of a closed-guard one.',
+                        focusName: 'Open Guard',
+                        filters: { preferredStyle: 'scrambles', topBottom: 'top', weakArea: 'guardPassing', partnerStyle: 'guard' }
+                      }
+                    ]
+                  }
+                },
+                {
+                  label: 'Posture and grip breaking first',
+                  description: 'Clear posture problems and sleeve or collar control before trying to open aggressively.',
+                  focusName: 'Closed Guard Posture Control',
+                  filters: { preferredStyle: 'pressure', topBottom: 'top', weakArea: 'guardPassing', riskTolerance: 'low' }
+                },
+                {
+                  label: 'Combat base opening',
+                  description: 'Open from a lower base, wedge pressure in, and stay ready to settle into the next pass.',
+                  focusName: 'Combat Base',
+                  filters: { preferredStyle: 'pressure', topBottom: 'top', weakArea: 'guardPassing', riskTolerance: 'low' }
+                },
+                {
+                  label: 'Grip clearing before I move',
+                  description: 'Use the grip-fight layer first so the guard cannot control posture while you start the pass.',
+                  focusName: 'Grip Breaking From Guard',
+                  filters: { preferredStyle: 'pressure', topBottom: 'top', weakArea: 'guardPassing', riskTolerance: 'medium' }
+                }
+              ]
+            }
+          },
           { label: 'Half guard', description: 'Underhooks, flattening, and knee-line control usually decide the pass.', focusName: 'Half Guard' },
           { label: 'Knee shield', description: 'You usually need angle changes and cleaner knee-line clearing here.', focusName: 'Knee Shield Half Guard' },
           { label: 'Butterfly guard', description: 'Inside hooks and elevation timing are often the main issue.', focusName: 'Butterfly Guard' },
@@ -82,31 +140,36 @@ const coachingScenarios = [
             label: 'Pressure passing',
             description: 'Best for compact or heavier players who like chest-to-chest control.',
             focusName: 'Pressure Passing',
-            filters: { preferredStyle: 'pressure', bodyType: 'larger', riskTolerance: 'low' }
+            filters: { preferredStyle: 'pressure', bodyType: 'larger', riskTolerance: 'low' },
+            preserveExistingFocus: true
           },
           {
             label: 'Mobility passing',
             description: 'Best for faster players who like circling, redirecting, and staying light.',
             focusName: 'Standing Passing',
-            filters: { preferredStyle: 'scrambles', bodyType: 'smaller', riskTolerance: 'medium' }
+            filters: { preferredStyle: 'scrambles', bodyType: 'smaller', riskTolerance: 'medium' },
+            preserveExistingFocus: true
           },
           {
             label: 'Leg pin passing',
             description: 'Best for players who like stapling legs and winning angles before control.',
             focusName: 'Leg Weave / Leg Pin Passing',
-            filters: { preferredStyle: 'pressure', riskTolerance: 'medium' }
+            filters: { preferredStyle: 'pressure', riskTolerance: 'medium' },
+            preserveExistingFocus: true
           },
           {
             label: 'Under / stack passing',
             description: 'Best for players who like folding the hips and lifting the legs.',
             focusName: 'Stack / Under Passing',
-            filters: { preferredStyle: 'pressure', bodyType: 'compact', riskTolerance: 'low' }
+            filters: { preferredStyle: 'pressure', bodyType: 'compact', riskTolerance: 'low' },
+            preserveExistingFocus: true
           },
           {
             label: 'Inside passing',
             description: 'Best for players who like knee-cut, split-squat, and inside-lane pressure.',
             focusName: 'Inside Passing',
             filters: { preferredStyle: 'pressure', topBottom: 'top', riskTolerance: 'medium' },
+            preserveExistingFocus: true,
             isExtended: true
           },
           {
@@ -114,6 +177,7 @@ const coachingScenarios = [
             description: 'Best for players who like long-step, backstep, and angle-change routes.',
             focusName: 'Outside Passing',
             filters: { preferredStyle: 'scrambles', topBottom: 'top', riskTolerance: 'medium' },
+            preserveExistingFocus: true,
             isExtended: true
           },
           {
@@ -121,6 +185,7 @@ const coachingScenarios = [
             description: 'Best for players who like staying light and converting failed pressure into motion.',
             focusName: 'Floating / Direction Change Passing',
             filters: { preferredStyle: 'scrambles', topBottom: 'top', riskTolerance: 'medium' },
+            preserveExistingFocus: true,
             isExtended: true
           },
           {
@@ -128,6 +193,7 @@ const coachingScenarios = [
             description: 'Best if the real issue is passing when the guard is already half-won but sticky.',
             focusName: 'Half Guard Passing',
             filters: { preferredStyle: 'pressure', topBottom: 'top', weakArea: 'guardPassing' },
+            preserveExistingFocus: true,
             isExtended: true
           }
         ]
@@ -1688,6 +1754,44 @@ const getGroupConnectionSummary = ({ groupKey, focusEntry, entry }) => {
   }
 };
 
+const getDecisionTreeEntryDisplayName = ({ entry, closedGuardPassingContext = false }) => {
+  if (!entry) return '';
+
+  const normalizedName = normalizeValue(entry.name);
+
+  if (closedGuardPassingContext) {
+    if (normalizedName === 'closed guard posture control') {
+      return 'Breaking Closed Guard';
+    }
+
+    if (normalizedName === 'closed guard') {
+      return 'Passing Closed Guard';
+    }
+  }
+
+  return entry.name;
+};
+
+const getDecisionTreeOptionDisplay = ({ option, closedGuardPassingContext = false }) => {
+  const entry = option?.entry || option;
+  const name = getDecisionTreeEntryDisplayName({ entry, closedGuardPassingContext }) || option?.name || '';
+  const normalizedName = normalizeValue(entry?.name);
+
+  if (closedGuardPassingContext && normalizedName === 'closed guard') {
+    return {
+      name,
+      sourceLabel: 'Closed-guard passing position',
+      summary: 'Use this branch when the top player still has to open the closed guard safely before the actual pass can begin.'
+    };
+  }
+
+  return {
+    name,
+    sourceLabel: option?.sourceLabel || '',
+    summary: ''
+  };
+};
+
 const getOptionReasons = ({ entry, groupKey, filters, focusEntry = null }) => {
   const reasons = [];
   const styleHints = getSelectedStyleHints(filters);
@@ -2326,6 +2430,7 @@ export default function DecisionTreePage() {
   const scenarioPromptRef = useRef(null);
   const treeBranchesRef = useRef(null);
   const recommendationsRef = useRef(null);
+  const startPointSectionRef = useRef(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -2394,6 +2499,11 @@ export default function DecisionTreePage() {
       .filter(Boolean),
     [decisionPath, entries]
   );
+  const closedGuardPassingContext = useMemo(() => (
+    decisionPathEntries.some((entry) => normalizeValue(entry.name) === 'closed guard posture control')
+    && filters.topBottom === 'top'
+    && filters.weakArea === 'guardPassing'
+  ), [decisionPathEntries, filters.topBottom, filters.weakArea]);
   const previousPathEntryId = decisionPath.length > 1 ? decisionPath[decisionPath.length - 2] : null;
 
   const searchResults = useMemo(() => {
@@ -2487,7 +2597,7 @@ export default function DecisionTreePage() {
     if (!searchIsActive) {
       decisionPathEntries.forEach((entry, index) => {
         pushUnique({
-          label: entry.name,
+          label: getDecisionTreeEntryDisplayName({ entry, closedGuardPassingContext }),
           type: 'tree-node',
           clickable: index < decisionPathEntries.length - 1,
           entryId: entry.id
@@ -2512,7 +2622,7 @@ export default function DecisionTreePage() {
     }
 
     return trail;
-  }, [decisionPathEntries, focusEntry, guidedActiveLabel, guidedSearchHistory, initialSetupPrompt, search, searchIsActive, setupFamily]);
+  }, [closedGuardPassingContext, decisionPathEntries, focusEntry, guidedActiveLabel, guidedSearchHistory, initialSetupPrompt, search, searchIsActive, setupFamily]);
 
   const visibleExpandedSearchResultIds = useMemo(() => {
     if (!isCompactSearchResults) {
@@ -2773,9 +2883,9 @@ export default function DecisionTreePage() {
       title: scenario.label,
       body: scenario.description,
       primaryLabel: 'Start here',
-      primaryTo: `/decision-tree?search=${encodeURIComponent(scenario.focusName || scenario.label)}`,
+      starterScenario: scenario,
       secondaryLabel: 'Open search',
-      secondaryTo: `/decision-tree?search=${encodeURIComponent(scenario.focusName || scenario.label)}`
+      searchValue: scenario.focusName || scenario.label
     }));
   }, [currentSequenceTrail, decisionPathEntries, focusEntry, groupedCoachingScenarios, setupFamily]);
 
@@ -3040,6 +3150,7 @@ export default function DecisionTreePage() {
     if (scenario.guidedPrompts?.length) {
       setActiveScenarioPrompt({
         scenario,
+        promptSequence: scenario.guidedPrompts,
         stepIndex: 0,
         selectedFilters: {},
         selectedFocusName: scenario.focusName
@@ -3060,6 +3171,41 @@ export default function DecisionTreePage() {
       focusName: followUp.focusName,
       label: `${scenario.label}: ${followUp.label}`
     });
+  };
+
+  const openStarterSearch = (searchValue) => {
+    const nextSearchValue = String(searchValue || '').trim();
+
+    setGuidedPromptOverride(null);
+    setGuidedSearchHistory([]);
+    setGuidedSearchScope(null);
+    setGuidedActiveLabel('');
+    setSearch(nextSearchValue);
+    setSearchIsActive(true);
+    setExpandedSearchResultIds([]);
+    setPendingScrollTarget('');
+    setScenarioFeedback(`Search opened for ${nextSearchValue}. Choose the exact start point below.`);
+
+    window.setTimeout(() => {
+      const targetElement = startPointSectionRef.current;
+
+      if (targetElement) {
+        const rect = targetElement.getBoundingClientRect();
+        const currentScrollY = window.scrollY || window.pageYOffset;
+        const nextTop = Math.max(0, currentScrollY + rect.top - 110);
+
+        window.scrollTo({
+          top: nextTop,
+          behavior: 'smooth'
+        });
+      }
+
+      const searchInput = document.getElementById('decision-tree-search');
+      if (searchInput) {
+        searchInput.focus();
+        searchInput.select();
+      }
+    }, 80);
   };
 
   const getScenarioPreview = (scenario) => {
@@ -3106,14 +3252,25 @@ export default function DecisionTreePage() {
   const applyGuidedScenarioOption = (option) => {
     if (!activeScenarioPrompt) return;
 
+    const promptSequence = activeScenarioPrompt.promptSequence || activeScenarioPrompt.scenario.guidedPrompts;
     const nextFilters = {
       ...activeScenarioPrompt.selectedFilters,
       ...(option.filters || {})
     };
-    const nextFocusName = option.focusName || activeScenarioPrompt.selectedFocusName;
+    const shouldPreserveExistingFocus = (
+      activeScenarioPrompt.stepIndex > 0
+      && Boolean(activeScenarioPrompt.selectedFocusName)
+      && option.replaceExistingFocus !== true
+    );
+    const nextFocusName = shouldPreserveExistingFocus
+      ? activeScenarioPrompt.selectedFocusName
+      : (option.focusName || activeScenarioPrompt.selectedFocusName);
     const nextStepIndex = activeScenarioPrompt.stepIndex + 1;
+    const nextPromptSequence = option.nextPrompt
+      ? [...promptSequence.slice(0, nextStepIndex), option.nextPrompt]
+      : promptSequence;
 
-    if (nextStepIndex >= activeScenarioPrompt.scenario.guidedPrompts.length) {
+    if (nextStepIndex >= nextPromptSequence.length) {
       setActiveScenarioPrompt(null);
       setExpandedPromptKeys({});
       applyScenarioSelection(activeScenarioPrompt.scenario, {
@@ -3125,6 +3282,7 @@ export default function DecisionTreePage() {
 
     setActiveScenarioPrompt({
       ...activeScenarioPrompt,
+      promptSequence: nextPromptSequence,
       stepIndex: nextStepIndex,
       selectedFilters: nextFilters,
       selectedFocusName: nextFocusName
@@ -3238,8 +3396,12 @@ export default function DecisionTreePage() {
                   <p className="meta-text">{card.body}</p>
                 </div>
                 <div className="inline-actions">
-                  {card.onClick ? (
-                    <button type="button" className="secondary-button" onClick={card.onClick}>
+                  {card.onClick || card.starterScenario ? (
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={card.onClick || (() => applyCoachingScenario(card.starterScenario))}
+                    >
                       {card.primaryLabel}
                     </button>
                   ) : (
@@ -3247,9 +3409,19 @@ export default function DecisionTreePage() {
                       {card.primaryLabel}
                     </Link>
                   )}
-                  <Link className="secondary-button" to={card.secondaryTo}>
-                    {card.secondaryLabel}
-                  </Link>
+                  {card.onSecondaryClick || card.searchValue ? (
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={card.onSecondaryClick || (() => openStarterSearch(card.searchValue))}
+                    >
+                      {card.secondaryLabel}
+                    </button>
+                  ) : (
+                    <Link className="secondary-button" to={card.secondaryTo}>
+                      {card.secondaryLabel}
+                    </Link>
+                  )}
                 </div>
               </article>
             ))}
@@ -3384,7 +3556,7 @@ export default function DecisionTreePage() {
           </section>
         ) : null}
 
-        <section className="page-section">
+        <section className="page-section" ref={startPointSectionRef}>
           <h3>Start point</h3>
           <p className="meta-text">
             {isMember
@@ -3655,7 +3827,8 @@ export default function DecisionTreePage() {
           {activeScenarioPrompt ? (
             <div className="decision-tree-guided-prompt" ref={scenarioPromptRef}>
               {(() => {
-                const prompt = activeScenarioPrompt.scenario.guidedPrompts[activeScenarioPrompt.stepIndex];
+                const promptSequence = activeScenarioPrompt.promptSequence || activeScenarioPrompt.scenario.guidedPrompts;
+                const prompt = promptSequence[activeScenarioPrompt.stepIndex];
                 const promptKey = `${activeScenarioPrompt.scenario.label}-${activeScenarioPrompt.stepIndex}`;
                 const isExpanded = Boolean(expandedPromptKeys[promptKey]);
                 const visibleOptions = isExpanded
@@ -3715,7 +3888,7 @@ export default function DecisionTreePage() {
                   Path: {decisionPathEntries.map((entry, index) => (
                     <span key={`path-${entry.id}`}>
                       {index > 0 ? ' -> ' : ''}
-                      {entry.name}
+                      {getDecisionTreeEntryDisplayName({ entry, closedGuardPassingContext })}
                     </span>
                   ))}
                 </p>
@@ -3801,74 +3974,78 @@ export default function DecisionTreePage() {
               </div>
 
               <div className="decision-tree-top-grid">
-                {topRecommendations.map((option) => (
-                  <article className="decision-tree-top-card" key={`top-${option.entry.id}`}>
-                    <div className="decision-tree-top-card-header">
-                      <div>
-                        <strong>{option.name}</strong>
-                        <span>{option.sourceLabel}</span>
+                {topRecommendations.map((option) => {
+                  const displayOption = getDecisionTreeOptionDisplay({ option, closedGuardPassingContext });
+
+                  return (
+                    <article className="decision-tree-top-card" key={`top-${option.entry.id}`}>
+                      <div className="decision-tree-top-card-header">
+                        <div>
+                          <strong>{displayOption.name}</strong>
+                          <span>{displayOption.sourceLabel || option.sourceLabel}</span>
+                        </div>
+                        <span className="curriculum-index-tag">
+                          {option.entry.category}
+                        </span>
                       </div>
-                      <span className="curriculum-index-tag">
-                        {option.entry.category}
-                      </span>
-                    </div>
 
-                    <p className="decision-tree-recommendation-summary">
-                      {buildRecommendationSummary({ option, focusEntry })}
-                    </p>
-
-                    <p className="meta-text">
-                      {option.reasons.join(' | ')}
-                    </p>
-
-                    {option.cue ? (
-                      <p className="meta-text decision-tree-top-cue">
-                        {option.cue}
+                      <p className="decision-tree-recommendation-summary">
+                        {displayOption.summary || buildRecommendationSummary({ option, focusEntry })}
                       </p>
-                    ) : null}
 
-                    {option.fitProfiles.length > 0 ? (
-                      <div className="decision-tree-fit-row">
-                        {option.fitProfiles.map((profile) => (
-                          <span
-                            key={`top-${option.entry.id}-${profile.key}`}
-                            className={`decision-tree-fit-chip${profile.isCaution ? ' is-caution' : ''}${profile.isMatch ? ' is-match' : ''}`}
-                          >
-                            {profile.label}
-                          </span>
-                        ))}
+                      <p className="meta-text">
+                        {option.reasons.join(' | ')}
+                      </p>
+
+                      {option.cue ? (
+                        <p className="meta-text decision-tree-top-cue">
+                          {option.cue}
+                        </p>
+                      ) : null}
+
+                      {option.fitProfiles.length > 0 ? (
+                        <div className="decision-tree-fit-row">
+                          {option.fitProfiles.map((profile) => (
+                            <span
+                              key={`top-${option.entry.id}-${profile.key}`}
+                              className={`decision-tree-fit-chip${profile.isCaution ? ' is-caution' : ''}${profile.isMatch ? ' is-match' : ''}`}
+                            >
+                              {profile.label}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      <div className="inline-actions decision-tree-top-actions">
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => selectFocusEntry(option.entry, {
+                            pathMode: 'append',
+                            scrollTarget: 'recommendations',
+                            feedback: `Moved from ${focusEntry.name} to ${displayOption.name}. Jumped to the next recommendation layer below.`,
+                            analyticsSource: 'top_recommendation'
+                          })}
+                        >
+                          Go to next step
+                        </button>
+                        <Link className="secondary-button" to={buildCurriculumIndexLink(option.entry)}>
+                          View in Index
+                        </Link>
+                        <Link
+                          className="secondary-button"
+                          to={buildLibraryLink({
+                            entryName: option.entry.name,
+                            focusEntry,
+                            decisionPathEntries
+                          })}
+                        >
+                          Library
+                        </Link>
                       </div>
-                    ) : null}
-
-                    <div className="inline-actions decision-tree-top-actions">
-                      <button
-                        type="button"
-                        className="secondary-button"
-                        onClick={() => selectFocusEntry(option.entry, {
-                          pathMode: 'append',
-                          scrollTarget: 'recommendations',
-                          feedback: `Moved from ${focusEntry.name} to ${option.entry.name}. Jumped to the next recommendation layer below.`,
-                          analyticsSource: 'top_recommendation'
-                        })}
-                      >
-                        Go to next step
-                      </button>
-                      <Link className="secondary-button" to={buildCurriculumIndexLink(option.entry)}>
-                        View in Index
-                      </Link>
-                      <Link
-                        className="secondary-button"
-                        to={buildLibraryLink({
-                          entryName: option.entry.name,
-                          focusEntry,
-                          decisionPathEntries
-                        })}
-                      >
-                        Library
-                      </Link>
-                    </div>
-                  </article>
-                ))}
+                    </article>
+                  );
+                })}
               </div>
             </div>
           ) : null}
@@ -3956,27 +4133,30 @@ export default function DecisionTreePage() {
                 </div>
                 {group.options.length > 0 ? (
                   <ul className="card-list">
-                    {group.options.map((option) => (
+                    {group.options.map((option) => {
+                      const displayOption = getDecisionTreeOptionDisplay({ option, closedGuardPassingContext });
+
+                      return (
                       <li className="decision-tree-option" key={`${group.key}-${option.name}`}>
                           <button
                             type="button"
                             onClick={() => option.entry && selectFocusEntry(option.entry, {
                               pathMode: 'append',
                               scrollTarget: 'recommendations',
-                              feedback: `Moved from ${focusEntry.name} to ${option.entry.name}. Jumped to the next recommendation layer below.`,
+                              feedback: `Moved from ${focusEntry.name} to ${displayOption.name}. Jumped to the next recommendation layer below.`,
                               analyticsSource: 'branch_group'
                             })}
                             disabled={!option.entry}
                           >
-                          <strong>{option.name}</strong>
+                          <strong>{displayOption.name || option.name}</strong>
                           <span>
                             {option.entry
                               ? `${option.entry.category}${option.entry.skillLevel ? ` | ${option.entry.skillLevel}` : ''}`
                               : 'Not a full Index node yet'}
                           </span>
-                          {option.summary ? (
+                          {displayOption.summary || option.summary ? (
                             <span className="decision-tree-summary-row">
-                              {option.summary}
+                              {displayOption.summary || option.summary}
                             </span>
                           ) : null}
                           <span className="decision-tree-reason-row">
@@ -3996,7 +4176,8 @@ export default function DecisionTreePage() {
                           ) : null}
                         </button>
                       </li>
-                    ))}
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p className="empty-state">No branches match the current filters yet.</p>

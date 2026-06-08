@@ -32,6 +32,10 @@ const formatActionLabel = (value) => (
 
 const emptyState = {
   window_days: 14,
+  tracking_status: {
+    page_tracking_ready: true,
+    action_tracking_ready: true
+  },
   overview: {
     total_page_views: 0,
     unique_users: 0,
@@ -124,6 +128,11 @@ export default function PlatformAnalyticsPage() {
     ];
   }, [analyticsState.data]);
 
+  const pageTrackingReady = analyticsState.data.tracking_status?.page_tracking_ready !== false;
+  const actionTrackingReady = analyticsState.data.tracking_status?.action_tracking_ready !== false;
+  const hasPageTraffic = (analyticsState.data.overview?.total_page_views || 0) > 0;
+  const hasActionTraffic = analyticsState.data.top_actions.length > 0;
+
   return (
     <Layout>
       <div className="account-page platform-admin-page platform-analytics-page">
@@ -151,6 +160,24 @@ export default function PlatformAnalyticsPage() {
 
             {analyticsState.error ? (
               <p className="form-error">{analyticsState.error}</p>
+            ) : null}
+
+            {!analyticsState.loading && !pageTrackingReady ? (
+              <div className="platform-admin-empty-state">
+                Page tracking is not ready on this environment yet. The analytics table or migration likely has not finished deploying.
+              </div>
+            ) : null}
+
+            {!analyticsState.loading && pageTrackingReady && !hasPageTraffic ? (
+              <div className="platform-admin-empty-state">
+                No tracked page traffic yet. Open a few authenticated app pages, then refresh analytics here.
+              </div>
+            ) : null}
+
+            {!analyticsState.loading && !actionTrackingReady ? (
+              <div className="platform-admin-empty-state">
+                Tracked action reporting is not ready on this environment yet. Audit-log data is temporarily unavailable here.
+              </div>
             ) : null}
 
             {analyticsState.loading ? (
@@ -247,7 +274,9 @@ export default function PlatformAnalyticsPage() {
                   <article className="account-billing-card platform-admin-feature-card">
                     <h3>Tracked actions</h3>
                     <p className="section-note">Backend actions already captured through audit logging.</p>
-                    {analyticsState.data.top_actions.length === 0 ? (
+                    {!actionTrackingReady ? (
+                      <div className="platform-admin-empty-state">Tracked actions are not available on this environment yet.</div>
+                    ) : !hasActionTraffic ? (
                       <div className="platform-admin-empty-state">No tracked actions yet.</div>
                     ) : (
                       <div className="analytics-list">

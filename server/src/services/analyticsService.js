@@ -98,6 +98,7 @@ const getPlatformAnalyticsSnapshot = async ({ days = 14 } = {}) => {
   let roleRows = [[]];
   let gymRows = [[]];
   let recentViewRows = [[]];
+  let pageTrackingReady = true;
 
   try {
     [
@@ -190,9 +191,12 @@ const getPlatformAnalyticsSnapshot = async ({ days = 14 } = {}) => {
     if (!isMissingAnalyticsSchemaError(error)) {
       throw error;
     }
+
+    pageTrackingReady = false;
   }
 
   let actionRows = [[]];
+  let actionTrackingReady = true;
   try {
     actionRows = await pool.query(
       `SELECT
@@ -214,6 +218,8 @@ const getPlatformAnalyticsSnapshot = async ({ days = 14 } = {}) => {
     if (!isMissingAuditSchema) {
       throw error;
     }
+
+    actionTrackingReady = false;
   }
 
   const overview = overviewRows[0]?.[0] || {};
@@ -225,6 +231,10 @@ const getPlatformAnalyticsSnapshot = async ({ days = 14 } = {}) => {
 
   return {
     window_days: windowDays,
+    tracking_status: {
+      page_tracking_ready: pageTrackingReady,
+      action_tracking_ready: actionTrackingReady
+    },
     overview: {
       total_page_views: Number(overview.total_page_views || 0),
       unique_users: Number(overview.unique_users || 0),
