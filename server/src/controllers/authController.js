@@ -22,9 +22,15 @@ const normalizeEmailInput = (value) => (
     .trim()
     .toLowerCase()
     .normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\s+/g, '')
 );
 
-const normalizePasswordForRetry = (value) => String(value || '').trim();
+const stripInvisibleCharacters = (value) => (
+  String(value || '').replace(/[\u200B-\u200D\uFEFF]/g, '')
+);
+
+const normalizePasswordForRetry = (value) => stripInvisibleCharacters(value).trim();
 const normalizePasswordCompatibility = (value) => String(value || '').normalize('NFKC');
 
 const generateToken = (user) => {
@@ -211,11 +217,32 @@ const login = async (req, res) => {
 
     const schemaSupport = await getAuthSchemaSupport(pool);
     const [rows] = await pool.query(
-      buildAuthUserSelectSql(schemaSupport, 'WHERE LOWER(TRIM(u.email)) = ?', { includePasswordHash: true }),
+      buildAuthUserSelectSql(schemaSupport, `
+        WHERE LOWER(
+          REPLACE(
+            REPLACE(
+              REPLACE(
+                REPLACE(TRIM(u.email), ' ', ''),
+                '\t',
+                ''
+              ),
+              '\r',
+              ''
+            ),
+            '\n',
+            ''
+          )
+        ) = ?
+      `, { includePasswordHash: true }),
       [normalizedEmail]
     );
 
     if (rows.length === 0) {
+      console.warn('Login failed: no user match', {
+        emailLength: normalizedEmail.length,
+        emailDomain: normalizedEmail.includes('@') ? normalizedEmail.split('@').pop() : ''
+      });
+
       return res.status(401).json({
         message: 'Invalid credentials'
       });
@@ -260,6 +287,22 @@ const login = async (req, res) => {
     }
 
     if (!isMatch) {
+      const strippedPassword = stripInvisibleCharacters(password);
+
+      if (strippedPassword && strippedPassword !== password) {
+        isMatch = await bcrypt.compare(strippedPassword, user.password_hash);
+      }
+    }
+
+    if (!isMatch) {
+      console.warn('Login failed: password mismatch', {
+        userId: user.id,
+        gymId: user.gym_id,
+        role: user.role,
+        passwordLength: String(password || '').length,
+        normalizedPasswordLength: normalizePasswordForRetry(password).length
+      });
+
       return res.status(401).json({
         message: 'Invalid credentials'
       });
