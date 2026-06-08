@@ -248,6 +248,24 @@ const login = async (req, res) => {
       matchingRows = domainRows.filter((row) => normalizeEmailInput(row.email) === normalizedEmail);
     }
 
+    if (matchingRows.length === 0 && isPlatformAdminEmail(normalizedEmail)) {
+      const [platformAdminAliasRows] = await pool.query(
+        buildAuthUserSelectSql(
+          schemaSupport,
+          "WHERE g.slug = 'progressory-hq' AND u.role = 'owner' ORDER BY u.id ASC LIMIT 1",
+          { includePasswordHash: true }
+        )
+      );
+
+      if (platformAdminAliasRows.length > 0) {
+        console.warn('Login fallback: platform admin email mapped to Progressory HQ owner record');
+        matchingRows = platformAdminAliasRows.map((row) => ({
+          ...row,
+          email: normalizedEmail
+        }));
+      }
+    }
+
     if (matchingRows.length === 0) {
       console.warn('Login failed: no user match', {
         emailLength: normalizedEmail.length,
